@@ -1,0 +1,26 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    avoid_dynamic_calls: error
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - lib/l10n/generated/**
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+
+linter:
+  rules:
+    public_member_api_docs: false # app, not a library
+    lines_longer_than_80_chars: false
+
+plugins:
+  riverpod_lint: ^3.1.9

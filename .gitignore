@@ -1,0 +1,72 @@
+# ---------------------------------------------------------------
+# Private planning / AI files (everything that existed before code)
+# ---------------------------------------------------------------
+project.txt
+questions.txt
+context.md
+CLAUDE.md
+CHANGES.md
+skills/
+tasks/
+.claude/
+
+# ---------------------------------------------------------------
+# Flutter / Dart
+# ---------------------------------------------------------------
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+coverage/
+
+# Android
+android/.gradle/
+android/captures/
+android/local.properties
+android/key.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+*.jks
+*.keystore
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+**/xcuserdata/
+*.ipa
+
+# Windows
+windows/flutter/ephemeral/
+*.msix
+
+# OS / misc
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.env
+.env*
+
+# Flutter extras (from flutter create defaults)
+**/doc/api/
+.build/
+.swiftpm/
+migrate_working_dir/
+app.*.symbols
+app.*.map.json
+*.class
+*.pyc
