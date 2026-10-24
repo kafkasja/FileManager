@@ -6,6 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 
+/// Lets buttons and screen-reader actions fly the current card out (P9),
+/// through the same fly-out + onSwiped as a drag.
+class SwipeCardController {
+  _SwipeCardState? _card;
+
+  /// False when no card is attached, it is already flying (double-tap
+  /// guard), a pinch runs, or the direction can't be swiped.
+  bool flyOff(SwipeDirection direction) => _card?._flyOff(direction) ?? false;
+}
+
 /// A draggable card. The drag offset lives in a ValueNotifier, so dragging
 /// never rebuilds anything above the card. Commits past ⅓ of the width
 /// (height for up/down) or on a fling; otherwise springs back. Directions
@@ -19,6 +29,7 @@ class SwipeCard extends StatefulWidget {
     required this.canSwipe,
     this.verticalEnabled = false,
     this.onBlocked,
+    this.controller,
     this.hintFor,
     this.onThresholdCrossed,
     this.onTap,
@@ -36,6 +47,9 @@ class SwipeCard extends StatefulWidget {
 
   /// Up or down has an action: turns on the diagonal guard.
   final bool verticalEnabled;
+
+  /// P9: buttons / screen-reader actions.
+  final SwipeCardController? controller;
 
   /// Released past the threshold in a direction [canSwipe] refused (the
   /// card springs back). P2 explains why, e.g. a deleted tag.
@@ -121,16 +135,31 @@ class _SwipeCardState extends State<SwipeCard>
   Offset _to = Offset.zero;
   bool _flying = false;
 
+  Size _lastSize = Size.zero;
+
   @override
   void initState() {
     super.initState();
+    widget.controller?._card = this;
     _controller.addListener(
       () => _offset.value = Offset.lerp(_from, _to, _controller.value)!,
     );
   }
 
   @override
+  void didUpdateWidget(covariant SwipeCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      if (oldWidget.controller?._card == this) {
+        oldWidget.controller?._card = null;
+      }
+      widget.controller?._card = this;
+    }
+  }
+
+  @override
   void dispose() {
+    if (widget.controller?._card == this) widget.controller?._card = null;
     _controller.dispose();
     _offset.dispose();
     super.dispose();
@@ -173,6 +202,12 @@ class _SwipeCardState extends State<SwipeCard>
       if (direction != null) widget.onBlocked?.call(direction);
       _springBack();
     }
+  }
+
+  bool _flyOff(SwipeDirection direction) {
+    if (_flying || _pinching || !widget.canSwipe(direction)) return false;
+    unawaited(_flyOut(direction, _lastSize));
+    return true;
   }
 
   Future<void> _flyOut(SwipeDirection direction, Size size) async {
@@ -226,6 +261,7 @@ class _SwipeCardState extends State<SwipeCard>
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
+        _lastSize = size;
         // Scale gestures: one finger drags the card, two fingers pinch
         // (S3 zoom). A plain tap opens the viewer.
         return GestureDetector(

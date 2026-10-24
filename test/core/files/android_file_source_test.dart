@@ -248,17 +248,42 @@ void main() {
     });
 
     group('system trash (D3)', () {
-      Future<Object?> Function(MethodCall) api(int sdk, {bool allow = true}) =>
-          (call) async => switch (call.method) {
-            'sdkInt' => sdk,
-            'trashMedia' || 'deleteMedia' => allow,
-            'statMedia' => _row(7),
-            'listTrashed' => [
-              {..._row(7), 'expires': 1700000000 + 30 * 86400},
-            ],
-            'scanPaths' => <Object?, Object?>{},
-            _ => null,
-          };
+      /// [trashed]: ids in the system trash (normal queries skip them); an
+      /// allowed restore takes them out.
+      Future<Object?> Function(MethodCall) api(
+        int sdk, {
+        bool allow = true,
+        Set<int>? trashed,
+      }) => (call) async {
+        final args = call.arguments is Map
+            ? call.arguments as Map
+            : const <Object?, Object?>{};
+        if (call.method == 'trashMedia' && allow && args['value'] == false) {
+          for (final uri in args['uris']! as List) {
+            trashed?.remove(int.parse((uri as String).split('/').last));
+          }
+        }
+        return switch (call.method) {
+          'sdkInt' => sdk,
+          'trashMedia' || 'deleteMedia' => allow,
+          'statMedia' =>
+            (trashed?.contains(args['id']) ?? false)
+                ? null
+                : _row(args['id'] as int? ?? 7),
+          'listTrashed' => [
+            {..._row(7), 'expires': 1700000000 + 30 * 86400},
+          ],
+          'scanPaths' => <Object?, Object?>{},
+          _ => null,
+        };
+      };
+
+      TrashedItem item(int id) => TrashedItem(
+        trashId: 'ms:$id',
+        original: _ref(id),
+        location: TrashLocation.systemTrash,
+        trashedAt: DateTime.utc(2026),
+      );
 
       test('API 30+: media goes to the system trash in one request', () async {
         create(api(34));
@@ -306,7 +331,7 @@ void main() {
       });
 
       test('restore takes it out of the trash and returns the file', () async {
-        create(api(34));
+        create(api(34, trashed: {7}));
         final restored = await source.restore(
           TrashedItem(
             trashId: 'ms:7',
@@ -318,6 +343,24 @@ void main() {
         expect(restored.id, 'ms:7');
         final call = calls.singleWhere((c) => c.method == 'trashMedia');
         expect((call.arguments as Map)['value'], isFalse);
+      });
+
+      test('H1: restore of a file already back shows no dialog', () async {
+        create(api(34, trashed: {}));
+        final restored = await source.restore(item(7));
+        expect(restored.id, 'ms:7');
+        expect(calls.map((c) => c.method), isNot(contains('trashMedia')));
+      });
+
+      test('H1: restoreBatch asks only for the files still trashed', () async {
+        create(api(34, trashed: {7, 9}));
+        final result = await source.restoreBatch([item(7), item(8), item(9)]);
+        expect(result.restored, hasLength(3));
+        final call = calls.singleWhere((c) => c.method == 'trashMedia');
+        expect((call.arguments as Map)['uris'], [
+          'content://media/external/images/media/7',
+          'content://media/external/images/media/9',
+        ]);
       });
 
       test('listTrashed maps expiry', () async {

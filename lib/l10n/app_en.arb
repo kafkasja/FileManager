@@ -124,7 +124,7 @@
       }
     }
   },
-  "sessionSummary": "{count, plural, =0{Session finished.} =1{Session finished: 1 file deleted, {size} freed.} other{Session finished: {count} files deleted, {size} freed.}}",
+  "sessionSummary": "{count, plural, =0{Session finished.} =1{Session finished: 1 file deleted ({size}).} other{Session finished: {count} files deleted ({size}).}}",
   "@sessionSummary": {
     "placeholders": {
       "count": {
@@ -699,5 +699,222 @@
   "presetCreate": "Create",
   "presetNew": "New preset",
   "settingsPresets": "Presets",
-  "settingsPresetsHelp": "Saved swipe setups"
+  "settingsPresetsHelp": "Saved swipe setups",
+  "reviewedBadge": "Reviewed",
+  "settingsShowReviewedBadge": "Show reviewed badge",
+  "settingsShowReviewedBadgeHelp": "A small mark on files you already swiped before",
+  "reviewedIncludeToggle": "Include files already reviewed here",
+  "filterReviewed": "Reviewed",
+  "filterReviewedOnly": "Reviewed",
+  "filterNotReviewed": "Not reviewed",
+  "reviewedInfoLine": "Reviewed in {preset} · {action} · {date}",
+  "@reviewedInfoLine": {
+    "placeholders": {
+      "preset": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewedReset": "Reset reviewed labels…",
+  "reviewedResetAll": "All presets",
+  "reviewedResetConfirm": "Reset reviewed labels for {name}? This can't be undone.",
+  "@reviewedResetConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewedResetCount": "{count, plural, =0{No files} =1{1 file} other{{count} files}}",
+  "@reviewedResetCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "reviewedResetDone": "Reviewed labels reset",
+  "presetIncludeReviewed": "Include files already reviewed in this preset",
+  "settingsStats": "Swipe stats",
+  "settingsStatsHelp": "Files reviewed and space freed",
+  "settingsShowSessionSummary": "Show summary after Done",
+  "statsTitle": "Swipe stats",
+  "statsInTrashFreed": "{inTrash} in trash · {freed} freed",
+  "@statsInTrashFreed": {
+    "placeholders": {
+      "inTrash": {
+        "type": "String"
+      },
+      "freed": {
+        "type": "String"
+      }
+    }
+  },
+  "statsGoToTrash": "Go to Trash",
+  "statsThisWeek": "This week",
+  "statsThisMonth": "This month",
+  "statsAllTime": "All time",
+  "statsReviewed": "{count, plural, =1{1 file reviewed} other{{count} files reviewed}}",
+  "@statsReviewed": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "statsFreed": "{size} freed",
+  "@statsFreed": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "statsRowLine": "{reviewed} · {freed}",
+  "@statsRowLine": {
+    "placeholders": {
+      "reviewed": {
+        "type": "String"
+      },
+      "freed": {
+        "type": "String"
+      }
+    }
+  },
+  "statsByPreset": "By preset",
+  "statsDeletedPresets": "Deleted presets",
+  "statsWeekly": "Last 8 weeks",
+  "statsReset": "Reset stats",
+  "statsResetConfirm": "Reset the reviewed and freed counters? Files in the trash stay counted.",
+  "summaryTitle": "Session finished",
+  "summaryReviewed": "{count, plural, =1{You reviewed 1 file} other{You reviewed {count} files}}",
+  "@summaryReviewed": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "summaryToTrash": "{size} moved to the trash",
+  "@summaryToTrash": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "summaryFreed": "{size} freed",
+  "@summaryFreed": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "ok": "OK",
+  "settingsSwipeButtons": "Use buttons instead of swiping",
+  "settingsSwipeButtonsHelp": "Tap buttons to do what each swipe does",
+  "swipeCardSemantics": "{kind}, {name}, {size}, {date}",
+  "@swipeCardSemantics": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "fileKindPhoto": "Photo",
+  "fileKindVideo": "Video",
+  "swipeButtonSemantics": "{action}, {direction}",
+  "@swipeButtonSemantics": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "direction": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingRetentionCustom": "Custom…",
+  "pendingRetentionCustomTitle": "Keep pending files for",
+  "pendingRetentionCustomHelper": "1–90 days",
+  "pendingRetentionCustomError": "Enter a number from 1 to 90",
+  "pendingRetentionCustomSave": "Save",
+  "pendingPurgeFailedPermission": "Automatic cleanup couldn't run: permission needed",
+  "pendingPurgeFailed": "Automatic cleanup couldn't run",
+  "pendingUnavailableSnack": "{count, plural, =1{1 file couldn't be moved to the pending-delete folder. It's still on your device.} other{{count} files couldn't be moved to the pending-delete folder. They're still on your device.}}",
+  "@pendingUnavailableSnack": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUnavailableBanner": "{count, plural, =1{1 file wasn't deleted: the pending-delete folder can't be used} other{{count} files weren't deleted: the pending-delete folder can't be used}}",
+  "@pendingUnavailableBanner": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUnavailableOptions": "Options",
+  "pendingUnavailableAfterDone": "{count, plural, =1{1 file wasn't deleted. Find it in Trash.} other{{count} files weren't deleted. Find them in Trash.}}",
+  "@pendingUnavailableAfterDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUnavailableTitle": "Couldn't move to the pending-delete folder",
+  "pendingUnavailableBody": "KFM can't put these files in its pending-delete folder, so they weren't deleted.",
+  "pendingUnavailableGrantAccess": "Allow All files access so KFM can use the folder",
+  "pendingUnavailableWarning": "Deleting permanently can't be undone. These files won't go to the trash and can't be restored.",
+  "pendingUnavailableKeep": "Keep",
+  "pendingUnavailableDeleteOne": "Delete permanently",
+  "pendingUnavailableDeleteAll": "{count, plural, =1{Delete 1 file permanently} other{Delete all {count} permanently}}",
+  "@pendingUnavailableDeleteAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUnavailableConfirm": "{count, plural, =1{Delete this file permanently?} other{Delete {count} files permanently?}} This can't be undone.",
+  "@pendingUnavailableConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUnavailableConfirmButton": "Delete permanently",
+  "pendingUnavailableDeleted": "{count, plural, =1{1 file deleted permanently} other{{count} files deleted permanently}}",
+  "@pendingUnavailableDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUnavailableSection": "Couldn't move to the pending folder"
 }

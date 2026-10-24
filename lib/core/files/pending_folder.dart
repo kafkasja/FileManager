@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
@@ -32,21 +33,33 @@ class PendingFolder {
     required this._retentionDays,
     this._clock = DateTime.now,
     Random? random,
-  }) : _random = random ?? Random.secure();
+    @visibleForTesting
+    Future<void> Function(String from, String to)? renameOverride,
+  }) : _random = random ?? Random.secure(),
+       _rename = renameOverride ?? _renameFile;
 
   static const folderName = '.KFMTrash';
   static const indexFileName = '.index.jsonl';
+
+  /// errno for a rename across mount points.
+  static const _exdev = 18;
 
   final AppDatabase _db;
   final String Function(String path) _volumeRootOf;
   final Future<int> Function() _retentionDays;
   final DateTime Function() _clock;
   final Random _random;
+  final Future<void> Function(String from, String to) _rename;
+
+  static Future<void> _renameFile(String from, String to) =>
+      File(from).rename(to);
 
   String folderFor(String volumeRoot) => '$volumeRoot/$folderName';
 
-  /// Moves [f] into its volume's folder. Throws [FileOpException]
-  /// (permissionDenied without write access; the file stays put).
+  /// Moves [f] into its volume's folder. Throws [FileOpException]; the file
+  /// stays put. `pendingFolderUnavailable` (H2) when the folder can't be
+  /// created there or the rename crosses mounts; `permissionDenied` when the
+  /// file itself can't be moved.
   Future<PendingFolderItemRow> moveIn(FileRef f) async {
     final root = _volumeRootOf(f.path);
     final folder = folderFor(root);
@@ -58,8 +71,23 @@ class PendingFolder {
       await Directory(folder).create(recursive: true);
       final noMedia = File('$folder/.nomedia');
       if (!await noMedia.exists()) await noMedia.create();
-      await File(f.path).rename(stored);
     } on FileSystemException catch (e) {
+      throw FileOpException(
+        FileOpFailure.pendingFolderUnavailable,
+        'cannot create $folder: ${e.osError?.message ?? e.message}',
+        fileId: f.id,
+      );
+    }
+    try {
+      await _rename(f.path, stored);
+    } on FileSystemException catch (e) {
+      if (e.osError?.errorCode == _exdev) {
+        throw FileOpException(
+          FileOpFailure.pendingFolderUnavailable,
+          'rename crosses mounts: ${f.path}',
+          fileId: f.id,
+        );
+      }
       throw fileOpExceptionFromIo(e, f.path, fileId: f.id);
     }
     final row = PendingFolderItemRow(
@@ -140,11 +168,12 @@ class PendingFolder {
     _db.pendingFolderItems,
   )..orderBy([(p) => OrderingTerm.desc(p.deletedAt)])).watch();
 
-  /// App data cleared but files still in the folders: rebuild the rows from
-  /// `.index.jsonl`. Unknown files go to `<volume>/Download/Restored/` with a
-  /// fresh retention. Only runs when the table is empty. Returns rows added.
-  Future<int> rebuildIfEmpty(List<String> volumeRoots) async {
-    if ((await all()).isNotEmpty) return 0;
+  /// Adds rows for files in the folders that have none (app data cleared,
+  /// or a kill between rename and insert), using `.index.jsonl`. Unknown
+  /// files go to `<volume>/Download/Restored/` with a fresh retention. Known
+  /// rows are untouched (H2). Returns rows added.
+  Future<int> reconcile(List<String> volumeRoots) async {
+    final stored = {for (final r in await all()) r.storedPath};
     var added = 0;
     final days = clampRetentionDays(await _retentionDays());
     for (final root in volumeRoots) {
@@ -162,7 +191,7 @@ class PendingFolder {
         if (e is! File) continue;
         final path = e.path.replaceAll(r'\', '/');
         final fileName = nameOf(path);
-        if (fileName.startsWith('.')) continue;
+        if (fileName.startsWith('.') || stored.contains(path)) continue;
         final sep = fileName.indexOf('__');
         final name = sep < 0 ? fileName : fileName.substring(sep + 2);
         final entry = known[path];

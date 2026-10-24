@@ -28,6 +28,8 @@ class SwipeDeckState {
     this.newFiles = 0,
     this.restored = false,
     this.undoMark,
+    this.reviewedIds = const {},
+    this.showReviewedBadge = false,
   });
 
   final Session session;
@@ -53,6 +55,12 @@ class SwipeDeckState {
 
   final UndoMark? undoMark;
 
+  /// P7: files in [upcoming] reviewed before in this preset (badge).
+  final Set<String> reviewedIds;
+
+  /// P7: Basic, or a preset that includes reviewed files.
+  final bool showReviewedBadge;
+
   FileRef? get current => upcoming.isEmpty ? null : upcoming.first;
 
   bool get isFinished => upcoming.isEmpty && !hasMore;
@@ -66,6 +74,8 @@ class SwipeDeckState {
     int? newFiles,
     bool? restored,
     UndoMark? undoMark,
+    Set<String>? reviewedIds,
+    bool? showReviewedBadge,
   }) => SwipeDeckState(
     session: session ?? this.session,
     upcoming: upcoming ?? this.upcoming,
@@ -75,5 +85,7 @@ class SwipeDeckState {
     newFiles: newFiles ?? this.newFiles,
     restored: restored ?? this.restored,
     undoMark: undoMark ?? this.undoMark,
+    reviewedIds: reviewedIds ?? this.reviewedIds,
+    showReviewedBadge: showReviewedBadge ?? this.showReviewedBadge,
   );
 }

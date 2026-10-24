@@ -20,6 +20,18 @@ abstract final class AppSettings {
     7,
   );
 
+  /// H2. ISO-8601 UTC of the last background purge; '' = never ran.
+  static final SettingKey<String> pendingLastPurgeAt = SettingKey.string(
+    'pending.lastPurgeAt',
+    '',
+  );
+
+  /// H2. FileOpFailure.name of the last automatic purge failure; '' = ok.
+  static final SettingKey<String> pendingLastPurgeError = SettingKey.string(
+    'pending.lastPurgeError',
+    '',
+  );
+
   /// B3.
   static final SettingKey<int> sameTimeWindowSeconds = SettingKey.integer(
     'sameTimeWindowSeconds',
@@ -80,6 +92,36 @@ abstract final class AppSettings {
   static final SettingKey<String> swipeRecentTargets = SettingKey.string(
     'swipe.recentTargets',
     '[]',
+  );
+
+  /// P9. A row of buttons under the swipe card.
+  static final SettingKey<bool> swipeButtonsMode = SettingKey.boolean(
+    'swipe.buttonsMode',
+    defaultValue: false,
+  );
+
+  /// P8. Counters only include events after this (ISO-8601 UTC); '' = never.
+  static final SettingKey<String> statsResetAt = SettingKey.string(
+    'stats.resetAt',
+    '',
+  );
+
+  /// P8. Summary sheet after Done.
+  static final SettingKey<bool> statsShowSessionSummary = SettingKey.boolean(
+    'stats.showSessionSummary',
+    defaultValue: true,
+  );
+
+  /// P7. Basic mode also shows files already reviewed in Basic.
+  static final SettingKey<bool> basicIncludeReviewed = SettingKey.boolean(
+    'reviewed.basicInclude',
+    defaultValue: true,
+  );
+
+  /// P7. Small "Reviewed" badge on swipe cards.
+  static final SettingKey<bool> showReviewedBadge = SettingKey.boolean(
+    'swipe.showReviewedBadge',
+    defaultValue: true,
   );
 
   /// P6. The preset the swipe tab uses; 0 = Basic.

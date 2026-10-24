@@ -52,7 +52,7 @@ final class PendingFolderProvider
   }
 }
 
-String _$pendingFolderHash() => r'd11d0dd31543c82f8b66fbe48ff9101d36d721dc';
+String _$pendingFolderHash() => r'e67158a19ed9314e37863fcf91da532432f29534';
 
 /// The device's own storage. Tests override this with `FakeFileSource`.
 

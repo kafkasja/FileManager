@@ -6,7 +6,9 @@ import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/features/reviewed/ui/reset_reviewed_dialog.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
+import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'swipe_settings_section.g.dart';
@@ -15,6 +17,22 @@ part 'swipe_settings_section.g.dart';
 @Riverpod(keepAlive: true)
 Stream<bool> hapticsEnabled(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch(AppSettings.hapticsEnabled);
+
+/// P7: the "Reviewed" badge on swipe cards.
+@Riverpod(keepAlive: true)
+Stream<bool> showReviewedBadge(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watch(AppSettings.showReviewedBadge);
+
+/// P9: buttons under the card instead of (or next to) swiping.
+@Riverpod(keepAlive: true)
+Stream<bool> swipeButtonsMode(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watch(AppSettings.swipeButtonsMode);
+
+/// P8: summary sheet after Done.
+@Riverpod(keepAlive: true)
+Stream<bool> sessionSummaryEnabled(Ref ref) => ref
+    .watch(settingsRepositoryProvider)
+    .watch(AppSettings.statsShowSessionSummary);
 
 /// P4: the optional action bar under the card.
 @Riverpod(keepAlive: true)
@@ -45,6 +63,16 @@ class SwipeSettingsSection extends ConsumerWidget {
           onTap: () => context.go(AppRoutes.presets),
         ),
         SwitchListTile(
+          secondary: const Icon(Icons.touch_app_outlined),
+          title: Text(l10n.settingsSwipeButtons),
+          subtitle: Text(l10n.settingsSwipeButtonsHelp),
+          value: ref.watch(swipeButtonsModeProvider).value ?? false,
+          onChanged: (v) => ref
+              .read(settingsRepositoryProvider)
+              .write(AppSettings.swipeButtonsMode, v)
+              .fireAndForget(),
+        ),
+        SwitchListTile(
           secondary: const Icon(Icons.vibration),
           title: Text(l10n.settingsHaptics),
           subtitle: Text(l10n.settingsHapticsHelp),
@@ -53,6 +81,40 @@ class SwipeSettingsSection extends ConsumerWidget {
               .read(settingsRepositoryProvider)
               .write(AppSettings.hapticsEnabled, v)
               .fireAndForget(),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.check_circle_outline),
+          title: Text(l10n.settingsShowReviewedBadge),
+          subtitle: Text(l10n.settingsShowReviewedBadgeHelp),
+          value: ref.watch(showReviewedBadgeProvider).value ?? true,
+          onChanged: (v) {
+            ref
+                .read(settingsRepositoryProvider)
+                .write(AppSettings.showReviewedBadge, v)
+                .then((_) => ref.invalidate(swipeDeckControllerProvider))
+                .ignore();
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.insights_outlined),
+          title: Text(l10n.settingsStats),
+          subtitle: Text(l10n.settingsStatsHelp),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.go(AppRoutes.stats),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.summarize_outlined),
+          title: Text(l10n.settingsShowSessionSummary),
+          value: ref.watch(sessionSummaryEnabledProvider).value ?? true,
+          onChanged: (v) => ref
+              .read(settingsRepositoryProvider)
+              .write(AppSettings.statsShowSessionSummary, v)
+              .fireAndForget(),
+        ),
+        ListTile(
+          leading: const Icon(Icons.layers_clear_outlined),
+          title: Text(l10n.reviewedReset),
+          onTap: () => showResetReviewedDialog(context, ref),
         ),
         ListTile(
           leading: const Icon(Icons.restart_alt),

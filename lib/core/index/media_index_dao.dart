@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
+import 'package:kfm/core/db/tables/reviewed_labels_table.dart';
 import 'package:kfm/core/db/tables/tags_table.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -14,7 +15,7 @@ part 'media_index_dao.g.dart';
 
 /// Indexed, keyset-paged access to `media_index` (TASK-F5). Never OFFSET:
 /// pages near the end of 50k rows stay as fast as the first.
-@DriftAccessor(tables: [MediaIndex, FileTags, Favorites])
+@DriftAccessor(tables: [MediaIndex, FileTags, Favorites, ReviewedLabels])
 class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     with _$MediaIndexDaoMixin {
   new(super.attachedDatabase);
@@ -273,6 +274,21 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
               (ft) => ft.fileId.equalsExp(t.id) & ft.tagId.isIn(q.anyTagIds),
             ),
           );
+    }
+    if (q.reviewed case final r?) {
+      // Same file, same preset, same modified second (edited = not reviewed).
+      final l = reviewedLabels;
+      final sub = selectOnly(l)
+        ..addColumns([l.actionId])
+        ..where(
+          l.fileId.equalsExp(t.id) &
+              l.presetKey.equals(r.presetKey) &
+              CustomExpression<bool>(
+                '${l.fileModifiedAtMs.escapedNameFor(SqlDialect.sqlite)} / 1000 '
+                '= media_index.modified_at_ms / 1000',
+              ),
+        );
+      where = where & (r.reviewed ? existsQuery(sub) : notExistsQuery(sub));
     }
     if (q.favoritesOnly) {
       where =

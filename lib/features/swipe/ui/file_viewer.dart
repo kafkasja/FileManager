@@ -6,11 +6,16 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/presets/data/preset_repository.dart';
+import 'package:kfm/features/reviewed/data/reviewed_repository.dart';
+import 'package:kfm/features/swipe/domain/action_label.dart';
+import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:kfm/features/swipe/ui/video_surface.dart';
+import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'file_viewer.g.dart';
@@ -246,16 +251,22 @@ class _ViewerImage extends StatelessWidget {
   }
 }
 
-class _InfoBar extends StatelessWidget {
+class _InfoBar extends ConsumerWidget {
   const new({required this.file});
 
   final FileRef file;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final text = Theme.of(context).textTheme.bodyMedium
         ?.copyWith(color: Colors.white);
+    final labels = ref.watch(reviewedLabelsForProvider(file)).value ?? const [];
+    final presets = ref.watch(presetsProvider).value ?? const [];
+    String presetName(int key) => key == 0
+        ? l10n.presetBasic
+        : presets.where((p) => p.id == key).firstOrNull?.name ?? '?';
     return Align(
       alignment: AlignmentDirectional.topStart,
       child: Container(
@@ -267,17 +278,44 @@ class _InfoBar extends StatelessWidget {
           16,
           12,
         ),
-        child: Text(
-          [
-            file.name,
-            formatBytes(file.sizeBytes, locale: locale),
-            formatDate(file.sortDate, locale: locale),
-          ].join('  ·  '),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: text,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              [
+                file.name,
+                formatBytes(file.sizeBytes, locale: locale),
+                formatDate(file.sortDate, locale: locale),
+              ].join('  ·  '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: text,
+            ),
+            for (final label in labels)
+              Text(
+                l10n.reviewedInfoLine(
+                  presetName(label.presetKey),
+                  _actionText(l10n, label),
+                  formatDate(label.reviewedAt, locale: locale),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text,
+              ),
+          ],
         ),
       ),
+    );
+  }
+
+  static String _actionText(AppLocalizations l, ReviewedLabel label) {
+    final type = SwipeActionType.values.asNameMap()[label.actionType];
+    if (type == null) return label.actionType;
+    return actionLabel(
+      l,
+      SwipeAction(type, targetFolder: label.actionDetail),
+      tagName: label.actionDetail,
     );
   }
 }

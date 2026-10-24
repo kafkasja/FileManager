@@ -8,6 +8,7 @@ mixin _$MediaIndexDaoMixin on DatabaseAccessor<AppDatabase> {
   $TagsTable get tags => attachedDatabase.tags;
   $FileTagsTable get fileTags => attachedDatabase.fileTags;
   $FavoritesTable get favorites => attachedDatabase.favorites;
+  $ReviewedLabelsTable get reviewedLabels => attachedDatabase.reviewedLabels;
   MediaIndexDaoManager get managers => MediaIndexDaoManager(this);
 }
 
@@ -22,4 +23,9 @@ class MediaIndexDaoManager {
       $$FileTagsTableTableManager(_db.attachedDatabase, _db.fileTags);
   $$FavoritesTableTableManager get favorites =>
       $$FavoritesTableTableManager(_db.attachedDatabase, _db.favorites);
+  $$ReviewedLabelsTableTableManager get reviewedLabels =>
+      $$ReviewedLabelsTableTableManager(
+        _db.attachedDatabase,
+        _db.reviewedLabels,
+      );
 }

@@ -303,8 +303,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Session finished: $countString files deleted, $size freed.',
-      one: 'Session finished: 1 file deleted, $size freed.',
+      other: 'Session finished: $countString files deleted ($size).',
+      one: 'Session finished: 1 file deleted ($size).',
       zero: 'Session finished.',
     );
     return '$_temp0';
@@ -1299,4 +1299,316 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPresetsHelp => 'Saved swipe setups';
+
+  @override
+  String get reviewedBadge => 'Reviewed';
+
+  @override
+  String get settingsShowReviewedBadge => 'Show reviewed badge';
+
+  @override
+  String get settingsShowReviewedBadgeHelp =>
+      'A small mark on files you already swiped before';
+
+  @override
+  String get reviewedIncludeToggle => 'Include files already reviewed here';
+
+  @override
+  String get filterReviewed => 'Reviewed';
+
+  @override
+  String get filterReviewedOnly => 'Reviewed';
+
+  @override
+  String get filterNotReviewed => 'Not reviewed';
+
+  @override
+  String reviewedInfoLine(String preset, String action, String date) {
+    return 'Reviewed in $preset · $action · $date';
+  }
+
+  @override
+  String get reviewedReset => 'Reset reviewed labels…';
+
+  @override
+  String get reviewedResetAll => 'All presets';
+
+  @override
+  String reviewedResetConfirm(String name) {
+    return 'Reset reviewed labels for $name? This can\'t be undone.';
+  }
+
+  @override
+  String reviewedResetCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files',
+      one: '1 file',
+      zero: 'No files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewedResetDone => 'Reviewed labels reset';
+
+  @override
+  String get presetIncludeReviewed =>
+      'Include files already reviewed in this preset';
+
+  @override
+  String get settingsStats => 'Swipe stats';
+
+  @override
+  String get settingsStatsHelp => 'Files reviewed and space freed';
+
+  @override
+  String get settingsShowSessionSummary => 'Show summary after Done';
+
+  @override
+  String get statsTitle => 'Swipe stats';
+
+  @override
+  String statsInTrashFreed(String inTrash, String freed) {
+    return '$inTrash in trash · $freed freed';
+  }
+
+  @override
+  String get statsGoToTrash => 'Go to Trash';
+
+  @override
+  String get statsThisWeek => 'This week';
+
+  @override
+  String get statsThisMonth => 'This month';
+
+  @override
+  String get statsAllTime => 'All time';
+
+  @override
+  String statsReviewed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files reviewed',
+      one: '1 file reviewed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsFreed(String size) {
+    return '$size freed';
+  }
+
+  @override
+  String statsRowLine(String reviewed, String freed) {
+    return '$reviewed · $freed';
+  }
+
+  @override
+  String get statsByPreset => 'By preset';
+
+  @override
+  String get statsDeletedPresets => 'Deleted presets';
+
+  @override
+  String get statsWeekly => 'Last 8 weeks';
+
+  @override
+  String get statsReset => 'Reset stats';
+
+  @override
+  String get statsResetConfirm =>
+      'Reset the reviewed and freed counters? Files in the trash stay counted.';
+
+  @override
+  String get summaryTitle => 'Session finished';
+
+  @override
+  String summaryReviewed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You reviewed $countString files',
+      one: 'You reviewed 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String summaryToTrash(String size) {
+    return '$size moved to the trash';
+  }
+
+  @override
+  String summaryFreed(String size) {
+    return '$size freed';
+  }
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get settingsSwipeButtons => 'Use buttons instead of swiping';
+
+  @override
+  String get settingsSwipeButtonsHelp =>
+      'Tap buttons to do what each swipe does';
+
+  @override
+  String swipeCardSemantics(
+    String kind,
+    String name,
+    String size,
+    String date,
+  ) {
+    return '$kind, $name, $size, $date';
+  }
+
+  @override
+  String get fileKindPhoto => 'Photo';
+
+  @override
+  String get fileKindVideo => 'Video';
+
+  @override
+  String swipeButtonSemantics(String action, String direction) {
+    return '$action, $direction';
+  }
+
+  @override
+  String get pendingRetentionCustom => 'Custom…';
+
+  @override
+  String get pendingRetentionCustomTitle => 'Keep pending files for';
+
+  @override
+  String get pendingRetentionCustomHelper => '1–90 days';
+
+  @override
+  String get pendingRetentionCustomError => 'Enter a number from 1 to 90';
+
+  @override
+  String get pendingRetentionCustomSave => 'Save';
+
+  @override
+  String get pendingPurgeFailedPermission =>
+      'Automatic cleanup couldn\'t run: permission needed';
+
+  @override
+  String get pendingPurgeFailed => 'Automatic cleanup couldn\'t run';
+
+  @override
+  String pendingUnavailableSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count files couldn\'t be moved to the pending-delete folder. They\'re still on your device.',
+      one: '1 file couldn\'t be moved to the pending-delete folder. It\'s still on your device.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pendingUnavailableBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count files weren\'t deleted: the pending-delete folder can\'t be used',
+      one: '1 file wasn\'t deleted: the pending-delete folder can\'t be used',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingUnavailableOptions => 'Options';
+
+  @override
+  String pendingUnavailableAfterDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files weren\'t deleted. Find them in Trash.',
+      one: '1 file wasn\'t deleted. Find it in Trash.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingUnavailableTitle =>
+      'Couldn\'t move to the pending-delete folder';
+
+  @override
+  String get pendingUnavailableBody =>
+      'KFM can\'t put these files in its pending-delete folder, so they weren\'t deleted.';
+
+  @override
+  String get pendingUnavailableGrantAccess =>
+      'Allow All files access so KFM can use the folder';
+
+  @override
+  String get pendingUnavailableWarning =>
+      'Deleting permanently can\'t be undone. These files won\'t go to the trash and can\'t be restored.';
+
+  @override
+  String get pendingUnavailableKeep => 'Keep';
+
+  @override
+  String get pendingUnavailableDeleteOne => 'Delete permanently';
+
+  @override
+  String pendingUnavailableDeleteAll(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete all $count permanently',
+      one: 'Delete 1 file permanently',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pendingUnavailableConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count files permanently?',
+      one: 'Delete this file permanently?',
+    );
+    return '$_temp0 This can\'t be undone.';
+  }
+
+  @override
+  String get pendingUnavailableConfirmButton => 'Delete permanently';
+
+  @override
+  String pendingUnavailableDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files deleted permanently',
+      one: '1 file deleted permanently',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingUnavailableSection =>
+      'Couldn\'t move to the pending folder';
 }

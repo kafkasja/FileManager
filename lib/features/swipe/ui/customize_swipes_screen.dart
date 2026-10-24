@@ -15,11 +15,9 @@ import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/swipe_layout_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
-import 'package:kfm/features/tags/domain/tag.dart';
 import 'package:kfm/features/tags/ui/tag_picker_sheet.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
-import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// Settings → Swiping → Customize swipes (TASK-P1): one action per
 /// direction. Directions are physical, never mirrored for RTL.
@@ -344,53 +342,6 @@ final Provider<DeleteMode> _deleteModeProvider =
     Provider.autoDispose<DeleteMode>(
       (ref) => ref.watch(deleteModeSettingProvider).value ?? DeleteMode.trash,
     );
-
-String swipeDirectionName(AppLocalizations l, SwipeDirection d) => switch (d) {
-  SwipeDirection.left => l.swipeDirectionLeft,
-  SwipeDirection.right => l.swipeDirectionRight,
-  SwipeDirection.up => l.swipeDirectionUp,
-  SwipeDirection.down => l.swipeDirectionDown,
-};
-
-/// A picker option ("Move to folder…").
-String swipeTypeName(
-  AppLocalizations l,
-  SwipeActionType? type,
-  DeleteMode mode,
-) => switch (type) {
-  null => l.swipeActionNothing,
-  SwipeActionType.trash =>
-    mode == DeleteMode.permanent ? l.swipeActionDelete : l.swipeActionTrash,
-  SwipeActionType.keep => l.swipeActionKeep,
-  SwipeActionType.moveTo => l.swipeActionMoveTo,
-  SwipeActionType.copyTo => l.swipeActionCopyTo,
-  SwipeActionType.addTag => l.swipeActionAddTag,
-  SwipeActionType.favorite => l.swipeActionFavorite,
-  SwipeActionType.renameBatch => l.swipeActionRenameBatch,
-  // Not assignable yet (Phase 5): shown only if a stored layout has it.
-  SwipeActionType.sendToDevice => actionLabel(l, SwipeAction(type)),
-};
-
-/// What a direction does, as a name ("Move to Holiday"), not a result label.
-String swipeActionName(
-  AppLocalizations l,
-  SwipeAction? a,
-  DeleteMode mode, {
-  Map<int, Tag> tags = const {},
-}) => switch (a?.type) {
-  SwipeActionType.moveTo => l.swipeActionMoveToNamed(_leaf(a!.targetFolder)),
-  SwipeActionType.copyTo => l.swipeActionCopyToNamed(_leaf(a!.targetFolder)),
-  SwipeActionType.addTag => switch (tags[a!.tagId]) {
-    final tag? => l.swipeActionTagNamed(tag.name),
-    null => l.swipeActionTagMissing,
-  },
-  final type => swipeTypeName(l, type, mode),
-};
-
-String _leaf(String? path) {
-  final parts = (path ?? '').split('/').where((p) => p.isNotEmpty);
-  return parts.isEmpty ? '' : parts.last;
-}
 
 /// No-target types already in the action bar (can't be added twice).
 Set<SwipeActionType> barTypesInUse(SwipeLayout layout) => {

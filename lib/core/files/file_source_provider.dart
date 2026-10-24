@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/core/files/android/android_file_source.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_source.dart';
@@ -18,10 +20,20 @@ const androidPrimaryRoot = '/storage/emulated/0';
 @Riverpod(keepAlive: true)
 PendingFolder? pendingFolder(Ref ref) {
   if (!Platform.isAndroid) return null;
-  final settings = ref.watch(settingsRepositoryProvider);
+  return createAndroidPendingFolder(
+    ref.watch(appDatabaseProvider),
+    ref.watch(settingsRepositoryProvider),
+  );
+}
+
+/// Shared by the provider and the H2 background worker.
+PendingFolder createAndroidPendingFolder(
+  AppDatabase db,
+  SettingsRepository settings,
+) {
   final root = RegExp(r'^/storage/(emulated/\d+|[^/]+)');
   return PendingFolder(
-    db: ref.watch(appDatabaseProvider),
+    db: db,
     volumeRootOf: (path) =>
         root.firstMatch(path)?.group(0) ?? androidPrimaryRoot,
     retentionDays: () => settings.read(AppSettings.pendingFolderRetentionDays),

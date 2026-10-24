@@ -5,6 +5,7 @@ import 'package:kfm/core/db/app_database.dart';
 
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
+import 'generated/schema_v11.dart' as v11;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -43,7 +44,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 10; from++) {
+  for (var from = 1; from < 12; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -190,4 +191,32 @@ void main() {
       expect(await db.select(db.presets).get(), isEmpty);
     },
   );
+
+  test('v11 -> v12 backfills trash_id of committed trash rows', () async {
+    final schema = await verifier.schemaAt(11);
+    final raw = v11.DatabaseAtV11(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO sessions (layout, started_at, updated_at, is_active) '
+      "VALUES ('{}', 1, 1, 1)",
+    );
+    await raw.customStatement(
+      'INSERT INTO session_actions (session_id, seq, file_id, action_type, '
+      "payload, previous_state, status, created_at) VALUES (1, 1, 'ms:1', "
+      """'trash', '{}', '{"mode":"trash","trashedItem":{"trashId":"ms:1"}}', """
+      "'committed', 1)",
+    );
+    await raw.customStatement(
+      'INSERT INTO pending_deletes (action_id, session_id, file_id, mode, '
+      'status, size_bytes, file_modified_at_ms, committed_mode, queued_at) '
+      "VALUES (1, 1, 'ms:1', 'trash', 'committed', 10, 1, 'trash', 1)",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    final row = (await db.select(db.pendingDeletes).get()).single;
+    expect(row.trashId, 'ms:1');
+    expect(row.leftTrashAt, equals(null));
+  });
 }

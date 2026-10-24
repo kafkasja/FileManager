@@ -5,6 +5,8 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/trash/data/trash_providers.dart';
+import 'package:kfm/features/trash/ui/pending_unavailable_list.dart';
 import 'package:kfm/features/trash/ui/trash_controller.dart';
 import 'package:kfm/features/trash/ui/widgets/expiry_badge.dart';
 
@@ -41,6 +43,7 @@ class TrashScreen extends ConsumerWidget {
           onRefresh: () => ref.refresh(trashControllerProvider.future),
           child: CustomScrollView(
             slivers: [
+              const _UnavailableSection(),
               _Section(
                 title: l10n.trashSystem,
                 help: l10n.trashSystemHelp,
@@ -75,6 +78,34 @@ class TrashScreen extends ConsumerWidget {
       bottomNavigationBar: selecting
           ? _SelectionBar(busy: value!.busy, count: value.selectedIds.length)
           : null,
+    );
+  }
+}
+
+/// H2: deletes the pending folder couldn't take (any session).
+class _UnavailableSection extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(folderUnavailableProvider).value ?? const [];
+    if (items.isEmpty) return const SliverToBoxAdapter();
+    final spacing = context.tokens.spacing;
+    return SliverPadding(
+      padding: EdgeInsetsDirectional.all(spacing * 2),
+      sliver: SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              context.l10n.pendingUnavailableSection,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: spacing),
+            PendingUnavailableList(items: items),
+          ],
+        ),
+      ),
     );
   }
 }

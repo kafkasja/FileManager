@@ -142,6 +142,7 @@ class UndoRepository {
                     createdAt: createdAt,
                   ),
                 );
+            await _writeLabel(id, sessionId, fileId, action, createdAt);
             await alsoInTransaction?.call(id);
           }),
         )
@@ -209,12 +210,18 @@ class UndoRepository {
         .toList();
   }
 
-  Future<void> markUndone(int actionId) =>
-      (_db.update(
-        _db.sessionActions,
-      )..where((a) => a.id.equals(actionId))).write(
-        const SessionActionsCompanion(status: Value(ActionStatus.undone)),
-      );
+  /// Also drops the action's reviewed label (P7), so an older label for the
+  /// same file applies again.
+  Future<void> markUndone(int actionId) => _db.transaction(() async {
+    await (_db.update(
+      _db.sessionActions,
+    )..where((a) => a.id.equals(actionId))).write(
+      const SessionActionsCompanion(status: Value(ActionStatus.undone)),
+    );
+    await (_db.delete(
+      _db.reviewedLabels,
+    )..where((l) => l.actionId.equals(actionId))).go();
+  });
 
   /// D2 commit: status + the trashed item undo will restore from.
   Future<void> markCommitted(int actionId, PreviousState previous) =>
@@ -230,16 +237,58 @@ class UndoRepository {
   /// D5: a file restored from the trash page is no longer "deleted" in the
   /// active session's undo log.
   Future<void> markUndoneByFileId(int sessionId, String fileId) =>
-      (_db.update(_db.sessionActions)..where(
-            (a) =>
-                a.sessionId.equals(sessionId) &
-                a.fileId.equals(fileId) &
-                a.actionType.equals(SwipeActionType.trash.name) &
-                a.status.equalsValue(ActionStatus.committed),
-          ))
-          .write(
-            const SessionActionsCompanion(status: Value(ActionStatus.undone)),
-          );
+      _db.transaction(() async {
+        Expression<bool> match($SessionActionsTable a) =>
+            a.sessionId.equals(sessionId) &
+            a.fileId.equals(fileId) &
+            a.actionType.equals(SwipeActionType.trash.name) &
+            a.status.equalsValue(ActionStatus.committed);
+        final ids =
+            await (_db.selectOnly(_db.sessionActions)
+                  ..addColumns([_db.sessionActions.id])
+                  ..where(match(_db.sessionActions)))
+                .map((r) => r.read(_db.sessionActions.id)!)
+                .get();
+        await (_db.update(_db.sessionActions)..where(match)).write(
+          const SessionActionsCompanion(status: Value(ActionStatus.undone)),
+        );
+        await (_db.delete(
+          _db.reviewedLabels,
+        )..where((l) => l.actionId.isIn(ids))).go();
+      });
+
+  /// P7: "this file was reviewed in this preset", written with the action
+  /// row. No index row (file unknown) → no label: it simply counts as not
+  /// reviewed.
+  Future<void> _writeLabel(
+    int actionId,
+    int sessionId,
+    String fileId,
+    SwipeAction action,
+    DateTime at,
+  ) => _db.customStatement(
+    'INSERT INTO reviewed_labels (action_id, file_id, preset_key, '
+    'action_type, action_detail, reviewed_at, file_modified_at_ms) '
+    'SELECT ?, mi.id, COALESCE(s.preset_id, 0), ?, '
+    'COALESCE(?, (SELECT name FROM tags WHERE id = ?)), ?, '
+    'mi.modified_at_ms FROM sessions s JOIN media_index mi ON mi.id = ? '
+    'WHERE s.id = ?',
+    [
+      actionId,
+      action.type.name,
+      _leaf(action.targetFolder),
+      action.tagId,
+      at.millisecondsSinceEpoch ~/ 1000,
+      fileId,
+      sessionId,
+    ],
+  );
+
+  static String? _leaf(String? path) {
+    if (path == null) return null;
+    final parts = path.split('/').where((p) => p.isNotEmpty);
+    return parts.isEmpty ? null : parts.last;
+  }
 
   Future<SessionAction?> byId(int actionId) async {
     final row = await (_db.select(

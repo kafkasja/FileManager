@@ -90,26 +90,104 @@ final class PendingRetentionDaysProvider
 String _$pendingRetentionDaysHash() =>
     r'c42d8a309e12a3060eb56a6a31a3ce234d1559d1';
 
-/// Once per app run, after storage access is granted: rows stuck in
-/// `committing` (D2), rebuild the pending-folder table if app data was
-/// cleared, and purge expired pending items (D4). The daily background
-/// purge (WorkManager) is not built yet.
+@ProviderFor(trashLedger)
+final trashLedgerProvider = TrashLedgerProvider._();
+
+final class TrashLedgerProvider
+    extends $FunctionalProvider<TrashLedger, TrashLedger, TrashLedger>
+    with $Provider<TrashLedger> {
+  TrashLedgerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'trashLedgerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$trashLedgerHash();
+
+  @$internal
+  @override
+  $ProviderElement<TrashLedger> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  TrashLedger create(Ref ref) {
+    return trashLedger(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TrashLedger value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TrashLedger>(value),
+    );
+  }
+}
+
+String _$trashLedgerHash() => r'ae37641a65b562bdd2fc709d305421080c099239';
+
+/// H2: all such deletes, any session, newest first.
+
+@ProviderFor(folderUnavailable)
+final folderUnavailableProvider = FolderUnavailableProvider._();
+
+/// H2: all such deletes, any session, newest first.
+
+final class FolderUnavailableProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<UnavailableDelete>>,
+          List<UnavailableDelete>,
+          Stream<List<UnavailableDelete>>
+        >
+    with
+        $FutureModifier<List<UnavailableDelete>>,
+        $StreamProvider<List<UnavailableDelete>> {
+  /// H2: all such deletes, any session, newest first.
+  FolderUnavailableProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'folderUnavailableProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$folderUnavailableHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<UnavailableDelete>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<UnavailableDelete>> create(Ref ref) {
+    return folderUnavailable(ref);
+  }
+}
+
+String _$folderUnavailableHash() => r'96b16c325dd59de59c6066600049bd61261b76a7';
+
+/// Once per app run, after storage access is granted. The order matters.
 
 @ProviderFor(startupMaintenance)
 final startupMaintenanceProvider = StartupMaintenanceProvider._();
 
-/// Once per app run, after storage access is granted: rows stuck in
-/// `committing` (D2), rebuild the pending-folder table if app data was
-/// cleared, and purge expired pending items (D4). The daily background
-/// purge (WorkManager) is not built yet.
+/// Once per app run, after storage access is granted. The order matters.
 
 final class StartupMaintenanceProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Once per app run, after storage access is granted: rows stuck in
-  /// `committing` (D2), rebuild the pending-folder table if app data was
-  /// cleared, and purge expired pending items (D4). The daily background
-  /// purge (WorkManager) is not built yet.
+  /// Once per app run, after storage access is granted. The order matters.
   StartupMaintenanceProvider._()
     : super(
         from: null,
@@ -136,4 +214,4 @@ final class StartupMaintenanceProvider
 }
 
 String _$startupMaintenanceHash() =>
-    r'72654aafacb0978a3d4c7ae121be4213ca6df3cf';
+    r'a72e5a65193cbedd9206d9f507048e9673d34e1c';

@@ -370,6 +370,14 @@ class AndroidFileSource implements FileSource {
       );
     }
     final id = _parseMsId(item.original.id);
+    // H1: already out of the trash (an earlier restore whose dialog result
+    // was lost). Normal queries exclude trashed rows, so a hit means the
+    // file is back: no second dialog.
+    final existing = await _guard(
+      item.original.id,
+      () => _channel.statMedia(id),
+    );
+    if (existing != null) return _mediaRef(existing);
     final ok = await _guard(
       item.original.id,
       () => _channel.trashMedia([item.original.uri], value: false),
@@ -429,7 +437,20 @@ class AndroidFileSource implements FileSource {
       for (final i in items)
         if (i.location == TrashLocation.systemTrash && _isMs(i.original)) i,
     ];
-    for (final chunk in _chunkItems(system)) {
+    // H1: items already back (a lost dialog result) skip the dialog.
+    final stillTrashed = <TrashedItem>[];
+    for (final i in system) {
+      final row = await _guard(
+        i.original.id,
+        () => _channel.statMedia(_parseMsId(i.original.id)),
+      );
+      if (row != null) {
+        restored[i.trashId] = _mediaRef(row);
+      } else {
+        stillTrashed.add(i);
+      }
+    }
+    for (final chunk in _chunkItems(stillTrashed)) {
       final ok = await _guard(
         null,
         () => _channel.trashMedia([
@@ -704,6 +725,9 @@ class AndroidFileSource implements FileSource {
       // Media can't be moved there without All files access (e.g. a photo
       // outside DCIM/Pictures), or across volumes (U2 / N11 safe move).
       'NOT_ALLOWED' || 'CROSS_VOLUME' => FileOpFailure.unsupported,
+      // H1: the activity died while a system dialog was open. The caller
+      // re-queues; the next commit reconciles from the file state.
+      'INTERRUPTED' => FileOpFailure.ioError,
       _ => FileOpFailure.ioError,
     };
     return FileOpException(failure, '${e.code}: ${e.message}', fileId: fileId);

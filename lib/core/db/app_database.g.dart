@@ -2630,6 +2630,37 @@ class $PendingDeletesTable extends PendingDeletes
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _trashIdMeta = const VerificationMeta(
+    'trashId',
+  );
+  @override
+  late final GeneratedColumn<String> trashId = GeneratedColumn<String>(
+    'trash_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _leftTrashAtMeta = const VerificationMeta(
+    'leftTrashAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> leftTrashAt = GeneratedColumn<DateTime>(
+    'left_trash_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<TrashExit?, String>
+  leftTrashReason = GeneratedColumn<String>(
+    'left_trash_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<TrashExit?>($PendingDeletesTable.$converterleftTrashReasonn);
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2644,6 +2675,9 @@ class $PendingDeletesTable extends PendingDeletes
     committedMode,
     queuedAt,
     committedAt,
+    trashId,
+    leftTrashAt,
+    leftTrashReason,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2746,6 +2780,21 @@ class $PendingDeletesTable extends PendingDeletes
         ),
       );
     }
+    if (data.containsKey('trash_id')) {
+      context.handle(
+        _trashIdMeta,
+        trashId.isAcceptableOrUnknown(data['trash_id']!, _trashIdMeta),
+      );
+    }
+    if (data.containsKey('left_trash_at')) {
+      context.handle(
+        _leftTrashAtMeta,
+        leftTrashAt.isAcceptableOrUnknown(
+          data['left_trash_at']!,
+          _leftTrashAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2805,6 +2854,20 @@ class $PendingDeletesTable extends PendingDeletes
         DriftSqlType.dateTime,
         data['${effectivePrefix}committed_at'],
       ),
+      trashId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trash_id'],
+      ),
+      leftTrashAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}left_trash_at'],
+      ),
+      leftTrashReason: $PendingDeletesTable.$converterleftTrashReasonn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}left_trash_reason'],
+        ),
+      ),
     );
   }
 
@@ -2816,6 +2879,14 @@ class $PendingDeletesTable extends PendingDeletes
   static JsonTypeConverter2<PendingDeleteStatus, String, String>
   $converterstatus = const EnumNameConverter<PendingDeleteStatus>(
     PendingDeleteStatus.values,
+  );
+  static JsonTypeConverter2<TrashExit, String, String>
+  $converterleftTrashReason = const EnumNameConverter<TrashExit>(
+    TrashExit.values,
+  );
+  static JsonTypeConverter2<TrashExit?, String?, String?>
+  $converterleftTrashReasonn = JsonTypeConverter2.asNullable(
+    $converterleftTrashReason,
   );
 }
 
@@ -2842,6 +2913,13 @@ class PendingDeleteRow extends DataClass
   final String? committedMode;
   final DateTime queuedAt;
   final DateTime? committedAt;
+
+  /// P8. TrashedItem.trashId when committed to the trash; null otherwise.
+  final String? trashId;
+
+  /// P8. When the trashed file left the trash (restored or purged).
+  final DateTime? leftTrashAt;
+  final TrashExit? leftTrashReason;
   const PendingDeleteRow({
     required this.id,
     required this.actionId,
@@ -2855,6 +2933,9 @@ class PendingDeleteRow extends DataClass
     this.committedMode,
     required this.queuedAt,
     this.committedAt,
+    this.trashId,
+    this.leftTrashAt,
+    this.leftTrashReason,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2881,6 +2962,17 @@ class PendingDeleteRow extends DataClass
     if (!nullToAbsent || committedAt != null) {
       map['committed_at'] = Variable<DateTime>(committedAt);
     }
+    if (!nullToAbsent || trashId != null) {
+      map['trash_id'] = Variable<String>(trashId);
+    }
+    if (!nullToAbsent || leftTrashAt != null) {
+      map['left_trash_at'] = Variable<DateTime>(leftTrashAt);
+    }
+    if (!nullToAbsent || leftTrashReason != null) {
+      map['left_trash_reason'] = Variable<String>(
+        $PendingDeletesTable.$converterleftTrashReasonn.toSql(leftTrashReason),
+      );
+    }
     return map;
   }
 
@@ -2904,6 +2996,15 @@ class PendingDeleteRow extends DataClass
       committedAt: committedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(committedAt),
+      trashId: trashId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashId),
+      leftTrashAt: leftTrashAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(leftTrashAt),
+      leftTrashReason: leftTrashReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(leftTrashReason),
     );
   }
 
@@ -2927,6 +3028,11 @@ class PendingDeleteRow extends DataClass
       committedMode: serializer.fromJson<String?>(json['committedMode']),
       queuedAt: serializer.fromJson<DateTime>(json['queuedAt']),
       committedAt: serializer.fromJson<DateTime?>(json['committedAt']),
+      trashId: serializer.fromJson<String?>(json['trashId']),
+      leftTrashAt: serializer.fromJson<DateTime?>(json['leftTrashAt']),
+      leftTrashReason: $PendingDeletesTable.$converterleftTrashReasonn.fromJson(
+        serializer.fromJson<String?>(json['leftTrashReason']),
+      ),
     );
   }
   @override
@@ -2947,6 +3053,11 @@ class PendingDeleteRow extends DataClass
       'committedMode': serializer.toJson<String?>(committedMode),
       'queuedAt': serializer.toJson<DateTime>(queuedAt),
       'committedAt': serializer.toJson<DateTime?>(committedAt),
+      'trashId': serializer.toJson<String?>(trashId),
+      'leftTrashAt': serializer.toJson<DateTime?>(leftTrashAt),
+      'leftTrashReason': serializer.toJson<String?>(
+        $PendingDeletesTable.$converterleftTrashReasonn.toJson(leftTrashReason),
+      ),
     };
   }
 
@@ -2963,6 +3074,9 @@ class PendingDeleteRow extends DataClass
     Value<String?> committedMode = const Value.absent(),
     DateTime? queuedAt,
     Value<DateTime?> committedAt = const Value.absent(),
+    Value<String?> trashId = const Value.absent(),
+    Value<DateTime?> leftTrashAt = const Value.absent(),
+    Value<TrashExit?> leftTrashReason = const Value.absent(),
   }) => PendingDeleteRow(
     id: id ?? this.id,
     actionId: actionId ?? this.actionId,
@@ -2980,6 +3094,11 @@ class PendingDeleteRow extends DataClass
         : this.committedMode,
     queuedAt: queuedAt ?? this.queuedAt,
     committedAt: committedAt.present ? committedAt.value : this.committedAt,
+    trashId: trashId.present ? trashId.value : this.trashId,
+    leftTrashAt: leftTrashAt.present ? leftTrashAt.value : this.leftTrashAt,
+    leftTrashReason: leftTrashReason.present
+        ? leftTrashReason.value
+        : this.leftTrashReason,
   );
   PendingDeleteRow copyWithCompanion(PendingDeletesCompanion data) {
     return PendingDeleteRow(
@@ -3003,6 +3122,13 @@ class PendingDeleteRow extends DataClass
       committedAt: data.committedAt.present
           ? data.committedAt.value
           : this.committedAt,
+      trashId: data.trashId.present ? data.trashId.value : this.trashId,
+      leftTrashAt: data.leftTrashAt.present
+          ? data.leftTrashAt.value
+          : this.leftTrashAt,
+      leftTrashReason: data.leftTrashReason.present
+          ? data.leftTrashReason.value
+          : this.leftTrashReason,
     );
   }
 
@@ -3020,7 +3146,10 @@ class PendingDeleteRow extends DataClass
           ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
           ..write('committedMode: $committedMode, ')
           ..write('queuedAt: $queuedAt, ')
-          ..write('committedAt: $committedAt')
+          ..write('committedAt: $committedAt, ')
+          ..write('trashId: $trashId, ')
+          ..write('leftTrashAt: $leftTrashAt, ')
+          ..write('leftTrashReason: $leftTrashReason')
           ..write(')'))
         .toString();
   }
@@ -3039,6 +3168,9 @@ class PendingDeleteRow extends DataClass
     committedMode,
     queuedAt,
     committedAt,
+    trashId,
+    leftTrashAt,
+    leftTrashReason,
   );
   @override
   bool operator ==(Object other) =>
@@ -3055,7 +3187,10 @@ class PendingDeleteRow extends DataClass
           other.fileModifiedAtMs == this.fileModifiedAtMs &&
           other.committedMode == this.committedMode &&
           other.queuedAt == this.queuedAt &&
-          other.committedAt == this.committedAt);
+          other.committedAt == this.committedAt &&
+          other.trashId == this.trashId &&
+          other.leftTrashAt == this.leftTrashAt &&
+          other.leftTrashReason == this.leftTrashReason);
 }
 
 class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
@@ -3071,6 +3206,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
   final Value<String?> committedMode;
   final Value<DateTime> queuedAt;
   final Value<DateTime?> committedAt;
+  final Value<String?> trashId;
+  final Value<DateTime?> leftTrashAt;
+  final Value<TrashExit?> leftTrashReason;
   const PendingDeletesCompanion({
     this.id = const Value.absent(),
     this.actionId = const Value.absent(),
@@ -3084,6 +3222,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
     this.committedMode = const Value.absent(),
     this.queuedAt = const Value.absent(),
     this.committedAt = const Value.absent(),
+    this.trashId = const Value.absent(),
+    this.leftTrashAt = const Value.absent(),
+    this.leftTrashReason = const Value.absent(),
   });
   PendingDeletesCompanion.insert({
     this.id = const Value.absent(),
@@ -3098,6 +3239,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
     this.committedMode = const Value.absent(),
     required DateTime queuedAt,
     this.committedAt = const Value.absent(),
+    this.trashId = const Value.absent(),
+    this.leftTrashAt = const Value.absent(),
+    this.leftTrashReason = const Value.absent(),
   }) : actionId = Value(actionId),
        sessionId = Value(sessionId),
        fileId = Value(fileId),
@@ -3119,6 +3263,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
     Expression<String>? committedMode,
     Expression<DateTime>? queuedAt,
     Expression<DateTime>? committedAt,
+    Expression<String>? trashId,
+    Expression<DateTime>? leftTrashAt,
+    Expression<String>? leftTrashReason,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3133,6 +3280,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
       if (committedMode != null) 'committed_mode': committedMode,
       if (queuedAt != null) 'queued_at': queuedAt,
       if (committedAt != null) 'committed_at': committedAt,
+      if (trashId != null) 'trash_id': trashId,
+      if (leftTrashAt != null) 'left_trash_at': leftTrashAt,
+      if (leftTrashReason != null) 'left_trash_reason': leftTrashReason,
     });
   }
 
@@ -3149,6 +3299,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
     Value<String?>? committedMode,
     Value<DateTime>? queuedAt,
     Value<DateTime?>? committedAt,
+    Value<String?>? trashId,
+    Value<DateTime?>? leftTrashAt,
+    Value<TrashExit?>? leftTrashReason,
   }) {
     return PendingDeletesCompanion(
       id: id ?? this.id,
@@ -3163,6 +3316,9 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
       committedMode: committedMode ?? this.committedMode,
       queuedAt: queuedAt ?? this.queuedAt,
       committedAt: committedAt ?? this.committedAt,
+      trashId: trashId ?? this.trashId,
+      leftTrashAt: leftTrashAt ?? this.leftTrashAt,
+      leftTrashReason: leftTrashReason ?? this.leftTrashReason,
     );
   }
 
@@ -3207,6 +3363,19 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
     if (committedAt.present) {
       map['committed_at'] = Variable<DateTime>(committedAt.value);
     }
+    if (trashId.present) {
+      map['trash_id'] = Variable<String>(trashId.value);
+    }
+    if (leftTrashAt.present) {
+      map['left_trash_at'] = Variable<DateTime>(leftTrashAt.value);
+    }
+    if (leftTrashReason.present) {
+      map['left_trash_reason'] = Variable<String>(
+        $PendingDeletesTable.$converterleftTrashReasonn.toSql(
+          leftTrashReason.value,
+        ),
+      );
+    }
     return map;
   }
 
@@ -3224,7 +3393,10 @@ class PendingDeletesCompanion extends UpdateCompanion<PendingDeleteRow> {
           ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
           ..write('committedMode: $committedMode, ')
           ..write('queuedAt: $queuedAt, ')
-          ..write('committedAt: $committedAt')
+          ..write('committedAt: $committedAt, ')
+          ..write('trashId: $trashId, ')
+          ..write('leftTrashAt: $leftTrashAt, ')
+          ..write('leftTrashReason: $leftTrashReason')
           ..write(')'))
         .toString();
   }
@@ -6288,6 +6460,488 @@ class PresetsCompanion extends UpdateCompanion<PresetRow> {
   }
 }
 
+class $ReviewedLabelsTable extends ReviewedLabels
+    with TableInfo<$ReviewedLabelsTable, ReviewedLabelRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReviewedLabelsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<int> actionId = GeneratedColumn<int>(
+    'action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _presetKeyMeta = const VerificationMeta(
+    'presetKey',
+  );
+  @override
+  late final GeneratedColumn<int> presetKey = GeneratedColumn<int>(
+    'preset_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actionTypeMeta = const VerificationMeta(
+    'actionType',
+  );
+  @override
+  late final GeneratedColumn<String> actionType = GeneratedColumn<String>(
+    'action_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actionDetailMeta = const VerificationMeta(
+    'actionDetail',
+  );
+  @override
+  late final GeneratedColumn<String> actionDetail = GeneratedColumn<String>(
+    'action_detail',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reviewedAtMeta = const VerificationMeta(
+    'reviewedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reviewedAt = GeneratedColumn<DateTime>(
+    'reviewed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileModifiedAtMsMeta = const VerificationMeta(
+    'fileModifiedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> fileModifiedAtMs = GeneratedColumn<int>(
+    'file_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    actionId,
+    fileId,
+    presetKey,
+    actionType,
+    actionDetail,
+    reviewedAt,
+    fileModifiedAtMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reviewed_labels';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReviewedLabelRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('preset_key')) {
+      context.handle(
+        _presetKeyMeta,
+        presetKey.isAcceptableOrUnknown(data['preset_key']!, _presetKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_presetKeyMeta);
+    }
+    if (data.containsKey('action_type')) {
+      context.handle(
+        _actionTypeMeta,
+        actionType.isAcceptableOrUnknown(data['action_type']!, _actionTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionTypeMeta);
+    }
+    if (data.containsKey('action_detail')) {
+      context.handle(
+        _actionDetailMeta,
+        actionDetail.isAcceptableOrUnknown(
+          data['action_detail']!,
+          _actionDetailMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reviewed_at')) {
+      context.handle(
+        _reviewedAtMeta,
+        reviewedAt.isAcceptableOrUnknown(data['reviewed_at']!, _reviewedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reviewedAtMeta);
+    }
+    if (data.containsKey('file_modified_at_ms')) {
+      context.handle(
+        _fileModifiedAtMsMeta,
+        fileModifiedAtMs.isAcceptableOrUnknown(
+          data['file_modified_at_ms']!,
+          _fileModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fileModifiedAtMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {actionId};
+  @override
+  ReviewedLabelRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReviewedLabelRow(
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}action_id'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      presetKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}preset_key'],
+      )!,
+      actionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_type'],
+      )!,
+      actionDetail: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_detail'],
+      ),
+      reviewedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reviewed_at'],
+      )!,
+      fileModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_modified_at_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $ReviewedLabelsTable createAlias(String alias) {
+    return $ReviewedLabelsTable(attachedDatabase, alias);
+  }
+}
+
+class ReviewedLabelRow extends DataClass
+    implements Insertable<ReviewedLabelRow> {
+  /// session_actions.id of the action that wrote it. No FK: labels outlive
+  /// any future pruning of the undo log.
+  final int actionId;
+
+  /// FileRef.id after the action (re-keyed on idChanges).
+  final String fileId;
+
+  /// Preset id, 0 = Basic.
+  final int presetKey;
+
+  /// SwipeActionType.name.
+  final String actionType;
+
+  /// Folder name (move/copy) or tag name (addTag); else null.
+  final String? actionDetail;
+  final DateTime reviewedAt;
+
+  /// FileRef.modifiedAt (epoch ms) when swiped. A different modified time
+  /// (whole seconds) = edited = not reviewed any more.
+  final int fileModifiedAtMs;
+  const ReviewedLabelRow({
+    required this.actionId,
+    required this.fileId,
+    required this.presetKey,
+    required this.actionType,
+    this.actionDetail,
+    required this.reviewedAt,
+    required this.fileModifiedAtMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['action_id'] = Variable<int>(actionId);
+    map['file_id'] = Variable<String>(fileId);
+    map['preset_key'] = Variable<int>(presetKey);
+    map['action_type'] = Variable<String>(actionType);
+    if (!nullToAbsent || actionDetail != null) {
+      map['action_detail'] = Variable<String>(actionDetail);
+    }
+    map['reviewed_at'] = Variable<DateTime>(reviewedAt);
+    map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs);
+    return map;
+  }
+
+  ReviewedLabelsCompanion toCompanion(bool nullToAbsent) {
+    return ReviewedLabelsCompanion(
+      actionId: Value(actionId),
+      fileId: Value(fileId),
+      presetKey: Value(presetKey),
+      actionType: Value(actionType),
+      actionDetail: actionDetail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionDetail),
+      reviewedAt: Value(reviewedAt),
+      fileModifiedAtMs: Value(fileModifiedAtMs),
+    );
+  }
+
+  factory ReviewedLabelRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReviewedLabelRow(
+      actionId: serializer.fromJson<int>(json['actionId']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+      presetKey: serializer.fromJson<int>(json['presetKey']),
+      actionType: serializer.fromJson<String>(json['actionType']),
+      actionDetail: serializer.fromJson<String?>(json['actionDetail']),
+      reviewedAt: serializer.fromJson<DateTime>(json['reviewedAt']),
+      fileModifiedAtMs: serializer.fromJson<int>(json['fileModifiedAtMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'actionId': serializer.toJson<int>(actionId),
+      'fileId': serializer.toJson<String>(fileId),
+      'presetKey': serializer.toJson<int>(presetKey),
+      'actionType': serializer.toJson<String>(actionType),
+      'actionDetail': serializer.toJson<String?>(actionDetail),
+      'reviewedAt': serializer.toJson<DateTime>(reviewedAt),
+      'fileModifiedAtMs': serializer.toJson<int>(fileModifiedAtMs),
+    };
+  }
+
+  ReviewedLabelRow copyWith({
+    int? actionId,
+    String? fileId,
+    int? presetKey,
+    String? actionType,
+    Value<String?> actionDetail = const Value.absent(),
+    DateTime? reviewedAt,
+    int? fileModifiedAtMs,
+  }) => ReviewedLabelRow(
+    actionId: actionId ?? this.actionId,
+    fileId: fileId ?? this.fileId,
+    presetKey: presetKey ?? this.presetKey,
+    actionType: actionType ?? this.actionType,
+    actionDetail: actionDetail.present ? actionDetail.value : this.actionDetail,
+    reviewedAt: reviewedAt ?? this.reviewedAt,
+    fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+  );
+  ReviewedLabelRow copyWithCompanion(ReviewedLabelsCompanion data) {
+    return ReviewedLabelRow(
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      presetKey: data.presetKey.present ? data.presetKey.value : this.presetKey,
+      actionType: data.actionType.present
+          ? data.actionType.value
+          : this.actionType,
+      actionDetail: data.actionDetail.present
+          ? data.actionDetail.value
+          : this.actionDetail,
+      reviewedAt: data.reviewedAt.present
+          ? data.reviewedAt.value
+          : this.reviewedAt,
+      fileModifiedAtMs: data.fileModifiedAtMs.present
+          ? data.fileModifiedAtMs.value
+          : this.fileModifiedAtMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewedLabelRow(')
+          ..write('actionId: $actionId, ')
+          ..write('fileId: $fileId, ')
+          ..write('presetKey: $presetKey, ')
+          ..write('actionType: $actionType, ')
+          ..write('actionDetail: $actionDetail, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    actionId,
+    fileId,
+    presetKey,
+    actionType,
+    actionDetail,
+    reviewedAt,
+    fileModifiedAtMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReviewedLabelRow &&
+          other.actionId == this.actionId &&
+          other.fileId == this.fileId &&
+          other.presetKey == this.presetKey &&
+          other.actionType == this.actionType &&
+          other.actionDetail == this.actionDetail &&
+          other.reviewedAt == this.reviewedAt &&
+          other.fileModifiedAtMs == this.fileModifiedAtMs);
+}
+
+class ReviewedLabelsCompanion extends UpdateCompanion<ReviewedLabelRow> {
+  final Value<int> actionId;
+  final Value<String> fileId;
+  final Value<int> presetKey;
+  final Value<String> actionType;
+  final Value<String?> actionDetail;
+  final Value<DateTime> reviewedAt;
+  final Value<int> fileModifiedAtMs;
+  const ReviewedLabelsCompanion({
+    this.actionId = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.presetKey = const Value.absent(),
+    this.actionType = const Value.absent(),
+    this.actionDetail = const Value.absent(),
+    this.reviewedAt = const Value.absent(),
+    this.fileModifiedAtMs = const Value.absent(),
+  });
+  ReviewedLabelsCompanion.insert({
+    this.actionId = const Value.absent(),
+    required String fileId,
+    required int presetKey,
+    required String actionType,
+    this.actionDetail = const Value.absent(),
+    required DateTime reviewedAt,
+    required int fileModifiedAtMs,
+  }) : fileId = Value(fileId),
+       presetKey = Value(presetKey),
+       actionType = Value(actionType),
+       reviewedAt = Value(reviewedAt),
+       fileModifiedAtMs = Value(fileModifiedAtMs);
+  static Insertable<ReviewedLabelRow> custom({
+    Expression<int>? actionId,
+    Expression<String>? fileId,
+    Expression<int>? presetKey,
+    Expression<String>? actionType,
+    Expression<String>? actionDetail,
+    Expression<DateTime>? reviewedAt,
+    Expression<int>? fileModifiedAtMs,
+  }) {
+    return RawValuesInsertable({
+      if (actionId != null) 'action_id': actionId,
+      if (fileId != null) 'file_id': fileId,
+      if (presetKey != null) 'preset_key': presetKey,
+      if (actionType != null) 'action_type': actionType,
+      if (actionDetail != null) 'action_detail': actionDetail,
+      if (reviewedAt != null) 'reviewed_at': reviewedAt,
+      if (fileModifiedAtMs != null) 'file_modified_at_ms': fileModifiedAtMs,
+    });
+  }
+
+  ReviewedLabelsCompanion copyWith({
+    Value<int>? actionId,
+    Value<String>? fileId,
+    Value<int>? presetKey,
+    Value<String>? actionType,
+    Value<String?>? actionDetail,
+    Value<DateTime>? reviewedAt,
+    Value<int>? fileModifiedAtMs,
+  }) {
+    return ReviewedLabelsCompanion(
+      actionId: actionId ?? this.actionId,
+      fileId: fileId ?? this.fileId,
+      presetKey: presetKey ?? this.presetKey,
+      actionType: actionType ?? this.actionType,
+      actionDetail: actionDetail ?? this.actionDetail,
+      reviewedAt: reviewedAt ?? this.reviewedAt,
+      fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (actionId.present) {
+      map['action_id'] = Variable<int>(actionId.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (presetKey.present) {
+      map['preset_key'] = Variable<int>(presetKey.value);
+    }
+    if (actionType.present) {
+      map['action_type'] = Variable<String>(actionType.value);
+    }
+    if (actionDetail.present) {
+      map['action_detail'] = Variable<String>(actionDetail.value);
+    }
+    if (reviewedAt.present) {
+      map['reviewed_at'] = Variable<DateTime>(reviewedAt.value);
+    }
+    if (fileModifiedAtMs.present) {
+      map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewedLabelsCompanion(')
+          ..write('actionId: $actionId, ')
+          ..write('fileId: $fileId, ')
+          ..write('presetKey: $presetKey, ')
+          ..write('actionType: $actionType, ')
+          ..write('actionDetail: $actionDetail, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6306,6 +6960,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $PresetsTable presets = $PresetsTable(this);
+  late final $ReviewedLabelsTable reviewedLabels = $ReviewedLabelsTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -6362,6 +7017,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'presets_name_nocase',
     'CREATE UNIQUE INDEX presets_name_nocase ON presets (name COLLATE NOCASE)',
   );
+  late final Index rlFilePreset = Index(
+    'rl_file_preset',
+    'CREATE INDEX rl_file_preset ON reviewed_labels (file_id, preset_key)',
+  );
+  late final Index rlPreset = Index(
+    'rl_preset',
+    'CREATE INDEX rl_preset ON reviewed_labels (preset_key)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6379,6 +7042,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     renameBatches,
     renameBatchItems,
     presets,
+    reviewedLabels,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -6393,6 +7057,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ftTag,
     oneCollectingBatch,
     presetsNameNocase,
+    rlFilePreset,
+    rlPreset,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -8156,6 +8822,9 @@ typedef $$PendingDeletesTableCreateCompanionBuilder =
       Value<String?> committedMode,
       required DateTime queuedAt,
       Value<DateTime?> committedAt,
+      Value<String?> trashId,
+      Value<DateTime?> leftTrashAt,
+      Value<TrashExit?> leftTrashReason,
     });
 typedef $$PendingDeletesTableUpdateCompanionBuilder =
     PendingDeletesCompanion Function({
@@ -8171,6 +8840,9 @@ typedef $$PendingDeletesTableUpdateCompanionBuilder =
       Value<String?> committedMode,
       Value<DateTime> queuedAt,
       Value<DateTime?> committedAt,
+      Value<String?> trashId,
+      Value<DateTime?> leftTrashAt,
+      Value<TrashExit?> leftTrashReason,
     });
 
 final class $$PendingDeletesTableReferences
@@ -8282,6 +8954,22 @@ class $$PendingDeletesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get trashId => $composableBuilder(
+    column: $table.trashId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get leftTrashAt => $composableBuilder(
+    column: $table.leftTrashAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TrashExit?, TrashExit, String>
+  get leftTrashReason => $composableBuilder(
+    column: $table.leftTrashReason,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
   $$SessionActionsTableFilterComposer get actionId {
     final $$SessionActionsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -8388,6 +9076,21 @@ class $$PendingDeletesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get trashId => $composableBuilder(
+    column: $table.trashId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get leftTrashAt => $composableBuilder(
+    column: $table.leftTrashAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get leftTrashReason => $composableBuilder(
+    column: $table.leftTrashReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$SessionActionsTableOrderingComposer get actionId {
     final $$SessionActionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -8482,6 +9185,20 @@ class $$PendingDeletesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get trashId =>
+      $composableBuilder(column: $table.trashId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get leftTrashAt => $composableBuilder(
+    column: $table.leftTrashAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<TrashExit?, String> get leftTrashReason =>
+      $composableBuilder(
+        column: $table.leftTrashReason,
+        builder: (column) => column,
+      );
+
   $$SessionActionsTableAnnotationComposer get actionId {
     final $$SessionActionsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -8571,6 +9288,9 @@ class $$PendingDeletesTableTableManager
                 Value<String?> committedMode = const Value.absent(),
                 Value<DateTime> queuedAt = const Value.absent(),
                 Value<DateTime?> committedAt = const Value.absent(),
+                Value<String?> trashId = const Value.absent(),
+                Value<DateTime?> leftTrashAt = const Value.absent(),
+                Value<TrashExit?> leftTrashReason = const Value.absent(),
               }) => PendingDeletesCompanion(
                 id: id,
                 actionId: actionId,
@@ -8584,6 +9304,9 @@ class $$PendingDeletesTableTableManager
                 committedMode: committedMode,
                 queuedAt: queuedAt,
                 committedAt: committedAt,
+                trashId: trashId,
+                leftTrashAt: leftTrashAt,
+                leftTrashReason: leftTrashReason,
               ),
           createCompanionCallback:
               ({
@@ -8599,6 +9322,9 @@ class $$PendingDeletesTableTableManager
                 Value<String?> committedMode = const Value.absent(),
                 required DateTime queuedAt,
                 Value<DateTime?> committedAt = const Value.absent(),
+                Value<String?> trashId = const Value.absent(),
+                Value<DateTime?> leftTrashAt = const Value.absent(),
+                Value<TrashExit?> leftTrashReason = const Value.absent(),
               }) => PendingDeletesCompanion.insert(
                 id: id,
                 actionId: actionId,
@@ -8612,6 +9338,9 @@ class $$PendingDeletesTableTableManager
                 committedMode: committedMode,
                 queuedAt: queuedAt,
                 committedAt: committedAt,
+                trashId: trashId,
+                leftTrashAt: leftTrashAt,
+                leftTrashReason: leftTrashReason,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -10851,6 +11580,261 @@ typedef $$PresetsTableProcessedTableManager =
       PresetRow,
       PrefetchHooks Function()
     >;
+typedef $$ReviewedLabelsTableCreateCompanionBuilder =
+    ReviewedLabelsCompanion Function({
+      Value<int> actionId,
+      required String fileId,
+      required int presetKey,
+      required String actionType,
+      Value<String?> actionDetail,
+      required DateTime reviewedAt,
+      required int fileModifiedAtMs,
+    });
+typedef $$ReviewedLabelsTableUpdateCompanionBuilder =
+    ReviewedLabelsCompanion Function({
+      Value<int> actionId,
+      Value<String> fileId,
+      Value<int> presetKey,
+      Value<String> actionType,
+      Value<String?> actionDetail,
+      Value<DateTime> reviewedAt,
+      Value<int> fileModifiedAtMs,
+    });
+
+class $$ReviewedLabelsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReviewedLabelsTable> {
+  $$ReviewedLabelsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get presetKey => $composableBuilder(
+    column: $table.presetKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionType => $composableBuilder(
+    column: $table.actionType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionDetail => $composableBuilder(
+    column: $table.actionDetail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReviewedLabelsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReviewedLabelsTable> {
+  $$ReviewedLabelsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get presetKey => $composableBuilder(
+    column: $table.presetKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionType => $composableBuilder(
+    column: $table.actionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionDetail => $composableBuilder(
+    column: $table.actionDetail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReviewedLabelsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReviewedLabelsTable> {
+  $$ReviewedLabelsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get presetKey =>
+      $composableBuilder(column: $table.presetKey, builder: (column) => column);
+
+  GeneratedColumn<String> get actionType => $composableBuilder(
+    column: $table.actionType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get actionDetail => $composableBuilder(
+    column: $table.actionDetail,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => column,
+  );
+}
+
+class $$ReviewedLabelsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReviewedLabelsTable,
+          ReviewedLabelRow,
+          $$ReviewedLabelsTableFilterComposer,
+          $$ReviewedLabelsTableOrderingComposer,
+          $$ReviewedLabelsTableAnnotationComposer,
+          $$ReviewedLabelsTableCreateCompanionBuilder,
+          $$ReviewedLabelsTableUpdateCompanionBuilder,
+          (
+            ReviewedLabelRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ReviewedLabelsTable,
+              ReviewedLabelRow
+            >,
+          ),
+          ReviewedLabelRow,
+          PrefetchHooks Function()
+        > {
+  $$ReviewedLabelsTableTableManager(
+    _$AppDatabase db,
+    $ReviewedLabelsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReviewedLabelsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReviewedLabelsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReviewedLabelsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> actionId = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<int> presetKey = const Value.absent(),
+                Value<String> actionType = const Value.absent(),
+                Value<String?> actionDetail = const Value.absent(),
+                Value<DateTime> reviewedAt = const Value.absent(),
+                Value<int> fileModifiedAtMs = const Value.absent(),
+              }) => ReviewedLabelsCompanion(
+                actionId: actionId,
+                fileId: fileId,
+                presetKey: presetKey,
+                actionType: actionType,
+                actionDetail: actionDetail,
+                reviewedAt: reviewedAt,
+                fileModifiedAtMs: fileModifiedAtMs,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> actionId = const Value.absent(),
+                required String fileId,
+                required int presetKey,
+                required String actionType,
+                Value<String?> actionDetail = const Value.absent(),
+                required DateTime reviewedAt,
+                required int fileModifiedAtMs,
+              }) => ReviewedLabelsCompanion.insert(
+                actionId: actionId,
+                fileId: fileId,
+                presetKey: presetKey,
+                actionType: actionType,
+                actionDetail: actionDetail,
+                reviewedAt: reviewedAt,
+                fileModifiedAtMs: fileModifiedAtMs,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReviewedLabelsTable, ReviewedLabelRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ReviewedLabelsTable,
+                    ReviewedLabelRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReviewedLabelsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReviewedLabelsTable,
+      ReviewedLabelRow,
+      $$ReviewedLabelsTableFilterComposer,
+      $$ReviewedLabelsTableOrderingComposer,
+      $$ReviewedLabelsTableAnnotationComposer,
+      $$ReviewedLabelsTableCreateCompanionBuilder,
+      $$ReviewedLabelsTableUpdateCompanionBuilder,
+      (
+        ReviewedLabelRow,
+        BaseReferences<_$AppDatabase, $ReviewedLabelsTable, ReviewedLabelRow>,
+      ),
+      ReviewedLabelRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10878,4 +11862,6 @@ class $AppDatabaseManager {
       $$RenameBatchItemsTableTableManager(_db, _db.renameBatchItems);
   $$PresetsTableTableManager get presets =>
       $$PresetsTableTableManager(_db, _db.presets);
+  $$ReviewedLabelsTableTableManager get reviewedLabels =>
+      $$ReviewedLabelsTableTableManager(_db, _db.reviewedLabels);
 }

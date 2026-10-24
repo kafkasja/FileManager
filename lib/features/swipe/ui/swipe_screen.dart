@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
@@ -15,8 +17,11 @@ import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
 import 'package:kfm/features/presets/ui/preset_chip.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
+import 'package:kfm/features/reviewed/ui/reviewed_badge.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
+import 'package:kfm/features/stats/data/stats_repository.dart';
+import 'package:kfm/features/stats/ui/session_summary_sheet.dart';
 import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -24,6 +29,7 @@ import 'package:kfm/features/swipe/domain/swipe_deck_state.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
 import 'package:kfm/features/swipe/ui/swipe_action_bar.dart';
+import 'package:kfm/features/swipe/ui/swipe_buttons_row.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
@@ -32,6 +38,7 @@ import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/domain/delete_batch_policy.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
+import 'package:kfm/features/trash/ui/pending_unavailable_sheet.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/ui/undo_button.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -200,6 +207,37 @@ class SwipeScreen extends ConsumerWidget {
           .showSnackBar(SnackBar(content: Text(l10n.newSessionFailed)));
       return;
     }
+    // H2: files the pending folder couldn't take weren't deleted.
+    final unavailable =
+        result.commit.folderUnavailable + summary.folderUnavailable;
+    if (unavailable > 0) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.pendingUnavailableAfterDone(unavailable)),
+            action: SnackBarAction(
+              label: l10n.pendingUnavailableOptions,
+              onPressed: () => showPendingUnavailableSheet(context),
+            ),
+          ),
+        );
+      return;
+    }
+    // P8: the summary sheet (setting, on by default).
+    if (await ref
+        .read(settingsRepositoryProvider)
+        .read(AppSettings.statsShowSessionSummary)) {
+      final stats = await ref
+          .read(statsRepositoryProvider)
+          .forSession(deck.session.id);
+      if (!context.mounted) return;
+      if (stats.reviewed > 0) {
+        await showSessionSummary(context, stats);
+        return;
+      }
+    }
+    if (!context.mounted) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final count = result.commit.committed + summary.committed;
     final size = formatBytes(
@@ -226,6 +264,12 @@ class _Deck extends ConsumerStatefulWidget {
 
 class _DeckState extends ConsumerState<_Deck> {
   final SwipeToastController _toast = SwipeToastController();
+
+  /// P9: buttons and screen-reader actions fly the current card out.
+  final SwipeCardController _cardController = SwipeCardController();
+
+  /// H2: the "couldn't be moved to the pending folder" snackbar showing.
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _unavailableSnack;
 
   @override
   void initState() {
@@ -309,6 +353,47 @@ class _DeckState extends ConsumerState<_Deck> {
     );
   }
 
+  /// P9: what TalkBack reads for the card, and its actions (always on).
+  Widget _cardSemantics(SwipeDeckState deck, FileRef current, Widget card) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final layout = deck.session.layout;
+    final tags = ref.watch(tagsByIdProvider).value ?? const {};
+    final undoable =
+        ref.watch(undoableCountProvider(deck.session.id)).value ?? 0;
+    return Semantics(
+      label: l10n.swipeCardSemantics(
+        current.kind == FileKind.video
+            ? l10n.fileKindVideo
+            : l10n.fileKindPhoto,
+        current.name,
+        formatBytes(current.sizeBytes, locale: locale),
+        formatDate(current.sortDate, locale: locale),
+      ),
+      customSemanticsActions: {
+        for (final d in swipeButtonOrder)
+          if (layout.actionFor(d) case final a?)
+            CustomSemanticsAction(
+              label: swipeActionName(
+                l10n,
+                a,
+                deck.session.deleteMode,
+                tags: tags,
+              ),
+            ): () =>
+                _cardController.flyOff(d),
+        if (undoable > 0)
+          CustomSemanticsAction(label: l10n.undo): _undoFromSemantics,
+      },
+      child: card,
+    );
+  }
+
+  Future<void> _undoFromSemantics() async {
+    final outcome = await ref.read(swipeDeckControllerProvider.notifier).undo();
+    if (mounted) showUndoOutcome(context, outcome);
+  }
+
   String? _tagName(SwipeAction action) =>
       ref.read(tagsByIdProvider).value?[action.tagId]?.name;
 
@@ -354,6 +439,24 @@ class _DeckState extends ConsumerState<_Deck> {
     ref.watch(hapticsEnabledProvider);
     final deck = widget.deck;
     final l10n = context.l10n;
+    // H2: a commit hit files the pending folder couldn't take.
+    ref.listen(pendingDeleteSummaryProvider(deck.session.id), (prev, next) {
+      final before = prev?.value?.folderUnavailable;
+      final now = next.value?.folderUnavailable ?? 0;
+      if (before == null || now <= before) return;
+      // One snackbar with the session total, replaced as rows fail one by
+      // one (snackbars queue otherwise).
+      _unavailableSnack?.close();
+      _unavailableSnack = ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.pendingUnavailableSnack(now)),
+          action: SnackBarAction(
+            label: l10n.pendingUnavailableOptions,
+            onPressed: () => showPendingUnavailableSheet(context),
+          ),
+        ),
+      );
+    });
     final spacing = context.tokens.spacing;
     final current = deck.current;
     final Widget body;
@@ -398,31 +501,46 @@ class _DeckState extends ConsumerState<_Deck> {
                   key: ValueKey('under:${next.id}'),
                   file: next,
                   active: false,
+                  // Under-card too, so it doesn't pop in when it moves up.
+                  reviewed:
+                      deck.showReviewedBadge &&
+                      deck.reviewedIds.contains(next.id),
                 ),
               ),
             _UndoReturn(
               mark: deck.undoMark?.fileId == current.id ? deck.undoMark : null,
-              child: SwipeCard(
-                key: ValueKey(current.id),
-                canSwipe: (d) =>
-                    deck.session.layout.actionFor(d) != null &&
-                    ref
-                            .read(swipeDeckControllerProvider.notifier)
-                            .problemFor(d) ==
-                        null,
-                onBlocked: _onBlocked,
-                verticalEnabled: deck.session.layout.hasVertical,
-                onSwiped: _onSwiped,
-                hintFor: _hintFor,
-                onThresholdCrossed: _tick,
-                // Video: tap = sound, double tap / expand = fullscreen (S5).
-                onTap: current.kind == FileKind.video
-                    ? ref.read(videoMutedProvider.notifier).toggle
-                    : () => openViewer(context, current).ignore(),
-                onDoubleTapDown: current.kind == FileKind.video
-                    ? (_) => openViewer(context, current).ignore()
-                    : null,
-                child: _CardFace(file: current, hero: true),
+              child: _cardSemantics(
+                deck,
+                current,
+                SwipeCard(
+                  key: ValueKey(current.id),
+                  controller: _cardController,
+                  canSwipe: (d) =>
+                      deck.session.layout.actionFor(d) != null &&
+                      ref
+                              .read(swipeDeckControllerProvider.notifier)
+                              .problemFor(d) ==
+                          null,
+                  onBlocked: _onBlocked,
+                  verticalEnabled: deck.session.layout.hasVertical,
+                  onSwiped: _onSwiped,
+                  hintFor: _hintFor,
+                  onThresholdCrossed: _tick,
+                  // Video: tap = sound, double tap / expand = fullscreen (S5).
+                  onTap: current.kind == FileKind.video
+                      ? ref.read(videoMutedProvider.notifier).toggle
+                      : () => openViewer(context, current).ignore(),
+                  onDoubleTapDown: current.kind == FileKind.video
+                      ? (_) => openViewer(context, current).ignore()
+                      : null,
+                  child: _CardFace(
+                    file: current,
+                    hero: true,
+                    reviewed:
+                        deck.showReviewedBadge &&
+                        deck.reviewedIds.contains(current.id),
+                  ),
+                ),
               ),
             ),
           ],
@@ -473,6 +591,16 @@ class _DeckState extends ConsumerState<_Deck> {
           ),
         ),
         _Precache(upcoming: deck.upcoming),
+        // P9: buttons instead of (or next to) swiping.
+        if (current != null &&
+            (ref.watch(swipeButtonsModeProvider).value ?? false) &&
+            !ref.watch(viewerOpenProvider))
+          SwipeButtonsRow(
+            layout: deck.session.layout,
+            deleteMode: deck.session.deleteMode,
+            controller: _cardController,
+            tags: ref.watch(tagsByIdProvider).value ?? const {},
+          ),
         // P4: optional extra buttons (only while there is a file to act on).
         if (current != null)
           SwipeActionBar(
@@ -509,10 +637,14 @@ class _CardFace extends StatelessWidget {
     required this.file,
     this.hero = false,
     this.active = true,
+    this.reviewed = false,
     super.key,
   });
 
   final FileRef file;
+
+  /// P7: show the "Reviewed" pill.
+  final bool reviewed;
 
   /// The card under the top one: its video is prepared, not played.
   final bool active;
@@ -538,6 +670,12 @@ class _CardFace extends StatelessWidget {
             )
           else
             MediaView(file: file, active: active),
+          if (reviewed)
+            const PositionedDirectional(
+              start: 8,
+              bottom: 12,
+              child: ReviewedBadge(),
+            ),
           if (hero && file.kind == FileKind.video)
             PositionedDirectional(
               end: 4,
@@ -601,6 +739,19 @@ class _PendingDeleteBanner extends ConsumerWidget {
     final held = summary.queued >= kBatchThreshold + kUndoSafeZone;
     if (!held && summary.failed == 0) return const SizedBox.shrink();
     final l10n = context.l10n;
+    // H2: Retry alone won't help; the user picks Keep / Delete permanently.
+    if (summary.folderUnavailable > 0) {
+      return MaterialBanner(
+        leading: const Icon(Icons.folder_off_outlined),
+        content: Text(l10n.pendingUnavailableBanner(summary.folderUnavailable)),
+        actions: [
+          TextButton(
+            onPressed: () => showPendingUnavailableSheet(context),
+            child: Text(l10n.pendingUnavailableOptions),
+          ),
+        ],
+      );
+    }
     return MaterialBanner(
       leading: const Icon(Icons.delete_sweep_outlined),
       content: Text(

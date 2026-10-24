@@ -14,6 +14,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit
  * Every call runs on a background thread and replies on the main thread.
  *
  * Error codes (mapped to FileOpFailure in Dart): NOT_FOUND, NEEDS_CONSENT, NOT_ALLOWED,
- * TARGET_EXISTS, CROSS_VOLUME, PERMISSION_DENIED, BAD_ARGS, IO.
+ * TARGET_EXISTS, CROSS_VOLUME, PERMISSION_DENIED, BAD_ARGS, IO, INTERRUPTED.
  */
 class FilesChannel(
     private val activity: Activity,
@@ -37,13 +38,24 @@ class FilesChannel(
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private val context: Context get() = activity.applicationContext
-    private var pendingConsent: ((Boolean) -> Unit)? = null
+    /** The Dart call waiting for the one system dialog that can be open (TASK-H1). */
+    private var pendingResult: MethodChannel.Result? = null
 
     init {
         channel.setMethodCallHandler(this)
     }
 
     fun dispose() {
+        // The engine may outlive this activity one day (N1, cached engine): never leave
+        // a Dart future hanging. Today the engine dies too, so this reply goes nowhere.
+        pendingResult?.let { r ->
+            pendingResult = null
+            try {
+                r.error("INTERRUPTED", "activity destroyed while a system dialog was open", null)
+            } catch (e: Exception) {
+                Log.w(TAG, "could not answer an interrupted request: $e")
+            }
+        }
         channel.setMethodCallHandler(null)
         io.shutdown()
     }
@@ -51,9 +63,15 @@ class FilesChannel(
     /** Forwarded from MainActivity.onActivityResult. Returns true if handled. */
     fun onActivityResult(requestCode: Int, resultCode: Int): Boolean {
         if (requestCode != CONSENT_REQUEST) return false
-        val callback = pendingConsent ?: return true
-        pendingConsent = null
-        callback(resultCode == Activity.RESULT_OK)
+        val r = pendingResult
+        if (r == null) {
+            // Result for a request made by a previous activity/engine. The system already
+            // applied (or skipped) the change; Dart reconciles from the file state.
+            Log.w(TAG, "system dialog result after recreation, granted=${resultCode == Activity.RESULT_OK}")
+            return true
+        }
+        pendingResult = null
+        r.success(resultCode == Activity.RESULT_OK)
         return true
     }
 
@@ -365,7 +383,7 @@ class FilesChannel(
             result.success(true)
             return
         }
-        if (pendingConsent != null) {
+        if (pendingResult != null) {
             result.error("IO", "consent request already in progress", null)
             return
         }
@@ -377,16 +395,16 @@ class FilesChannel(
      * holds Media management) and replies true when the user allowed it.
      */
     private fun launchRequest(result: MethodChannel.Result, create: () -> android.app.PendingIntent) {
-        if (pendingConsent != null) {
+        if (pendingResult != null) {
             result.error("IO", "a system request is already in progress", null)
             return
         }
         try {
             val intent = create()
-            pendingConsent = { granted -> result.success(granted) }
+            pendingResult = result
             activity.startIntentSenderForResult(intent.intentSender, CONSENT_REQUEST, null, 0, 0, 0)
         } catch (e: Exception) {
-            pendingConsent = null
+            pendingResult = null
             result.error("IO", e.toString(), null)
         }
     }
@@ -586,6 +604,7 @@ class FilesChannel(
     private class FilesError(val code: String, message: String) : Exception(message)
 
     companion object {
+        private const val TAG = "kfm.files"
         private const val CONSENT_REQUEST = 4101
         // Column names exist in the files table on every supported API level.
         private const val COL_DATE_TAKEN = "datetaken"

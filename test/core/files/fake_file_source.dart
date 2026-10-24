@@ -83,6 +83,22 @@ class FakeFileSource implements FileSource {
     _bytes.remove(id);
   }
 
+  /// H2: files [trashBatch] can't put in the pending-delete folder.
+  final Set<String> folderUnavailable = {};
+
+  /// Moves a file into the trash as if the system did it (H1: a dialog
+  /// whose result was lost), without a [trashBatch] call.
+  void trashExternally(String id) {
+    final f = _files.remove(id)!;
+    _trash[id] = TrashedItem(
+      trashId: id,
+      original: f,
+      location: TrashLocation.systemTrash,
+      trashedAt: _clock().toUtc(),
+      expiresAt: _clock().toUtc().add(const Duration(days: 30)),
+    );
+  }
+
   Future<void> dispose() => _idChanges.close();
 
   @override
@@ -204,6 +220,14 @@ class FakeFileSource implements FileSource {
     final trashed = <TrashedItem>[];
     final failed = <String, FileOpException>{};
     for (final f in files) {
+      if (folderUnavailable.contains(f.id)) {
+        failed[f.id] = FileOpException(
+          FileOpFailure.pendingFolderUnavailable,
+          f.path,
+          fileId: f.id,
+        );
+        continue;
+      }
       final current = _files.remove(f.id);
       if (current == null) {
         failed[f.id] = FileOpException(

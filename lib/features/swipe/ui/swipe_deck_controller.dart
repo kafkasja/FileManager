@@ -2,13 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/features/filters/data/filter_query.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/presets/data/preset_repository.dart';
+import 'package:kfm/features/presets/domain/preset.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
+import 'package:kfm/features/reviewed/data/reviewed_repository.dart';
+import 'package:kfm/features/reviewed/domain/reviewed_rules.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
 import 'package:kfm/features/session/domain/session.dart';
@@ -132,10 +138,14 @@ class SwipeDeckController extends _$SwipeDeckController {
     _newAfterMs = resumeMs == null
         ? null
         : (resumeMs > startedMs ? resumeMs : startedMs);
-    _query = toIndexQuery(
-      FileFilter.decode(session.filterJson),
-      now: DateTime.now(),
-    );
+    _presetKey = session.presetId ?? 0;
+    final filter = FileFilter.decode(session.filterJson);
+    _query = await _queryFor(filter);
+    _showBadge =
+        await ref
+            .read(settingsRepositoryProvider)
+            .read(AppSettings.showReviewedBadge) &&
+        (_presetKey == 0 || await _includeReviewed(filter));
     final window = await _window(skip: _acted, after: _resumeAt);
     _next = window.next;
     // A fresh deck starts at the newest file: anything newer arrives later.
@@ -163,6 +173,8 @@ class SwipeDeckController extends _$SwipeDeckController {
       hasMore: window.next != null,
       newFiles: await _countNew(const []),
       restored: restored,
+      reviewedIds: await _reviewedAmong(window.files),
+      showReviewedBadge: _showBadge,
     );
   }
 
@@ -236,8 +248,48 @@ class SwipeDeckController extends _$SwipeDeckController {
   }
 
   /// P5: how many files [f] would leave to swipe (the sheet's live count).
-  Future<int> matchCount(FileFilter f) =>
-      _remainingFor(toIndexQuery(f, now: DateTime.now()));
+  Future<int> matchCount(FileFilter f) async =>
+      await _remainingFor(await _queryFor(f));
+
+  /// P7: the preset (0 = Basic) this deck's labels belong to.
+  int _presetKey = 0;
+  bool _showBadge = false;
+
+  /// [f] + the reviewed clause for this session.
+  Future<IndexQuery?> _queryFor(FileFilter f) async => toIndexQuery(
+    f,
+    now: DateTime.now(),
+    reviewed: deckReviewedClause(
+      presetKey: _presetKey,
+      mode: f.reviewed,
+      includeReviewed: await _includeReviewed(f),
+    ),
+  );
+
+  /// P7: the session override, else the preset's setting, else Basic's.
+  Future<bool> includeReviewedDefault() async {
+    if (_presetKey == 0) {
+      return await ref
+          .read(settingsRepositoryProvider)
+          .read(AppSettings.basicIncludeReviewed);
+    }
+    final preset = await ref.read(presetRepositoryProvider).byId(_presetKey);
+    return preset is Preset && preset.includeReviewed;
+  }
+
+  Future<bool> _includeReviewed(FileFilter f) async =>
+      f.includeReviewed ?? await includeReviewedDefault();
+
+  /// P7: badge ids for [files] (nothing when the badge isn't shown).
+  Future<Set<String>> _reviewedAmong(List<FileRef> files) async => _showBadge
+      ? await ref
+            .read(reviewedRepositoryProvider)
+            .reviewedAmong(_presetKey, files)
+      : const {};
+
+  /// P7: whether the active preset is Basic (0) — the filter sheet's
+  /// include switch writes Basic's setting there, else the session.
+  int get presetKey => _presetKey;
 
   /// Not-acted files newer than the resume point, minus those in [shown].
   Future<int> _countNew(List<FileRef> shown) async {
@@ -359,6 +411,10 @@ class SwipeDeckController extends _$SwipeDeckController {
               fileId: file.id,
               from: from,
             ),
+            // It may still carry an older label (P7).
+            reviewedIds: (await _reviewedAmong([file])).isEmpty
+                ? latest.reviewedIds.difference({file.id})
+                : {...latest.reviewedIds, file.id},
           ),
         );
       }
@@ -506,6 +562,7 @@ class SwipeDeckController extends _$SwipeDeckController {
       _newAfterMs ??= _newestMs([...before.upcoming, ...window.files]);
       final latest = state.value ?? before;
       final present = {for (final f in latest.upcoming) f.id};
+      final added = await _reviewedAmong(window.files);
       state = AsyncData(
         latest.copyWith(
           upcoming: [
@@ -520,6 +577,7 @@ class SwipeDeckController extends _$SwipeDeckController {
           hasMore: window.next != null,
           remaining: await _remaining(),
           newFiles: await _countNew(latest.upcoming),
+          reviewedIds: {...latest.reviewedIds, ...added},
         ),
       );
     } on Object catch (e, st) {

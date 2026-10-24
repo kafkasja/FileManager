@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/pending_folder.dart';
+import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
@@ -16,6 +19,9 @@ class DeletingSection extends ConsumerWidget {
   const new({super.key});
 
   static const retentionPresets = [1, 3, 7, 14, 30];
+
+  /// Dropdown value of "Custom…" (never stored).
+  static const _custom = 0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,10 +77,17 @@ class DeletingSection extends ConsumerWidget {
             trailing: DropdownButton<int>(
               value: retentionPresets.contains(days) ? days : null,
               hint: Text(l10n.pendingRetentionDays(days)),
-              onChanged: (v) {
+              onChanged: (v) async {
                 if (v == null) return;
+                final value = v == _custom
+                    ? await showDialog<int>(
+                        context: context,
+                        builder: (_) => _CustomRetentionDialog(initial: days),
+                      )
+                    : v;
+                if (value == null) return;
                 settings
-                    .write(AppSettings.pendingFolderRetentionDays, v)
+                    .write(AppSettings.pendingFolderRetentionDays, value)
                     .fireAndForget();
               },
               items: [
@@ -83,9 +96,31 @@ class DeletingSection extends ConsumerWidget {
                     value: d,
                     child: Text(l10n.pendingRetentionDays(d)),
                   ),
+                DropdownMenuItem(
+                  value: _custom,
+                  child: Text(l10n.pendingRetentionCustom),
+                ),
               ],
             ),
           ),
+          // H2: the automatic cleanup failed (shown until a purge succeeds).
+          if (ref.watch(_purgeErrorProvider).value case final error?
+              when error.isNotEmpty)
+            ListTile(
+              leading: Icon(Icons.error_outline, color: scheme.error),
+              title: Text(
+                error == FileOpFailure.permissionDenied.name
+                    ? l10n.pendingPurgeFailedPermission
+                    : l10n.pendingPurgeFailed,
+                style: TextStyle(color: scheme.error),
+              ),
+              trailing: error == FileOpFailure.permissionDenied.name
+                  ? TextButton(
+                      onPressed: () => ensureAllFilesAccess(context, ref),
+                      child: Text(l10n.turnOn),
+                    )
+                  : null,
+            ),
           if (ref.watch(pendingFolderProvider) != null)
             ListTile(
               leading: const Icon(Icons.delete_forever_outlined),
@@ -124,6 +159,73 @@ class DeletingSection extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(l10n.pendingEmptied(items.length))));
+  }
+}
+
+final StreamProvider<String> _purgeErrorProvider = StreamProvider.autoDispose(
+  (ref) => ref
+      .watch(settingsRepositoryProvider)
+      .watch(AppSettings.pendingLastPurgeError),
+);
+
+/// H2: "Custom…" retention, 1–90 days. Returns the value, or null.
+class _CustomRetentionDialog extends StatefulWidget {
+  const new({required this.initial});
+
+  final int initial;
+
+  @override
+  State<_CustomRetentionDialog> createState() => _CustomRetentionDialogState();
+}
+
+class _CustomRetentionDialogState extends State<_CustomRetentionDialog> {
+  late final TextEditingController _text = TextEditingController(
+    text: '${widget.initial}',
+  );
+
+  int? get _value {
+    final v = int.tryParse(_text.text);
+    return v != null &&
+            v >= kPendingRetentionRange.min &&
+            v <= kPendingRetentionRange.max
+        ? v
+        : null;
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final value = _value;
+    return AlertDialog(
+      title: Text(l10n.pendingRetentionCustomTitle),
+      content: TextField(
+        controller: _text,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          helperText: l10n.pendingRetentionCustomHelper,
+          errorText: value == null ? l10n.pendingRetentionCustomError : null,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: value == null ? null : () => Navigator.pop(context, value),
+          child: Text(l10n.pendingRetentionCustomSave),
+        ),
+      ],
+    );
   }
 }
 

@@ -1,8 +1,10 @@
+import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -63,6 +65,8 @@ class TrashController extends _$TrashController {
     // Batch commits remove index rows: reload then.
     ref.watch(mediaIndexChangesProvider);
     final items = await ref.watch(fileSourceProvider).listTrashed();
+    // P8: the list we just loaded tells which trashed files are gone.
+    ref.read(trashLedgerProvider).reconcile(items).ignore();
     int byExpiry(TrashedItem a, TrashedItem b) =>
         (a.expiresAt ?? a.trashedAt).compareTo(b.expiresAt ?? b.trashedAt);
     final previous = state.value?.selectedIds ?? const {};
@@ -116,6 +120,9 @@ class TrashController extends _$TrashController {
           .restoreBatch(s.selected);
       await _markRestoredInSession(s.selected, result);
       await ref
+          .read(trashLedgerProvider)
+          .markLeft(result.restored.keys, TrashExit.restored);
+      await ref
           .read(mediaIndexerProvider)
           .addFiles(result.restored.values.toList());
       if (result.userCancelled && result.restored.isEmpty) {
@@ -144,6 +151,9 @@ class TrashController extends _$TrashController {
     state = AsyncData(s.copyWith(busy: true));
     try {
       await ref.read(fileSourceProvider).deleteFromTrash(items);
+      await ref
+          .read(trashLedgerProvider)
+          .markLeft(items.map((i) => i.trashId), TrashExit.purged);
     } on FileOpException catch (e) {
       state = AsyncData(s.copyWith(busy: false));
       if (e.failure == FileOpFailure.userCancelled) {

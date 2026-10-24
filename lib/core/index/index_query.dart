@@ -9,6 +9,26 @@ const Set<FileKind> mediaKinds = {
   FileKind.audio,
 };
 
+/// P7: only files (not) reviewed in a preset (0 = Basic).
+@immutable
+class ReviewedClause {
+  const new({required this.presetKey, required this.reviewed});
+
+  final int presetKey;
+
+  /// true = only reviewed files, false = only not-reviewed files.
+  final bool reviewed;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReviewedClause &&
+      other.presetKey == presetKey &&
+      other.reviewed == reviewed;
+
+  @override
+  int get hashCode => Object.hash(presetKey, reviewed);
+}
+
 /// A sorted, filtered view of the media index. P5 extends it with tag /
 /// reviewed / screenshot predicates (single edit point: `_applyQuery` in
 /// MediaIndexDao).
@@ -30,6 +50,7 @@ class IndexQuery {
     this.tagged,
     this.anyTagIds = const {},
     this.favoritesOnly = false,
+    this.reviewed,
   });
 
   /// Empty = all kinds.
@@ -63,6 +84,9 @@ class IndexQuery {
   final Set<int> anyTagIds;
   final bool favoritesOnly;
 
+  /// P7; null = no reviewed predicate.
+  final ReviewedClause? reviewed;
+
   static const all = IndexQuery();
 
   /// Without All files access only media is shown (non-media rows stay in
@@ -90,6 +114,7 @@ class IndexQuery {
     bool? tagged,
     Set<int>? anyTagIds,
     bool? favoritesOnly,
+    ReviewedClause? reviewed,
   }) => IndexQuery(
     kinds: kinds ?? this.kinds,
     folderPath: folderPath ?? this.folderPath,
@@ -106,6 +131,7 @@ class IndexQuery {
     tagged: tagged ?? this.tagged,
     anyTagIds: anyTagIds ?? this.anyTagIds,
     favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+    reviewed: reviewed ?? this.reviewed,
   );
 
   @override
@@ -126,7 +152,8 @@ class IndexQuery {
       other.screenshotsOnly == screenshotsOnly &&
       other.tagged == tagged &&
       setEquals(other.anyTagIds, anyTagIds) &&
-      other.favoritesOnly == favoritesOnly;
+      other.favoritesOnly == favoritesOnly &&
+      other.reviewed == reviewed;
 
   @override
   int get hashCode => Object.hash(
@@ -146,6 +173,7 @@ class IndexQuery {
     tagged,
     Object.hashAllUnordered(anyTagIds),
     favoritesOnly,
+    reviewed,
   );
 }
 

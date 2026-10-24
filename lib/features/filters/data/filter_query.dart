@@ -10,6 +10,7 @@ IndexQuery? toIndexQuery(
   FileFilter f, {
   required DateTime now,
   IndexQuery base = swipeQuery,
+  ReviewedClause? reviewed,
 }) {
   final kinds = f.kinds.isEmpty
       ? base.kinds
@@ -46,5 +47,6 @@ IndexQuery? toIndexQuery(
     },
     anyTagIds: f.tagMode == TagFilterMode.hasTags ? f.tagIds : const {},
     favoritesOnly: f.favoritesOnly,
+    reviewed: reviewed,
   );
 }

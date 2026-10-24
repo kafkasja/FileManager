@@ -8,6 +8,7 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
@@ -394,7 +395,195 @@ void main() {
         expect(rows[1].status, PendingDeleteStatus.queued);
       },
     );
+
+    Future<void> markAllCommitting() => db
+        .update(db.pendingDeletes)
+        .write(
+          const PendingDeletesCompanion(
+            status: Value(PendingDeleteStatus.committing),
+          ),
+        );
+
+    test(
+      'H1: a stuck row the system trashed keeps its trash item for undo',
+      () async {
+        final s = await swipeLeft(2);
+        await markAllCommitting();
+        source.trashExternally('path:/s/DCIM/p0.jpg');
+        expect(await deletes.recoverStuck(), 2);
+        final rows = await pending();
+        expect(rows[0].status, PendingDeleteStatus.committed);
+        expect(rows[0].trashId, 'path:/s/DCIM/p0.jpg');
+        expect(rows[1].status, PendingDeleteStatus.queued);
+        // p1 (queued) is undone first, then p0 comes back from the trash.
+        await undoService.undoLast(s.id);
+        final outcome = await undoService.undoLast(s.id);
+        expect(outcome, isA<Undone>());
+        expect((outcome as Undone).restoredFromTrash, isTrue);
+        expect(await source.stat('path:/s/DCIM/p0.jpg'), isNotNull);
+      },
+    );
+
+    test('H1: permanent mode, file gone → committed without an item', () async {
+      final s = await swipeLeft(1, mode: DeleteMode.permanent);
+      await markAllCommitting();
+      source.removeExternally('path:/s/DCIM/p0.jpg');
+      await deletes.recoverStuck();
+      final row = (await pending()).single;
+      expect(row.status, PendingDeleteStatus.committed);
+      expect(row.trashId, isNull);
+      expect(await undoService.undoLast(s.id), isA<PermanentlyDeleted>());
+    });
+
+    test('H1: commit of a file trashed elsewhere stores its item', () async {
+      final s = await swipeLeft(1);
+      source.trashExternally('path:/s/DCIM/p0.jpg');
+      final r = await deletes.commitAll(s.id);
+      expect(r.committed, 1);
+      expect((await pending()).single.trashId, 'path:/s/DCIM/p0.jpg');
+      final outcome = await undoService.undoLast(s.id);
+      expect((outcome as Undone).restoredFromTrash, isTrue);
+    });
+
+    test(
+      'H1: trash listing fails → gone row still committed, error once',
+      () async {
+        await swipeLeft(1);
+        await markAllCommitting();
+        final broken = DeleteQueue(
+          db: db,
+          lock: SerialLock(),
+          source: _NoTrashList(),
+          undo: undo,
+          index: index,
+        );
+        addTearDown(broken.dispose);
+        final errors = <Object>[];
+        final sub = broken.errors.listen(errors.add);
+        addTearDown(sub.cancel);
+        await broken.recoverStuck();
+        await Future<void>.delayed(Duration.zero);
+        final row = (await pending()).single;
+        expect(row.status, PendingDeleteStatus.committed);
+        expect(row.trashId, isNull);
+        expect(errors, hasLength(1));
+      },
+    );
+
+    group('H2: pending folder unavailable', () {
+      Future<Session> failOne() async {
+        final s = await swipeLeft(2);
+        source.folderUnavailable.add('path:/s/DCIM/p0.jpg');
+        final r = await deletes.commitAll(s.id);
+        expect(r.committed, 1);
+        expect(r.folderUnavailable, 1);
+        return s;
+      }
+
+      test('row failed with the code, counted, listed', () async {
+        final s = await failOne();
+        final row = (await pending()).first;
+        expect(row.status, PendingDeleteStatus.failed);
+        expect(row.failureReason, 'pendingFolderUnavailable');
+        expect(source.files.map((f) => f.id), contains('path:/s/DCIM/p0.jpg'));
+        final summary = await deletes.watchSummary(s.id).first;
+        expect(summary.folderUnavailable, 1);
+        expect(summary.failed, 1);
+        expect(await deletes.watchFolderUnavailable().first, hasLength(1));
+      });
+
+      test(
+        'Delete permanently: committed as permanent, undo says so',
+        () async {
+          final s = await failOne();
+          final row = (await pending()).first;
+          final r = await deletes.deleteUnavailablePermanently([row.id]);
+          expect(r.committed, 1);
+          final after = (await pending()).first;
+          expect(after.status, PendingDeleteStatus.committed);
+          expect(after.committedMode, 'permanent');
+          expect(after.mode, 'trash');
+          expect(after.trashId, isNull);
+          expect(source.files, isEmpty);
+          expect(await deletes.watchFolderUnavailable().first, isEmpty);
+          // p1 went to the trash normally; undo it first, then p0.
+          expect(await undoService.undoLast(s.id), isA<Undone>());
+          expect(await undoService.undoLast(s.id), isA<PermanentlyDeleted>());
+        },
+      );
+
+      test('a file changed since the swipe is never deleted', () async {
+        await failOne();
+        final row = (await pending()).first;
+        source.addFile('/s/DCIM/p0.jpg', modifiedAt: DateTime.utc(2030));
+        await deletes.deleteUnavailablePermanently([row.id]);
+        final after = (await pending()).first;
+        expect(after.status, PendingDeleteStatus.failed);
+        expect(after.failureReason, contains('changed'));
+        expect(source.files.map((f) => f.id), contains('path:/s/DCIM/p0.jpg'));
+      });
+
+      test('Keep: row gone, swipe undone, file stays', () async {
+        final s = await failOne();
+        final row = (await pending()).first;
+        await deletes.keepUnavailable([row.id]);
+        expect(await pending(), hasLength(1));
+        expect(source.files.map((f) => f.id), contains('path:/s/DCIM/p0.jpg'));
+        final action = await (db.select(
+          db.sessionActions,
+        )..where((a) => a.id.equals(row.actionId))).getSingle();
+        expect(action.status, ActionStatus.undone);
+        expect(await undo.top(s.id), isNotNull, reason: 'p1 still undoable');
+      });
+
+      test('Retry once the folder works: committed to the trash', () async {
+        final s = await failOne();
+        source.folderUnavailable.clear();
+        final r = await deletes.commitAll(s.id);
+        expect(r.committed, 1);
+        final row = (await pending()).first;
+        expect(row.status, PendingDeleteStatus.committed);
+        expect(row.committedMode, 'trash');
+      });
+    });
+
+    test('H1: INTERRUPTED during a commit keeps rows queued', () async {
+      final s = await start();
+      final broken = DeleteQueue(
+        db: db,
+        lock: SerialLock(),
+        source: _Interrupted(),
+        undo: undo,
+        index: index,
+      );
+      addTearDown(broken.dispose);
+      final errors = <Object>[];
+      final sub = broken.errors.listen(errors.add);
+      addTearDown(sub.cancel);
+      dispatcher.dispatch(s, photo(1), SwipeAction.trash);
+      await queue.flush();
+      final r = await broken.commitAll(s.id);
+      expect(r.committed, 0);
+      await Future<void>.delayed(Duration.zero);
+      expect(errors.single, isA<FileOpException>());
+      expect((await pending()).single.status, PendingDeleteStatus.queued);
+    });
   });
+}
+
+class _NoTrashList extends FakeFileSource {
+  @override
+  Future<List<TrashedItem>> listTrashed() =>
+      throw const FileOpException(FileOpFailure.ioError, 'listing failed');
+}
+
+class _Interrupted extends _Unsupported {
+  @override
+  Future<TrashResult> trashBatch(List<FileRef> files) =>
+      throw const FileOpException(
+        FileOpFailure.ioError,
+        'INTERRUPTED: activity destroyed while a system dialog was open',
+      );
 }
 
 class _Unsupported extends FakeFileSource {

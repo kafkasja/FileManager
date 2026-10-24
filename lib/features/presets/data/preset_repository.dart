@@ -140,7 +140,9 @@ class PresetRepository {
       ),
     );
     await (_db.delete(_db.presets)..where((p) => p.id.equals(id))).go();
-    // P7 also drops the preset's reviewed labels here.
+    await (_db.delete(
+      _db.reviewedLabels,
+    )..where((l) => l.presetKey.equals(id))).go();
   });
 
   /// Strict decoding: anything off gives [PresetLoadError], never Basic.

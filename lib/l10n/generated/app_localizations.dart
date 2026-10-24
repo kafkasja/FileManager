@@ -529,7 +529,7 @@ abstract class AppLocalizations {
   /// No description provided for @sessionSummary.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{Session finished.} =1{Session finished: 1 file deleted, {size} freed.} other{Session finished: {count} files deleted, {size} freed.}}'**
+  /// **'{count, plural, =0{Session finished.} =1{Session finished: 1 file deleted ({size}).} other{Session finished: {count} files deleted ({size}).}}'**
   String sessionSummary(int count, String size);
 
   /// No description provided for @sessionSummaryTrash.
@@ -1917,6 +1917,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved swipe setups'**
   String get settingsPresetsHelp;
+
+  /// No description provided for @reviewedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed'**
+  String get reviewedBadge;
+
+  /// No description provided for @settingsShowReviewedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Show reviewed badge'**
+  String get settingsShowReviewedBadge;
+
+  /// No description provided for @settingsShowReviewedBadgeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A small mark on files you already swiped before'**
+  String get settingsShowReviewedBadgeHelp;
+
+  /// No description provided for @reviewedIncludeToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Include files already reviewed here'**
+  String get reviewedIncludeToggle;
+
+  /// No description provided for @filterReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed'**
+  String get filterReviewed;
+
+  /// No description provided for @filterReviewedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed'**
+  String get filterReviewedOnly;
+
+  /// No description provided for @filterNotReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reviewed'**
+  String get filterNotReviewed;
+
+  /// No description provided for @reviewedInfoLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed in {preset} · {action} · {date}'**
+  String reviewedInfoLine(String preset, String action, String date);
+
+  /// No description provided for @reviewedReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset reviewed labels…'**
+  String get reviewedReset;
+
+  /// No description provided for @reviewedResetAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All presets'**
+  String get reviewedResetAll;
+
+  /// No description provided for @reviewedResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset reviewed labels for {name}? This can\'t be undone.'**
+  String reviewedResetConfirm(String name);
+
+  /// No description provided for @reviewedResetCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files} =1{1 file} other{{count} files}}'**
+  String reviewedResetCount(int count);
+
+  /// No description provided for @reviewedResetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed labels reset'**
+  String get reviewedResetDone;
+
+  /// No description provided for @presetIncludeReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Include files already reviewed in this preset'**
+  String get presetIncludeReviewed;
+
+  /// No description provided for @settingsStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe stats'**
+  String get settingsStats;
+
+  /// No description provided for @settingsStatsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Files reviewed and space freed'**
+  String get settingsStatsHelp;
+
+  /// No description provided for @settingsShowSessionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Show summary after Done'**
+  String get settingsShowSessionSummary;
+
+  /// No description provided for @statsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe stats'**
+  String get statsTitle;
+
+  /// No description provided for @statsInTrashFreed.
+  ///
+  /// In en, this message translates to:
+  /// **'{inTrash} in trash · {freed} freed'**
+  String statsInTrashFreed(String inTrash, String freed);
+
+  /// No description provided for @statsGoToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Trash'**
+  String get statsGoToTrash;
+
+  /// No description provided for @statsThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get statsThisWeek;
+
+  /// No description provided for @statsThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get statsThisMonth;
+
+  /// No description provided for @statsAllTime.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get statsAllTime;
+
+  /// No description provided for @statsReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file reviewed} other{{count} files reviewed}}'**
+  String statsReviewed(int count);
+
+  /// No description provided for @statsFreed.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} freed'**
+  String statsFreed(String size);
+
+  /// No description provided for @statsRowLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{reviewed} · {freed}'**
+  String statsRowLine(String reviewed, String freed);
+
+  /// No description provided for @statsByPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'By preset'**
+  String get statsByPreset;
+
+  /// No description provided for @statsDeletedPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted presets'**
+  String get statsDeletedPresets;
+
+  /// No description provided for @statsWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 8 weeks'**
+  String get statsWeekly;
+
+  /// No description provided for @statsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset stats'**
+  String get statsReset;
+
+  /// No description provided for @statsResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset the reviewed and freed counters? Files in the trash stay counted.'**
+  String get statsResetConfirm;
+
+  /// No description provided for @summaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session finished'**
+  String get summaryTitle;
+
+  /// No description provided for @summaryReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{You reviewed 1 file} other{You reviewed {count} files}}'**
+  String summaryReviewed(int count);
+
+  /// No description provided for @summaryToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} moved to the trash'**
+  String summaryToTrash(String size);
+
+  /// No description provided for @summaryFreed.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} freed'**
+  String summaryFreed(String size);
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @settingsSwipeButtons.
+  ///
+  /// In en, this message translates to:
+  /// **'Use buttons instead of swiping'**
+  String get settingsSwipeButtons;
+
+  /// No description provided for @settingsSwipeButtonsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap buttons to do what each swipe does'**
+  String get settingsSwipeButtonsHelp;
+
+  /// No description provided for @swipeCardSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind}, {name}, {size}, {date}'**
+  String swipeCardSemantics(String kind, String name, String size, String date);
+
+  /// No description provided for @fileKindPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get fileKindPhoto;
+
+  /// No description provided for @fileKindVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get fileKindVideo;
+
+  /// No description provided for @swipeButtonSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{action}, {direction}'**
+  String swipeButtonSemantics(String action, String direction);
+
+  /// No description provided for @pendingRetentionCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get pendingRetentionCustom;
+
+  /// No description provided for @pendingRetentionCustomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep pending files for'**
+  String get pendingRetentionCustomTitle;
+
+  /// No description provided for @pendingRetentionCustomHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'1–90 days'**
+  String get pendingRetentionCustomHelper;
+
+  /// No description provided for @pendingRetentionCustomError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number from 1 to 90'**
+  String get pendingRetentionCustomError;
+
+  /// No description provided for @pendingRetentionCustomSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get pendingRetentionCustomSave;
+
+  /// No description provided for @pendingPurgeFailedPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic cleanup couldn\'t run: permission needed'**
+  String get pendingPurgeFailedPermission;
+
+  /// No description provided for @pendingPurgeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic cleanup couldn\'t run'**
+  String get pendingPurgeFailed;
+
+  /// No description provided for @pendingUnavailableSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn\'t be moved to the pending-delete folder. It\'s still on your device.} other{{count} files couldn\'t be moved to the pending-delete folder. They\'re still on your device.}}'**
+  String pendingUnavailableSnack(int count);
+
+  /// No description provided for @pendingUnavailableBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file wasn\'t deleted: the pending-delete folder can\'t be used} other{{count} files weren\'t deleted: the pending-delete folder can\'t be used}}'**
+  String pendingUnavailableBanner(int count);
+
+  /// No description provided for @pendingUnavailableOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get pendingUnavailableOptions;
+
+  /// No description provided for @pendingUnavailableAfterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file wasn\'t deleted. Find it in Trash.} other{{count} files weren\'t deleted. Find them in Trash.}}'**
+  String pendingUnavailableAfterDone(int count);
+
+  /// No description provided for @pendingUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t move to the pending-delete folder'**
+  String get pendingUnavailableTitle;
+
+  /// No description provided for @pendingUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM can\'t put these files in its pending-delete folder, so they weren\'t deleted.'**
+  String get pendingUnavailableBody;
+
+  /// No description provided for @pendingUnavailableGrantAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow All files access so KFM can use the folder'**
+  String get pendingUnavailableGrantAccess;
+
+  /// No description provided for @pendingUnavailableWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting permanently can\'t be undone. These files won\'t go to the trash and can\'t be restored.'**
+  String get pendingUnavailableWarning;
+
+  /// No description provided for @pendingUnavailableKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get pendingUnavailableKeep;
+
+  /// No description provided for @pendingUnavailableDeleteOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get pendingUnavailableDeleteOne;
+
+  /// No description provided for @pendingUnavailableDeleteAll.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete 1 file permanently} other{Delete all {count} permanently}}'**
+  String pendingUnavailableDeleteAll(int count);
+
+  /// No description provided for @pendingUnavailableConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete this file permanently?} other{Delete {count} files permanently?}} This can\'t be undone.'**
+  String pendingUnavailableConfirm(int count);
+
+  /// No description provided for @pendingUnavailableConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get pendingUnavailableConfirmButton;
+
+  /// No description provided for @pendingUnavailableDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file deleted permanently} other{{count} files deleted permanently}}'**
+  String pendingUnavailableDeleted(int count);
+
+  /// No description provided for @pendingUnavailableSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t move to the pending folder'**
+  String get pendingUnavailableSection;
 }
 
 class _AppLocalizationsDelegate

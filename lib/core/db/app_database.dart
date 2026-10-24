@@ -6,6 +6,7 @@ import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/db/tables/pending_folder_items_table.dart';
 import 'package:kfm/core/db/tables/presets_table.dart';
 import 'package:kfm/core/db/tables/rename_batches_table.dart';
+import 'package:kfm/core/db/tables/reviewed_labels_table.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/db/tables/sessions_table.dart';
 import 'package:kfm/core/db/tables/settings_table.dart';
@@ -32,15 +33,28 @@ part 'app_database.g.dart';
     RenameBatches,
     RenameBatchItems,
     Presets,
+    ReviewedLabels,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   /// Pass an [executor] in tests (e.g. `NativeDatabase.memory()`).
   new([QueryExecutor? executor]) : super(executor ?? _open());
 
+  /// The H2 background worker: same file, its own connection (never the
+  /// app's shared isolate, which may not exist or may outlive the worker).
+  factory forWorker() => AppDatabase(
+    driftDatabase(
+      name: 'kfm',
+      native: const DriftNativeOptions(
+        databaseDirectory: getApplicationSupportDirectory,
+        setup: setupConnection,
+      ),
+    ),
+  );
+
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -115,6 +129,28 @@ class AppDatabase extends _$AppDatabase {
         );
         await m.createIndex(oneOpenSessionPerPreset);
       }
+      if (from < 11) {
+        // TASK-P7
+        await m.createTable(reviewedLabels);
+        await m.createIndex(rlFilePreset);
+        await m.createIndex(rlPreset);
+      }
+      if (from < 12) {
+        // TASK-P8
+        // From < 5 the v5 block created pending_deletes with these already.
+        if (from >= 5) {
+          await m.addColumn(pendingDeletes, pendingDeletes.trashId);
+          await m.addColumn(pendingDeletes, pendingDeletes.leftTrashAt);
+          await m.addColumn(pendingDeletes, pendingDeletes.leftTrashReason);
+        }
+        // Rows committed before P8: the trashId from the action's item.
+        await customStatement(
+          'UPDATE pending_deletes SET trash_id = (SELECT '
+          r"json_extract(sa.previous_state, '$.trashedItem.trashId') "
+          'FROM session_actions sa WHERE sa.id = pending_deletes.action_id) '
+          "WHERE status = 'committed' AND committed_mode = 'trash'",
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -151,6 +187,9 @@ class AppDatabase extends _$AppDatabase {
   /// changed inside a transaction, so it is set here rather than in beforeOpen.
   @visibleForTesting
   static void setupConnection(CommonDatabase db) {
-    db.execute('PRAGMA journal_mode = WAL');
+    db
+      ..execute('PRAGMA journal_mode = WAL')
+      // App and background worker may write at the same moment (H2).
+      ..execute('PRAGMA busy_timeout = 5000');
   }
 }

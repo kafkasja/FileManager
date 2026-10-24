@@ -9,6 +9,7 @@ import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
 import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
 import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
+import 'package:kfm/features/stats/ui/stats_screen.dart';
 import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
 import 'package:kfm/features/trash/ui/trash_screen.dart';
@@ -29,6 +30,7 @@ abstract final class AppRoutes {
   static const customizeSwipes = '/settings/swipes';
   static const renameBatch = '/swipe/rename';
   static const presets = '/settings/presets';
+  static const stats = '/settings/stats';
   static String presetEditorFor(int id) => '/settings/presets/$id';
 }
 
@@ -121,6 +123,10 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'swipes',
                     builder: (context, state) => const CustomizeSwipesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'stats',
+                    builder: (context, state) => const StatsScreen(),
                   ),
                   GoRoute(
                     path: 'presets',

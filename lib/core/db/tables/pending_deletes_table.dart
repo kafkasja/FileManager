@@ -4,6 +4,9 @@ import 'package:kfm/core/db/tables/sessions_table.dart';
 
 enum PendingDeleteStatus { queued, committing, committed, failed }
 
+/// P8: how a trashed file left the trash.
+enum TrashExit { restored, purged }
+
 /// Deferred deletes (TASK-D2): a trash swipe only queues a row here; files
 /// are deleted in batches outside the undo safe zone.
 @DataClassName('PendingDeleteRow')
@@ -35,4 +38,11 @@ class PendingDeletes extends Table {
   TextColumn get committedMode => text().nullable()();
   DateTimeColumn get queuedAt => dateTime()();
   DateTimeColumn get committedAt => dateTime().nullable()();
+
+  /// P8. TrashedItem.trashId when committed to the trash; null otherwise.
+  TextColumn get trashId => text().nullable()();
+
+  /// P8. When the trashed file left the trash (restored or purged).
+  DateTimeColumn get leftTrashAt => dateTime().nullable()();
+  TextColumn get leftTrashReason => textEnum<TrashExit>().nullable()();
 }

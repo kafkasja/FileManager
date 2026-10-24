@@ -88,6 +88,7 @@ class FileFilter {
     this.tagIds = const {},
     this.favoritesOnly = false,
     this.reviewed = ReviewedFilterMode.any,
+    this.includeReviewed,
   });
 
   /// Throws [FormatException] on bad types or a newer version. Unknown keys
@@ -118,6 +119,7 @@ class FileFilter {
       tagIds: {for (final t in tags) _of<int>(t, 'tag id')},
       favoritesOnly: opt<bool>('favorites') ?? false,
       reviewed: _enum(ReviewedFilterMode.values, opt<String>('reviewed')),
+      includeReviewed: opt<bool>('inclRev'),
     );
   }
 
@@ -136,8 +138,12 @@ class FileFilter {
   final Set<int> tagIds;
   final bool favoritesOnly;
 
-  /// P7 adds the query part; hidden in the sheet until then.
+  /// P7: only (not) reviewed files in the current preset.
   final ReviewedFilterMode reviewed;
+
+  /// P7: session-only "include files already reviewed here"; null = the
+  /// default (the preset's setting, or Basic's).
+  final bool? includeReviewed;
 
   static const none = FileFilter();
 
@@ -197,6 +203,7 @@ class FileFilter {
     if (tagIds.isNotEmpty) 'tagIds': tagIds.toList()..sort(),
     if (favoritesOnly) 'favorites': true,
     if (reviewed != ReviewedFilterMode.any) 'reviewed': reviewed.name,
+    'inclRev': ?includeReviewed,
   };
 
   /// Sizes are set with [clearMinSize]/[clearMaxSize] to go back to "any".
@@ -213,6 +220,8 @@ class FileFilter {
     Set<int>? tagIds,
     bool? favoritesOnly,
     ReviewedFilterMode? reviewed,
+    bool? includeReviewed,
+    bool clearIncludeReviewed = false,
   }) => FileFilter(
     kinds: kinds ?? this.kinds,
     screenshotsOnly: screenshotsOnly ?? this.screenshotsOnly,
@@ -224,6 +233,9 @@ class FileFilter {
     tagIds: tagIds ?? this.tagIds,
     favoritesOnly: favoritesOnly ?? this.favoritesOnly,
     reviewed: reviewed ?? this.reviewed,
+    includeReviewed: clearIncludeReviewed
+        ? null
+        : includeReviewed ?? this.includeReviewed,
   );
 
   @override
@@ -238,7 +250,8 @@ class FileFilter {
       other.tagMode == tagMode &&
       _setEquals(other.tagIds, tagIds) &&
       other.favoritesOnly == favoritesOnly &&
-      other.reviewed == reviewed;
+      other.reviewed == reviewed &&
+      other.includeReviewed == includeReviewed;
 
   @override
   int get hashCode => Object.hash(
@@ -252,6 +265,7 @@ class FileFilter {
     Object.hashAllUnordered(tagIds),
     favoritesOnly,
     reviewed,
+    includeReviewed,
   );
 
   static T _of<T>(Object? value, String what) =>

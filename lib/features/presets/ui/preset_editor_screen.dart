@@ -9,6 +9,7 @@ import 'package:kfm/features/filters/ui/filter_sheet.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/presets/domain/preset.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/swipe/domain/action_label.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -36,6 +37,8 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
   SwipeLayout _savedLayout = SwipeLayout.basic;
   String? _filterJson;
   String? _savedFilterJson;
+  bool _includeReviewed = false;
+  bool _savedIncludeReviewed = false;
   bool _loaded = false;
   bool _hasOpenSession = false;
   String? _nameError;
@@ -43,7 +46,8 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
   bool get _dirty =>
       _name.text.trim() != _savedName ||
       _layout != _savedLayout ||
-      _filterJson != _savedFilterJson;
+      _filterJson != _savedFilterJson ||
+      _includeReviewed != _savedIncludeReviewed;
 
   @override
   void initState() {
@@ -71,9 +75,14 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
       _savedName = entry.name;
       _name.text = entry.name;
       // A broken row opens as Basic with no filter; Save repairs it.
-      if (entry case Preset(:final layout, :final filterJson)) {
+      if (entry case Preset(
+        :final layout,
+        :final filterJson,
+        :final includeReviewed,
+      )) {
         _layout = _savedLayout = layout;
         _filterJson = _savedFilterJson = filterJson;
+        _includeReviewed = _savedIncludeReviewed = includeReviewed;
       }
       _hasOpenSession = open;
       _loaded = true;
@@ -133,6 +142,9 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
       layout: _layout,
       filterJson: _filterJson,
     );
+    if (_includeReviewed != _savedIncludeReviewed) {
+      await repo.setIncludeReviewed(widget.presetId, value: _includeReviewed);
+    }
     await ref
         .read(sessionRepositoryProvider)
         .applyPresetToOpenSession(
@@ -149,6 +161,7 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
       _savedName = _name.text.trim();
       _savedLayout = _layout;
       _savedFilterJson = _filterJson;
+      _savedIncludeReviewed = _includeReviewed;
     });
     navigator.pop();
   }
@@ -190,6 +203,7 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
             _name.text = _savedName;
             _layout = _savedLayout;
             _filterJson = _savedFilterJson;
+            _includeReviewed = _savedIncludeReviewed;
           });
           navigator.pop();
         }
@@ -276,6 +290,13 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: _editFilter,
+                  ),
+                  // P7: by default a preset skips files it already reviewed.
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.presetIncludeReviewed),
+                    value: _includeReviewed,
+                    onChanged: (v) => setState(() => _includeReviewed = v),
                   ),
                   SizedBox(height: spacing * 2),
                   if (_hasOpenSession)

@@ -144,7 +144,7 @@ void main() {
         .writeAsStringSync('not json\n', mode: FileMode.append);
     await db.delete(db.pendingFolderItems).go();
 
-    expect(await folder.rebuildIfEmpty([root]), 3);
+    expect(await folder.reconcile([root]), 3);
     final byName = {for (final r in await folder.all()) r.name: r};
     expect(byName['a.pdf']!.originalPath, p1);
     expect(byName['b.txt']!.originalPath, p2);
@@ -152,8 +152,97 @@ void main() {
       byName['stray.bin']!.originalPath,
       '$root/Download/Restored/stray.bin',
     );
-    expect(await folder.rebuildIfEmpty([root]), 0, reason: 'only when empty');
+    expect(await folder.reconcile([root]), 0, reason: 'all known now');
   });
+
+  test('H2: reconcile adds unknown files, known rows untouched', () async {
+    final p1 = await file('Download/a.pdf', '1');
+    final known = await folder.moveIn((await source.stat('path:$p1'))!);
+    // A kill between the rename and the DB insert.
+    File('$root/.KFMTrash/zz__lost.txt').writeAsStringSync('?');
+    expect(await folder.reconcile([root]), 1);
+    final rows = await folder.all();
+    expect(rows, hasLength(2));
+    final again = rows.singleWhere((r) => r.id == known.id);
+    expect(again.originalPath, p1);
+    expect(again.expiresAt.isAtSameMomentAs(known.expiresAt), isTrue);
+    expect(rows.singleWhere((r) => r.id != known.id).name, 'lost.txt');
+  });
+
+  test('H2: folder not creatable → pendingFolderUnavailable', () async {
+    final p = await file('Download/a.pdf', '1');
+    // A file where the folder should be: Directory.create fails.
+    File('$root/.KFMTrash').writeAsStringSync('in the way');
+    await expectLater(
+      folder.moveIn((await source.stat('path:$p'))!),
+      throwsA(
+        isA<FileOpException>().having(
+          (e) => e.failure,
+          'failure',
+          FileOpFailure.pendingFolderUnavailable,
+        ),
+      ),
+    );
+    expect(File(p).existsSync(), isTrue);
+    expect(await folder.all(), isEmpty);
+  });
+
+  test('H2: rename across mounts → pendingFolderUnavailable', () async {
+    final crossMount = PendingFolder(
+      db: db,
+      volumeRootOf: (_) => root,
+      retentionDays: () async => retention,
+      clock: () => now,
+      renameOverride: (from, to) async =>
+          throw FileSystemException('rename', from, const OSError('', 18)),
+    );
+    final p = await file('Download/a.pdf', '1');
+    await expectLater(
+      crossMount.moveIn((await source.stat('path:$p'))!),
+      throwsA(
+        isA<FileOpException>().having(
+          (e) => e.failure,
+          'failure',
+          FileOpFailure.pendingFolderUnavailable,
+        ),
+      ),
+    );
+    expect(File(p).readAsStringSync(), '1');
+    expect(
+      Directory('$root/.KFMTrash').listSync().whereType<File>().where(
+        (f) => !f.path.replaceAll(r'\', '/').split('/').last.startsWith('.'),
+      ),
+      isEmpty,
+      reason: 'nothing copied',
+    );
+    expect(await folder.all(), isEmpty);
+  });
+
+  test(
+    'H2: a permission error on the file itself stays permissionDenied',
+    () async {
+      final denied = PendingFolder(
+        db: db,
+        volumeRootOf: (_) => root,
+        retentionDays: () async => retention,
+        clock: () => now,
+        renameOverride: (from, to) async =>
+            throw PathAccessException('rename', const OSError('', 13), from),
+      );
+      final p = await file('Download/a.pdf', '1');
+      await expectLater(
+        denied.moveIn((await source.stat('path:$p'))!),
+        throwsA(
+          isA<FileOpException>().having(
+            (e) => e.failure,
+            'failure',
+            FileOpFailure.permissionDenied,
+          ),
+        ),
+      );
+      expect(File(p).existsSync(), isTrue);
+    },
+  );
 
   test('retention values out of range fall back to 7', () {
     expect(clampRetentionDays(0), 7);

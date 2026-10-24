@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/utils/debouncer.dart';
@@ -51,10 +53,29 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   int? _count;
   int _requests = 0;
 
+  /// P7 include switch (deck mode only); null while loading the default.
+  bool? _include;
+
+  bool get _deckMode => widget.onSave == null;
+
   @override
   void initState() {
     super.initState();
     _recount();
+    if (_deckMode) {
+      final override = _filter.includeReviewed;
+      if (override != null) {
+        _include = override;
+      } else {
+        ref
+            .read(swipeDeckControllerProvider.notifier)
+            .includeReviewedDefault()
+            .then((v) {
+              if (mounted) setState(() => _include = v);
+            })
+            .ignore();
+      }
+    }
   }
 
   @override
@@ -70,7 +91,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   void _recount() {
     final request = ++_requests;
-    final filter = _filter;
+    final include = _include;
+    final filter = include == null || !_deckMode
+        ? _filter
+        : _filter.copyWith(includeReviewed: include);
     if (!filter.isValid) return;
     unawaited(
       _countFor(filter).then((n) {
@@ -96,7 +120,22 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     if (widget.onSave case final onSave?) {
       onSave(_filter);
     } else {
-      await ref.read(swipeDeckControllerProvider.notifier).applyFilter(_filter);
+      final deck = ref.read(swipeDeckControllerProvider.notifier);
+      var filter = _filter;
+      final include = _include;
+      if (include != null) {
+        if (deck.presetKey == 0) {
+          // Basic isn't a preset: the switch is Basic's own setting.
+          await ref
+              .read(settingsRepositoryProvider)
+              .write(AppSettings.basicIncludeReviewed, include);
+          filter = filter.copyWith(clearIncludeReviewed: true);
+        } else {
+          // In a preset it lasts for this session only.
+          filter = filter.copyWith(includeReviewed: include);
+        }
+      }
+      await deck.applyFilter(filter);
     }
     navigator.pop();
   }
@@ -270,6 +309,32 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       ],
                     ),
                 ],
+                _Header(l10n.filterReviewed),
+                Wrap(
+                  spacing: spacing,
+                  children: [
+                    for (final (mode, label) in [
+                      (ReviewedFilterMode.any, l10n.filterAny),
+                      (ReviewedFilterMode.reviewed, l10n.filterReviewedOnly),
+                      (ReviewedFilterMode.notReviewed, l10n.filterNotReviewed),
+                    ])
+                      _choice(
+                        label,
+                        f.reviewed == mode,
+                        () => _set(_filter.copyWith(reviewed: mode)),
+                      ),
+                  ],
+                ),
+                if (_deckMode && _include != null)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.reviewedIncludeToggle),
+                    value: _include!,
+                    onChanged: (v) {
+                      setState(() => _include = v);
+                      _debouncer.run(_recount);
+                    },
+                  ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.filterFavoritesOnly),
