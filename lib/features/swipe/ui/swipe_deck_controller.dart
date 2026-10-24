@@ -1,17 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/features/filters/data/filter_query.dart';
+import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/swipe/data/swipe_action_dispatcher.dart';
+import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/data/swipe_queue_repository.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/domain/swipe_deck_state.dart';
+import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
@@ -31,12 +37,34 @@ SwipeQueueRepository swipeQueueRepository(Ref ref) =>
 ClearSessionUseCase clearSessionUseCase(Ref ref) => ClearSessionUseCase(
   ref.watch(sessionRepositoryProvider),
   ref.watch(deleteQueueProvider),
+  renames: ref.watch(renameBatchRepositoryProvider),
 );
+
+@Riverpod(keepAlive: true)
+SwipeFileOps swipeFileOps(Ref ref) {
+  final ops = SwipeFileOps(
+    source: ref.watch(fileSourceProvider),
+    undo: ref.watch(undoRepositoryProvider),
+    lock: ref.watch(historyLockProvider),
+    indexer: ref.watch(mediaIndexerProvider),
+  );
+  ref.onDispose(ops.dispose);
+  return ops;
+}
+
+/// Move/copy results for the swipe screen's snackbars (P2).
+@Riverpod(keepAlive: true)
+Stream<SwipeFileOpEvent> swipeFileOpEvents(Ref ref) =>
+    ref.watch(swipeFileOpsProvider).events;
 
 @Riverpod(keepAlive: true)
 SwipeActionDispatcher swipeActionDispatcher(Ref ref) => SwipeActionDispatcher(
   ref.watch(undoRepositoryProvider),
   ref.watch(deleteQueueProvider),
+  fileOps: ref.watch(swipeFileOpsProvider),
+  tags: ref.watch(tagRepositoryProvider),
+  favorites: ref.watch(favoritesRepositoryProvider),
+  renames: ref.watch(renameBatchRepositoryProvider),
 );
 
 /// D1: no active session and the setting is "delete permanently" → the
@@ -68,7 +96,12 @@ class SwipeDeckController extends _$SwipeDeckController {
   /// SE2: where this deck resumed (after the last swiped file); null = top.
   IndexCursor? _resumeAt;
 
+  /// P5: the session's filter on top of the swipe base. Null = the filter
+  /// can't match anything (empty deck, "no matches").
+  IndexQuery? _query = swipeQuery;
+
   /// SE2: files sorted after this (epoch ms) and not acted on are "new".
+  /// Null until the deck knows its newest file.
   int? _newAfterMs;
 
   /// SE2: the "continued where you left off" note shows once per process.
@@ -86,7 +119,8 @@ class SwipeDeckController extends _$SwipeDeckController {
   Future<SwipeDeckState> build() async {
     final sessions = ref.watch(sessionRepositoryProvider);
     final undo = ref.watch(undoRepositoryProvider);
-    final queue = ref.watch(swipeQueueRepositoryProvider);
+    // Rebuild when the queue's source changes (tests swap the index).
+    ref.watch(swipeQueueRepositoryProvider);
     await ref.read(deleteQueueProvider).recoverStuck();
 
     final session = await sessions.getOrCreateActive();
@@ -98,11 +132,26 @@ class SwipeDeckController extends _$SwipeDeckController {
     _newAfterMs = resumeMs == null
         ? null
         : (resumeMs > startedMs ? resumeMs : startedMs);
-    final window = await queue.window(skip: _acted, after: _resumeAt);
+    _query = toIndexQuery(
+      FileFilter.decode(session.filterJson),
+      now: DateTime.now(),
+    );
+    final window = await _window(skip: _acted, after: _resumeAt);
     _next = window.next;
+    // A fresh deck starts at the newest file: anything newer arrives later.
+    _newAfterMs ??= _newestMs(window.files);
+
+    // P2: a move/copy finishes (or fails) after the card has gone.
+    final fileOps = ref.read(swipeFileOpsProvider).events.listen(_onFileOp);
+    ref.onDispose(fileOps.cancel);
+    // Tags must be loaded before the first tag swipe is checked.
+    ref.listen(tagsByIdProvider, (_, _) {});
 
     // The first scan fills the index while the deck is open: top up then.
-    ref.listen(mediaIndexChangesProvider, (_, _) => unawaited(_reloadIfLow()));
+    ref.listen(
+      mediaIndexChangesProvider,
+      (_, _) => unawaited(_onIndexChanged()),
+    );
 
     final restored = !_restoreNoticeShown && _acted.isNotEmpty;
     _restoreNoticeShown = true;
@@ -150,11 +199,45 @@ class SwipeDeckController extends _$SwipeDeckController {
 
   IndexQuery? _newQuery() {
     final after = _newAfterMs;
-    if (after == null) return null;
-    return swipeQuery.copyWith(
-      from: DateTime.fromMillisecondsSinceEpoch(after + 1, isUtc: true),
+    final query = _query;
+    if (after == null || query == null) return null;
+    final newFrom = DateTime.fromMillisecondsSinceEpoch(after + 1, isUtc: true);
+    final from = query.from;
+    // Never widens a date filter.
+    return query.copyWith(
+      from: from != null && from.isAfter(newFrom) ? from : newFrom,
     );
   }
+
+  Future<SwipeWindow> _window({
+    required Set<String> skip,
+    IndexCursor? after,
+  }) async {
+    final query = _query;
+    if (query == null) return const SwipeWindow([], null);
+    return await ref
+        .read(swipeQueueRepositoryProvider)
+        .window(skip: skip, query: query, after: after);
+  }
+
+  /// P5: the session's current filter.
+  FileFilter get filter => FileFilter.decode(state.value?.session.filterJson);
+
+  /// P5: saves [f] on the session and rebuilds the deck from the resume
+  /// point. Undo history is untouched.
+  Future<void> applyFilter(FileFilter f) async {
+    final deck = state.value;
+    if (deck == null) return;
+    await ref
+        .read(sessionRepositoryProvider)
+        .saveFilter(deck.session.id, f.isEmpty ? null : jsonEncode(f.toJson()));
+    ref.invalidateSelf();
+    await future;
+  }
+
+  /// P5: how many files [f] would leave to swipe (the sheet's live count).
+  Future<int> matchCount(FileFilter f) =>
+      _remainingFor(toIndexQuery(f, now: DateTime.now()));
 
   /// Not-acted files newer than the resume point, minus those in [shown].
   Future<int> _countNew(List<FileRef> shown) async {
@@ -194,14 +277,35 @@ class SwipeDeckController extends _$SwipeDeckController {
     }
   }
 
-  /// Returns false when nothing happened (no file, or the direction has no
-  /// action: the card snaps back and nothing is recorded).
+  /// Why [direction] can't run right now (P2), or null. Unmapped
+  /// directions are not a problem: they simply do nothing.
+  SwipeActionProblem? problemFor(SwipeDirection direction) {
+    final action = state.value?.session.layout.actionFor(direction);
+    return action == null ? null : problemForAction(action);
+  }
+
+  /// Why [action] can't run right now (P2: deleted tag, unsupported type).
+  SwipeActionProblem? problemForAction(SwipeAction action) =>
+      SwipeActionDispatcher.problemFor(
+        action,
+        ref.read(tagsByIdProvider).value ?? const {},
+      );
+
+  /// Returns false when nothing happened (no file, the direction has no
+  /// action, or it can't run: the card snaps back and nothing is recorded).
   bool swipe(SwipeDirection direction) {
+    final action = state.value?.session.layout.actionFor(direction);
+    return action != null && apply(action);
+  }
+
+  /// Applies [action] to the current file: a swipe or an action bar tap
+  /// (P4). Same undo row, advance and stats either way. False = nothing
+  /// happened.
+  bool apply(SwipeAction action) {
     final deck = state.value;
     final file = deck?.current;
     if (deck == null || file == null) return false;
-    final action = deck.session.layout.actionFor(direction);
-    if (action == null) return false;
+    if (problemForAction(action) != null) return false;
 
     ref
         .read(swipeActionDispatcherProvider)
@@ -230,18 +334,31 @@ class SwipeDeckController extends _$SwipeDeckController {
     final outcome = await ref
         .read(undoServiceProvider)
         .undoLast(deck.session.id);
-    if (outcome case Undone(:final action)) {
+    if (outcome case Undone(reshow: false)) {
+      // An applied rename batch was reverted: no file comes back.
+    } else if (outcome case Undone(:final action, file: final undoneFile)) {
       final file =
+          undoneFile ??
           await ref.read(mediaIndexDaoProvider).byId(action.fileId) ??
           await ref.read(fileSourceProvider).stat(action.fileId);
       _acted.remove(action.fileId);
       final latest = state.value ?? deck;
       if (file != null) {
+        // The side the card left by: the direction mapped to that action.
+        final from = latest.session.layout.directions.entries
+            .where((e) => e.value == action.action)
+            .map((e) => e.key)
+            .firstOrNull;
         state = AsyncData(
           latest.copyWith(
             upcoming: [file, ...latest.upcoming.where((f) => f.id != file.id)],
             swiped: latest.swiped > 0 ? latest.swiped - 1 : 0,
             remaining: latest.remaining + 1,
+            undoMark: UndoMark(
+              tick: (latest.undoMark?.tick ?? 0) + 1,
+              fileId: file.id,
+              from: from,
+            ),
           ),
         );
       }
@@ -293,6 +410,37 @@ class SwipeDeckController extends _$SwipeDeckController {
     await reloadSession();
   }
 
+  /// P2: a move/copy swipe finished in the background.
+  void _onFileOp(SwipeFileOpEvent event) {
+    final deck = state.value;
+    if (deck == null) return;
+    switch (event) {
+      case SwipeFileOpDone(:final result):
+        // The moved file (new id?) or the copy is never offered.
+        _acted.add(result.id);
+        if (deck.upcoming.any((f) => f.id == result.id)) {
+          state = AsyncData(
+            deck.copyWith(
+              upcoming: [
+                for (final f in deck.upcoming)
+                  if (f.id != result.id) f,
+              ],
+            ),
+          );
+        }
+      case SwipeFileOpFailed(:final file):
+        // Nothing happened to the file: offer it again (front of the deck).
+        _acted.remove(file.id);
+        state = AsyncData(
+          deck.copyWith(
+            upcoming: [file, ...deck.upcoming.where((f) => f.id != file.id)],
+            swiped: deck.swiped > 0 ? deck.swiped - 1 : 0,
+            remaining: deck.remaining + 1,
+          ),
+        );
+    }
+  }
+
   /// Picks up layout changes (SE3 reset, P1 Customize swipes); applies from
   /// the next swipe.
   Future<void> reloadSession() async {
@@ -312,13 +460,39 @@ class SwipeDeckController extends _$SwipeDeckController {
 
   Future<void> _refill() => _load(after: _next);
 
-  Future<void> _reloadIfLow() async {
+  /// Index changed (scan, camera, other apps): top up a low window, or at
+  /// least refresh "N left" and the new-photos chip.
+  Future<void> _onIndexChanged() async {
     final deck = state.value;
-    if (deck == null || deck.upcoming.length >= refillBelow) return;
-    // Re-read from the resume point: skipping by id stays correct when new
-    // files were indexed anywhere after it; newer ones come via the chip.
-    await _load(after: _resumeAt);
+    if (deck == null) return;
+    if (deck.upcoming.length < refillBelow) {
+      // Re-read from the resume point: skipping by id stays correct when new
+      // files were indexed anywhere after it; newer ones come via the chip.
+      await _load(after: _resumeAt);
+      return;
+    }
+    if (_refilling) return;
+    final remaining = await _remaining();
+    final newFiles = await _countNew(deck.upcoming);
+    final latest = state.value;
+    if (latest == null) return;
+    state = AsyncData(
+      latest.copyWith(remaining: remaining, newFiles: newFiles),
+    );
   }
+
+  /// Newer than what the deck started with: offered via the chip (SE2),
+  /// never slipped into the deck.
+  bool _isNew(FileRef f) {
+    final after = _newAfterMs;
+    return after != null && f.sortDate.millisecondsSinceEpoch > after;
+  }
+
+  static int? _newestMs(List<FileRef> files) => files.isEmpty
+      ? null
+      : files
+            .map((f) => f.sortDate.millisecondsSinceEpoch)
+            .reduce((a, b) => a > b ? a : b);
 
   Future<void> _load({required IndexCursor? after}) async {
     if (_refilling) return;
@@ -327,10 +501,9 @@ class SwipeDeckController extends _$SwipeDeckController {
       final before = state.value;
       if (before == null) return;
       final shown = {for (final f in before.upcoming) f.id};
-      final window = await ref
-          .read(swipeQueueRepositoryProvider)
-          .window(skip: {..._acted, ...shown}, after: after);
+      final window = await _window(skip: {..._acted, ...shown}, after: after);
       _next = window.next;
+      _newAfterMs ??= _newestMs([...before.upcoming, ...window.files]);
       final latest = state.value ?? before;
       final present = {for (final f in latest.upcoming) f.id};
       state = AsyncData(
@@ -338,7 +511,10 @@ class SwipeDeckController extends _$SwipeDeckController {
           upcoming: [
             ...latest.upcoming,
             ...window.files.where(
-              (f) => !present.contains(f.id) && !_acted.contains(f.id),
+              (f) =>
+                  !present.contains(f.id) &&
+                  !_acted.contains(f.id) &&
+                  !_isNew(f),
             ),
           ],
           hasMore: window.next != null,
@@ -354,14 +530,15 @@ class SwipeDeckController extends _$SwipeDeckController {
   }
 
   /// Files in the queue not yet acted on.
-  Future<int> _remaining() async {
-    final queue = ref.read(swipeQueueRepositoryProvider);
-    final total = await queue.count();
-    final actedStillThere =
-        (await ref.read(mediaIndexDaoProvider).byIds(_acted.toList()))
-            .where((f) => f.kind == FileKind.image || f.kind == FileKind.video)
-            .length;
-    final left = total - actedStillThere;
+  Future<int> _remaining() => _remainingFor(_query);
+
+  Future<int> _remainingFor(IndexQuery? query) async {
+    if (query == null) return 0;
+    final total = await ref.read(swipeQueueRepositoryProvider).count(query);
+    final acted = await ref
+        .read(mediaIndexDaoProvider)
+        .countAmong(query, _acted.toList());
+    final left = total - acted;
     return left < 0 ? 0 : left;
   }
 }

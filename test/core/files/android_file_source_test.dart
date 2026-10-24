@@ -113,6 +113,7 @@ void main() {
       return source = AndroidFileSource(
         channel: FilesChannel(),
         walker: (_) => const Stream.empty(),
+        folderExists: (_) async => true,
       );
     }
 

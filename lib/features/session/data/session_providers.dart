@@ -2,7 +2,9 @@ import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_repository.dart';
+import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/undo_service.dart';
@@ -46,6 +48,12 @@ UndoService undoService(Ref ref) => UndoService(
   source: ref.watch(fileSourceProvider),
   lock: ref.watch(historyLockProvider),
   queue: ref.watch(dbWriteQueueProvider),
+  indexer: ref.watch(mediaIndexerProvider),
+  index: ref.watch(mediaIndexDaoProvider),
+  tags: ref.watch(tagRepositoryProvider),
+  favorites: ref.watch(favoritesRepositoryProvider),
+  renames: ref.watch(renameBatchRepositoryProvider),
+  renameRunner: ref.watch(renameRunnerProvider),
 );
 
 /// Commit problems that aren't per file (shown as a snackbar).

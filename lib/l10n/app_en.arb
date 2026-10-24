@@ -136,6 +136,18 @@
       }
     }
   },
+  "sessionSummaryTrash": "{count, plural, =0{Session finished.} =1{Session finished: 1 file moved to the trash ({size}).} other{Session finished: {count} files moved to the trash ({size}).}}",
+  "@sessionSummaryTrash": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "deleteBatchWaiting": "{count, plural, =1{1 file waiting to be deleted} other{{count} files waiting to be deleted}}",
   "@deleteBatchWaiting": {
     "placeholders": {
@@ -324,7 +336,7 @@
   "viewerClose": "Close",
   "videoCantPlay": "Can't play this video",
   "videoTapForSound": "Tap for sound",
-    "videoOpenFullscreen": "Open fullscreen",
+  "videoOpenFullscreen": "Open fullscreen",
   "customizeSwipes": "Customize swipes",
   "customizeSwipesHelp": "Choose what each swipe direction does",
   "customizeSwipesIntro": "Tap an arrow to change what swiping that way does.",
@@ -340,5 +352,352 @@
   "swipeLayoutReset": "Reset to basic",
   "swipeLayoutResetTitle": "Reset swipes?",
   "swipeLayoutResetBody": "Left goes back to trash and right to keep. Up and down will do nothing.",
-  "reset": "Reset"
+  "reset": "Reset",
+  "swipeActionMoveTo": "Move to folder…",
+  "swipeActionCopyTo": "Copy to folder…",
+  "swipeActionAddTag": "Add tag…",
+  "swipeActionFavorite": "Add to favorites",
+  "swipeActionMoveToNamed": "Move to {folder}",
+  "@swipeActionMoveToNamed": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeActionCopyToNamed": "Copy to {folder}",
+  "@swipeActionCopyToNamed": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeActionTagNamed": "Tag: {tag}",
+  "@swipeActionTagNamed": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeActionTagMissing": "Tag no longer exists",
+  "moveConsentNotice": "Android may ask before each move",
+  "turnOn": "Turn on",
+  "folderPickerTitle": "Choose a folder",
+  "folderPickerRecent": "Recent",
+  "folderPickerWithPhotos": "Folders with photos",
+  "folderPickerNew": "New folder…",
+  "folderPickerNewTitle": "New folder",
+  "folderPickerNewIn": "Inside {folder}",
+  "@folderPickerNewIn": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "folderNameHint": "Folder name",
+  "folderNameInvalid": "That name can't be used",
+  "folderNeedsAllFiles": "Needs All files access",
+  "folderFileCount": "{count, plural, =1{1 file} other{{count} files}}",
+  "@folderFileCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "create": "Create",
+  "tagPickerTitle": "Choose a tag",
+  "tagPickerNew": "New tag…",
+  "tagNewTitle": "New tag",
+  "tagNameHint": "Tag name",
+  "tagNameTaken": "A tag with this name already exists",
+  "tagNameInvalid": "Use 1 to 40 characters",
+  "tagsEmpty": "No tags yet",
+  "swipeProblemTagMissing": "Tag no longer exists. Change it in Customize swipes.",
+  "swipeProblemUnsupported": "This swipe can't be used yet",
+  "fileOpFolderMissing": "Folder not found. Pick it again in Customize swipes.",
+  "fileOpDeclined": "Not moved: permission declined",
+  "fileOpNoSpace": "Not enough space",
+  "fileOpNeedsAllFiles": "This folder needs All files access",
+  "fileOpMoveFailed": "Couldn't move {name}",
+  "@fileOpMoveFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileOpCopyFailed": "Couldn't copy {name}",
+  "@fileOpCopyFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "undoneLabel": "↩ Undone",
+  "swipeActionRenameBatch": "Add to rename batch",
+  "renamePill": "✎ {count}",
+  "@renamePill": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "renameTitle": "Rename batch",
+  "renamePatternLabel": "Name pattern",
+  "renamePatternHint": "holiday_{n}",
+  "@renamePatternHint": {
+    "description": "The {…} tokens are passed in literally; never translate them.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "renameStart": "Start at",
+  "renamePadding": "Digits",
+  "renameTokensHelp": "{n} = number · {date} = date · {orig} = original name",
+  "@renameTokensHelp": {
+    "description": "The {…} tokens are passed in literally; never translate them.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "orig": {
+        "type": "String"
+      }
+    }
+  },
+  "renameMissing": "Missing or changed: skipped",
+  "renameCollision": "Name was taken: \"{name}\" is used instead",
+  "@renameCollision": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameApply": "Rename",
+  "renameDiscard": "Discard batch",
+  "renameDiscardTitle": "Discard this rename batch?",
+  "renameDiscardBody": "The files stay as they are; only the batch is dropped.",
+  "renameErrorEmpty": "Type a name pattern",
+  "renameErrorInvalid": "These characters can't be used: / \\ : * ? \" < > |",
+  "renameErrorNeedsCounter": "Add {n} so every file gets its own number",
+  "@renameErrorNeedsCounter": {
+    "description": "The {…} tokens are passed in literally; never translate them.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "renameErrorTooLong": "The names would be too long",
+  "renameRunning": "Renaming…",
+  "renameDone": "{count, plural, =1{Renamed 1 file} other{Renamed {count} files}}",
+  "@renameDone": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "renameDoneSkipped": "Renamed {renamed} · skipped {skipped}",
+  "@renameDoneSkipped": {
+    "placeholders": {
+      "renamed": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "skipped": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "renameDeclined": "Nothing renamed: permission declined",
+  "renameNoUndoAfterDone": "You can undo this until you tap Done.",
+  "renameBeforeFinishTitle": "{count, plural, =1{Rename 1 file first?} other{Rename {count} files first?}}",
+  "@renameBeforeFinishTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "renameBeforeFinishBody": "Your rename batch hasn't been applied yet. Discarding it keeps the current names.",
+  "renameOpen": "Rename…",
+  "labelRenameApplied": "✎ Renamed batch",
+  "clearRenameDropped": "{count, plural, =1{1 file in the rename batch will be dropped} other{{count} files in the rename batch will be dropped}}",
+  "@clearRenameDropped": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "barTrash": "Trash",
+  "barDelete": "Delete",
+  "barKeep": "Keep",
+  "barFavorite": "Favorite",
+  "barRename": "Rename",
+  "actionBarTitle": "Action bar",
+  "actionBarHelp": "Extra buttons under the card",
+  "actionBarAdd": "Add action",
+  "actionBarEmpty": "No buttons yet",
+  "actionBarRemove": "Remove",
+  "actionBarFull": "Up to 8 buttons",
+  "filterTitle": "Filter",
+  "filterButton": "Filter",
+  "filterKinds": "Show",
+  "filterPhotos": "Photos",
+  "filterVideos": "Videos",
+  "filterScreenshotsOnly": "Screenshots only",
+  "filterDate": "Date",
+  "filterAny": "Any",
+  "filterThisMonth": "This month",
+  "filterLast30Days": "Last 30 days",
+  "filterCustomRange": "Pick dates…",
+  "filterRange": "{from} – {to}",
+  "@filterRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "filterSize": "Size",
+  "filterOverMb": "Over {mb} MB",
+  "@filterOverMb": {
+    "placeholders": {
+      "mb": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "filterFolders": "Folders",
+  "filterFolderCount": "{folder} ({count})",
+  "@filterFolderCount": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "filterFolderMissing": "{folder} (missing)",
+  "@filterFolderMissing": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "filterTags": "Tags",
+  "filterTagged": "Tagged",
+  "filterUntagged": "Untagged",
+  "filterSpecificTags": "Specific…",
+  "filterFavoritesOnly": "Favorites only",
+  "filterMatches": "{count, plural, =0{No files match} =1{1 file matches} other{{count} files match}}",
+  "@filterMatches": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "filterApply": "Apply",
+  "filterProblemSize": "The minimum size is larger than the maximum",
+  "filterProblemTags": "Pick at least one tag",
+  "filterProblemDate": "The start date is after the end date",
+  "filterNoMatches": "No files match this filter",
+  "filterAllDone": "All matching files done",
+  "filterChange": "Change filter",
+  "presetBasic": "Basic",
+  "presetChipTooltip": "Switch preset",
+  "presetSheetTitle": "Presets",
+  "presetManage": "Manage presets",
+  "presetSaveAs": "Save as preset…",
+  "presetNameLabel": "Preset name",
+  "presetIncludeFilter": "Include the current filter",
+  "presetSaved": "Saved “{name}”",
+  "@presetSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presetNameTaken": "A preset with this name already exists",
+  "presetNameInvalid": "Use 1 to 40 characters",
+  "presetRename": "Rename",
+  "presetEdit": "Edit",
+  "presetDuplicate": "Duplicate",
+  "presetDelete": "Delete",
+  "presetDeleteConfirm": "Delete “{name}”?",
+  "@presetDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presetDeleteBody": "Its unfinished session ends. Your files aren't touched.",
+  "presetLoadError": "Can't load: edit or delete",
+  "presetNoSessionHint": "Start swiping in {name} to change the buttons for that session, or edit the preset in Manage presets.",
+  "@presetNoSessionHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presetEditorTitle": "Edit preset",
+  "presetDirections": "Swipe buttons",
+  "presetFilter": "Filter",
+  "presetEditorFilterNone": "No filter",
+  "presetEditorFilterOn": "Filter set",
+  "presetEditorSave": "Save",
+  "presetEditorReplacesSession": "Also replaces the setup of this preset's unfinished session",
+  "presetEditorDiscard": "Discard your changes?",
+  "presetDiscard": "Discard",
+  "presetSwitchBlocked": "Couldn't finish the deletes, so you're still on {name}. Try again.",
+  "@presetSwitchBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presetEmptyTitle": "No presets yet",
+  "presetEmptyBody": "A preset saves your swipe buttons and, if you like, a filter. Switch between them with one tap.",
+  "presetEmptyQuickCleanup": "Quick cleanup",
+  "presetEmptyQuickCleanupHelp": "Left = trash, right = keep, screenshots only",
+  "presetEmptySortHoliday": "Sort holiday",
+  "presetEmptySortHolidayHelp": "Left = trash, right = move to a folder, up = favorite",
+  "presetCreate": "Create",
+  "presetNew": "New preset",
+  "settingsPresets": "Presets",
+  "settingsPresetsHelp": "Saved swipe setups"
 }

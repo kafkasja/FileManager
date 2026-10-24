@@ -2,28 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/filters/ui/filter_sheet.dart';
+import 'package:kfm/features/presets/ui/preset_chip.dart';
+import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
+import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/domain/swipe_deck_state.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
+import 'package:kfm/features/swipe/ui/swipe_action_bar.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_toast.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
+import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/domain/delete_batch_policy.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/ui/undo_button.dart';
+import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// Swipe tab (TASK-S1): one file large in the middle, left = trash,
 /// right = keep, undo always visible.
@@ -33,13 +44,29 @@ class SwipeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    ref.listen(deleteQueueErrorsProvider, (_, next) {
-      if (next is AsyncData) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(l10n.deleteCommitFailed)));
-      }
-    });
+    ref
+      ..listen(swipeFileOpEventsProvider, (_, next) {
+        if (next.value case SwipeFileOpFailed(
+          :final file,
+          :final action,
+          :final error,
+        )) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                fileOpFailureText(context.l10n, file, action, error),
+              ),
+            ),
+          );
+        }
+      })
+      ..listen(deleteQueueErrorsProvider, (_, next) {
+        if (next is AsyncData) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(l10n.deleteCommitFailed)));
+        }
+      });
     final needsChoice = ref.watch(needsDeleteModeChoiceProvider);
     if (needsChoice.value != false) {
       return Scaffold(
@@ -57,10 +84,22 @@ class SwipeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.tabSwipe),
         actions: [
+          const PresetChip(),
           if (value != null && value.swiped > 0)
             TextButton(
               onPressed: () => _finish(context, ref, value),
               child: Text(l10n.swipeDone),
+            ),
+          if (value != null)
+            IconButton(
+              tooltip: l10n.filterButton,
+              onPressed: () => showFilterSheet(context),
+              icon: Badge(
+                isLabelVisible: !FileFilter.decode(value.session.filterJson)
+                    .isEmpty,
+                smallSize: 8,
+                child: const Icon(Icons.filter_list),
+              ),
             ),
           if (value != null)
             PopupMenuButton<String>(
@@ -92,6 +131,39 @@ class SwipeScreen extends ConsumerWidget {
     SwipeDeckState deck,
   ) async {
     final l10n = context.l10n;
+    // P3: an unapplied rename batch would be dropped: ask first.
+    final renameCount = await ref.read(
+      renameBatchCountProvider(deck.session.id).future,
+    );
+    if (!context.mounted) return;
+    if (renameCount > 0) {
+      final choice = await showDialog<_RenameChoice>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.renameBeforeFinishTitle(renameCount)),
+          content: Text(l10n.renameBeforeFinishBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _RenameChoice.discard),
+              child: Text(l10n.renameDiscard),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, _RenameChoice.rename),
+              child: Text(l10n.renameOpen),
+            ),
+          ],
+        ),
+      );
+      if (!context.mounted || choice == null) return;
+      if (choice == _RenameChoice.rename) {
+        context.go(AppRoutes.renameBatch);
+        return;
+      }
+    }
     final summary = await ref.read(
       pendingDeleteSummaryProvider(deck.session.id).future,
     );
@@ -129,19 +201,17 @@ class SwipeScreen extends ConsumerWidget {
       return;
     }
     final locale = Localizations.localeOf(context).toLanguageTag();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.sessionSummary(
-            result.commit.committed + summary.committed,
-            formatBytes(
-              result.commit.bytes + summary.committedBytes,
-              locale: locale,
-            ),
-          ),
-        ),
-      ),
+    final count = result.commit.committed + summary.committed;
+    final size = formatBytes(
+      result.commit.bytes + summary.committedBytes,
+      locale: locale,
     );
+    // Trash mode frees nothing yet: say where the files went.
+    final message = deck.session.deleteMode == DeleteMode.permanent
+        ? l10n.sessionSummary(count, size)
+        : l10n.sessionSummaryTrash(count, size);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -191,12 +261,15 @@ class _DeckState extends ConsumerState<_Deck> {
 
   /// S4: vibration + "→ Trash" pill + screen-reader announcement.
   void _onSwiped(SwipeDirection direction) {
+    final action = widget.deck.session.layout.actionFor(direction);
+    if (action != null) _onApplied(action);
+  }
+
+  /// A swipe or an action bar tap (P4): apply, then the same feedback.
+  bool _onApplied(SwipeAction action) {
     final deck = widget.deck;
-    final action = deck.session.layout.actionFor(direction);
-    final done = ref
-        .read(swipeDeckControllerProvider.notifier)
-        .swipe(direction);
-    if (!done || action == null) return;
+    final done = ref.read(swipeDeckControllerProvider.notifier).apply(action);
+    if (!done) return false;
     if (ref.read(hapticsEnabledProvider).value ?? true) {
       HapticFeedback.lightImpact().ignore();
     }
@@ -204,6 +277,7 @@ class _DeckState extends ConsumerState<_Deck> {
       context.l10n,
       action,
       deleteMode: deck.session.deleteMode,
+      tagName: _tagName(action),
     );
     _toast.show(label);
     SemanticsService.sendAnnouncement(
@@ -211,6 +285,7 @@ class _DeckState extends ConsumerState<_Deck> {
       label,
       Directionality.of(context),
     ).ignore();
+    return true;
   }
 
   SwipeHint? _hintFor(SwipeDirection d) {
@@ -221,29 +296,55 @@ class _DeckState extends ConsumerState<_Deck> {
       context.l10n,
       action,
       deleteMode: widget.deck.session.deleteMode,
+      tagName: _tagName(action),
     );
-    return switch (action.type) {
-      SwipeActionType.trash => (
-        color: tokens.swipeTrash,
-        icon: Icons.delete_outline,
-        label: label,
+    return (
+      color: switch (action.type) {
+        SwipeActionType.trash => tokens.swipeTrash,
+        SwipeActionType.keep => tokens.swipeKeep,
+        _ => tokens.swipeOther,
+      },
+      icon: swipeActionIcon(action.type),
+      label: label,
+    );
+  }
+
+  String? _tagName(SwipeAction action) =>
+      ref.read(tagsByIdProvider).value?[action.tagId]?.name;
+
+  /// P2: released on a direction whose action can't run right now.
+  void _onBlocked(SwipeDirection direction) {
+    final problem = ref
+        .read(swipeDeckControllerProvider.notifier)
+        .problemFor(direction);
+    if (problem != null) _explain(problem); // unmapped: nothing to explain
+  }
+
+  void _explain(SwipeActionProblem problem) {
+    final l10n = context.l10n;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(switch (problem) {
+          SwipeActionProblem.tagMissing => l10n.swipeProblemTagMissing,
+          SwipeActionProblem.unsupported => l10n.swipeProblemUnsupported,
+        }),
       ),
-      SwipeActionType.keep => (
-        color: tokens.swipeKeep,
-        icon: Icons.check,
-        label: label,
-      ),
-      _ => (
-        color: tokens.swipeOther,
-        icon: Icons.drive_file_move_outline,
-        label: label,
-      ),
-    };
+    );
   }
 
   void _tick() {
     if (ref.read(hapticsEnabledProvider).value ?? true) {
       HapticFeedback.selectionClick().ignore();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _Deck oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A new undo brought a file back: say so (the card animates in below).
+    final mark = widget.deck.undoMark;
+    if (mark != null && mark.tick != oldWidget.deck.undoMark?.tick) {
+      _toast.show(context.l10n.undoneLabel);
     }
   }
 
@@ -258,10 +359,22 @@ class _DeckState extends ConsumerState<_Deck> {
     final Widget body;
     if (current == null) {
       final scanning = ref.watch(indexStatusProvider).value is IndexScanning;
+      final filtered = !FileFilter.decode(deck.session.filterJson).isEmpty;
       body = scanning && deck.swiped == 0
           ? _Message(
               icon: Icons.hourglass_empty,
               text: l10n.swipeLookingForPhotos,
+            )
+          : filtered
+          ? _Message(
+              icon: Icons.filter_list_off,
+              text: deck.remaining == 0 && deck.swiped == 0
+                  ? l10n.filterNoMatches
+                  : l10n.filterAllDone,
+              action: TextButton(
+                onPressed: () => showFilterSheet(context),
+                child: Text(l10n.filterChange),
+              ),
             )
           : _Message(
               icon: deck.swiped > 0
@@ -287,27 +400,29 @@ class _DeckState extends ConsumerState<_Deck> {
                   active: false,
                 ),
               ),
-            SwipeCard(
-              key: ValueKey(current.id),
-              canSwipe: (d) => deck.session.layout.actionFor(d) != null,
-              verticalEnabled: deck.session.layout.hasVertical,
-              onSwiped: _onSwiped,
-              hintFor: _hintFor,
-              onThresholdCrossed: _tick,
-              // Video: tap = sound, double tap / expand = fullscreen (S5).
-              onTap: current.kind == FileKind.video
-                  ? ref.read(videoMutedProvider.notifier).toggle
-                  : () => openViewer(context, current).ignore(),
-              onDoubleTapDown: current.kind == FileKind.video
-                  ? (_) => openViewer(context, current).ignore()
-                  : null,
-              child: _CardFace(file: current, hero: true),
-            ),
-            Align(
-              alignment: AlignmentDirectional.topCenter,
-              child: Padding(
-                padding: EdgeInsetsDirectional.only(top: spacing * 2),
-                child: SwipeToast(controller: _toast),
+            _UndoReturn(
+              mark: deck.undoMark?.fileId == current.id ? deck.undoMark : null,
+              child: SwipeCard(
+                key: ValueKey(current.id),
+                canSwipe: (d) =>
+                    deck.session.layout.actionFor(d) != null &&
+                    ref
+                            .read(swipeDeckControllerProvider.notifier)
+                            .problemFor(d) ==
+                        null,
+                onBlocked: _onBlocked,
+                verticalEnabled: deck.session.layout.hasVertical,
+                onSwiped: _onSwiped,
+                hintFor: _hintFor,
+                onThresholdCrossed: _tick,
+                // Video: tap = sound, double tap / expand = fullscreen (S5).
+                onTap: current.kind == FileKind.video
+                    ? ref.read(videoMutedProvider.notifier).toggle
+                    : () => openViewer(context, current).ignore(),
+                onDoubleTapDown: current.kind == FileKind.video
+                    ? (_) => openViewer(context, current).ignore()
+                    : null,
+                child: _CardFace(file: current, hero: true),
               ),
             ),
           ],
@@ -319,9 +434,15 @@ class _DeckState extends ConsumerState<_Deck> {
       children: [
         Padding(
           padding: EdgeInsetsDirectional.only(top: spacing),
-          child: Text(
-            l10n.swipeProgress(deck.swiped, deck.remaining),
-            style: Theme.of(context).textTheme.labelLarge,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                l10n.swipeProgress(deck.swiped, deck.remaining),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              _RenamePill(sessionId: deck.session.id),
+            ],
           ),
         ),
         _PendingDeleteBanner(sessionId: deck.session.id),
@@ -334,8 +455,32 @@ class _DeckState extends ConsumerState<_Deck> {
                 .showNewFiles()
                 .ignore(),
           ),
-        Expanded(child: body),
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              body,
+              // Above the card area, so the last swipe's label still shows
+              // on the "All done" screen.
+              Align(
+                alignment: AlignmentDirectional.topCenter,
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(top: spacing * 4),
+                  child: SwipeToast(controller: _toast),
+                ),
+              ),
+            ],
+          ),
+        ),
         _Precache(upcoming: deck.upcoming),
+        // P4: optional extra buttons (only while there is a file to act on).
+        if (current != null)
+          SwipeActionBar(
+            layout: deck.session.layout,
+            deleteMode: deck.session.deleteMode,
+            onApply: _onApplied,
+            onBlocked: _explain,
+          ),
         Padding(
           padding: EdgeInsetsDirectional.fromSTEB(
             spacing * 2,
@@ -542,4 +687,91 @@ class _Message extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// P2: why a move/copy swipe didn't happen.
+String fileOpFailureText(
+  AppLocalizations l,
+  FileRef file,
+  SwipeAction action,
+  Object error,
+) {
+  final failure = error is FileOpException ? error.failure : null;
+  return switch (failure) {
+    FileOpFailure.notFound => l.fileOpFolderMissing,
+    FileOpFailure.userCancelled => l.fileOpDeclined,
+    FileOpFailure.noSpace => l.fileOpNoSpace,
+    FileOpFailure.unsupported ||
+    FileOpFailure.permissionDenied => l.fileOpNeedsAllFiles,
+    _ =>
+      action.type == SwipeActionType.copyTo
+          ? l.fileOpCopyFailed(file.name)
+          : l.fileOpMoveFailed(file.name),
+  };
+}
+
+/// Undo: the card that came back slides in from the side it left by (or
+/// fades in when unknown). Plays once per undo ([UndoMark.tick]).
+class _UndoReturn extends StatelessWidget {
+  const new({required this.mark, required this.child});
+
+  final UndoMark? mark;
+  final Widget child;
+
+  static const duration = Duration(milliseconds: 260);
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = this.mark;
+    if (mark == null) return child;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest;
+        final from = switch (mark.from) {
+          SwipeDirection.left => Offset(-size.width, 0),
+          SwipeDirection.right => Offset(size.width, 0),
+          SwipeDirection.up => Offset(0, -size.height),
+          SwipeDirection.down => Offset(0, size.height),
+          null => Offset.zero,
+        };
+        return TweenAnimationBuilder<double>(
+          key: ValueKey('undo:${mark.tick}'),
+          tween: Tween(begin: 0, end: 1),
+          duration: duration,
+          curve: Curves.easeOutCubic,
+          child: child,
+          builder: (context, t, child) => Transform.translate(
+            offset: from * (1 - t),
+            child: Opacity(
+              opacity: mark.from == null ? t : 1,
+              child: Transform.scale(scale: 0.9 + 0.1 * t, child: child),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+enum _RenameChoice { rename, discard }
+
+/// P3: "✎ N" while files wait in the rename batch; opens the screen.
+class _RenamePill extends ConsumerWidget {
+  const new({required this.sessionId});
+
+  final int sessionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(renameBatchCountProvider(sessionId)).value ?? 0;
+    if (count == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: 8),
+      child: ActionChip(
+        visualDensity: VisualDensity.compact,
+        label: Text(context.l10n.renamePill(count)),
+        onPressed: () => context.go(AppRoutes.renameBatch),
+      ),
+    );
+  }
 }

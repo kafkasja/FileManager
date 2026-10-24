@@ -311,6 +311,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String sessionSummaryTrash(int count, String size) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Session finished: $countString files moved to the trash ($size).',
+      one: 'Session finished: 1 file moved to the trash ($size).',
+      zero: 'Session finished.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String deleteBatchWaiting(int count) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -720,4 +736,567 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reset => 'Reset';
+
+  @override
+  String get swipeActionMoveTo => 'Move to folder…';
+
+  @override
+  String get swipeActionCopyTo => 'Copy to folder…';
+
+  @override
+  String get swipeActionAddTag => 'Add tag…';
+
+  @override
+  String get swipeActionFavorite => 'Add to favorites';
+
+  @override
+  String swipeActionMoveToNamed(String folder) {
+    return 'Move to $folder';
+  }
+
+  @override
+  String swipeActionCopyToNamed(String folder) {
+    return 'Copy to $folder';
+  }
+
+  @override
+  String swipeActionTagNamed(String tag) {
+    return 'Tag: $tag';
+  }
+
+  @override
+  String get swipeActionTagMissing => 'Tag no longer exists';
+
+  @override
+  String get moveConsentNotice => 'Android may ask before each move';
+
+  @override
+  String get turnOn => 'Turn on';
+
+  @override
+  String get folderPickerTitle => 'Choose a folder';
+
+  @override
+  String get folderPickerRecent => 'Recent';
+
+  @override
+  String get folderPickerWithPhotos => 'Folders with photos';
+
+  @override
+  String get folderPickerNew => 'New folder…';
+
+  @override
+  String get folderPickerNewTitle => 'New folder';
+
+  @override
+  String folderPickerNewIn(String folder) {
+    return 'Inside $folder';
+  }
+
+  @override
+  String get folderNameHint => 'Folder name';
+
+  @override
+  String get folderNameInvalid => 'That name can\'t be used';
+
+  @override
+  String get folderNeedsAllFiles => 'Needs All files access';
+
+  @override
+  String folderFileCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get tagPickerTitle => 'Choose a tag';
+
+  @override
+  String get tagPickerNew => 'New tag…';
+
+  @override
+  String get tagNewTitle => 'New tag';
+
+  @override
+  String get tagNameHint => 'Tag name';
+
+  @override
+  String get tagNameTaken => 'A tag with this name already exists';
+
+  @override
+  String get tagNameInvalid => 'Use 1 to 40 characters';
+
+  @override
+  String get tagsEmpty => 'No tags yet';
+
+  @override
+  String get swipeProblemTagMissing =>
+      'Tag no longer exists. Change it in Customize swipes.';
+
+  @override
+  String get swipeProblemUnsupported => 'This swipe can\'t be used yet';
+
+  @override
+  String get fileOpFolderMissing =>
+      'Folder not found. Pick it again in Customize swipes.';
+
+  @override
+  String get fileOpDeclined => 'Not moved: permission declined';
+
+  @override
+  String get fileOpNoSpace => 'Not enough space';
+
+  @override
+  String get fileOpNeedsAllFiles => 'This folder needs All files access';
+
+  @override
+  String fileOpMoveFailed(String name) {
+    return 'Couldn\'t move $name';
+  }
+
+  @override
+  String fileOpCopyFailed(String name) {
+    return 'Couldn\'t copy $name';
+  }
+
+  @override
+  String get undoneLabel => '↩ Undone';
+
+  @override
+  String get swipeActionRenameBatch => 'Add to rename batch';
+
+  @override
+  String renamePill(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '✎ $countString';
+  }
+
+  @override
+  String get renameTitle => 'Rename batch';
+
+  @override
+  String get renamePatternLabel => 'Name pattern';
+
+  @override
+  String renamePatternHint(String n) {
+    return 'holiday_$n';
+  }
+
+  @override
+  String get renameStart => 'Start at';
+
+  @override
+  String get renamePadding => 'Digits';
+
+  @override
+  String renameTokensHelp(String n, String date, String orig) {
+    return '$n = number · $date = date · $orig = original name';
+  }
+
+  @override
+  String get renameMissing => 'Missing or changed: skipped';
+
+  @override
+  String renameCollision(String name) {
+    return 'Name was taken: \"$name\" is used instead';
+  }
+
+  @override
+  String get renameApply => 'Rename';
+
+  @override
+  String get renameDiscard => 'Discard batch';
+
+  @override
+  String get renameDiscardTitle => 'Discard this rename batch?';
+
+  @override
+  String get renameDiscardBody =>
+      'The files stay as they are; only the batch is dropped.';
+
+  @override
+  String get renameErrorEmpty => 'Type a name pattern';
+
+  @override
+  String get renameErrorInvalid =>
+      'These characters can\'t be used: / \\ : * ? \" < > |';
+
+  @override
+  String renameErrorNeedsCounter(String n) {
+    return 'Add $n so every file gets its own number';
+  }
+
+  @override
+  String get renameErrorTooLong => 'The names would be too long';
+
+  @override
+  String get renameRunning => 'Renaming…';
+
+  @override
+  String renameDone(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Renamed $countString files',
+      one: 'Renamed 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String renameDoneSkipped(int renamed, int skipped) {
+    final intl.NumberFormat renamedNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String renamedString = renamedNumberFormat.format(renamed);
+    final intl.NumberFormat skippedNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String skippedString = skippedNumberFormat.format(skipped);
+
+    return 'Renamed $renamedString · skipped $skippedString';
+  }
+
+  @override
+  String get renameDeclined => 'Nothing renamed: permission declined';
+
+  @override
+  String get renameNoUndoAfterDone => 'You can undo this until you tap Done.';
+
+  @override
+  String renameBeforeFinishTitle(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Rename $countString files first?',
+      one: 'Rename 1 file first?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get renameBeforeFinishBody =>
+      'Your rename batch hasn\'t been applied yet. Discarding it keeps the current names.';
+
+  @override
+  String get renameOpen => 'Rename…';
+
+  @override
+  String get labelRenameApplied => '✎ Renamed batch';
+
+  @override
+  String clearRenameDropped(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files in the rename batch will be dropped',
+      one: '1 file in the rename batch will be dropped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get barTrash => 'Trash';
+
+  @override
+  String get barDelete => 'Delete';
+
+  @override
+  String get barKeep => 'Keep';
+
+  @override
+  String get barFavorite => 'Favorite';
+
+  @override
+  String get barRename => 'Rename';
+
+  @override
+  String get actionBarTitle => 'Action bar';
+
+  @override
+  String get actionBarHelp => 'Extra buttons under the card';
+
+  @override
+  String get actionBarAdd => 'Add action';
+
+  @override
+  String get actionBarEmpty => 'No buttons yet';
+
+  @override
+  String get actionBarRemove => 'Remove';
+
+  @override
+  String get actionBarFull => 'Up to 8 buttons';
+
+  @override
+  String get filterTitle => 'Filter';
+
+  @override
+  String get filterButton => 'Filter';
+
+  @override
+  String get filterKinds => 'Show';
+
+  @override
+  String get filterPhotos => 'Photos';
+
+  @override
+  String get filterVideos => 'Videos';
+
+  @override
+  String get filterScreenshotsOnly => 'Screenshots only';
+
+  @override
+  String get filterDate => 'Date';
+
+  @override
+  String get filterAny => 'Any';
+
+  @override
+  String get filterThisMonth => 'This month';
+
+  @override
+  String get filterLast30Days => 'Last 30 days';
+
+  @override
+  String get filterCustomRange => 'Pick dates…';
+
+  @override
+  String filterRange(String from, String to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get filterSize => 'Size';
+
+  @override
+  String filterOverMb(int mb) {
+    final intl.NumberFormat mbNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String mbString = mbNumberFormat.format(mb);
+
+    return 'Over $mbString MB';
+  }
+
+  @override
+  String get filterFolders => 'Folders';
+
+  @override
+  String filterFolderCount(String folder, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$folder ($countString)';
+  }
+
+  @override
+  String filterFolderMissing(String folder) {
+    return '$folder (missing)';
+  }
+
+  @override
+  String get filterTags => 'Tags';
+
+  @override
+  String get filterTagged => 'Tagged';
+
+  @override
+  String get filterUntagged => 'Untagged';
+
+  @override
+  String get filterSpecificTags => 'Specific…';
+
+  @override
+  String get filterFavoritesOnly => 'Favorites only';
+
+  @override
+  String filterMatches(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files match',
+      one: '1 file matches',
+      zero: 'No files match',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get filterApply => 'Apply';
+
+  @override
+  String get filterProblemSize => 'The minimum size is larger than the maximum';
+
+  @override
+  String get filterProblemTags => 'Pick at least one tag';
+
+  @override
+  String get filterProblemDate => 'The start date is after the end date';
+
+  @override
+  String get filterNoMatches => 'No files match this filter';
+
+  @override
+  String get filterAllDone => 'All matching files done';
+
+  @override
+  String get filterChange => 'Change filter';
+
+  @override
+  String get presetBasic => 'Basic';
+
+  @override
+  String get presetChipTooltip => 'Switch preset';
+
+  @override
+  String get presetSheetTitle => 'Presets';
+
+  @override
+  String get presetManage => 'Manage presets';
+
+  @override
+  String get presetSaveAs => 'Save as preset…';
+
+  @override
+  String get presetNameLabel => 'Preset name';
+
+  @override
+  String get presetIncludeFilter => 'Include the current filter';
+
+  @override
+  String presetSaved(String name) {
+    return 'Saved “$name”';
+  }
+
+  @override
+  String get presetNameTaken => 'A preset with this name already exists';
+
+  @override
+  String get presetNameInvalid => 'Use 1 to 40 characters';
+
+  @override
+  String get presetRename => 'Rename';
+
+  @override
+  String get presetEdit => 'Edit';
+
+  @override
+  String get presetDuplicate => 'Duplicate';
+
+  @override
+  String get presetDelete => 'Delete';
+
+  @override
+  String presetDeleteConfirm(String name) {
+    return 'Delete “$name”?';
+  }
+
+  @override
+  String get presetDeleteBody =>
+      'Its unfinished session ends. Your files aren\'t touched.';
+
+  @override
+  String get presetLoadError => 'Can\'t load: edit or delete';
+
+  @override
+  String presetNoSessionHint(String name) {
+    return 'Start swiping in $name to change the buttons for that session, or edit the preset in Manage presets.';
+  }
+
+  @override
+  String get presetEditorTitle => 'Edit preset';
+
+  @override
+  String get presetDirections => 'Swipe buttons';
+
+  @override
+  String get presetFilter => 'Filter';
+
+  @override
+  String get presetEditorFilterNone => 'No filter';
+
+  @override
+  String get presetEditorFilterOn => 'Filter set';
+
+  @override
+  String get presetEditorSave => 'Save';
+
+  @override
+  String get presetEditorReplacesSession =>
+      'Also replaces the setup of this preset\'s unfinished session';
+
+  @override
+  String get presetEditorDiscard => 'Discard your changes?';
+
+  @override
+  String get presetDiscard => 'Discard';
+
+  @override
+  String presetSwitchBlocked(String name) {
+    return 'Couldn\'t finish the deletes, so you\'re still on $name. Try again.';
+  }
+
+  @override
+  String get presetEmptyTitle => 'No presets yet';
+
+  @override
+  String get presetEmptyBody =>
+      'A preset saves your swipe buttons and, if you like, a filter. Switch between them with one tap.';
+
+  @override
+  String get presetEmptyQuickCleanup => 'Quick cleanup';
+
+  @override
+  String get presetEmptyQuickCleanupHelp =>
+      'Left = trash, right = keep, screenshots only';
+
+  @override
+  String get presetEmptySortHoliday => 'Sort holiday';
+
+  @override
+  String get presetEmptySortHolidayHelp =>
+      'Left = trash, right = move to a folder, up = favorite';
+
+  @override
+  String get presetCreate => 'Create';
+
+  @override
+  String get presetNew => 'New preset';
+
+  @override
+  String get settingsPresets => 'Presets';
+
+  @override
+  String get settingsPresetsHelp => 'Saved swipe setups';
 }

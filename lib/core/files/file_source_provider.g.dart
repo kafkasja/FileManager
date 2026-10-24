@@ -99,3 +99,50 @@ final class FileSourceProvider
 }
 
 String _$fileSourceHash() => r'10b3cb6789beec59f21c8837d1779718427dc48b';
+
+/// Where "New folder…" goes when no folder is selected (P2 folder picker).
+
+@ProviderFor(defaultNewFolderParent)
+final defaultNewFolderParentProvider = DefaultNewFolderParentProvider._();
+
+/// Where "New folder…" goes when no folder is selected (P2 folder picker).
+
+final class DefaultNewFolderParentProvider
+    extends $FunctionalProvider<String, String, String>
+    with $Provider<String> {
+  /// Where "New folder…" goes when no folder is selected (P2 folder picker).
+  DefaultNewFolderParentProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'defaultNewFolderParentProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$defaultNewFolderParentHash();
+
+  @$internal
+  @override
+  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String create(Ref ref) {
+    return defaultNewFolderParent(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$defaultNewFolderParentHash() =>
+    r'ede5bdbd751322a865cae4ff2c8c6add7a9248a4';

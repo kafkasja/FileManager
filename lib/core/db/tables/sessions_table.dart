@@ -1,15 +1,21 @@
 import 'package:drift/drift.dart';
 
-/// One row per swipe session (TASK-SE1). At most one is active.
+/// One row per swipe session (TASK-SE1). At most one is active; at most one
+/// open (not ended) per preset (P6).
 @DataClassName('SessionRow')
 @TableIndex.sql(
   'CREATE UNIQUE INDEX one_active_session ON sessions (is_active) '
   'WHERE is_active = 1',
 )
+@TableIndex.sql(
+  'CREATE UNIQUE INDEX one_open_session_per_preset ON sessions '
+  '(COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
+)
 class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  /// FK to presets is added by P6's migration.
+  /// Preset id (P6); null = Basic. No FK: a deleted preset's ended sessions
+  /// keep their id for P8 stats.
   IntColumn get presetId => integer().nullable()();
 
   /// SwipeLayout JSON.
@@ -31,4 +37,8 @@ class Sessions extends Table {
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get isActive => boolean()();
+
+  /// Set when the session ends (Done / SE3 / preset deleted). Null with
+  /// isActive false = paused by a preset switch (P6).
+  DateTimeColumn get endedAt => dateTime().nullable()();
 }

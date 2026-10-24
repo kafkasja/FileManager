@@ -69,8 +69,9 @@ void main() {
       SwipeActionType.addTag: const TagPreviousState(tagId: 1, hadTag: false),
       SwipeActionType.favorite: const FavoritePreviousState(wasFavorite: true),
       SwipeActionType.renameBatch: const RenamePreviousState(
-        name: 'a.jpg',
         batchId: 4,
+        op: RenameOp.add,
+        added: false,
       ),
     };
     for (final MapEntry(key: type, value: state) in cases.entries) {

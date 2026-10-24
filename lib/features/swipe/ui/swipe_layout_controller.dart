@@ -29,16 +29,46 @@ class SwipeLayoutController extends _$SwipeLayoutController {
 
   Future<void> resetToBasic() => _save((_) => SwipeLayout.basic);
 
+  /// P4 action bar: at most [maxBarActions], no duplicates.
+  static const maxBarActions = 8;
+
+  Future<void> addBarAction(SwipeAction action) => _save((current) {
+    final bar = current.actionBar;
+    if (bar.length >= maxBarActions || bar.contains(action)) return current;
+    return current.withActionBar([...bar, action]);
+  });
+
+  Future<void> removeBarAction(int index) => _save(
+    (current) => current.withActionBar([
+      for (final (i, a) in current.actionBar.indexed)
+        if (i != index) a,
+    ]),
+  );
+
+  /// [to] = the final index (ReorderableListView.onReorderItem).
+  Future<void> moveBarAction(int from, int to) => _save((current) {
+    final bar = [...current.actionBar];
+    bar.insert(to, bar.removeAt(from));
+    return current.withActionBar(bar);
+  });
+
   Future<void> _save(SwipeLayout Function(SwipeLayout current) change) async {
-    final next = change(await future);
+    final previous = await future;
+    final next = change(previous);
     if (!ref.mounted) return;
     state = AsyncData(next);
     try {
       final sessions = ref.read(sessionRepositoryProvider);
       final session = await sessions.active();
+      final settings = ref.read(settingsRepositoryProvider);
       if (session != null) {
-        // Session row + saved default in one transaction.
+        // Basic: session row + saved default; preset: session only (P6).
         await sessions.saveLayout(session.id, next);
+      } else if (await settings.read(AppSettings.activePresetId) != 0) {
+        // P6: a preset without a session yet. Its setup changes only in
+        // its editor, so there is nothing to write here.
+        if (ref.mounted) state = AsyncData(previous);
+        return;
       } else {
         // Never start a session here: that would skip D1's confirmation.
         await ref

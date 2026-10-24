@@ -4,9 +4,12 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:kfm/core/db/tables/media_index_table.dart';
 import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/db/tables/pending_folder_items_table.dart';
+import 'package:kfm/core/db/tables/presets_table.dart';
+import 'package:kfm/core/db/tables/rename_batches_table.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/db/tables/sessions_table.dart';
 import 'package:kfm/core/db/tables/settings_table.dart';
+import 'package:kfm/core/db/tables/tags_table.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/common.dart' show CommonDatabase;
@@ -23,6 +26,12 @@ part 'app_database.g.dart';
     SessionActions,
     PendingDeletes,
     PendingFolderItems,
+    Tags,
+    FileTags,
+    Favorites,
+    RenameBatches,
+    RenameBatchItems,
+    Presets,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -31,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,12 +80,56 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(pendingFolderItems);
         await m.createIndex(pfiExpires);
       }
+      if (from < 7) {
+        // TASK-P2
+        await m.createTable(tags);
+        await m.createTable(fileTags);
+        await m.createTable(favorites);
+        await m.createIndex(ftTag);
+      }
+      if (from < 8) {
+        // TASK-P3
+        await m.createTable(renameBatches);
+        await m.createIndex(oneCollectingBatch);
+        await m.createTable(renameBatchItems);
+      }
+      if (from < 9) {
+        // TASK-P5
+        if (from >= 2) {
+          // media_index exists in its v2 shape. (From v1 the `from < 2`
+          // block created it from the current class, column included.)
+          await m.addColumn(mediaIndex, mediaIndex.screenshot);
+          await customStatement(screenshotBackfillSql);
+        }
+        await m.createIndex(miScreenshotDate);
+      }
+      if (from < 10) {
+        // TASK-P6
+        await m.createTable(presets);
+        await m.createIndex(presetsNameNocase);
+        // From < 3 the v3 block created `sessions` with ended_at already.
+        if (from >= 3) await m.addColumn(sessions, sessions.endedAt);
+        // Before P6 every inactive session was ended (no pausing yet).
+        await customStatement(
+          'UPDATE sessions SET ended_at = updated_at WHERE is_active = 0',
+        );
+        await m.createIndex(oneOpenSessionPerPreset);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
       await customStatement('PRAGMA synchronous = NORMAL');
     },
   );
+
+  /// P5 backfill; mirrors `isScreenshot` (kind 0 = FileKind.image).
+  @visibleForTesting
+  static const screenshotBackfillSql =
+      'UPDATE media_index SET screenshot = 1 WHERE kind = 0 AND ( '
+      "name_lower LIKE 'screenshot%' OR "
+      "'/' || lower(folder_path) || '/' LIKE '%/screenshots/%' OR "
+      "'/' || lower(folder_path) || '/' LIKE '%/screenshot/%' OR "
+      "'/' || lower(folder_path) || '/' LIKE '%/screen captures/%')";
 
   /// Current SQLite journal mode (`wal` on device, `memory` for in-memory DBs).
   Future<String> journalMode() async {

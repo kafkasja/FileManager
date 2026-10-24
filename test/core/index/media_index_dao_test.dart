@@ -165,7 +165,7 @@ void main() {
   });
 
   test('watchChanges fires once per burst', () async {
-    final events = <void>[];
+    final events = <int>[];
     final sub = dao.watchChanges().listen(events.add);
     addTearDown(sub.cancel);
     await dao.upsertBatch([ref(1)], 1);

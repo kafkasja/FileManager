@@ -118,6 +118,39 @@ void main() {
     expect(tester.widget<IconButton>(undo).onPressed, isNull);
   });
 
+  testWidgets('the last swipe still shows its label on "All done"', (
+    tester,
+  ) async {
+    await _pumpWithLibrary(tester, 1);
+    await tester.drag(find.byType(SwipeCard), const Offset(500, 0));
+    await _finishFlyOut(tester);
+    expect(find.text('→ Kept'), findsOneWidget);
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('undo shows "↩ Undone"; a double tap undoes only one swipe', (
+    tester,
+  ) async {
+    final app = await _pumpWithLibrary(tester, 3);
+    for (var i = 0; i < 2; i++) {
+      await tester.drag(find.byType(SwipeCard), const Offset(500, 0));
+      await tester.pumpAndSettle();
+    }
+    expect(_current(app), 'p0.jpg');
+    final undo = find.widgetWithIcon(IconButton, Icons.undo);
+    await tester.tap(undo);
+    // Second tap while the first undo is still running: ignored.
+    await tester.tap(find.byType(IconButton).last, warnIfMissed: false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pumpAndSettle();
+    expect(find.text('↩ Undone'), findsOneWidget);
+    expect(_current(app), 'p1.jpg');
+    expect(await _actionTypes(app), ['keep:applied', 'keep:undone']);
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('the last swipe shows the all-done state', (tester) async {
     await _pumpWithLibrary(tester, 2);
     for (var i = 0; i < 2; i++) {

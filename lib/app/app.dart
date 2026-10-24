@@ -7,6 +7,7 @@ import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
@@ -48,6 +49,8 @@ class _AppState extends ConsumerState<App> {
     // Lives as long as the app; starts scanning once access is granted.
     ref
       ..watch(mediaIndexerProvider)
+      // P2: tags/favorites follow files whose id changes.
+      ..watch(fileIdRekeyerProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).
       ..watch(startupMaintenanceProvider);
     return MaterialApp.router(

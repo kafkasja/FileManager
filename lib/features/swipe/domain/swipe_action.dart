@@ -81,11 +81,30 @@ class SwipeAction {
   String toString() => 'SwipeAction(${type.name})';
 }
 
-/// Actions the "Customize swipes" picker offers (P1). P2 adds its types.
-const assignableSwipeActions = <SwipeAction>[
-  SwipeAction.trash,
-  SwipeAction.keep,
+/// Types the "Customize swipes" picker offers (P1–P3). `sendToDevice`
+/// (Phase 5) is added by its task.
+const assignableSwipeActionTypes = <SwipeActionType>[
+  SwipeActionType.trash,
+  SwipeActionType.keep,
+  SwipeActionType.moveTo,
+  SwipeActionType.copyTo,
+  SwipeActionType.addTag,
+  SwipeActionType.favorite,
+  SwipeActionType.renameBatch,
 ];
+
+extension SwipeActionTypeX on SwipeActionType {
+  /// Picking this type opens a folder or tag picker.
+  bool get needsTarget => switch (this) {
+    SwipeActionType.moveTo ||
+    SwipeActionType.copyTo ||
+    SwipeActionType.addTag => true,
+    _ => false,
+  };
+}
+
+/// Why a mapped direction can't run right now (the card springs back).
+enum SwipeActionProblem { unsupported, tagMissing }
 
 /// What each direction (and the optional action bar, P4) does.
 @immutable
@@ -158,6 +177,10 @@ class SwipeLayout {
   bool get hasVertical =>
       directions.containsKey(SwipeDirection.up) ||
       directions.containsKey(SwipeDirection.down);
+
+  /// A copy with a new action bar (P4).
+  SwipeLayout withActionBar(List<SwipeAction> bar) =>
+      SwipeLayout(directions: directions, actionBar: List.unmodifiable(bar));
 
   /// A copy with [direction] set to [action] (null = nothing).
   SwipeLayout withDirection(SwipeDirection direction, SwipeAction? action) =>

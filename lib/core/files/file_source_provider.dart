@@ -46,3 +46,7 @@ FileSource fileSource(Ref ref) {
     'FileSource not implemented for ${Platform.operatingSystem} yet (PL1/PL2)',
   );
 }
+
+/// Where "New folder…" goes when no folder is selected (P2 folder picker).
+@Riverpod(keepAlive: true)
+String defaultNewFolderParent(Ref ref) => '$androidPrimaryRoot/Pictures';

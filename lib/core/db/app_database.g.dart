@@ -390,6 +390,21 @@ class $MediaIndexTable extends MediaIndex
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _screenshotMeta = const VerificationMeta(
+    'screenshot',
+  );
+  @override
+  late final GeneratedColumn<bool> screenshot = GeneratedColumn<bool>(
+    'screenshot',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("screenshot" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -409,6 +424,7 @@ class $MediaIndexTable extends MediaIndex
     origin,
     indexedAtMs,
     scanGeneration,
+    screenshot,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -541,6 +557,12 @@ class $MediaIndexTable extends MediaIndex
     } else if (isInserting) {
       context.missing(_scanGenerationMeta);
     }
+    if (data.containsKey('screenshot')) {
+      context.handle(
+        _screenshotMeta,
+        screenshot.isAcceptableOrUnknown(data['screenshot']!, _screenshotMeta),
+      );
+    }
     return context;
   }
 
@@ -622,6 +644,10 @@ class $MediaIndexTable extends MediaIndex
         DriftSqlType.int,
         data['${effectivePrefix}scan_generation'],
       )!,
+      screenshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}screenshot'],
+      )!,
     );
   }
 
@@ -664,6 +690,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
   /// Scan generation that last saw this row. After a full scan, rows of the
   /// scanned kinds with an older generation are gone from the device.
   final int scanGeneration;
+
+  /// P5: see `isScreenshot` (set by the DAO on every write).
+  final bool screenshot;
   const MediaIndexRow({
     required this.id,
     required this.uri,
@@ -682,6 +711,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     required this.origin,
     required this.indexedAtMs,
     required this.scanGeneration,
+    required this.screenshot,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -719,6 +749,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     }
     map['indexed_at_ms'] = Variable<int>(indexedAtMs);
     map['scan_generation'] = Variable<int>(scanGeneration);
+    map['screenshot'] = Variable<bool>(screenshot);
     return map;
   }
 
@@ -751,6 +782,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       origin: Value(origin),
       indexedAtMs: Value(indexedAtMs),
       scanGeneration: Value(scanGeneration),
+      screenshot: Value(screenshot),
     );
   }
 
@@ -781,6 +813,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       ),
       indexedAtMs: serializer.fromJson<int>(json['indexedAtMs']),
       scanGeneration: serializer.fromJson<int>(json['scanGeneration']),
+      screenshot: serializer.fromJson<bool>(json['screenshot']),
     );
   }
   @override
@@ -808,6 +841,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       ),
       'indexedAtMs': serializer.toJson<int>(indexedAtMs),
       'scanGeneration': serializer.toJson<int>(scanGeneration),
+      'screenshot': serializer.toJson<bool>(screenshot),
     };
   }
 
@@ -829,6 +863,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     FileOrigin? origin,
     int? indexedAtMs,
     int? scanGeneration,
+    bool? screenshot,
   }) => MediaIndexRow(
     id: id ?? this.id,
     uri: uri ?? this.uri,
@@ -847,6 +882,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     origin: origin ?? this.origin,
     indexedAtMs: indexedAtMs ?? this.indexedAtMs,
     scanGeneration: scanGeneration ?? this.scanGeneration,
+    screenshot: screenshot ?? this.screenshot,
   );
   MediaIndexRow copyWithCompanion(MediaIndexCompanion data) {
     return MediaIndexRow(
@@ -879,6 +915,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       scanGeneration: data.scanGeneration.present
           ? data.scanGeneration.value
           : this.scanGeneration,
+      screenshot: data.screenshot.present
+          ? data.screenshot.value
+          : this.screenshot,
     );
   }
 
@@ -901,7 +940,8 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
           ..write('folderPath: $folderPath, ')
           ..write('origin: $origin, ')
           ..write('indexedAtMs: $indexedAtMs, ')
-          ..write('scanGeneration: $scanGeneration')
+          ..write('scanGeneration: $scanGeneration, ')
+          ..write('screenshot: $screenshot')
           ..write(')'))
         .toString();
   }
@@ -925,6 +965,7 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     origin,
     indexedAtMs,
     scanGeneration,
+    screenshot,
   );
   @override
   bool operator ==(Object other) =>
@@ -946,7 +987,8 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
           other.folderPath == this.folderPath &&
           other.origin == this.origin &&
           other.indexedAtMs == this.indexedAtMs &&
-          other.scanGeneration == this.scanGeneration);
+          other.scanGeneration == this.scanGeneration &&
+          other.screenshot == this.screenshot);
 }
 
 class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
@@ -967,6 +1009,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
   final Value<FileOrigin> origin;
   final Value<int> indexedAtMs;
   final Value<int> scanGeneration;
+  final Value<bool> screenshot;
   final Value<int> rowid;
   const MediaIndexCompanion({
     this.id = const Value.absent(),
@@ -986,6 +1029,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     this.origin = const Value.absent(),
     this.indexedAtMs = const Value.absent(),
     this.scanGeneration = const Value.absent(),
+    this.screenshot = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaIndexCompanion.insert({
@@ -1006,6 +1050,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     required FileOrigin origin,
     required int indexedAtMs,
     required int scanGeneration,
+    this.screenshot = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        uri = Value(uri),
@@ -1037,6 +1082,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     Expression<int>? origin,
     Expression<int>? indexedAtMs,
     Expression<int>? scanGeneration,
+    Expression<bool>? screenshot,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1057,6 +1103,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
       if (origin != null) 'origin': origin,
       if (indexedAtMs != null) 'indexed_at_ms': indexedAtMs,
       if (scanGeneration != null) 'scan_generation': scanGeneration,
+      if (screenshot != null) 'screenshot': screenshot,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1079,6 +1126,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     Value<FileOrigin>? origin,
     Value<int>? indexedAtMs,
     Value<int>? scanGeneration,
+    Value<bool>? screenshot,
     Value<int>? rowid,
   }) {
     return MediaIndexCompanion(
@@ -1099,6 +1147,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
       origin: origin ?? this.origin,
       indexedAtMs: indexedAtMs ?? this.indexedAtMs,
       scanGeneration: scanGeneration ?? this.scanGeneration,
+      screenshot: screenshot ?? this.screenshot,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1161,6 +1210,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     if (scanGeneration.present) {
       map['scan_generation'] = Variable<int>(scanGeneration.value);
     }
+    if (screenshot.present) {
+      map['screenshot'] = Variable<bool>(screenshot.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1187,6 +1239,7 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
           ..write('origin: $origin, ')
           ..write('indexedAtMs: $indexedAtMs, ')
           ..write('scanGeneration: $scanGeneration, ')
+          ..write('screenshot: $screenshot, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1310,6 +1363,17 @@ class $SessionsTable extends Sessions
       'CHECK ("is_active" IN (0, 1))',
     ),
   );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1322,6 +1386,7 @@ class $SessionsTable extends Sessions
     startedAt,
     updatedAt,
     isActive,
+    endedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1403,6 +1468,12 @@ class $SessionsTable extends Sessions
     } else if (isInserting) {
       context.missing(_isActiveMeta);
     }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1452,6 +1523,10 @@ class $SessionsTable extends Sessions
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
       )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      ),
     );
   }
 
@@ -1464,7 +1539,8 @@ class $SessionsTable extends Sessions
 class SessionRow extends DataClass implements Insertable<SessionRow> {
   final int id;
 
-  /// FK to presets is added by P6's migration.
+  /// Preset id (P6); null = Basic. No FK: a deleted preset's ended sessions
+  /// keep their id for P8 stats.
   final int? presetId;
 
   /// SwipeLayout JSON.
@@ -1486,6 +1562,10 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
   final DateTime startedAt;
   final DateTime updatedAt;
   final bool isActive;
+
+  /// Set when the session ends (Done / SE3 / preset deleted). Null with
+  /// isActive false = paused by a preset switch (P6).
+  final DateTime? endedAt;
   const SessionRow({
     required this.id,
     this.presetId,
@@ -1497,6 +1577,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     required this.startedAt,
     required this.updatedAt,
     required this.isActive,
+    this.endedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1517,6 +1598,9 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     map['started_at'] = Variable<DateTime>(startedAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_active'] = Variable<bool>(isActive);
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<DateTime>(endedAt);
+    }
     return map;
   }
 
@@ -1538,6 +1622,9 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       startedAt: Value(startedAt),
       updatedAt: Value(updatedAt),
       isActive: Value(isActive),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
     );
   }
 
@@ -1557,6 +1644,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
     );
   }
   @override
@@ -1573,6 +1661,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isActive': serializer.toJson<bool>(isActive),
+      'endedAt': serializer.toJson<DateTime?>(endedAt),
     };
   }
 
@@ -1587,6 +1676,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     DateTime? startedAt,
     DateTime? updatedAt,
     bool? isActive,
+    Value<DateTime?> endedAt = const Value.absent(),
   }) => SessionRow(
     id: id ?? this.id,
     presetId: presetId.present ? presetId.value : this.presetId,
@@ -1598,6 +1688,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     startedAt: startedAt ?? this.startedAt,
     updatedAt: updatedAt ?? this.updatedAt,
     isActive: isActive ?? this.isActive,
+    endedAt: endedAt.present ? endedAt.value : this.endedAt,
   );
   SessionRow copyWithCompanion(SessionsCompanion data) {
     return SessionRow(
@@ -1615,6 +1706,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
     );
   }
 
@@ -1630,7 +1722,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           ..write('cursorFileId: $cursorFileId, ')
           ..write('startedAt: $startedAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isActive: $isActive')
+          ..write('isActive: $isActive, ')
+          ..write('endedAt: $endedAt')
           ..write(')'))
         .toString();
   }
@@ -1647,6 +1740,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     startedAt,
     updatedAt,
     isActive,
+    endedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1661,7 +1755,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           other.cursorFileId == this.cursorFileId &&
           other.startedAt == this.startedAt &&
           other.updatedAt == this.updatedAt &&
-          other.isActive == this.isActive);
+          other.isActive == this.isActive &&
+          other.endedAt == this.endedAt);
 }
 
 class SessionsCompanion extends UpdateCompanion<SessionRow> {
@@ -1675,6 +1770,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
   final Value<DateTime> startedAt;
   final Value<DateTime> updatedAt;
   final Value<bool> isActive;
+  final Value<DateTime?> endedAt;
   const SessionsCompanion({
     this.id = const Value.absent(),
     this.presetId = const Value.absent(),
@@ -1686,6 +1782,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     this.startedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.endedAt = const Value.absent(),
   });
   SessionsCompanion.insert({
     this.id = const Value.absent(),
@@ -1698,6 +1795,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     required DateTime startedAt,
     required DateTime updatedAt,
     required bool isActive,
+    this.endedAt = const Value.absent(),
   }) : layout = Value(layout),
        startedAt = Value(startedAt),
        updatedAt = Value(updatedAt),
@@ -1713,6 +1811,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     Expression<DateTime>? startedAt,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isActive,
+    Expression<DateTime>? endedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1725,6 +1824,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
       if (startedAt != null) 'started_at': startedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isActive != null) 'is_active': isActive,
+      if (endedAt != null) 'ended_at': endedAt,
     });
   }
 
@@ -1739,6 +1839,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     Value<DateTime>? startedAt,
     Value<DateTime>? updatedAt,
     Value<bool>? isActive,
+    Value<DateTime?>? endedAt,
   }) {
     return SessionsCompanion(
       id: id ?? this.id,
@@ -1751,6 +1852,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
       startedAt: startedAt ?? this.startedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
+      endedAt: endedAt ?? this.endedAt,
     );
   }
 
@@ -1787,6 +1889,9 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
     return map;
   }
 
@@ -1802,7 +1907,8 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
           ..write('cursorFileId: $cursorFileId, ')
           ..write('startedAt: $startedAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isActive: $isActive')
+          ..write('isActive: $isActive, ')
+          ..write('endedAt: $endedAt')
           ..write(')'))
         .toString();
   }
@@ -3811,6 +3917,2377 @@ class PendingFolderItemsCompanion
   }
 }
 
+class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 40,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'tags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TagRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {name},
+  ];
+  @override
+  TagRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TagRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TagsTable createAlias(String alias) {
+    return $TagsTable(attachedDatabase, alias);
+  }
+}
+
+class TagRow extends DataClass implements Insertable<TagRow> {
+  final int id;
+  final String name;
+
+  /// ARGB, one of `kTagColors`.
+  final int color;
+  final DateTime createdAt;
+  const TagRow({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<int>(color);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  TagsCompanion toCompanion(bool nullToAbsent) {
+    return TagsCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory TagRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TagRow(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<int>(json['color']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<int>(color),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  TagRow copyWith({int? id, String? name, int? color, DateTime? createdAt}) =>
+      TagRow(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        color: color ?? this.color,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  TagRow copyWithCompanion(TagsCompanion data) {
+    return TagRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TagRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, color, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TagRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.createdAt == this.createdAt);
+}
+
+class TagsCompanion extends UpdateCompanion<TagRow> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<int> color;
+  final Value<DateTime> createdAt;
+  const TagsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  TagsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required int color,
+    required DateTime createdAt,
+  }) : name = Value(name),
+       color = Value(color),
+       createdAt = Value(createdAt);
+  static Insertable<TagRow> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<int>? color,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  TagsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<int>? color,
+    Value<DateTime>? createdAt,
+  }) {
+    return TagsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TagsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FileTagsTable extends FileTags
+    with TableInfo<$FileTagsTable, FileTagRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FileTagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
+  @override
+  late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
+    'tag_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tags (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [fileId, tagId, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'file_tags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FileTagRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('tag_id')) {
+      context.handle(
+        _tagIdMeta,
+        tagId.isAcceptableOrUnknown(data['tag_id']!, _tagIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tagIdMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId, tagId};
+  @override
+  FileTagRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FileTagRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      tagId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tag_id'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FileTagsTable createAlias(String alias) {
+    return $FileTagsTable(attachedDatabase, alias);
+  }
+}
+
+class FileTagRow extends DataClass implements Insertable<FileTagRow> {
+  final String fileId;
+  final int tagId;
+  final DateTime addedAt;
+  const FileTagRow({
+    required this.fileId,
+    required this.tagId,
+    required this.addedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['tag_id'] = Variable<int>(tagId);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  FileTagsCompanion toCompanion(bool nullToAbsent) {
+    return FileTagsCompanion(
+      fileId: Value(fileId),
+      tagId: Value(tagId),
+      addedAt: Value(addedAt),
+    );
+  }
+
+  factory FileTagRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FileTagRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      tagId: serializer.fromJson<int>(json['tagId']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'tagId': serializer.toJson<int>(tagId),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  FileTagRow copyWith({String? fileId, int? tagId, DateTime? addedAt}) =>
+      FileTagRow(
+        fileId: fileId ?? this.fileId,
+        tagId: tagId ?? this.tagId,
+        addedAt: addedAt ?? this.addedAt,
+      );
+  FileTagRow copyWithCompanion(FileTagsCompanion data) {
+    return FileTagRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      tagId: data.tagId.present ? data.tagId.value : this.tagId,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FileTagRow(')
+          ..write('fileId: $fileId, ')
+          ..write('tagId: $tagId, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fileId, tagId, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FileTagRow &&
+          other.fileId == this.fileId &&
+          other.tagId == this.tagId &&
+          other.addedAt == this.addedAt);
+}
+
+class FileTagsCompanion extends UpdateCompanion<FileTagRow> {
+  final Value<String> fileId;
+  final Value<int> tagId;
+  final Value<DateTime> addedAt;
+  final Value<int> rowid;
+  const FileTagsCompanion({
+    this.fileId = const Value.absent(),
+    this.tagId = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FileTagsCompanion.insert({
+    required String fileId,
+    required int tagId,
+    required DateTime addedAt,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       tagId = Value(tagId),
+       addedAt = Value(addedAt);
+  static Insertable<FileTagRow> custom({
+    Expression<String>? fileId,
+    Expression<int>? tagId,
+    Expression<DateTime>? addedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (tagId != null) 'tag_id': tagId,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FileTagsCompanion copyWith({
+    Value<String>? fileId,
+    Value<int>? tagId,
+    Value<DateTime>? addedAt,
+    Value<int>? rowid,
+  }) {
+    return FileTagsCompanion(
+      fileId: fileId ?? this.fileId,
+      tagId: tagId ?? this.tagId,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (tagId.present) {
+      map['tag_id'] = Variable<int>(tagId.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FileTagsCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('tagId: $tagId, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FavoritesTable extends Favorites
+    with TableInfo<$FavoritesTable, FavoriteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FavoritesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [fileId, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'favorites';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FavoriteRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  FavoriteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FavoriteRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FavoritesTable createAlias(String alias) {
+    return $FavoritesTable(attachedDatabase, alias);
+  }
+}
+
+class FavoriteRow extends DataClass implements Insertable<FavoriteRow> {
+  final String fileId;
+  final DateTime addedAt;
+  const FavoriteRow({required this.fileId, required this.addedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  FavoritesCompanion toCompanion(bool nullToAbsent) {
+    return FavoritesCompanion(fileId: Value(fileId), addedAt: Value(addedAt));
+  }
+
+  factory FavoriteRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FavoriteRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  FavoriteRow copyWith({String? fileId, DateTime? addedAt}) => FavoriteRow(
+    fileId: fileId ?? this.fileId,
+    addedAt: addedAt ?? this.addedAt,
+  );
+  FavoriteRow copyWithCompanion(FavoritesCompanion data) {
+    return FavoriteRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavoriteRow(')
+          ..write('fileId: $fileId, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fileId, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FavoriteRow &&
+          other.fileId == this.fileId &&
+          other.addedAt == this.addedAt);
+}
+
+class FavoritesCompanion extends UpdateCompanion<FavoriteRow> {
+  final Value<String> fileId;
+  final Value<DateTime> addedAt;
+  final Value<int> rowid;
+  const FavoritesCompanion({
+    this.fileId = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FavoritesCompanion.insert({
+    required String fileId,
+    required DateTime addedAt,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       addedAt = Value(addedAt);
+  static Insertable<FavoriteRow> custom({
+    Expression<String>? fileId,
+    Expression<DateTime>? addedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FavoritesCompanion copyWith({
+    Value<String>? fileId,
+    Value<DateTime>? addedAt,
+    Value<int>? rowid,
+  }) {
+    return FavoritesCompanion(
+      fileId: fileId ?? this.fileId,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavoritesCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RenameBatchesTable extends RenameBatches
+    with TableInfo<$RenameBatchesTable, RenameBatchRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RenameBatchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<RenameBatchStatus, String>
+  status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<RenameBatchStatus>($RenameBatchesTable.$converterstatus);
+  static const VerificationMeta _patternJsonMeta = const VerificationMeta(
+    'patternJson',
+  );
+  @override
+  late final GeneratedColumn<String> patternJson = GeneratedColumn<String>(
+    'pattern_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _appliedAtMeta = const VerificationMeta(
+    'appliedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> appliedAt = GeneratedColumn<DateTime>(
+    'applied_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    status,
+    patternJson,
+    createdAt,
+    appliedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rename_batches';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RenameBatchRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('pattern_json')) {
+      context.handle(
+        _patternJsonMeta,
+        patternJson.isAcceptableOrUnknown(
+          data['pattern_json']!,
+          _patternJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('applied_at')) {
+      context.handle(
+        _appliedAtMeta,
+        appliedAt.isAcceptableOrUnknown(data['applied_at']!, _appliedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RenameBatchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RenameBatchRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      status: $RenameBatchesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      patternJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pattern_json'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      appliedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}applied_at'],
+      ),
+    );
+  }
+
+  @override
+  $RenameBatchesTable createAlias(String alias) {
+    return $RenameBatchesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<RenameBatchStatus, String, String>
+  $converterstatus = const EnumNameConverter<RenameBatchStatus>(
+    RenameBatchStatus.values,
+  );
+}
+
+class RenameBatchRow extends DataClass implements Insertable<RenameBatchRow> {
+  final int id;
+  final int sessionId;
+  final RenameBatchStatus status;
+
+  /// The NamePattern JSON used by apply (null while collecting).
+  final String? patternJson;
+  final DateTime createdAt;
+  final DateTime? appliedAt;
+  const RenameBatchRow({
+    required this.id,
+    required this.sessionId,
+    required this.status,
+    this.patternJson,
+    required this.createdAt,
+    this.appliedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['session_id'] = Variable<int>(sessionId);
+    {
+      map['status'] = Variable<String>(
+        $RenameBatchesTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || patternJson != null) {
+      map['pattern_json'] = Variable<String>(patternJson);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || appliedAt != null) {
+      map['applied_at'] = Variable<DateTime>(appliedAt);
+    }
+    return map;
+  }
+
+  RenameBatchesCompanion toCompanion(bool nullToAbsent) {
+    return RenameBatchesCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      status: Value(status),
+      patternJson: patternJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(patternJson),
+      createdAt: Value(createdAt),
+      appliedAt: appliedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(appliedAt),
+    );
+  }
+
+  factory RenameBatchRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RenameBatchRow(
+      id: serializer.fromJson<int>(json['id']),
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      status: $RenameBatchesTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      patternJson: serializer.fromJson<String?>(json['patternJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      appliedAt: serializer.fromJson<DateTime?>(json['appliedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sessionId': serializer.toJson<int>(sessionId),
+      'status': serializer.toJson<String>(
+        $RenameBatchesTable.$converterstatus.toJson(status),
+      ),
+      'patternJson': serializer.toJson<String?>(patternJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'appliedAt': serializer.toJson<DateTime?>(appliedAt),
+    };
+  }
+
+  RenameBatchRow copyWith({
+    int? id,
+    int? sessionId,
+    RenameBatchStatus? status,
+    Value<String?> patternJson = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> appliedAt = const Value.absent(),
+  }) => RenameBatchRow(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    status: status ?? this.status,
+    patternJson: patternJson.present ? patternJson.value : this.patternJson,
+    createdAt: createdAt ?? this.createdAt,
+    appliedAt: appliedAt.present ? appliedAt.value : this.appliedAt,
+  );
+  RenameBatchRow copyWithCompanion(RenameBatchesCompanion data) {
+    return RenameBatchRow(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      status: data.status.present ? data.status.value : this.status,
+      patternJson: data.patternJson.present
+          ? data.patternJson.value
+          : this.patternJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      appliedAt: data.appliedAt.present ? data.appliedAt.value : this.appliedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RenameBatchRow(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('status: $status, ')
+          ..write('patternJson: $patternJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('appliedAt: $appliedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, sessionId, status, patternJson, createdAt, appliedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RenameBatchRow &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.status == this.status &&
+          other.patternJson == this.patternJson &&
+          other.createdAt == this.createdAt &&
+          other.appliedAt == this.appliedAt);
+}
+
+class RenameBatchesCompanion extends UpdateCompanion<RenameBatchRow> {
+  final Value<int> id;
+  final Value<int> sessionId;
+  final Value<RenameBatchStatus> status;
+  final Value<String?> patternJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> appliedAt;
+  const RenameBatchesCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.patternJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.appliedAt = const Value.absent(),
+  });
+  RenameBatchesCompanion.insert({
+    this.id = const Value.absent(),
+    required int sessionId,
+    required RenameBatchStatus status,
+    this.patternJson = const Value.absent(),
+    required DateTime createdAt,
+    this.appliedAt = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       status = Value(status),
+       createdAt = Value(createdAt);
+  static Insertable<RenameBatchRow> custom({
+    Expression<int>? id,
+    Expression<int>? sessionId,
+    Expression<String>? status,
+    Expression<String>? patternJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? appliedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (status != null) 'status': status,
+      if (patternJson != null) 'pattern_json': patternJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (appliedAt != null) 'applied_at': appliedAt,
+    });
+  }
+
+  RenameBatchesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sessionId,
+    Value<RenameBatchStatus>? status,
+    Value<String?>? patternJson,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? appliedAt,
+  }) {
+    return RenameBatchesCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      status: status ?? this.status,
+      patternJson: patternJson ?? this.patternJson,
+      createdAt: createdAt ?? this.createdAt,
+      appliedAt: appliedAt ?? this.appliedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $RenameBatchesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (patternJson.present) {
+      map['pattern_json'] = Variable<String>(patternJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (appliedAt.present) {
+      map['applied_at'] = Variable<DateTime>(appliedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RenameBatchesCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('status: $status, ')
+          ..write('patternJson: $patternJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('appliedAt: $appliedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RenameBatchItemsTable extends RenameBatchItems
+    with TableInfo<$RenameBatchItemsTable, RenameBatchItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RenameBatchItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _batchIdMeta = const VerificationMeta(
+    'batchId',
+  );
+  @override
+  late final GeneratedColumn<int> batchId = GeneratedColumn<int>(
+    'batch_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES rename_batches (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _folderPathMeta = const VerificationMeta(
+    'folderPath',
+  );
+  @override
+  late final GeneratedColumn<String> folderPath = GeneratedColumn<String>(
+    'folder_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalNameMeta = const VerificationMeta(
+    'originalName',
+  );
+  @override
+  late final GeneratedColumn<String> originalName = GeneratedColumn<String>(
+    'original_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _currentFileIdMeta = const VerificationMeta(
+    'currentFileId',
+  );
+  @override
+  late final GeneratedColumn<String> currentFileId = GeneratedColumn<String>(
+    'current_file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _currentNameMeta = const VerificationMeta(
+    'currentName',
+  );
+  @override
+  late final GeneratedColumn<String> currentName = GeneratedColumn<String>(
+    'current_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _newNameMeta = const VerificationMeta(
+    'newName',
+  );
+  @override
+  late final GeneratedColumn<String> newName = GeneratedColumn<String>(
+    'new_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tempNameMeta = const VerificationMeta(
+    'tempName',
+  );
+  @override
+  late final GeneratedColumn<String> tempName = GeneratedColumn<String>(
+    'temp_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _skippedMeta = const VerificationMeta(
+    'skipped',
+  );
+  @override
+  late final GeneratedColumn<bool> skipped = GeneratedColumn<bool>(
+    'skipped',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("skipped" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _skipReasonMeta = const VerificationMeta(
+    'skipReason',
+  );
+  @override
+  late final GeneratedColumn<String> skipReason = GeneratedColumn<String>(
+    'skip_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    batchId,
+    fileId,
+    position,
+    folderPath,
+    originalName,
+    currentFileId,
+    currentName,
+    newName,
+    tempName,
+    skipped,
+    skipReason,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rename_batch_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RenameBatchItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('batch_id')) {
+      context.handle(
+        _batchIdMeta,
+        batchId.isAcceptableOrUnknown(data['batch_id']!, _batchIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_batchIdMeta);
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('folder_path')) {
+      context.handle(
+        _folderPathMeta,
+        folderPath.isAcceptableOrUnknown(data['folder_path']!, _folderPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_folderPathMeta);
+    }
+    if (data.containsKey('original_name')) {
+      context.handle(
+        _originalNameMeta,
+        originalName.isAcceptableOrUnknown(
+          data['original_name']!,
+          _originalNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalNameMeta);
+    }
+    if (data.containsKey('current_file_id')) {
+      context.handle(
+        _currentFileIdMeta,
+        currentFileId.isAcceptableOrUnknown(
+          data['current_file_id']!,
+          _currentFileIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_currentFileIdMeta);
+    }
+    if (data.containsKey('current_name')) {
+      context.handle(
+        _currentNameMeta,
+        currentName.isAcceptableOrUnknown(
+          data['current_name']!,
+          _currentNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_currentNameMeta);
+    }
+    if (data.containsKey('new_name')) {
+      context.handle(
+        _newNameMeta,
+        newName.isAcceptableOrUnknown(data['new_name']!, _newNameMeta),
+      );
+    }
+    if (data.containsKey('temp_name')) {
+      context.handle(
+        _tempNameMeta,
+        tempName.isAcceptableOrUnknown(data['temp_name']!, _tempNameMeta),
+      );
+    }
+    if (data.containsKey('skipped')) {
+      context.handle(
+        _skippedMeta,
+        skipped.isAcceptableOrUnknown(data['skipped']!, _skippedMeta),
+      );
+    }
+    if (data.containsKey('skip_reason')) {
+      context.handle(
+        _skipReasonMeta,
+        skipReason.isAcceptableOrUnknown(data['skip_reason']!, _skipReasonMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {batchId, fileId};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {batchId, position},
+  ];
+  @override
+  RenameBatchItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RenameBatchItemRow(
+      batchId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}batch_id'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      folderPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folder_path'],
+      )!,
+      originalName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_name'],
+      )!,
+      currentFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}current_file_id'],
+      )!,
+      currentName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}current_name'],
+      )!,
+      newName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}new_name'],
+      ),
+      tempName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}temp_name'],
+      ),
+      skipped: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}skipped'],
+      )!,
+      skipReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}skip_reason'],
+      ),
+    );
+  }
+
+  @override
+  $RenameBatchItemsTable createAlias(String alias) {
+    return $RenameBatchItemsTable(attachedDatabase, alias);
+  }
+}
+
+class RenameBatchItemRow extends DataClass
+    implements Insertable<RenameBatchItemRow> {
+  final int batchId;
+
+  /// FileRef.id when the file was added (stable key).
+  final String fileId;
+
+  /// Swipe order, 1..n.
+  final int position;
+  final String folderPath;
+  final String originalName;
+  final String currentFileId;
+  final String currentName;
+
+  /// Final name, set when apply starts.
+  final String? newName;
+
+  /// Intermediate name for the two-phase rename (name swaps).
+  final String? tempName;
+  final bool skipped;
+
+  /// 'missing' | 'changed' | FileOpFailure.name.
+  final String? skipReason;
+  const RenameBatchItemRow({
+    required this.batchId,
+    required this.fileId,
+    required this.position,
+    required this.folderPath,
+    required this.originalName,
+    required this.currentFileId,
+    required this.currentName,
+    this.newName,
+    this.tempName,
+    required this.skipped,
+    this.skipReason,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['batch_id'] = Variable<int>(batchId);
+    map['file_id'] = Variable<String>(fileId);
+    map['position'] = Variable<int>(position);
+    map['folder_path'] = Variable<String>(folderPath);
+    map['original_name'] = Variable<String>(originalName);
+    map['current_file_id'] = Variable<String>(currentFileId);
+    map['current_name'] = Variable<String>(currentName);
+    if (!nullToAbsent || newName != null) {
+      map['new_name'] = Variable<String>(newName);
+    }
+    if (!nullToAbsent || tempName != null) {
+      map['temp_name'] = Variable<String>(tempName);
+    }
+    map['skipped'] = Variable<bool>(skipped);
+    if (!nullToAbsent || skipReason != null) {
+      map['skip_reason'] = Variable<String>(skipReason);
+    }
+    return map;
+  }
+
+  RenameBatchItemsCompanion toCompanion(bool nullToAbsent) {
+    return RenameBatchItemsCompanion(
+      batchId: Value(batchId),
+      fileId: Value(fileId),
+      position: Value(position),
+      folderPath: Value(folderPath),
+      originalName: Value(originalName),
+      currentFileId: Value(currentFileId),
+      currentName: Value(currentName),
+      newName: newName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(newName),
+      tempName: tempName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tempName),
+      skipped: Value(skipped),
+      skipReason: skipReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(skipReason),
+    );
+  }
+
+  factory RenameBatchItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RenameBatchItemRow(
+      batchId: serializer.fromJson<int>(json['batchId']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+      position: serializer.fromJson<int>(json['position']),
+      folderPath: serializer.fromJson<String>(json['folderPath']),
+      originalName: serializer.fromJson<String>(json['originalName']),
+      currentFileId: serializer.fromJson<String>(json['currentFileId']),
+      currentName: serializer.fromJson<String>(json['currentName']),
+      newName: serializer.fromJson<String?>(json['newName']),
+      tempName: serializer.fromJson<String?>(json['tempName']),
+      skipped: serializer.fromJson<bool>(json['skipped']),
+      skipReason: serializer.fromJson<String?>(json['skipReason']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'batchId': serializer.toJson<int>(batchId),
+      'fileId': serializer.toJson<String>(fileId),
+      'position': serializer.toJson<int>(position),
+      'folderPath': serializer.toJson<String>(folderPath),
+      'originalName': serializer.toJson<String>(originalName),
+      'currentFileId': serializer.toJson<String>(currentFileId),
+      'currentName': serializer.toJson<String>(currentName),
+      'newName': serializer.toJson<String?>(newName),
+      'tempName': serializer.toJson<String?>(tempName),
+      'skipped': serializer.toJson<bool>(skipped),
+      'skipReason': serializer.toJson<String?>(skipReason),
+    };
+  }
+
+  RenameBatchItemRow copyWith({
+    int? batchId,
+    String? fileId,
+    int? position,
+    String? folderPath,
+    String? originalName,
+    String? currentFileId,
+    String? currentName,
+    Value<String?> newName = const Value.absent(),
+    Value<String?> tempName = const Value.absent(),
+    bool? skipped,
+    Value<String?> skipReason = const Value.absent(),
+  }) => RenameBatchItemRow(
+    batchId: batchId ?? this.batchId,
+    fileId: fileId ?? this.fileId,
+    position: position ?? this.position,
+    folderPath: folderPath ?? this.folderPath,
+    originalName: originalName ?? this.originalName,
+    currentFileId: currentFileId ?? this.currentFileId,
+    currentName: currentName ?? this.currentName,
+    newName: newName.present ? newName.value : this.newName,
+    tempName: tempName.present ? tempName.value : this.tempName,
+    skipped: skipped ?? this.skipped,
+    skipReason: skipReason.present ? skipReason.value : this.skipReason,
+  );
+  RenameBatchItemRow copyWithCompanion(RenameBatchItemsCompanion data) {
+    return RenameBatchItemRow(
+      batchId: data.batchId.present ? data.batchId.value : this.batchId,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      position: data.position.present ? data.position.value : this.position,
+      folderPath: data.folderPath.present
+          ? data.folderPath.value
+          : this.folderPath,
+      originalName: data.originalName.present
+          ? data.originalName.value
+          : this.originalName,
+      currentFileId: data.currentFileId.present
+          ? data.currentFileId.value
+          : this.currentFileId,
+      currentName: data.currentName.present
+          ? data.currentName.value
+          : this.currentName,
+      newName: data.newName.present ? data.newName.value : this.newName,
+      tempName: data.tempName.present ? data.tempName.value : this.tempName,
+      skipped: data.skipped.present ? data.skipped.value : this.skipped,
+      skipReason: data.skipReason.present
+          ? data.skipReason.value
+          : this.skipReason,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RenameBatchItemRow(')
+          ..write('batchId: $batchId, ')
+          ..write('fileId: $fileId, ')
+          ..write('position: $position, ')
+          ..write('folderPath: $folderPath, ')
+          ..write('originalName: $originalName, ')
+          ..write('currentFileId: $currentFileId, ')
+          ..write('currentName: $currentName, ')
+          ..write('newName: $newName, ')
+          ..write('tempName: $tempName, ')
+          ..write('skipped: $skipped, ')
+          ..write('skipReason: $skipReason')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    batchId,
+    fileId,
+    position,
+    folderPath,
+    originalName,
+    currentFileId,
+    currentName,
+    newName,
+    tempName,
+    skipped,
+    skipReason,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RenameBatchItemRow &&
+          other.batchId == this.batchId &&
+          other.fileId == this.fileId &&
+          other.position == this.position &&
+          other.folderPath == this.folderPath &&
+          other.originalName == this.originalName &&
+          other.currentFileId == this.currentFileId &&
+          other.currentName == this.currentName &&
+          other.newName == this.newName &&
+          other.tempName == this.tempName &&
+          other.skipped == this.skipped &&
+          other.skipReason == this.skipReason);
+}
+
+class RenameBatchItemsCompanion extends UpdateCompanion<RenameBatchItemRow> {
+  final Value<int> batchId;
+  final Value<String> fileId;
+  final Value<int> position;
+  final Value<String> folderPath;
+  final Value<String> originalName;
+  final Value<String> currentFileId;
+  final Value<String> currentName;
+  final Value<String?> newName;
+  final Value<String?> tempName;
+  final Value<bool> skipped;
+  final Value<String?> skipReason;
+  final Value<int> rowid;
+  const RenameBatchItemsCompanion({
+    this.batchId = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.folderPath = const Value.absent(),
+    this.originalName = const Value.absent(),
+    this.currentFileId = const Value.absent(),
+    this.currentName = const Value.absent(),
+    this.newName = const Value.absent(),
+    this.tempName = const Value.absent(),
+    this.skipped = const Value.absent(),
+    this.skipReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RenameBatchItemsCompanion.insert({
+    required int batchId,
+    required String fileId,
+    required int position,
+    required String folderPath,
+    required String originalName,
+    required String currentFileId,
+    required String currentName,
+    this.newName = const Value.absent(),
+    this.tempName = const Value.absent(),
+    this.skipped = const Value.absent(),
+    this.skipReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : batchId = Value(batchId),
+       fileId = Value(fileId),
+       position = Value(position),
+       folderPath = Value(folderPath),
+       originalName = Value(originalName),
+       currentFileId = Value(currentFileId),
+       currentName = Value(currentName);
+  static Insertable<RenameBatchItemRow> custom({
+    Expression<int>? batchId,
+    Expression<String>? fileId,
+    Expression<int>? position,
+    Expression<String>? folderPath,
+    Expression<String>? originalName,
+    Expression<String>? currentFileId,
+    Expression<String>? currentName,
+    Expression<String>? newName,
+    Expression<String>? tempName,
+    Expression<bool>? skipped,
+    Expression<String>? skipReason,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (batchId != null) 'batch_id': batchId,
+      if (fileId != null) 'file_id': fileId,
+      if (position != null) 'position': position,
+      if (folderPath != null) 'folder_path': folderPath,
+      if (originalName != null) 'original_name': originalName,
+      if (currentFileId != null) 'current_file_id': currentFileId,
+      if (currentName != null) 'current_name': currentName,
+      if (newName != null) 'new_name': newName,
+      if (tempName != null) 'temp_name': tempName,
+      if (skipped != null) 'skipped': skipped,
+      if (skipReason != null) 'skip_reason': skipReason,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RenameBatchItemsCompanion copyWith({
+    Value<int>? batchId,
+    Value<String>? fileId,
+    Value<int>? position,
+    Value<String>? folderPath,
+    Value<String>? originalName,
+    Value<String>? currentFileId,
+    Value<String>? currentName,
+    Value<String?>? newName,
+    Value<String?>? tempName,
+    Value<bool>? skipped,
+    Value<String?>? skipReason,
+    Value<int>? rowid,
+  }) {
+    return RenameBatchItemsCompanion(
+      batchId: batchId ?? this.batchId,
+      fileId: fileId ?? this.fileId,
+      position: position ?? this.position,
+      folderPath: folderPath ?? this.folderPath,
+      originalName: originalName ?? this.originalName,
+      currentFileId: currentFileId ?? this.currentFileId,
+      currentName: currentName ?? this.currentName,
+      newName: newName ?? this.newName,
+      tempName: tempName ?? this.tempName,
+      skipped: skipped ?? this.skipped,
+      skipReason: skipReason ?? this.skipReason,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (batchId.present) {
+      map['batch_id'] = Variable<int>(batchId.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (folderPath.present) {
+      map['folder_path'] = Variable<String>(folderPath.value);
+    }
+    if (originalName.present) {
+      map['original_name'] = Variable<String>(originalName.value);
+    }
+    if (currentFileId.present) {
+      map['current_file_id'] = Variable<String>(currentFileId.value);
+    }
+    if (currentName.present) {
+      map['current_name'] = Variable<String>(currentName.value);
+    }
+    if (newName.present) {
+      map['new_name'] = Variable<String>(newName.value);
+    }
+    if (tempName.present) {
+      map['temp_name'] = Variable<String>(tempName.value);
+    }
+    if (skipped.present) {
+      map['skipped'] = Variable<bool>(skipped.value);
+    }
+    if (skipReason.present) {
+      map['skip_reason'] = Variable<String>(skipReason.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RenameBatchItemsCompanion(')
+          ..write('batchId: $batchId, ')
+          ..write('fileId: $fileId, ')
+          ..write('position: $position, ')
+          ..write('folderPath: $folderPath, ')
+          ..write('originalName: $originalName, ')
+          ..write('currentFileId: $currentFileId, ')
+          ..write('currentName: $currentName, ')
+          ..write('newName: $newName, ')
+          ..write('tempName: $tempName, ')
+          ..write('skipped: $skipped, ')
+          ..write('skipReason: $skipReason, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PresetsTable extends Presets with TableInfo<$PresetsTable, PresetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PresetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 40,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _layoutJsonMeta = const VerificationMeta(
+    'layoutJson',
+  );
+  @override
+  late final GeneratedColumn<String> layoutJson = GeneratedColumn<String>(
+    'layout_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _filterJsonMeta = const VerificationMeta(
+    'filterJson',
+  );
+  @override
+  late final GeneratedColumn<String> filterJson = GeneratedColumn<String>(
+    'filter_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _includeReviewedMeta = const VerificationMeta(
+    'includeReviewed',
+  );
+  @override
+  late final GeneratedColumn<bool> includeReviewed = GeneratedColumn<bool>(
+    'include_reviewed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("include_reviewed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    layoutJson,
+    filterJson,
+    includeReviewed,
+    sortOrder,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'presets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PresetRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('layout_json')) {
+      context.handle(
+        _layoutJsonMeta,
+        layoutJson.isAcceptableOrUnknown(data['layout_json']!, _layoutJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_layoutJsonMeta);
+    }
+    if (data.containsKey('filter_json')) {
+      context.handle(
+        _filterJsonMeta,
+        filterJson.isAcceptableOrUnknown(data['filter_json']!, _filterJsonMeta),
+      );
+    }
+    if (data.containsKey('include_reviewed')) {
+      context.handle(
+        _includeReviewedMeta,
+        includeReviewed.isAcceptableOrUnknown(
+          data['include_reviewed']!,
+          _includeReviewedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PresetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PresetRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      layoutJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}layout_json'],
+      )!,
+      filterJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}filter_json'],
+      ),
+      includeReviewed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_reviewed'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PresetsTable createAlias(String alias) {
+    return $PresetsTable(attachedDatabase, alias);
+  }
+}
+
+class PresetRow extends DataClass implements Insertable<PresetRow> {
+  final int id;
+
+  /// Trimmed, 1–40 chars, unique ignoring case.
+  final String name;
+
+  /// SwipeLayout JSON.
+  final String layoutJson;
+
+  /// FileFilter JSON; null = no filter.
+  final String? filterJson;
+
+  /// P7: false = skip files already reviewed in this preset (default).
+  final bool includeReviewed;
+  final int sortOrder;
+  final DateTime createdAt;
+  const PresetRow({
+    required this.id,
+    required this.name,
+    required this.layoutJson,
+    this.filterJson,
+    required this.includeReviewed,
+    required this.sortOrder,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['layout_json'] = Variable<String>(layoutJson);
+    if (!nullToAbsent || filterJson != null) {
+      map['filter_json'] = Variable<String>(filterJson);
+    }
+    map['include_reviewed'] = Variable<bool>(includeReviewed);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  PresetsCompanion toCompanion(bool nullToAbsent) {
+    return PresetsCompanion(
+      id: Value(id),
+      name: Value(name),
+      layoutJson: Value(layoutJson),
+      filterJson: filterJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(filterJson),
+      includeReviewed: Value(includeReviewed),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory PresetRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PresetRow(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      layoutJson: serializer.fromJson<String>(json['layoutJson']),
+      filterJson: serializer.fromJson<String?>(json['filterJson']),
+      includeReviewed: serializer.fromJson<bool>(json['includeReviewed']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'layoutJson': serializer.toJson<String>(layoutJson),
+      'filterJson': serializer.toJson<String?>(filterJson),
+      'includeReviewed': serializer.toJson<bool>(includeReviewed),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  PresetRow copyWith({
+    int? id,
+    String? name,
+    String? layoutJson,
+    Value<String?> filterJson = const Value.absent(),
+    bool? includeReviewed,
+    int? sortOrder,
+    DateTime? createdAt,
+  }) => PresetRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    layoutJson: layoutJson ?? this.layoutJson,
+    filterJson: filterJson.present ? filterJson.value : this.filterJson,
+    includeReviewed: includeReviewed ?? this.includeReviewed,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  PresetRow copyWithCompanion(PresetsCompanion data) {
+    return PresetRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      layoutJson: data.layoutJson.present
+          ? data.layoutJson.value
+          : this.layoutJson,
+      filterJson: data.filterJson.present
+          ? data.filterJson.value
+          : this.filterJson,
+      includeReviewed: data.includeReviewed.present
+          ? data.includeReviewed.value
+          : this.includeReviewed,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PresetRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('layoutJson: $layoutJson, ')
+          ..write('filterJson: $filterJson, ')
+          ..write('includeReviewed: $includeReviewed, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    layoutJson,
+    filterJson,
+    includeReviewed,
+    sortOrder,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PresetRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.layoutJson == this.layoutJson &&
+          other.filterJson == this.filterJson &&
+          other.includeReviewed == this.includeReviewed &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt);
+}
+
+class PresetsCompanion extends UpdateCompanion<PresetRow> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> layoutJson;
+  final Value<String?> filterJson;
+  final Value<bool> includeReviewed;
+  final Value<int> sortOrder;
+  final Value<DateTime> createdAt;
+  const PresetsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.layoutJson = const Value.absent(),
+    this.filterJson = const Value.absent(),
+    this.includeReviewed = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  PresetsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String layoutJson,
+    this.filterJson = const Value.absent(),
+    this.includeReviewed = const Value.absent(),
+    required int sortOrder,
+    required DateTime createdAt,
+  }) : name = Value(name),
+       layoutJson = Value(layoutJson),
+       sortOrder = Value(sortOrder),
+       createdAt = Value(createdAt);
+  static Insertable<PresetRow> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? layoutJson,
+    Expression<String>? filterJson,
+    Expression<bool>? includeReviewed,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (layoutJson != null) 'layout_json': layoutJson,
+      if (filterJson != null) 'filter_json': filterJson,
+      if (includeReviewed != null) 'include_reviewed': includeReviewed,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  PresetsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? layoutJson,
+    Value<String?>? filterJson,
+    Value<bool>? includeReviewed,
+    Value<int>? sortOrder,
+    Value<DateTime>? createdAt,
+  }) {
+    return PresetsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      layoutJson: layoutJson ?? this.layoutJson,
+      filterJson: filterJson ?? this.filterJson,
+      includeReviewed: includeReviewed ?? this.includeReviewed,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (layoutJson.present) {
+      map['layout_json'] = Variable<String>(layoutJson.value);
+    }
+    if (filterJson.present) {
+      map['filter_json'] = Variable<String>(filterJson.value);
+    }
+    if (includeReviewed.present) {
+      map['include_reviewed'] = Variable<bool>(includeReviewed.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PresetsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('layoutJson: $layoutJson, ')
+          ..write('filterJson: $filterJson, ')
+          ..write('includeReviewed: $includeReviewed, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3821,6 +6298,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PendingDeletesTable pendingDeletes = $PendingDeletesTable(this);
   late final $PendingFolderItemsTable pendingFolderItems =
       $PendingFolderItemsTable(this);
+  late final $TagsTable tags = $TagsTable(this);
+  late final $FileTagsTable fileTags = $FileTagsTable(this);
+  late final $FavoritesTable favorites = $FavoritesTable(this);
+  late final $RenameBatchesTable renameBatches = $RenameBatchesTable(this);
+  late final $RenameBatchItemsTable renameBatchItems = $RenameBatchItemsTable(
+    this,
+  );
+  late final $PresetsTable presets = $PresetsTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -3841,9 +6326,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'mi_name',
     'CREATE INDEX mi_name ON media_index (name_lower)',
   );
+  late final Index miScreenshotDate = Index(
+    'mi_screenshot_date',
+    'CREATE INDEX mi_screenshot_date ON media_index (screenshot, sort_date_ms)',
+  );
   late final Index oneActiveSession = Index(
     'one_active_session',
     'CREATE UNIQUE INDEX one_active_session ON sessions (is_active) WHERE is_active = 1',
+  );
+  late final Index oneOpenSessionPerPreset = Index(
+    'one_open_session_per_preset',
+    'CREATE UNIQUE INDEX one_open_session_per_preset ON sessions (COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
   );
   late final Index saSessionStatusSeq = Index(
     'sa_session_status_seq',
@@ -3857,6 +6350,18 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'pfi_expires',
     'CREATE INDEX pfi_expires ON pending_folder_items (expires_at)',
   );
+  late final Index ftTag = Index(
+    'ft_tag',
+    'CREATE INDEX ft_tag ON file_tags (tag_id)',
+  );
+  late final Index oneCollectingBatch = Index(
+    'one_collecting_batch',
+    'CREATE UNIQUE INDEX one_collecting_batch ON rename_batches (session_id) WHERE status = \'collecting\'',
+  );
+  late final Index presetsNameNocase = Index(
+    'presets_name_nocase',
+    'CREATE UNIQUE INDEX presets_name_nocase ON presets (name COLLATE NOCASE)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3868,15 +6373,26 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     sessionActions,
     pendingDeletes,
     pendingFolderItems,
+    tags,
+    fileTags,
+    favorites,
+    renameBatches,
+    renameBatchItems,
+    presets,
     miKindDate,
     miKindSize,
     miFolderDate,
     miDate,
     miName,
+    miScreenshotDate,
     oneActiveSession,
+    oneOpenSessionPerPreset,
     saSessionStatusSeq,
     pdSessionStatus,
     pfiExpires,
+    ftTag,
+    oneCollectingBatch,
+    presetsNameNocase,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3900,6 +6416,27 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('pending_deletes', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tags',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('file_tags', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('rename_batches', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'rename_batches',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('rename_batch_items', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -4059,6 +6596,7 @@ typedef $$MediaIndexTableCreateCompanionBuilder = MediaIndexCompanion Function({
   required FileOrigin origin,
   required int indexedAtMs,
   required int scanGeneration,
+  Value<bool> screenshot,
   Value<int> rowid,
 });
 typedef $$MediaIndexTableUpdateCompanionBuilder = MediaIndexCompanion Function({
@@ -4079,6 +6617,7 @@ typedef $$MediaIndexTableUpdateCompanionBuilder = MediaIndexCompanion Function({
   Value<FileOrigin> origin,
   Value<int> indexedAtMs,
   Value<int> scanGeneration,
+  Value<bool> screenshot,
   Value<int> rowid,
 });
 
@@ -4177,6 +6716,11 @@ class $$MediaIndexTableFilterComposer
     column: $table.scanGeneration,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get screenshot => $composableBuilder(
+    column: $table.screenshot,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$MediaIndexTableOrderingComposer
@@ -4272,6 +6816,11 @@ class $$MediaIndexTableOrderingComposer
     column: $table.scanGeneration,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get screenshot => $composableBuilder(
+    column: $table.screenshot,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaIndexTableAnnotationComposer
@@ -4345,6 +6894,11 @@ class $$MediaIndexTableAnnotationComposer
     column: $table.scanGeneration,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get screenshot => $composableBuilder(
+    column: $table.screenshot,
+    builder: (column) => column,
+  );
 }
 
 class $$MediaIndexTableTableManager
@@ -4395,6 +6949,7 @@ class $$MediaIndexTableTableManager
                 Value<FileOrigin> origin = const Value.absent(),
                 Value<int> indexedAtMs = const Value.absent(),
                 Value<int> scanGeneration = const Value.absent(),
+                Value<bool> screenshot = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaIndexCompanion(
                 id: id,
@@ -4414,6 +6969,7 @@ class $$MediaIndexTableTableManager
                 origin: origin,
                 indexedAtMs: indexedAtMs,
                 scanGeneration: scanGeneration,
+                screenshot: screenshot,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4435,6 +6991,7 @@ class $$MediaIndexTableTableManager
                 required FileOrigin origin,
                 required int indexedAtMs,
                 required int scanGeneration,
+                Value<bool> screenshot = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaIndexCompanion.insert(
                 id: id,
@@ -4454,6 +7011,7 @@ class $$MediaIndexTableTableManager
                 origin: origin,
                 indexedAtMs: indexedAtMs,
                 scanGeneration: scanGeneration,
+                screenshot: screenshot,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4501,6 +7059,7 @@ typedef $$SessionsTableCreateCompanionBuilder = SessionsCompanion Function({
   required DateTime startedAt,
   required DateTime updatedAt,
   required bool isActive,
+  Value<DateTime?> endedAt,
 });
 typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
   Value<int> id,
@@ -4513,6 +7072,7 @@ typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
   Value<DateTime> startedAt,
   Value<DateTime> updatedAt,
   Value<bool> isActive,
+  Value<DateTime?> endedAt,
 });
 
 final class $$SessionsTableReferences
@@ -4550,6 +7110,24 @@ final class $$SessionsTableReferences
     ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_pendingDeletesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RenameBatchesTable, List<RenameBatchRow>>
+  _renameBatchesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.renameBatches,
+    aliasName: 'sessions__id__rename_batches__session_id',
+  );
+
+  $$RenameBatchesTableProcessedTableManager get renameBatchesRefs {
+    final manager = $$RenameBatchesTableTableManager(
+      $_db,
+      $_db.renameBatches,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_renameBatchesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4615,6 +7193,11 @@ class $$SessionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> sessionActionsRefs(
     Expression<bool> Function($$SessionActionsTableFilterComposer f) f,
   ) {
@@ -4656,6 +7239,31 @@ class $$SessionsTableFilterComposer
           }) => $$PendingDeletesTableFilterComposer(
             $db: $db,
             $table: $db.pendingDeletes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> renameBatchesRefs(
+    Expression<bool> Function($$RenameBatchesTableFilterComposer f) f,
+  ) {
+    final $$RenameBatchesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.renameBatches,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchesTableFilterComposer(
+            $db: $db,
+            $table: $db.renameBatches,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4724,6 +7332,11 @@ class $$SessionsTableOrderingComposer
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SessionsTableAnnotationComposer
@@ -4768,6 +7381,9 @@ class $$SessionsTableAnnotationComposer
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
 
   Expression<T> sessionActionsRefs<T extends Object>(
     Expression<T> Function($$SessionActionsTableAnnotationComposer a) f,
@@ -4818,6 +7434,31 @@ class $$SessionsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> renameBatchesRefs<T extends Object>(
+    Expression<T> Function($$RenameBatchesTableAnnotationComposer a) f,
+  ) {
+    final $$RenameBatchesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.renameBatches,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.renameBatches,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SessionsTableTableManager
@@ -4836,6 +7477,7 @@ class $$SessionsTableTableManager
           PrefetchHooks Function({
             bool sessionActionsRefs,
             bool pendingDeletesRefs,
+            bool renameBatchesRefs,
           })
         > {
   $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
@@ -4861,6 +7503,7 @@ class $$SessionsTableTableManager
                 Value<DateTime> startedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
               }) => SessionsCompanion(
                 id: id,
                 presetId: presetId,
@@ -4872,6 +7515,7 @@ class $$SessionsTableTableManager
                 startedAt: startedAt,
                 updatedAt: updatedAt,
                 isActive: isActive,
+                endedAt: endedAt,
               ),
           createCompanionCallback:
               ({
@@ -4885,6 +7529,7 @@ class $$SessionsTableTableManager
                 required DateTime startedAt,
                 required DateTime updatedAt,
                 required bool isActive,
+                Value<DateTime?> endedAt = const Value.absent(),
               }) => SessionsCompanion.insert(
                 id: id,
                 presetId: presetId,
@@ -4896,6 +7541,7 @@ class $$SessionsTableTableManager
                 startedAt: startedAt,
                 updatedAt: updatedAt,
                 isActive: isActive,
+                endedAt: endedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4906,12 +7552,17 @@ class $$SessionsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({sessionActionsRefs = false, pendingDeletesRefs = false}) {
+              ({
+                sessionActionsRefs = false,
+                pendingDeletesRefs = false,
+                renameBatchesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (sessionActionsRefs) db.sessionActions,
                     if (pendingDeletesRefs) db.pendingDeletes,
+                    if (renameBatchesRefs) db.renameBatches,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4956,6 +7607,26 @@ class $$SessionsTableTableManager
                           referencedColumn: 'session_id',
                           typedResults: items,
                         ),
+                      if (renameBatchesRefs)
+                        await $_getPrefetchedDataByColumns<
+                          SessionRow,
+                          $SessionsTable,
+                          RenameBatchRow,
+                          $RenameBatchesTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SessionsTableReferences
+                              ._renameBatchesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).renameBatchesRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'session_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4976,7 +7647,11 @@ typedef $$SessionsTableProcessedTableManager =
       $$SessionsTableUpdateCompanionBuilder,
       (SessionRow, $$SessionsTableReferences),
       SessionRow,
-      PrefetchHooks Function({bool sessionActionsRefs, bool pendingDeletesRefs})
+      PrefetchHooks Function({
+        bool sessionActionsRefs,
+        bool pendingDeletesRefs,
+        bool renameBatchesRefs,
+      })
     >;
 typedef $$SessionActionsTableCreateCompanionBuilder =
     SessionActionsCompanion Function({
@@ -6360,6 +9035,1822 @@ typedef $$PendingFolderItemsTableProcessedTableManager =
       PendingFolderItemRow,
       PrefetchHooks Function()
     >;
+typedef $$TagsTableCreateCompanionBuilder = TagsCompanion Function({
+  Value<int> id,
+  required String name,
+  required int color,
+  required DateTime createdAt,
+});
+typedef $$TagsTableUpdateCompanionBuilder = TagsCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<int> color,
+  Value<DateTime> createdAt,
+});
+
+final class $$TagsTableReferences
+    extends BaseReferences<_$AppDatabase, $TagsTable, TagRow> {
+  $$TagsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$FileTagsTable, List<FileTagRow>>
+  _fileTagsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.fileTags,
+    aliasName: 'tags__id__file_tags__tag_id',
+  );
+
+  $$FileTagsTableProcessedTableManager get fileTagsRefs {
+    final manager = $$FileTagsTableTableManager(
+      $_db,
+      $_db.fileTags,
+    ).filter((f) => f.tagId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_fileTagsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$TagsTableFilterComposer extends Composer<_$AppDatabase, $TagsTable> {
+  $$TagsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> fileTagsRefs(
+    Expression<bool> Function($$FileTagsTableFilterComposer f) f,
+  ) {
+    final $$FileTagsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.fileTags,
+      getReferencedColumn: (t) => t.tagId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FileTagsTableFilterComposer(
+            $db: $db,
+            $table: $db.fileTags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$TagsTableOrderingComposer extends Composer<_$AppDatabase, $TagsTable> {
+  $$TagsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TagsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TagsTable> {
+  $$TagsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> fileTagsRefs<T extends Object>(
+    Expression<T> Function($$FileTagsTableAnnotationComposer a) f,
+  ) {
+    final $$FileTagsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.fileTags,
+      getReferencedColumn: (t) => t.tagId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FileTagsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.fileTags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$TagsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TagsTable,
+          TagRow,
+          $$TagsTableFilterComposer,
+          $$TagsTableOrderingComposer,
+          $$TagsTableAnnotationComposer,
+          $$TagsTableCreateCompanionBuilder,
+          $$TagsTableUpdateCompanionBuilder,
+          (TagRow, $$TagsTableReferences),
+          TagRow,
+          PrefetchHooks Function({bool fileTagsRefs})
+        > {
+  $$TagsTableTableManager(_$AppDatabase db, $TagsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TagsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TagsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TagsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => TagsCompanion(
+                id: id,
+                name: name,
+                color: color,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required int color,
+                required DateTime createdAt,
+              }) => TagsCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TagsTable, TagRow>(table),
+                  $$TagsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({fileTagsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (fileTagsRefs) db.fileTags],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (fileTagsRefs)
+                    await $_getPrefetchedDataByColumns<
+                      TagRow,
+                      $TagsTable,
+                      FileTagRow,
+                      $FileTagsTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$TagsTableReferences._fileTagsRefsTable(
+                        db,
+                      ),
+                      managerFromTypedResult: (p0) =>
+                          $$TagsTableReferences(db, table, p0).fileTagsRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'tag_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$TagsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TagsTable,
+      TagRow,
+      $$TagsTableFilterComposer,
+      $$TagsTableOrderingComposer,
+      $$TagsTableAnnotationComposer,
+      $$TagsTableCreateCompanionBuilder,
+      $$TagsTableUpdateCompanionBuilder,
+      (TagRow, $$TagsTableReferences),
+      TagRow,
+      PrefetchHooks Function({bool fileTagsRefs})
+    >;
+typedef $$FileTagsTableCreateCompanionBuilder = FileTagsCompanion Function({
+  required String fileId,
+  required int tagId,
+  required DateTime addedAt,
+  Value<int> rowid,
+});
+typedef $$FileTagsTableUpdateCompanionBuilder = FileTagsCompanion Function({
+  Value<String> fileId,
+  Value<int> tagId,
+  Value<DateTime> addedAt,
+  Value<int> rowid,
+});
+
+final class $$FileTagsTableReferences
+    extends BaseReferences<_$AppDatabase, $FileTagsTable, FileTagRow> {
+  $$FileTagsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $TagsTable _tagIdTable(_$AppDatabase db) =>
+      db.tags.createAlias('file_tags__tag_id__tags__id');
+
+  $$TagsTableProcessedTableManager get tagId {
+    final $_column = $_itemColumn<int>('tag_id')!;
+
+    final manager = $$TagsTableTableManager(
+      $_db,
+      $_db.tags,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tagIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$FileTagsTableFilterComposer
+    extends Composer<_$AppDatabase, $FileTagsTable> {
+  $$FileTagsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TagsTableFilterComposer get tagId {
+    final $$TagsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tagId,
+      referencedTable: $db.tags,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TagsTableFilterComposer(
+            $db: $db,
+            $table: $db.tags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FileTagsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FileTagsTable> {
+  $$FileTagsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TagsTableOrderingComposer get tagId {
+    final $$TagsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tagId,
+      referencedTable: $db.tags,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TagsTableOrderingComposer(
+            $db: $db,
+            $table: $db.tags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FileTagsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FileTagsTable> {
+  $$FileTagsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  $$TagsTableAnnotationComposer get tagId {
+    final $$TagsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tagId,
+      referencedTable: $db.tags,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TagsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FileTagsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FileTagsTable,
+          FileTagRow,
+          $$FileTagsTableFilterComposer,
+          $$FileTagsTableOrderingComposer,
+          $$FileTagsTableAnnotationComposer,
+          $$FileTagsTableCreateCompanionBuilder,
+          $$FileTagsTableUpdateCompanionBuilder,
+          (FileTagRow, $$FileTagsTableReferences),
+          FileTagRow,
+          PrefetchHooks Function({bool tagId})
+        > {
+  $$FileTagsTableTableManager(_$AppDatabase db, $FileTagsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FileTagsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FileTagsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FileTagsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<int> tagId = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FileTagsCompanion(
+                fileId: fileId,
+                tagId: tagId,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required int tagId,
+                required DateTime addedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => FileTagsCompanion.insert(
+                fileId: fileId,
+                tagId: tagId,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FileTagsTable, FileTagRow>(table),
+                  $$FileTagsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tagId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tagId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.tagId,
+                        referencedTable: $$FileTagsTableReferences._tagIdTable(
+                          db,
+                        ),
+                        referencedColumn: $$FileTagsTableReferences
+                            ._tagIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$FileTagsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FileTagsTable,
+      FileTagRow,
+      $$FileTagsTableFilterComposer,
+      $$FileTagsTableOrderingComposer,
+      $$FileTagsTableAnnotationComposer,
+      $$FileTagsTableCreateCompanionBuilder,
+      $$FileTagsTableUpdateCompanionBuilder,
+      (FileTagRow, $$FileTagsTableReferences),
+      FileTagRow,
+      PrefetchHooks Function({bool tagId})
+    >;
+typedef $$FavoritesTableCreateCompanionBuilder = FavoritesCompanion Function({
+  required String fileId,
+  required DateTime addedAt,
+  Value<int> rowid,
+});
+typedef $$FavoritesTableUpdateCompanionBuilder = FavoritesCompanion Function({
+  Value<String> fileId,
+  Value<DateTime> addedAt,
+  Value<int> rowid,
+});
+
+class $$FavoritesTableFilterComposer
+    extends Composer<_$AppDatabase, $FavoritesTable> {
+  $$FavoritesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FavoritesTableOrderingComposer
+    extends Composer<_$AppDatabase, $FavoritesTable> {
+  $$FavoritesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FavoritesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FavoritesTable> {
+  $$FavoritesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$FavoritesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FavoritesTable,
+          FavoriteRow,
+          $$FavoritesTableFilterComposer,
+          $$FavoritesTableOrderingComposer,
+          $$FavoritesTableAnnotationComposer,
+          $$FavoritesTableCreateCompanionBuilder,
+          $$FavoritesTableUpdateCompanionBuilder,
+          (
+            FavoriteRow,
+            BaseReferences<_$AppDatabase, $FavoritesTable, FavoriteRow>,
+          ),
+          FavoriteRow,
+          PrefetchHooks Function()
+        > {
+  $$FavoritesTableTableManager(_$AppDatabase db, $FavoritesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FavoritesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FavoritesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FavoritesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FavoritesCompanion(
+                fileId: fileId,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required DateTime addedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => FavoritesCompanion.insert(
+                fileId: fileId,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FavoritesTable, FavoriteRow>(table),
+                  BaseReferences<_$AppDatabase, $FavoritesTable, FavoriteRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FavoritesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FavoritesTable,
+      FavoriteRow,
+      $$FavoritesTableFilterComposer,
+      $$FavoritesTableOrderingComposer,
+      $$FavoritesTableAnnotationComposer,
+      $$FavoritesTableCreateCompanionBuilder,
+      $$FavoritesTableUpdateCompanionBuilder,
+      (
+        FavoriteRow,
+        BaseReferences<_$AppDatabase, $FavoritesTable, FavoriteRow>,
+      ),
+      FavoriteRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RenameBatchesTableCreateCompanionBuilder =
+    RenameBatchesCompanion Function({
+      Value<int> id,
+      required int sessionId,
+      required RenameBatchStatus status,
+      Value<String?> patternJson,
+      required DateTime createdAt,
+      Value<DateTime?> appliedAt,
+    });
+typedef $$RenameBatchesTableUpdateCompanionBuilder =
+    RenameBatchesCompanion Function({
+      Value<int> id,
+      Value<int> sessionId,
+      Value<RenameBatchStatus> status,
+      Value<String?> patternJson,
+      Value<DateTime> createdAt,
+      Value<DateTime?> appliedAt,
+    });
+
+final class $$RenameBatchesTableReferences
+    extends BaseReferences<_$AppDatabase, $RenameBatchesTable, RenameBatchRow> {
+  $$RenameBatchesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SessionsTable _sessionIdTable(_$AppDatabase db) =>
+      db.sessions.createAlias('rename_batches__session_id__sessions__id');
+
+  $$SessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$SessionsTableTableManager(
+      $_db,
+      $_db.sessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$RenameBatchItemsTable, List<RenameBatchItemRow>>
+  _renameBatchItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.renameBatchItems,
+    aliasName: 'rename_batches__id__rename_batch_items__batch_id',
+  );
+
+  $$RenameBatchItemsTableProcessedTableManager get renameBatchItemsRefs {
+    final manager = $$RenameBatchItemsTableTableManager(
+      $_db,
+      $_db.renameBatchItems,
+    ).filter((f) => f.batchId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _renameBatchItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$RenameBatchesTableFilterComposer
+    extends Composer<_$AppDatabase, $RenameBatchesTable> {
+  $$RenameBatchesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<RenameBatchStatus, RenameBatchStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get patternJson => $composableBuilder(
+    column: $table.patternJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get appliedAt => $composableBuilder(
+    column: $table.appliedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SessionsTableFilterComposer get sessionId {
+    final $$SessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> renameBatchItemsRefs(
+    Expression<bool> Function($$RenameBatchItemsTableFilterComposer f) f,
+  ) {
+    final $$RenameBatchItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.renameBatchItems,
+      getReferencedColumn: (t) => t.batchId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.renameBatchItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$RenameBatchesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RenameBatchesTable> {
+  $$RenameBatchesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get patternJson => $composableBuilder(
+    column: $table.patternJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get appliedAt => $composableBuilder(
+    column: $table.appliedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SessionsTableOrderingComposer get sessionId {
+    final $$SessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RenameBatchesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RenameBatchesTable> {
+  $$RenameBatchesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<RenameBatchStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get patternJson => $composableBuilder(
+    column: $table.patternJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get appliedAt =>
+      $composableBuilder(column: $table.appliedAt, builder: (column) => column);
+
+  $$SessionsTableAnnotationComposer get sessionId {
+    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> renameBatchItemsRefs<T extends Object>(
+    Expression<T> Function($$RenameBatchItemsTableAnnotationComposer a) f,
+  ) {
+    final $$RenameBatchItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.renameBatchItems,
+      getReferencedColumn: (t) => t.batchId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.renameBatchItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$RenameBatchesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RenameBatchesTable,
+          RenameBatchRow,
+          $$RenameBatchesTableFilterComposer,
+          $$RenameBatchesTableOrderingComposer,
+          $$RenameBatchesTableAnnotationComposer,
+          $$RenameBatchesTableCreateCompanionBuilder,
+          $$RenameBatchesTableUpdateCompanionBuilder,
+          (RenameBatchRow, $$RenameBatchesTableReferences),
+          RenameBatchRow,
+          PrefetchHooks Function({bool sessionId, bool renameBatchItemsRefs})
+        > {
+  $$RenameBatchesTableTableManager(_$AppDatabase db, $RenameBatchesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RenameBatchesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RenameBatchesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RenameBatchesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sessionId = const Value.absent(),
+                Value<RenameBatchStatus> status = const Value.absent(),
+                Value<String?> patternJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> appliedAt = const Value.absent(),
+              }) => RenameBatchesCompanion(
+                id: id,
+                sessionId: sessionId,
+                status: status,
+                patternJson: patternJson,
+                createdAt: createdAt,
+                appliedAt: appliedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sessionId,
+                required RenameBatchStatus status,
+                Value<String?> patternJson = const Value.absent(),
+                required DateTime createdAt,
+                Value<DateTime?> appliedAt = const Value.absent(),
+              }) => RenameBatchesCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                status: status,
+                patternJson: patternJson,
+                createdAt: createdAt,
+                appliedAt: appliedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RenameBatchesTable, RenameBatchRow>(table),
+                  $$RenameBatchesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({sessionId = false, renameBatchItemsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (renameBatchItemsRefs) db.renameBatchItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sessionId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.sessionId,
+                            referencedTable: $$RenameBatchesTableReferences
+                                ._sessionIdTable(db),
+                            referencedColumn: $$RenameBatchesTableReferences
+                                ._sessionIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (renameBatchItemsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          RenameBatchRow,
+                          $RenameBatchesTable,
+                          RenameBatchItemRow,
+                          $RenameBatchItemsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$RenameBatchesTableReferences
+                              ._renameBatchItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$RenameBatchesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).renameBatchItemsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'batch_id',
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$RenameBatchesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RenameBatchesTable,
+      RenameBatchRow,
+      $$RenameBatchesTableFilterComposer,
+      $$RenameBatchesTableOrderingComposer,
+      $$RenameBatchesTableAnnotationComposer,
+      $$RenameBatchesTableCreateCompanionBuilder,
+      $$RenameBatchesTableUpdateCompanionBuilder,
+      (RenameBatchRow, $$RenameBatchesTableReferences),
+      RenameBatchRow,
+      PrefetchHooks Function({bool sessionId, bool renameBatchItemsRefs})
+    >;
+typedef $$RenameBatchItemsTableCreateCompanionBuilder =
+    RenameBatchItemsCompanion Function({
+      required int batchId,
+      required String fileId,
+      required int position,
+      required String folderPath,
+      required String originalName,
+      required String currentFileId,
+      required String currentName,
+      Value<String?> newName,
+      Value<String?> tempName,
+      Value<bool> skipped,
+      Value<String?> skipReason,
+      Value<int> rowid,
+    });
+typedef $$RenameBatchItemsTableUpdateCompanionBuilder =
+    RenameBatchItemsCompanion Function({
+      Value<int> batchId,
+      Value<String> fileId,
+      Value<int> position,
+      Value<String> folderPath,
+      Value<String> originalName,
+      Value<String> currentFileId,
+      Value<String> currentName,
+      Value<String?> newName,
+      Value<String?> tempName,
+      Value<bool> skipped,
+      Value<String?> skipReason,
+      Value<int> rowid,
+    });
+
+final class $$RenameBatchItemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $RenameBatchItemsTable,
+          RenameBatchItemRow
+        > {
+  $$RenameBatchItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $RenameBatchesTable _batchIdTable(_$AppDatabase db) => db.renameBatches
+      .createAlias('rename_batch_items__batch_id__rename_batches__id');
+
+  $$RenameBatchesTableProcessedTableManager get batchId {
+    final $_column = $_itemColumn<int>('batch_id')!;
+
+    final manager = $$RenameBatchesTableTableManager(
+      $_db,
+      $_db.renameBatches,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_batchIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RenameBatchItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $RenameBatchItemsTable> {
+  $$RenameBatchItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folderPath => $composableBuilder(
+    column: $table.folderPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalName => $composableBuilder(
+    column: $table.originalName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currentFileId => $composableBuilder(
+    column: $table.currentFileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currentName => $composableBuilder(
+    column: $table.currentName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get newName => $composableBuilder(
+    column: $table.newName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tempName => $composableBuilder(
+    column: $table.tempName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get skipped => $composableBuilder(
+    column: $table.skipped,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get skipReason => $composableBuilder(
+    column: $table.skipReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$RenameBatchesTableFilterComposer get batchId {
+    final $$RenameBatchesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.batchId,
+      referencedTable: $db.renameBatches,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchesTableFilterComposer(
+            $db: $db,
+            $table: $db.renameBatches,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RenameBatchItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RenameBatchItemsTable> {
+  $$RenameBatchItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get folderPath => $composableBuilder(
+    column: $table.folderPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalName => $composableBuilder(
+    column: $table.originalName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentFileId => $composableBuilder(
+    column: $table.currentFileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentName => $composableBuilder(
+    column: $table.currentName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get newName => $composableBuilder(
+    column: $table.newName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tempName => $composableBuilder(
+    column: $table.tempName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get skipped => $composableBuilder(
+    column: $table.skipped,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get skipReason => $composableBuilder(
+    column: $table.skipReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$RenameBatchesTableOrderingComposer get batchId {
+    final $$RenameBatchesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.batchId,
+      referencedTable: $db.renameBatches,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchesTableOrderingComposer(
+            $db: $db,
+            $table: $db.renameBatches,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RenameBatchItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RenameBatchItemsTable> {
+  $$RenameBatchItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get folderPath => $composableBuilder(
+    column: $table.folderPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalName => $composableBuilder(
+    column: $table.originalName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currentFileId => $composableBuilder(
+    column: $table.currentFileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currentName => $composableBuilder(
+    column: $table.currentName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get newName =>
+      $composableBuilder(column: $table.newName, builder: (column) => column);
+
+  GeneratedColumn<String> get tempName =>
+      $composableBuilder(column: $table.tempName, builder: (column) => column);
+
+  GeneratedColumn<bool> get skipped =>
+      $composableBuilder(column: $table.skipped, builder: (column) => column);
+
+  GeneratedColumn<String> get skipReason => $composableBuilder(
+    column: $table.skipReason,
+    builder: (column) => column,
+  );
+
+  $$RenameBatchesTableAnnotationComposer get batchId {
+    final $$RenameBatchesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.batchId,
+      referencedTable: $db.renameBatches,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RenameBatchesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.renameBatches,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RenameBatchItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RenameBatchItemsTable,
+          RenameBatchItemRow,
+          $$RenameBatchItemsTableFilterComposer,
+          $$RenameBatchItemsTableOrderingComposer,
+          $$RenameBatchItemsTableAnnotationComposer,
+          $$RenameBatchItemsTableCreateCompanionBuilder,
+          $$RenameBatchItemsTableUpdateCompanionBuilder,
+          (RenameBatchItemRow, $$RenameBatchItemsTableReferences),
+          RenameBatchItemRow,
+          PrefetchHooks Function({bool batchId})
+        > {
+  $$RenameBatchItemsTableTableManager(
+    _$AppDatabase db,
+    $RenameBatchItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RenameBatchItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RenameBatchItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RenameBatchItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> batchId = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> folderPath = const Value.absent(),
+                Value<String> originalName = const Value.absent(),
+                Value<String> currentFileId = const Value.absent(),
+                Value<String> currentName = const Value.absent(),
+                Value<String?> newName = const Value.absent(),
+                Value<String?> tempName = const Value.absent(),
+                Value<bool> skipped = const Value.absent(),
+                Value<String?> skipReason = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RenameBatchItemsCompanion(
+                batchId: batchId,
+                fileId: fileId,
+                position: position,
+                folderPath: folderPath,
+                originalName: originalName,
+                currentFileId: currentFileId,
+                currentName: currentName,
+                newName: newName,
+                tempName: tempName,
+                skipped: skipped,
+                skipReason: skipReason,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int batchId,
+                required String fileId,
+                required int position,
+                required String folderPath,
+                required String originalName,
+                required String currentFileId,
+                required String currentName,
+                Value<String?> newName = const Value.absent(),
+                Value<String?> tempName = const Value.absent(),
+                Value<bool> skipped = const Value.absent(),
+                Value<String?> skipReason = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RenameBatchItemsCompanion.insert(
+                batchId: batchId,
+                fileId: fileId,
+                position: position,
+                folderPath: folderPath,
+                originalName: originalName,
+                currentFileId: currentFileId,
+                currentName: currentName,
+                newName: newName,
+                tempName: tempName,
+                skipped: skipped,
+                skipReason: skipReason,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RenameBatchItemsTable, RenameBatchItemRow>(
+                    table,
+                  ),
+                  $$RenameBatchItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({batchId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (batchId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.batchId,
+                        referencedTable: $$RenameBatchItemsTableReferences
+                            ._batchIdTable(db),
+                        referencedColumn: $$RenameBatchItemsTableReferences
+                            ._batchIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RenameBatchItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RenameBatchItemsTable,
+      RenameBatchItemRow,
+      $$RenameBatchItemsTableFilterComposer,
+      $$RenameBatchItemsTableOrderingComposer,
+      $$RenameBatchItemsTableAnnotationComposer,
+      $$RenameBatchItemsTableCreateCompanionBuilder,
+      $$RenameBatchItemsTableUpdateCompanionBuilder,
+      (RenameBatchItemRow, $$RenameBatchItemsTableReferences),
+      RenameBatchItemRow,
+      PrefetchHooks Function({bool batchId})
+    >;
+typedef $$PresetsTableCreateCompanionBuilder = PresetsCompanion Function({
+  Value<int> id,
+  required String name,
+  required String layoutJson,
+  Value<String?> filterJson,
+  Value<bool> includeReviewed,
+  required int sortOrder,
+  required DateTime createdAt,
+});
+typedef $$PresetsTableUpdateCompanionBuilder = PresetsCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String> layoutJson,
+  Value<String?> filterJson,
+  Value<bool> includeReviewed,
+  Value<int> sortOrder,
+  Value<DateTime> createdAt,
+});
+
+class $$PresetsTableFilterComposer
+    extends Composer<_$AppDatabase, $PresetsTable> {
+  $$PresetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get layoutJson => $composableBuilder(
+    column: $table.layoutJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeReviewed => $composableBuilder(
+    column: $table.includeReviewed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PresetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PresetsTable> {
+  $$PresetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get layoutJson => $composableBuilder(
+    column: $table.layoutJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includeReviewed => $composableBuilder(
+    column: $table.includeReviewed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PresetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PresetsTable> {
+  $$PresetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get layoutJson => $composableBuilder(
+    column: $table.layoutJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeReviewed => $composableBuilder(
+    column: $table.includeReviewed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$PresetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PresetsTable,
+          PresetRow,
+          $$PresetsTableFilterComposer,
+          $$PresetsTableOrderingComposer,
+          $$PresetsTableAnnotationComposer,
+          $$PresetsTableCreateCompanionBuilder,
+          $$PresetsTableUpdateCompanionBuilder,
+          (PresetRow, BaseReferences<_$AppDatabase, $PresetsTable, PresetRow>),
+          PresetRow,
+          PrefetchHooks Function()
+        > {
+  $$PresetsTableTableManager(_$AppDatabase db, $PresetsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PresetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PresetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PresetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> layoutJson = const Value.absent(),
+                Value<String?> filterJson = const Value.absent(),
+                Value<bool> includeReviewed = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => PresetsCompanion(
+                id: id,
+                name: name,
+                layoutJson: layoutJson,
+                filterJson: filterJson,
+                includeReviewed: includeReviewed,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String layoutJson,
+                Value<String?> filterJson = const Value.absent(),
+                Value<bool> includeReviewed = const Value.absent(),
+                required int sortOrder,
+                required DateTime createdAt,
+              }) => PresetsCompanion.insert(
+                id: id,
+                name: name,
+                layoutJson: layoutJson,
+                filterJson: filterJson,
+                includeReviewed: includeReviewed,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PresetsTable, PresetRow>(table),
+                  BaseReferences<_$AppDatabase, $PresetsTable, PresetRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PresetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PresetsTable,
+      PresetRow,
+      $$PresetsTableFilterComposer,
+      $$PresetsTableOrderingComposer,
+      $$PresetsTableAnnotationComposer,
+      $$PresetsTableCreateCompanionBuilder,
+      $$PresetsTableUpdateCompanionBuilder,
+      (PresetRow, BaseReferences<_$AppDatabase, $PresetsTable, PresetRow>),
+      PresetRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6376,4 +10867,15 @@ class $AppDatabaseManager {
       $$PendingDeletesTableTableManager(_db, _db.pendingDeletes);
   $$PendingFolderItemsTableTableManager get pendingFolderItems =>
       $$PendingFolderItemsTableTableManager(_db, _db.pendingFolderItems);
+  $$TagsTableTableManager get tags => $$TagsTableTableManager(_db, _db.tags);
+  $$FileTagsTableTableManager get fileTags =>
+      $$FileTagsTableTableManager(_db, _db.fileTags);
+  $$FavoritesTableTableManager get favorites =>
+      $$FavoritesTableTableManager(_db, _db.favorites);
+  $$RenameBatchesTableTableManager get renameBatches =>
+      $$RenameBatchesTableTableManager(_db, _db.renameBatches);
+  $$RenameBatchItemsTableTableManager get renameBatchItems =>
+      $$RenameBatchItemsTableTableManager(_db, _db.renameBatchItems);
+  $$PresetsTableTableManager get presets =>
+      $$PresetsTableTableManager(_db, _db.presets);
 }

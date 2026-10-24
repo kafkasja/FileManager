@@ -18,6 +18,7 @@ class SwipeCard extends StatefulWidget {
     required this.onSwiped,
     required this.canSwipe,
     this.verticalEnabled = false,
+    this.onBlocked,
     this.hintFor,
     this.onThresholdCrossed,
     this.onTap,
@@ -35,6 +36,10 @@ class SwipeCard extends StatefulWidget {
 
   /// Up or down has an action: turns on the diagonal guard.
   final bool verticalEnabled;
+
+  /// Released past the threshold in a direction [canSwipe] refused (the
+  /// card springs back). P2 explains why, e.g. a deleted tag.
+  final void Function(SwipeDirection direction)? onBlocked;
 
   /// Colour + icon shown on the card while it is past the threshold (S4).
   final SwipeHint? Function(SwipeDirection direction)? hintFor;
@@ -165,6 +170,7 @@ class _SwipeCardState extends State<SwipeCard>
     if (direction != null && widget.canSwipe(direction)) {
       unawaited(_flyOut(direction, size));
     } else {
+      if (direction != null) widget.onBlocked?.call(direction);
       _springBack();
     }
   }

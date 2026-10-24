@@ -1,37 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
+import 'package:kfm/features/tags/data/tag_providers.dart';
+import 'package:kfm/features/undo/domain/previous_state.dart';
 import 'package:kfm/features/undo/domain/undo_service.dart';
 
 /// Always visible on the swipe screen; disabled when there is nothing to
-/// undo. Long-press shows the last 5 actions (S2).
-class UndoButton extends ConsumerWidget {
+/// undo. Long-press shows the last 5 actions (S2). A tap gives instant
+/// feedback (tick + spinner) and further taps are ignored until that undo
+/// is done, so impatient double taps never undo extra files.
+class UndoButton extends ConsumerStatefulWidget {
   const new({required this.sessionId, super.key});
 
   final int sessionId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UndoButton> createState() => _UndoButtonState();
+}
+
+class _UndoButtonState extends ConsumerState<UndoButton> {
+  bool _busy = false;
+
+  int get sessionId => widget.sessionId;
+
+  @override
+  Widget build(BuildContext context) {
     final count = ref.watch(undoableCountProvider(sessionId)).value ?? 0;
-    final enabled = count > 0;
+    final enabled = count > 0 && !_busy;
     return GestureDetector(
       onLongPress: enabled ? () => _showHistory(context, ref) : null,
       child: IconButton.filledTonal(
         tooltip: context.l10n.undo,
         iconSize: 28,
-        onPressed: enabled ? () => _undo(context, ref) : null,
-        icon: const Icon(Icons.undo),
+        onPressed: count > 0 ? () => _undo(context) : null,
+        icon: _busy
+            ? const SizedBox.square(
+                dimension: 28,
+                child: Padding(
+                  padding: EdgeInsets.all(4),
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              )
+            : const Icon(Icons.undo),
       ),
     );
   }
 
-  static Future<void> _undo(BuildContext context, WidgetRef ref) async {
-    final outcome = await ref.read(swipeDeckControllerProvider.notifier).undo();
-    if (context.mounted) showUndoOutcome(context, outcome);
+  Future<void> _undo(BuildContext context) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    if (ref.read(hapticsEnabledProvider).value ?? true) {
+      HapticFeedback.selectionClick().ignore();
+    }
+    try {
+      final outcome = await ref
+          .read(swipeDeckControllerProvider.notifier)
+          .undo();
+      if (context.mounted) showUndoOutcome(context, outcome);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _showHistory(BuildContext context, WidgetRef ref) async {
@@ -58,7 +92,18 @@ class UndoButton extends ConsumerWidget {
               for (final (i, a) in actions.indexed)
                 ListTile(
                   leading: const Icon(Icons.undo),
-                  title: Text(actionLabel(l10n, a.action)),
+                  title: Text(switch (a.previous) {
+                    RenamePreviousState(op: RenameOp.apply) =>
+                      l10n.labelRenameApplied,
+                    _ => actionLabel(
+                      l10n,
+                      a.action,
+                      tagName: ref
+                          .read(tagsByIdProvider)
+                          .value?[a.action.tagId]
+                          ?.name,
+                    ),
+                  }),
                   subtitle: Text(names[a.fileId] ?? a.fileId),
                   onTap: () => Navigator.pop(context, i + 1),
                 ),

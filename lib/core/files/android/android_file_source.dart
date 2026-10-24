@@ -31,9 +31,14 @@ class AndroidFileSource implements FileSource {
     this._walker = walkFiles,
     this._canSeeAllFiles = _always,
     this._pendingFolder,
+    this._folderExists = _dirExists,
   });
 
   static bool _always() => true;
+  static Future<bool> _dirExists(String path) => Directory(path).exists();
+
+  /// Tests with device paths (MediaStore mocks) replace the disk check.
+  final Future<bool> Function(String path) _folderExists;
 
   final FilesChannel _channel;
   final Stream<List<FileRef>> Function(WalkOptions options) _walker;
@@ -174,6 +179,7 @@ class AndroidFileSource implements FileSource {
   Future<FileRef> move(FileRef f, String targetFolder) async {
     final target = _trimSlash(targetFolder);
     if (target == f.folderPath) return f;
+    await _requireFolder(target);
     final name = await uniqueName(f.name, (c) => _exists('$target/$c'));
     if (_isMs(f)) {
       final row = await _withConsent(
@@ -189,6 +195,7 @@ class AndroidFileSource implements FileSource {
   @override
   Future<FileRef> copy(FileRef f, String targetFolder) async {
     final target = _trimSlash(targetFolder);
+    await _requireFolder(target);
     final name = await uniqueName(f.name, (c) => _exists('$target/$c'));
     if (_isMs(f)) {
       final row = await _guard(
@@ -198,6 +205,34 @@ class AndroidFileSource implements FileSource {
       return _mediaRef(row);
     }
     return await _copyPath(f, '$target/$name');
+  }
+
+  @override
+  Future<bool> requestWriteAccess(List<FileRef> files) async {
+    final media = files.where(_isMs).toList();
+    if (media.isEmpty || await _sdkInt() < 30 || _canSeeAllFiles()) {
+      return true;
+    }
+    if (await _guard(null, _channel.canManageMedia)) return true;
+    for (final chunk in _chunks(media)) {
+      final granted = await _guard(
+        null,
+        () => _channel.requestWriteConsent([for (final f in chunk) f.uri]),
+      );
+      if (!granted) return false;
+    }
+    return true;
+  }
+
+  /// MediaStore would silently re-create a missing RELATIVE_PATH: a swipe
+  /// action whose folder was deleted must fail instead (TASK-P2).
+  Future<void> _requireFolder(String path) async {
+    if (!await _folderExists(path)) {
+      throw FileOpException(
+        FileOpFailure.notFound,
+        'target folder missing: $path',
+      );
+    }
   }
 
   @override

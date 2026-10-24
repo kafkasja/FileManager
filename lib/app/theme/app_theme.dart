@@ -14,5 +14,11 @@ ThemeData buildTheme(
       if (brightness == Brightness.light) AppTokens.light else AppTokens.dark,
     ],
     visualDensity: VisualDensity.standard,
+    // Messages float above each screen's bottom controls (the swipe undo
+    // button, Trash selection bar, Rename button) instead of covering them.
+    snackBarTheme: const SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      insetPadding: EdgeInsets.fromLTRB(16, 0, 16, 88),
+    ),
   );
 }

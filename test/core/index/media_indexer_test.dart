@@ -166,6 +166,7 @@ void main() {
     addPhotos(2);
     await indexer.start();
     final f = (await dao.byId('path:/s/DCIM/p0.jpg'))!;
+    source.addFolder('/s/Pictures');
     await source.move(f, '/s/Pictures');
     await Future<void>.delayed(Duration.zero);
     await indexer.incremental(); // serial: waits for the re-key job

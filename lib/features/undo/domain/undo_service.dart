@@ -2,9 +2,16 @@ import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/trash_types.dart';
+import 'package:kfm/core/index/media_index_dao.dart';
+import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/features/rename/data/rename_batch_repository.dart';
+import 'package:kfm/features/rename/data/rename_runner.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:kfm/features/tags/data/favorites_repository.dart';
+import 'package:kfm/features/tags/data/tag_repository.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/previous_state.dart';
@@ -22,10 +29,22 @@ class NothingToUndo extends UndoOutcome {
 
 /// Undone; the file can be shown again.
 class Undone extends UndoOutcome {
-  const new(this.action, {this.restoredFromTrash = false});
+  const new(
+    this.action, {
+    this.restoredFromTrash = false,
+    this.file,
+    this.reshow = true,
+  });
 
   final SessionAction action;
   final bool restoredFromTrash;
+
+  /// The file to show again when it isn't `action.fileId` (a move undone:
+  /// the file is back under its old folder, maybe with a new id).
+  final FileRef? file;
+
+  /// False when no file comes back to the deck (a rename batch reverted).
+  final bool reshow;
 }
 
 /// A committed permanent delete: can't come back. The stack moved past it.
@@ -54,6 +73,12 @@ class UndoService {
     required this._source,
     required this._lock,
     required this._queue,
+    required this._indexer,
+    required this._index,
+    required this._tags,
+    required this._favorites,
+    required this._renames,
+    required this._renameRunner,
   });
 
   final UndoRepository _repo;
@@ -61,6 +86,12 @@ class UndoService {
   final FileSource _source;
   final SerialLock _lock;
   final DbWriteQueue _queue;
+  final MediaIndexer _indexer;
+  final MediaIndexDao _index;
+  final TagRepository _tags;
+  final FavoritesRepository _favorites;
+  final RenameBatchRepository _renames;
+  final RenameRunner _renameRunner;
 
   Future<UndoOutcome> undoLast(int sessionId) => _lock.run(() async {
     // Recorded swipes may still be in the write queue.
@@ -108,11 +139,43 @@ class UndoService {
             return Undone(a, restoredFromTrash: true);
           }
         case SwipeActionType.moveTo:
+          final previous = a.previous as MovePreviousState;
+          final current = await _source.stat(a.fileId);
+          if (current == null) {
+            throw FileOpException(
+              FileOpFailure.notFound,
+              'moved file gone: ${a.fileId}',
+            );
+          }
+          final back = await _source.move(current, previous.folderPath);
+          await _indexer.addFiles([back]);
+          await _repo.markUndone(a.id);
+          return Undone(a, file: back);
         case SwipeActionType.copyTo:
+          final previous = a.previous as CopyPreviousState;
+          final copy = await _source.stat(previous.createdFileId);
+          if (copy != null) {
+            // KFM's own copy: deleted without a system dialog (P2 Kotlin).
+            await _source.deletePermanentlyBatch([copy]);
+          }
+          await _index.deleteIds([previous.createdFileId]);
         case SwipeActionType.addTag:
+          await _tags.removeIfAdded(a.fileId, a.previous as TagPreviousState);
         case SwipeActionType.favorite:
+          await _favorites.removeIfAdded(
+            a.fileId,
+            a.previous as FavoritePreviousState,
+          );
         case SwipeActionType.renameBatch:
-          throw UnimplementedError('undo of ${a.action.type.name}: TASK-P2/P3');
+          final previous = a.previous as RenamePreviousState;
+          if (previous.op == RenameOp.apply) {
+            await _renameRunner.revert(previous.batchId);
+            await _repo.markUndone(a.id);
+            return Undone(a, reshow: false);
+          }
+          if (previous.added) {
+            await _renames.removeItem(previous.batchId, a.fileId);
+          }
       }
       await _repo.markUndone(a.id);
       return Undone(a);

@@ -5,6 +5,9 @@ import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/browse/ui/browse_placeholder.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
+import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
+import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
+import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
 import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
@@ -24,6 +27,9 @@ abstract final class AppRoutes {
   static const trash = '/trash';
   static const settings = '/settings';
   static const customizeSwipes = '/settings/swipes';
+  static const renameBatch = '/swipe/rename';
+  static const presets = '/settings/presets';
+  static String presetEditorFor(int id) => '/settings/presets/$id';
 }
 
 /// Where to go for [location] given the current [access]; null = stay.
@@ -81,6 +87,12 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: AppRoutes.swipe,
                 builder: (context, state) => const SwipeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'rename',
+                    builder: (context, state) => const RenameBatchScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -109,6 +121,20 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'swipes',
                     builder: (context, state) => const CustomizeSwipesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'presets',
+                    builder: (context, state) => const ManagePresetsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) => PresetEditorScreen(
+                          presetId:
+                              int.tryParse(state.pathParameters['id'] ?? '') ??
+                              0,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

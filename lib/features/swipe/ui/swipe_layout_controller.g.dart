@@ -40,7 +40,7 @@ final class SwipeLayoutControllerProvider
 }
 
 String _$swipeLayoutControllerHash() =>
-    r'36734c8647320887316107d79003d0b9f812452e';
+    r'd4a78e9097993a7e465ea794143ada83b2694b58';
 
 /// The layout edited on "Customize swipes" (TASK-P1): the active session's
 /// layout, or the saved default when no session is active.

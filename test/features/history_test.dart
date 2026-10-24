@@ -11,10 +11,16 @@ import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
+import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/features/rename/data/rename_batch_repository.dart';
+import 'package:kfm/features/rename/data/rename_runner.dart';
 import 'package:kfm/features/session/data/session_repository.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/swipe/data/swipe_action_dispatcher.dart';
+import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:kfm/features/tags/data/favorites_repository.dart';
+import 'package:kfm/features/tags/data/tag_repository.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
@@ -47,6 +53,10 @@ void main() {
   late SwipeActionDispatcher dispatcher;
   late _TrashFake source;
   late MediaIndexDao index;
+  late MediaIndexer indexer;
+  late SwipeFileOps fileOps;
+  late TagRepository tags;
+  late FavoritesRepository favorites;
 
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
@@ -63,17 +73,54 @@ void main() {
       undo: undo,
       index: index,
     );
+    indexer = MediaIndexer(
+      dao: index,
+      source: source,
+      settings: SettingsRepository(db, queue),
+      canSeeAllFiles: () => true,
+    );
+    tags = TagRepository(db);
+    favorites = FavoritesRepository(db);
+    final renames = RenameBatchRepository(db);
+    final renameRunner = RenameRunner(
+      source: source,
+      repo: renames,
+      undo: undo,
+      lock: lock,
+      indexer: indexer,
+    );
+    fileOps = SwipeFileOps(
+      source: source,
+      undo: undo,
+      lock: lock,
+      indexer: indexer,
+    );
     undoService = UndoService(
       repo: undo,
       deletes: deletes,
       source: source,
       lock: lock,
       queue: queue,
+      indexer: indexer,
+      index: index,
+      tags: tags,
+      favorites: favorites,
+      renames: renames,
+      renameRunner: renameRunner,
     );
-    dispatcher = SwipeActionDispatcher(undo, deletes);
+    dispatcher = SwipeActionDispatcher(
+      undo,
+      deletes,
+      fileOps: fileOps,
+      tags: tags,
+      favorites: favorites,
+      renames: renames,
+    );
   });
 
   tearDown(() async {
+    await fileOps.dispose();
+    await indexer.dispose();
     await deletes.dispose();
     await queue.close();
     await db.close();

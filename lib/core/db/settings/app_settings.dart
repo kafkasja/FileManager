@@ -76,5 +76,21 @@ abstract final class AppSettings {
     defaultValue: true,
   );
 
-  // P4 adds actionBarEnabled, etc.
+  /// P2. Last 5 move/copy target folders, newest first (JSON list).
+  static final SettingKey<String> swipeRecentTargets = SettingKey.string(
+    'swipe.recentTargets',
+    '[]',
+  );
+
+  /// P6. The preset the swipe tab uses; 0 = Basic.
+  static final SettingKey<int> activePresetId = SettingKey.integer(
+    'presets.active',
+    0,
+  );
+
+  /// P4. Extra action buttons under the card (off by default).
+  static final SettingKey<bool> actionBarEnabled = SettingKey.boolean(
+    'swipe.actionBar.enabled',
+    defaultValue: false,
+  );
 }

@@ -25,6 +25,11 @@ class IndexQuery {
     this.to,
     this.nameContains,
     this.mimePrefix,
+    this.folderPaths = const {},
+    this.screenshotsOnly = false,
+    this.tagged,
+    this.anyTagIds = const {},
+    this.favoritesOnly = false,
   });
 
   /// Empty = all kinds.
@@ -46,6 +51,17 @@ class IndexQuery {
 
   /// e.g. 'video/'.
   final String? mimePrefix;
+
+  /// P5: empty = any; exact folders, OR'ed.
+  final Set<String> folderPaths;
+  final bool screenshotsOnly;
+
+  /// P5: null any · true ≥1 tag · false no tag.
+  final bool? tagged;
+
+  /// P5: non-empty = has at least one of these tags.
+  final Set<int> anyTagIds;
+  final bool favoritesOnly;
 
   static const all = IndexQuery();
 
@@ -69,6 +85,11 @@ class IndexQuery {
     DateTime? to,
     String? nameContains,
     String? mimePrefix,
+    Set<String>? folderPaths,
+    bool? screenshotsOnly,
+    bool? tagged,
+    Set<int>? anyTagIds,
+    bool? favoritesOnly,
   }) => IndexQuery(
     kinds: kinds ?? this.kinds,
     folderPath: folderPath ?? this.folderPath,
@@ -80,6 +101,11 @@ class IndexQuery {
     to: to ?? this.to,
     nameContains: nameContains ?? this.nameContains,
     mimePrefix: mimePrefix ?? this.mimePrefix,
+    folderPaths: folderPaths ?? this.folderPaths,
+    screenshotsOnly: screenshotsOnly ?? this.screenshotsOnly,
+    tagged: tagged ?? this.tagged,
+    anyTagIds: anyTagIds ?? this.anyTagIds,
+    favoritesOnly: favoritesOnly ?? this.favoritesOnly,
   );
 
   @override
@@ -95,7 +121,12 @@ class IndexQuery {
       other.from == from &&
       other.to == to &&
       other.nameContains == nameContains &&
-      other.mimePrefix == mimePrefix;
+      other.mimePrefix == mimePrefix &&
+      setEquals(other.folderPaths, folderPaths) &&
+      other.screenshotsOnly == screenshotsOnly &&
+      other.tagged == tagged &&
+      setEquals(other.anyTagIds, anyTagIds) &&
+      other.favoritesOnly == favoritesOnly;
 
   @override
   int get hashCode => Object.hash(
@@ -110,6 +141,11 @@ class IndexQuery {
     to,
     nameContains,
     mimePrefix,
+    Object.hashAllUnordered(folderPaths),
+    screenshotsOnly,
+    tagged,
+    Object.hashAllUnordered(anyTagIds),
+    favoritesOnly,
   );
 }
 

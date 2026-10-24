@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -14,6 +15,9 @@ Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
   final summary = await ref.read(
     pendingDeleteSummaryProvider(deck.session.id).future,
   );
+  final renameCount = await ref.read(
+    renameBatchCountProvider(deck.session.id).future,
+  );
   if (!context.mounted) return;
   final request = await showModalBottomSheet<ClearRequest>(
     context: context,
@@ -21,6 +25,7 @@ Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
     builder: (_) => _ClearSheet(
       canResetLayout: deck.session.layout != SwipeLayout.basic,
       waitingDeletes: summary.queued + summary.failed,
+      renameCount: renameCount,
     ),
   );
   if (request == null || request.isEmpty) return;
@@ -51,10 +56,17 @@ Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
 }
 
 class _ClearSheet extends StatefulWidget {
-  const new({required this.canResetLayout, required this.waitingDeletes});
+  const new({
+    required this.canResetLayout,
+    required this.waitingDeletes,
+    this.renameCount = 0,
+  });
 
   final bool canResetLayout;
   final int waitingDeletes;
+
+  /// P3: files in the rename batch that a new session drops.
+  final int renameCount;
 
   @override
   State<_ClearSheet> createState() => _ClearSheetState();
@@ -99,6 +111,8 @@ class _ClearSheetState extends State<_ClearSheet> {
               children: [
                 Text(l10n.clearNewSessionHelp),
                 Text(l10n.clearNewSessionDeletes(widget.waitingDeletes)),
+                if (widget.renameCount > 0)
+                  Text(l10n.clearRenameDropped(widget.renameCount)),
               ],
             ),
             isThreeLine: true,

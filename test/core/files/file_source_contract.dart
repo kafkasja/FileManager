@@ -82,6 +82,7 @@ void fileSourceContract(
 
     test('move relocates the file and reports an id change', () async {
       final f = await h.addFile('${h.root}/a/doc.pdf', [1, 2]);
+      await s.createFolder(h.root, 'b');
       final changes = <FileIdChange>[];
       final sub = s.idChanges.listen(changes.add);
       addTearDown(sub.cancel);
@@ -112,8 +113,29 @@ void fileSourceContract(
       expect(same.id, f.id);
     });
 
+    test(
+      'move/copy into a missing folder throw notFound, file untouched',
+      () async {
+        final f = await h.addFile('${h.root}/a/doc.pdf', [1]);
+        await expectLater(
+          s.move(f, '${h.root}/gone'),
+          _fails(FileOpFailure.notFound),
+        );
+        await expectLater(
+          s.copy(f, '${h.root}/gone'),
+          _fails(FileOpFailure.notFound),
+        );
+        expect((await s.stat(f.id))?.folderPath, '${h.root}/a');
+      },
+    );
+
+    test('requestWriteAccess for nothing is granted', () async {
+      expect(await s.requestWriteAccess(const []), isTrue);
+    });
+
     test('move of a file deleted meanwhile throws notFound', () async {
       final f = await h.addFile('${h.root}/a/doc.pdf', [1]);
+      await s.createFolder(h.root, 'b');
       await h.removeExternally(f);
       await expectLater(
         s.move(f, '${h.root}/b'),

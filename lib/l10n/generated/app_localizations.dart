@@ -532,6 +532,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{Session finished.} =1{Session finished: 1 file deleted, {size} freed.} other{Session finished: {count} files deleted, {size} freed.}}'**
   String sessionSummary(int count, String size);
 
+  /// No description provided for @sessionSummaryTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Session finished.} =1{Session finished: 1 file moved to the trash ({size}).} other{Session finished: {count} files moved to the trash ({size}).}}'**
+  String sessionSummaryTrash(int count, String size);
+
   /// No description provided for @deleteBatchWaiting.
   ///
   /// In en, this message translates to:
@@ -1047,6 +1053,870 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset'**
   String get reset;
+
+  /// No description provided for @swipeActionMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to folder…'**
+  String get swipeActionMoveTo;
+
+  /// No description provided for @swipeActionCopyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to folder…'**
+  String get swipeActionCopyTo;
+
+  /// No description provided for @swipeActionAddTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag…'**
+  String get swipeActionAddTag;
+
+  /// No description provided for @swipeActionFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get swipeActionFavorite;
+
+  /// No description provided for @swipeActionMoveToNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to {folder}'**
+  String swipeActionMoveToNamed(String folder);
+
+  /// No description provided for @swipeActionCopyToNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to {folder}'**
+  String swipeActionCopyToNamed(String folder);
+
+  /// No description provided for @swipeActionTagNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag: {tag}'**
+  String swipeActionTagNamed(String tag);
+
+  /// No description provided for @swipeActionTagMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag no longer exists'**
+  String get swipeActionTagMissing;
+
+  /// No description provided for @moveConsentNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Android may ask before each move'**
+  String get moveConsentNotice;
+
+  /// No description provided for @turnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get turnOn;
+
+  /// No description provided for @folderPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder'**
+  String get folderPickerTitle;
+
+  /// No description provided for @folderPickerRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get folderPickerRecent;
+
+  /// No description provided for @folderPickerWithPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders with photos'**
+  String get folderPickerWithPhotos;
+
+  /// No description provided for @folderPickerNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder…'**
+  String get folderPickerNew;
+
+  /// No description provided for @folderPickerNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get folderPickerNewTitle;
+
+  /// No description provided for @folderPickerNewIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Inside {folder}'**
+  String folderPickerNewIn(String folder);
+
+  /// No description provided for @folderNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder name'**
+  String get folderNameHint;
+
+  /// No description provided for @folderNameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That name can\'t be used'**
+  String get folderNameInvalid;
+
+  /// No description provided for @folderNeedsAllFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs All files access'**
+  String get folderNeedsAllFiles;
+
+  /// No description provided for @folderFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String folderFileCount(int count);
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @tagPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a tag'**
+  String get tagPickerTitle;
+
+  /// No description provided for @tagPickerNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag…'**
+  String get tagPickerNew;
+
+  /// No description provided for @tagNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag'**
+  String get tagNewTitle;
+
+  /// No description provided for @tagNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get tagNameHint;
+
+  /// No description provided for @tagNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag with this name already exists'**
+  String get tagNameTaken;
+
+  /// No description provided for @tagNameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 1 to 40 characters'**
+  String get tagNameInvalid;
+
+  /// No description provided for @tagsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet'**
+  String get tagsEmpty;
+
+  /// No description provided for @swipeProblemTagMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag no longer exists. Change it in Customize swipes.'**
+  String get swipeProblemTagMissing;
+
+  /// No description provided for @swipeProblemUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This swipe can\'t be used yet'**
+  String get swipeProblemUnsupported;
+
+  /// No description provided for @fileOpFolderMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder not found. Pick it again in Customize swipes.'**
+  String get fileOpFolderMissing;
+
+  /// No description provided for @fileOpDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Not moved: permission declined'**
+  String get fileOpDeclined;
+
+  /// No description provided for @fileOpNoSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space'**
+  String get fileOpNoSpace;
+
+  /// No description provided for @fileOpNeedsAllFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder needs All files access'**
+  String get fileOpNeedsAllFiles;
+
+  /// No description provided for @fileOpMoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t move {name}'**
+  String fileOpMoveFailed(String name);
+
+  /// No description provided for @fileOpCopyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t copy {name}'**
+  String fileOpCopyFailed(String name);
+
+  /// No description provided for @undoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'↩ Undone'**
+  String get undoneLabel;
+
+  /// No description provided for @swipeActionRenameBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to rename batch'**
+  String get swipeActionRenameBatch;
+
+  /// No description provided for @renamePill.
+  ///
+  /// In en, this message translates to:
+  /// **'✎ {count}'**
+  String renamePill(int count);
+
+  /// No description provided for @renameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename batch'**
+  String get renameTitle;
+
+  /// No description provided for @renamePatternLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name pattern'**
+  String get renamePatternLabel;
+
+  /// The {…} tokens are passed in literally; never translate them.
+  ///
+  /// In en, this message translates to:
+  /// **'holiday_{n}'**
+  String renamePatternHint(String n);
+
+  /// No description provided for @renameStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start at'**
+  String get renameStart;
+
+  /// No description provided for @renamePadding.
+  ///
+  /// In en, this message translates to:
+  /// **'Digits'**
+  String get renamePadding;
+
+  /// The {…} tokens are passed in literally; never translate them.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} = number · {date} = date · {orig} = original name'**
+  String renameTokensHelp(String n, String date, String orig);
+
+  /// No description provided for @renameMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing or changed: skipped'**
+  String get renameMissing;
+
+  /// No description provided for @renameCollision.
+  ///
+  /// In en, this message translates to:
+  /// **'Name was taken: \"{name}\" is used instead'**
+  String renameCollision(String name);
+
+  /// No description provided for @renameApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameApply;
+
+  /// No description provided for @renameDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard batch'**
+  String get renameDiscard;
+
+  /// No description provided for @renameDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this rename batch?'**
+  String get renameDiscardTitle;
+
+  /// No description provided for @renameDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The files stay as they are; only the batch is dropped.'**
+  String get renameDiscardBody;
+
+  /// No description provided for @renameErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a name pattern'**
+  String get renameErrorEmpty;
+
+  /// No description provided for @renameErrorInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'These characters can\'t be used: / \\ : * ? \" < > |'**
+  String get renameErrorInvalid;
+
+  /// The {…} tokens are passed in literally; never translate them.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {n} so every file gets its own number'**
+  String renameErrorNeedsCounter(String n);
+
+  /// No description provided for @renameErrorTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'The names would be too long'**
+  String get renameErrorTooLong;
+
+  /// No description provided for @renameRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Renaming…'**
+  String get renameRunning;
+
+  /// No description provided for @renameDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Renamed 1 file} other{Renamed {count} files}}'**
+  String renameDone(int count);
+
+  /// No description provided for @renameDoneSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed {renamed} · skipped {skipped}'**
+  String renameDoneSkipped(int renamed, int skipped);
+
+  /// No description provided for @renameDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing renamed: permission declined'**
+  String get renameDeclined;
+
+  /// No description provided for @renameNoUndoAfterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'You can undo this until you tap Done.'**
+  String get renameNoUndoAfterDone;
+
+  /// No description provided for @renameBeforeFinishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Rename 1 file first?} other{Rename {count} files first?}}'**
+  String renameBeforeFinishTitle(int count);
+
+  /// No description provided for @renameBeforeFinishBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rename batch hasn\'t been applied yet. Discarding it keeps the current names.'**
+  String get renameBeforeFinishBody;
+
+  /// No description provided for @renameOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename…'**
+  String get renameOpen;
+
+  /// No description provided for @labelRenameApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'✎ Renamed batch'**
+  String get labelRenameApplied;
+
+  /// No description provided for @clearRenameDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file in the rename batch will be dropped} other{{count} files in the rename batch will be dropped}}'**
+  String clearRenameDropped(int count);
+
+  /// No description provided for @barTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get barTrash;
+
+  /// No description provided for @barDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get barDelete;
+
+  /// No description provided for @barKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get barKeep;
+
+  /// No description provided for @barFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get barFavorite;
+
+  /// No description provided for @barRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get barRename;
+
+  /// No description provided for @actionBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Action bar'**
+  String get actionBarTitle;
+
+  /// No description provided for @actionBarHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra buttons under the card'**
+  String get actionBarHelp;
+
+  /// No description provided for @actionBarAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add action'**
+  String get actionBarAdd;
+
+  /// No description provided for @actionBarEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No buttons yet'**
+  String get actionBarEmpty;
+
+  /// No description provided for @actionBarRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get actionBarRemove;
+
+  /// No description provided for @actionBarFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 8 buttons'**
+  String get actionBarFull;
+
+  /// No description provided for @filterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filterTitle;
+
+  /// No description provided for @filterButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filterButton;
+
+  /// No description provided for @filterKinds.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get filterKinds;
+
+  /// No description provided for @filterPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get filterPhotos;
+
+  /// No description provided for @filterVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get filterVideos;
+
+  /// No description provided for @filterScreenshotsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots only'**
+  String get filterScreenshotsOnly;
+
+  /// No description provided for @filterDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get filterDate;
+
+  /// No description provided for @filterAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get filterAny;
+
+  /// No description provided for @filterThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get filterThisMonth;
+
+  /// No description provided for @filterLast30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get filterLast30Days;
+
+  /// No description provided for @filterCustomRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick dates…'**
+  String get filterCustomRange;
+
+  /// No description provided for @filterRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} – {to}'**
+  String filterRange(String from, String to);
+
+  /// No description provided for @filterSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get filterSize;
+
+  /// No description provided for @filterOverMb.
+  ///
+  /// In en, this message translates to:
+  /// **'Over {mb} MB'**
+  String filterOverMb(int mb);
+
+  /// No description provided for @filterFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get filterFolders;
+
+  /// No description provided for @filterFolderCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{folder} ({count})'**
+  String filterFolderCount(String folder, int count);
+
+  /// No description provided for @filterFolderMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'{folder} (missing)'**
+  String filterFolderMissing(String folder);
+
+  /// No description provided for @filterTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get filterTags;
+
+  /// No description provided for @filterTagged.
+  ///
+  /// In en, this message translates to:
+  /// **'Tagged'**
+  String get filterTagged;
+
+  /// No description provided for @filterUntagged.
+  ///
+  /// In en, this message translates to:
+  /// **'Untagged'**
+  String get filterUntagged;
+
+  /// No description provided for @filterSpecificTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific…'**
+  String get filterSpecificTags;
+
+  /// No description provided for @filterFavoritesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites only'**
+  String get filterFavoritesOnly;
+
+  /// No description provided for @filterMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files match} =1{1 file matches} other{{count} files match}}'**
+  String filterMatches(int count);
+
+  /// No description provided for @filterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get filterApply;
+
+  /// No description provided for @filterProblemSize.
+  ///
+  /// In en, this message translates to:
+  /// **'The minimum size is larger than the maximum'**
+  String get filterProblemSize;
+
+  /// No description provided for @filterProblemTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one tag'**
+  String get filterProblemTags;
+
+  /// No description provided for @filterProblemDate.
+  ///
+  /// In en, this message translates to:
+  /// **'The start date is after the end date'**
+  String get filterProblemDate;
+
+  /// No description provided for @filterNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No files match this filter'**
+  String get filterNoMatches;
+
+  /// No description provided for @filterAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All matching files done'**
+  String get filterAllDone;
+
+  /// No description provided for @filterChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change filter'**
+  String get filterChange;
+
+  /// No description provided for @presetBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic'**
+  String get presetBasic;
+
+  /// No description provided for @presetChipTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch preset'**
+  String get presetChipTooltip;
+
+  /// No description provided for @presetSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get presetSheetTitle;
+
+  /// No description provided for @presetManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage presets'**
+  String get presetManage;
+
+  /// No description provided for @presetSaveAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as preset…'**
+  String get presetSaveAs;
+
+  /// No description provided for @presetNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset name'**
+  String get presetNameLabel;
+
+  /// No description provided for @presetIncludeFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Include the current filter'**
+  String get presetIncludeFilter;
+
+  /// No description provided for @presetSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved “{name}”'**
+  String presetSaved(String name);
+
+  /// No description provided for @presetNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'A preset with this name already exists'**
+  String get presetNameTaken;
+
+  /// No description provided for @presetNameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 1 to 40 characters'**
+  String get presetNameInvalid;
+
+  /// No description provided for @presetRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get presetRename;
+
+  /// No description provided for @presetEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get presetEdit;
+
+  /// No description provided for @presetDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get presetDuplicate;
+
+  /// No description provided for @presetDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get presetDelete;
+
+  /// No description provided for @presetDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}”?'**
+  String presetDeleteConfirm(String name);
+
+  /// No description provided for @presetDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Its unfinished session ends. Your files aren\'t touched.'**
+  String get presetDeleteBody;
+
+  /// No description provided for @presetLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t load: edit or delete'**
+  String get presetLoadError;
+
+  /// No description provided for @presetNoSessionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start swiping in {name} to change the buttons for that session, or edit the preset in Manage presets.'**
+  String presetNoSessionHint(String name);
+
+  /// No description provided for @presetEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit preset'**
+  String get presetEditorTitle;
+
+  /// No description provided for @presetDirections.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe buttons'**
+  String get presetDirections;
+
+  /// No description provided for @presetFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get presetFilter;
+
+  /// No description provided for @presetEditorFilterNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No filter'**
+  String get presetEditorFilterNone;
+
+  /// No description provided for @presetEditorFilterOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter set'**
+  String get presetEditorFilterOn;
+
+  /// No description provided for @presetEditorSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get presetEditorSave;
+
+  /// No description provided for @presetEditorReplacesSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Also replaces the setup of this preset\'s unfinished session'**
+  String get presetEditorReplacesSession;
+
+  /// No description provided for @presetEditorDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard your changes?'**
+  String get presetEditorDiscard;
+
+  /// No description provided for @presetDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get presetDiscard;
+
+  /// No description provided for @presetSwitchBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t finish the deletes, so you\'re still on {name}. Try again.'**
+  String presetSwitchBlocked(String name);
+
+  /// No description provided for @presetEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No presets yet'**
+  String get presetEmptyTitle;
+
+  /// No description provided for @presetEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A preset saves your swipe buttons and, if you like, a filter. Switch between them with one tap.'**
+  String get presetEmptyBody;
+
+  /// No description provided for @presetEmptyQuickCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick cleanup'**
+  String get presetEmptyQuickCleanup;
+
+  /// No description provided for @presetEmptyQuickCleanupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Left = trash, right = keep, screenshots only'**
+  String get presetEmptyQuickCleanupHelp;
+
+  /// No description provided for @presetEmptySortHoliday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort holiday'**
+  String get presetEmptySortHoliday;
+
+  /// No description provided for @presetEmptySortHolidayHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Left = trash, right = move to a folder, up = favorite'**
+  String get presetEmptySortHolidayHelp;
+
+  /// No description provided for @presetCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get presetCreate;
+
+  /// No description provided for @presetNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New preset'**
+  String get presetNew;
+
+  /// No description provided for @settingsPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get settingsPresets;
+
+  /// No description provided for @settingsPresetsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved swipe setups'**
+  String get settingsPresetsHelp;
 }
 
 class _AppLocalizationsDelegate

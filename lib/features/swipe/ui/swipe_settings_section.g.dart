@@ -45,3 +45,41 @@ final class HapticsEnabledProvider
 }
 
 String _$hapticsEnabledHash() => r'0c7e9b57a010e28a2458ddfe19d46a0f61c8ac02';
+
+/// P4: the optional action bar under the card.
+
+@ProviderFor(actionBarEnabled)
+final actionBarEnabledProvider = ActionBarEnabledProvider._();
+
+/// P4: the optional action bar under the card.
+
+final class ActionBarEnabledProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// P4: the optional action bar under the card.
+  ActionBarEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'actionBarEnabledProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$actionBarEnabledHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return actionBarEnabled(ref);
+  }
+}
+
+String _$actionBarEnabledHash() => r'a30d2331bc938180a971d9e865e96a46580adb2f';

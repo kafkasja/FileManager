@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_ref.dart';
 @TableIndex(name: 'mi_folder_date', columns: {#folderPath, #sortDateMs})
 @TableIndex(name: 'mi_date', columns: {#sortDateMs})
 @TableIndex(name: 'mi_name', columns: {#nameLower})
+@TableIndex(name: 'mi_screenshot_date', columns: {#screenshot, #sortDateMs})
 class MediaIndex extends Table {
   /// FileRef.id.
   TextColumn get id => text()();
@@ -38,6 +39,9 @@ class MediaIndex extends Table {
   /// Scan generation that last saw this row. After a full scan, rows of the
   /// scanned kinds with an older generation are gone from the device.
   IntColumn get scanGeneration => integer()();
+
+  /// P5: see `isScreenshot` (set by the DAO on every write).
+  BoolColumn get screenshot => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

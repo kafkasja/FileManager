@@ -30,8 +30,9 @@ sealed class PreviousState {
           wasFavorite: j['wasFavorite']! as bool,
         ),
         SwipeActionType.renameBatch => RenamePreviousState(
-          name: j['name']! as String,
           batchId: j['batchId']! as int,
+          op: RenameOp.values.asNameMap()[j['op']] ?? RenameOp.add,
+          added: j['added'] as bool? ?? true,
         ),
       };
 
@@ -103,12 +104,24 @@ final class FavoritePreviousState extends PreviousState {
   Map<String, Object?> toJson() => {'wasFavorite': wasFavorite};
 }
 
-final class RenamePreviousState extends PreviousState {
-  const new({required this.name, required this.batchId});
+/// P3: `add` = a file swiped into the batch; `apply` = the whole batch was
+/// renamed (one row, so one undo reverts it).
+enum RenameOp { add, apply }
 
-  final String name;
+final class RenamePreviousState extends PreviousState {
+  const new({required this.batchId, required this.op, this.added = true});
+
   final int batchId;
+  final RenameOp op;
+
+  /// op == add: false when the file was already in the batch (undo then
+  /// removes nothing).
+  final bool added;
 
   @override
-  Map<String, Object?> toJson() => {'name': name, 'batchId': batchId};
+  Map<String, Object?> toJson() => {
+    'batchId': batchId,
+    'op': op.name,
+    if (op == RenameOp.add) 'added': added,
+  };
 }

@@ -94,7 +94,7 @@ Future<IndexPage> indexPage(
 
 /// Ticks (debounced) whenever the index changes.
 @Riverpod(keepAlive: true)
-Stream<void> mediaIndexChanges(Ref ref) =>
+Stream<int> mediaIndexChanges(Ref ref) =>
     ref.watch(mediaIndexDaoProvider).watchChanges();
 
 @Riverpod(keepAlive: true)

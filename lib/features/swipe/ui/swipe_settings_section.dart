@@ -16,6 +16,11 @@ part 'swipe_settings_section.g.dart';
 Stream<bool> hapticsEnabled(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch(AppSettings.hapticsEnabled);
 
+/// P4: the optional action bar under the card.
+@Riverpod(keepAlive: true)
+Stream<bool> actionBarEnabled(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watch(AppSettings.actionBarEnabled);
+
 /// Settings → Swiping (S4; P1/P2 add their options here).
 class SwipeSettingsSection extends ConsumerWidget {
   const new({super.key});
@@ -31,6 +36,13 @@ class SwipeSettingsSection extends ConsumerWidget {
           subtitle: Text(l10n.customizeSwipesHelp),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.go(AppRoutes.customizeSwipes),
+        ),
+        ListTile(
+          leading: const Icon(Icons.tune),
+          title: Text(l10n.settingsPresets),
+          subtitle: Text(l10n.settingsPresetsHelp),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.go(AppRoutes.presets),
         ),
         SwitchListTile(
           secondary: const Icon(Icons.vibration),

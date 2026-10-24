@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
+import 'package:kfm/core/db/tables/tags_table.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/core/index/screenshot_rule.dart';
 
 part 'media_index_dao.g.dart';
 
 /// Indexed, keyset-paged access to `media_index` (TASK-F5). Never OFFSET:
 /// pages near the end of 50k rows stay as fast as the first.
-@DriftAccessor(tables: [MediaIndex])
+@DriftAccessor(tables: [MediaIndex, FileTags, Favorites])
 class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     with _$MediaIndexDaoMixin {
   new(super.attachedDatabase);
@@ -64,17 +66,20 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
 
   /// Emits (debounced) after any change to the index. Views reload their
   /// visible pages. Not filtered per query: a cheap reload beats tracking.
-  Stream<void> watchChanges() {
+  /// Each event is a new number: Riverpod skips equal values, so a plain
+  /// `void` event would only ever be delivered once.
+  Stream<int> watchChanges() {
     final updates = attachedDatabase.tableUpdates(
       TableUpdateQuery.onTable(mediaIndex),
     );
-    late StreamController<void> controller;
+    late StreamController<int> controller;
+    var tick = 0;
     StreamSubscription<Set<TableUpdate>>? sub;
     Timer? timer;
-    controller = StreamController<void>(
+    controller = StreamController<int>(
       onListen: () => sub = updates.listen((_) {
         timer?.cancel();
-        timer = Timer(changeDebounce, () => controller.add(null));
+        timer = Timer(changeDebounce, () => controller.add(++tick));
       }, onError: controller.addError),
       onCancel: () async {
         timer?.cancel();
@@ -83,6 +88,35 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     );
     return controller.stream;
   }
+
+  /// Every indexed folder with its file count, sorted by path (P2 folder
+  /// picker: "Folders with photos").
+  Future<List<({String path, int count})>> folderSummaries() async {
+    final count = mediaIndex.id.count();
+    final rows =
+        await (selectOnly(mediaIndex)
+              ..addColumns([mediaIndex.folderPath, count])
+              ..groupBy([mediaIndex.folderPath])
+              ..orderBy([OrderingTerm.asc(mediaIndex.folderPath)]))
+            .get();
+    return [
+      for (final r in rows)
+        (path: r.read(mediaIndex.folderPath)!, count: r.read(count) ?? 0),
+    ];
+  }
+
+  /// Some indexed file in [folderPath] is called [name] (case-insensitive;
+  /// shared storage is). P3 preview collisions for MediaStore files.
+  Future<bool> nameExists(String folderPath, String name) async =>
+      (await (select(mediaIndex)
+                ..where(
+                  (t) =>
+                      t.folderPath.equals(folderPath) &
+                      t.nameLower.equals(name.toLowerCase()),
+                )
+                ..limit(1))
+              .get())
+          .isNotEmpty;
 
   Future<FileRef?> byId(String id) async {
     final row = await (select(
@@ -221,7 +255,49 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
       where =
           where & t.mimeType.like('${_escapeLike(prefix)}%', escapeChar: r'\');
     }
+    if (q.folderPaths.isNotEmpty) {
+      where = where & t.folderPath.isIn(q.folderPaths);
+    }
+    if (q.screenshotsOnly) where = where & t.screenshot.equals(true);
+    if (q.tagged case final tagged?) {
+      final any = existsQuery(
+        select(fileTags)..where((ft) => ft.fileId.equalsExp(t.id)),
+      );
+      where = where & (tagged ? any : any.not());
+    }
+    if (q.anyTagIds.isNotEmpty) {
+      where =
+          where &
+          existsQuery(
+            select(fileTags)..where(
+              (ft) => ft.fileId.equalsExp(t.id) & ft.tagId.isIn(q.anyTagIds),
+            ),
+          );
+    }
+    if (q.favoritesOnly) {
+      where =
+          where &
+          existsQuery(
+            select(favorites)..where((f) => f.fileId.equalsExp(t.id)),
+          );
+    }
     return where;
+  }
+
+  /// How many of [ids] match [q] (P5: acted files under a filter).
+  Future<int> countAmong(IndexQuery q, List<String> ids) async {
+    var total = 0;
+    for (var i = 0; i < ids.length; i += 500) {
+      final chunk = ids.sublist(i, i + 500 > ids.length ? ids.length : i + 500);
+      final count = mediaIndex.id.count();
+      final row =
+          await (selectOnly(mediaIndex)
+                ..addColumns([count])
+                ..where(_applyQuery(mediaIndex, q) & mediaIndex.id.isIn(chunk)))
+              .getSingle();
+      total += row.read(count) ?? 0;
+    }
+    return total;
   }
 
   Expression<Object> _sortColumn(FileSortField field) => switch (field) {
@@ -291,6 +367,7 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     origin: f.origin,
     indexedAtMs: indexedAtMs,
     scanGeneration: generation,
+    screenshot: Value(isScreenshot(f.kind, f.folderPath, f.name)),
   );
 
   static FileRef _toRef(MediaIndexRow r) => FileRef(

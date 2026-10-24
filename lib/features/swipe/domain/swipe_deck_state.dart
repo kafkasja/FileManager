@@ -1,6 +1,20 @@
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/session/domain/session.dart';
+import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:meta/meta.dart';
+
+/// The last undo that brought a file back (the card animates in, and a
+/// "↩ Undone" label shows). [tick] changes on every undo.
+@immutable
+class UndoMark {
+  const new({required this.tick, required this.fileId, this.from});
+
+  final int tick;
+  final String fileId;
+
+  /// The side the card left by (null: unknown, it just fades in).
+  final SwipeDirection? from;
+}
 
 /// The deck: a window of upcoming files (never the whole 50k queue).
 @immutable
@@ -13,6 +27,7 @@ class SwipeDeckState {
     required this.hasMore,
     this.newFiles = 0,
     this.restored = false,
+    this.undoMark,
   });
 
   final Session session;
@@ -36,6 +51,8 @@ class SwipeDeckState {
   /// SE2: this session was continued after the app process restarted.
   final bool restored;
 
+  final UndoMark? undoMark;
+
   FileRef? get current => upcoming.isEmpty ? null : upcoming.first;
 
   bool get isFinished => upcoming.isEmpty && !hasMore;
@@ -48,6 +65,7 @@ class SwipeDeckState {
     bool? hasMore,
     int? newFiles,
     bool? restored,
+    UndoMark? undoMark,
   }) => SwipeDeckState(
     session: session ?? this.session,
     upcoming: upcoming ?? this.upcoming,
@@ -56,5 +74,6 @@ class SwipeDeckState {
     hasMore: hasMore ?? this.hasMore,
     newFiles: newFiles ?? this.newFiles,
     restored: restored ?? this.restored,
+    undoMark: undoMark ?? this.undoMark,
   );
 }

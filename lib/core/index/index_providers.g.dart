@@ -287,8 +287,8 @@ final mediaIndexChangesProvider = MediaIndexChangesProvider._();
 /// Ticks (debounced) whenever the index changes.
 
 final class MediaIndexChangesProvider
-    extends $FunctionalProvider<AsyncValue<void>, void, Stream<void>>
-    with $FutureModifier<void>, $StreamProvider<void> {
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
   /// Ticks (debounced) whenever the index changes.
   MediaIndexChangesProvider._()
     : super(
@@ -306,16 +306,16 @@ final class MediaIndexChangesProvider
 
   @$internal
   @override
-  $StreamProviderElement<void> $createElement($ProviderPointer pointer) =>
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
       $StreamProviderElement(pointer);
 
   @override
-  Stream<void> create(Ref ref) {
+  Stream<int> create(Ref ref) {
     return mediaIndexChanges(ref);
   }
 }
 
-String _$mediaIndexChangesHash() => r'9352106200798feb11189bccc6903e1e837ff799';
+String _$mediaIndexChangesHash() => r'd90f8857232154c1cc2f73138647765ab3d65e93';
 
 @ProviderFor(thumbnailCache)
 final thumbnailCacheProvider = ThumbnailCacheProvider._();

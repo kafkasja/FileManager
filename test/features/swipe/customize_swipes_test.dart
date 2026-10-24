@@ -123,18 +123,64 @@ void main() {
       await _assign(tester, Icons.arrow_downward, 'Move to trash');
       expect(_deckLayout(app).hasVertical, isTrue);
 
+      await tester.scrollUntilVisible(
+        find.text('Reset to basic'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('Reset to basic'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(_deckLayout(app).hasVertical, isTrue);
 
+      await tester.scrollUntilVisible(
+        find.text('Reset to basic'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('Reset to basic'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Reset'));
       await tester.pumpAndSettle();
       expect(_deckLayout(app), SwipeLayout.basic);
       expect(find.text('Reset to basic'), findsNothing);
+    });
+  });
+
+  group('P2 sub-pickers', () {
+    testWidgets('Move to folder… picks an indexed folder', (tester) async {
+      final app = await _pump(tester);
+      await _openScreen(tester, app);
+      await tester.tap(_arrow(Icons.arrow_upward));
+      await tester.pumpAndSettle();
+      await tester.tap(_inSheet('Move to folder…'));
+      await tester.pumpAndSettle();
+      expect(find.text('Folders with photos'), findsOneWidget);
+      await tester.tap(find.text('DCIM').last);
+      await tester.pumpAndSettle();
+      expect(
+        _deckLayout(app).actionFor(SwipeDirection.up),
+        const SwipeAction(SwipeActionType.moveTo, targetFolder: '/s/DCIM'),
+      );
+      expect(find.text('Move to DCIM'), findsOneWidget);
+    });
+
+    testWidgets('Add tag… creates a tag and assigns it', (tester) async {
+      final app = await _pump(tester);
+      await _openScreen(tester, app);
+      await tester.tap(_arrow(Icons.arrow_downward));
+      await tester.pumpAndSettle();
+      await tester.tap(_inSheet('Add tag…'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New tag…'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Cats');
+      await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+      await tester.pumpAndSettle();
+      final action = _deckLayout(app).actionFor(SwipeDirection.down);
+      expect(action?.type, SwipeActionType.addTag);
+      expect(find.text('Tag: Cats'), findsOneWidget);
     });
   });
 

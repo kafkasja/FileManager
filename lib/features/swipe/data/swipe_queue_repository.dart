@@ -3,7 +3,7 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:meta/meta.dart';
 
-/// Photos and videos, newest first (P5 adds filters).
+/// Photos and videos, newest first: the base every filter narrows (P5).
 const swipeQuery = IndexQuery(kinds: {FileKind.image, FileKind.video});
 
 @immutable
@@ -27,6 +27,7 @@ class SwipeQueueRepository {
   /// the order stable when new photos are added.
   Future<SwipeWindow> window({
     required Set<String> skip,
+    IndexQuery query = swipeQuery,
     IndexCursor? after,
     int size = 200,
   }) async {
@@ -35,12 +36,12 @@ class SwipeQueueRepository {
     var first = true;
     while (files.length < size && (first || cursor != null)) {
       first = false;
-      final page = await _dao.page(swipeQuery, after: cursor, limit: size);
+      final page = await _dao.page(query, after: cursor, limit: size);
       files.addAll(page.items.where((f) => !skip.contains(f.id)));
       cursor = page.next;
     }
     return SwipeWindow(files, cursor);
   }
 
-  Future<int> count() => _dao.count(swipeQuery);
+  Future<int> count([IndexQuery query = swipeQuery]) => _dao.count(query);
 }

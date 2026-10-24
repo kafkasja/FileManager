@@ -62,6 +62,21 @@ class FakeFileSource implements FileSource {
   /// Adds an empty folder (and its parents).
   void addFolder(String path) => _addFolders(path);
 
+  /// P3: make [requestWriteAccess] answer "declined".
+  bool declineWriteAccess = false;
+
+  @override
+  Future<bool> requestWriteAccess(List<FileRef> files) async {
+    calls.add('requestWriteAccess ${files.length}');
+    return !declineWriteAccess;
+  }
+
+  void _requireFolder(String path) {
+    if (!_folders.contains(path)) {
+      throw FileOpException(FileOpFailure.notFound, 'no folder $path');
+    }
+  }
+
   /// Simulates another app deleting a file.
   void removeExternally(String id) {
     _files.remove(id);
@@ -140,6 +155,7 @@ class FakeFileSource implements FileSource {
     calls.add('move ${f.id} $targetFolder');
     final current = _require(f);
     if (targetFolder == current.folderPath) return current;
+    _requireFolder(targetFolder);
     final name = await uniqueName(
       current.name,
       (c) async => _taken('$targetFolder/$c'),
@@ -151,6 +167,7 @@ class FakeFileSource implements FileSource {
   Future<FileRef> copy(FileRef f, String targetFolder) async {
     calls.add('copy ${f.id} $targetFolder');
     final current = _require(f);
+    _requireFolder(targetFolder);
     final name = await uniqueName(
       current.name,
       (c) async => _taken('$targetFolder/$c'),

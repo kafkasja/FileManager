@@ -69,26 +69,75 @@ class UndoRepository {
     PreviousState previous, {
     Future<void> Function(int actionId)? alsoInTransaction,
   }) {
+    final seq = reserveSeq(sessionId);
+    _write(
+      seq,
+      sessionId,
+      file.id,
+      action,
+      () async => previous,
+      alsoInTransaction,
+    );
+    return seq;
+  }
+
+  /// Tag/favorite (P2): the change and its [PreviousState] are computed in
+  /// the same queued transaction as the undo row. Returns the seq.
+  int recordWith(
+    int sessionId,
+    FileRef file,
+    SwipeAction action, {
+    required Future<PreviousState> Function() applyInTransaction,
+  }) {
+    final seq = reserveSeq(sessionId);
+    _write(seq, sessionId, file.id, action, applyInTransaction, null);
+    return seq;
+  }
+
+  /// Move/copy (P2): the seq is taken at swipe time (keeps swipe order);
+  /// [recordAt] writes the row once the file operation has finished. A
+  /// failed operation leaves a gap, which is fine: seq only orders.
+  int reserveSeq(int sessionId) {
     final next = _nextSeq[sessionId];
     if (next == null) {
       throw StateError('UndoRepository.prepare($sessionId) not called');
     }
     _nextSeq[sessionId] = next + 1;
+    return next;
+  }
+
+  void recordAt(
+    int seq,
+    int sessionId,
+    String fileId,
+    SwipeAction action,
+    PreviousState previous,
+  ) => _write(seq, sessionId, fileId, action, () async => previous, null);
+
+  void _write(
+    int seq,
+    int sessionId,
+    String fileId,
+    SwipeAction action,
+    Future<PreviousState> Function() previous,
+    Future<void> Function(int actionId)? alsoInTransaction,
+  ) {
     final createdAt = _clock();
     _queue
         .enqueue(
           null, // every action is kept: never coalesce
           () => _db.transaction(() async {
+            final state = await previous();
             final id = await _db
                 .into(_db.sessionActions)
                 .insert(
                   SessionActionsCompanion.insert(
                     sessionId: sessionId,
-                    seq: next,
-                    fileId: file.id,
+                    seq: seq,
+                    fileId: fileId,
                     actionType: action.type.name,
                     payload: jsonEncode(action.toJson()),
-                    previousState: jsonEncode(previous.toJson()),
+                    previousState: jsonEncode(state.toJson()),
                     status: ActionStatus.applied,
                     createdAt: createdAt,
                   ),
@@ -97,7 +146,6 @@ class UndoRepository {
           }),
         )
         .fireAndForget();
-    return next;
   }
 
   /// The undo stack (applied + committed rows), newest first.
@@ -121,14 +169,25 @@ class UndoRepository {
         .map((r) => r.read(count) ?? 0);
   }
 
-  /// File ids with a non-undone action in the session (the deck skips them).
+  /// File ids with a non-undone action in the session (the deck skips them),
+  /// plus copies a `copyTo` swipe made (they are never offered either).
   Future<Set<String>> actedFileIds(int sessionId) async {
+    final t = _db.sessionActions;
+    const created = CustomExpression<String>(
+      r"json_extract(previous_state, '$.createdFileId')",
+    );
     final rows =
-        await (_db.selectOnly(_db.sessionActions)
-              ..addColumns([_db.sessionActions.fileId])
-              ..where(_inStack(_db.sessionActions, sessionId)))
+        await (_db.selectOnly(t)
+              ..addColumns([t.fileId, t.actionType, created])
+              ..where(_inStack(t, sessionId)))
             .get();
-    return {for (final r in rows) r.read(_db.sessionActions.fileId)!};
+    return {
+      for (final r in rows) ...[
+        r.read(t.fileId)!,
+        if (r.read(t.actionType) == SwipeActionType.copyTo.name)
+          ?r.read(created),
+      ],
+    };
   }
 
   /// Applied trash actions deeper than [safeZone] in the undo stack (depth

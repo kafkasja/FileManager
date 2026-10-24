@@ -103,7 +103,92 @@ final class ClearSessionUseCaseProvider
 }
 
 String _$clearSessionUseCaseHash() =>
-    r'02c788fae77928abfd62056526d5cbab9a149b45';
+    r'bc9bb2946b866b79e987dd0c07ba88bfe68af88e';
+
+@ProviderFor(swipeFileOps)
+final swipeFileOpsProvider = SwipeFileOpsProvider._();
+
+final class SwipeFileOpsProvider
+    extends $FunctionalProvider<SwipeFileOps, SwipeFileOps, SwipeFileOps>
+    with $Provider<SwipeFileOps> {
+  SwipeFileOpsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'swipeFileOpsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$swipeFileOpsHash();
+
+  @$internal
+  @override
+  $ProviderElement<SwipeFileOps> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SwipeFileOps create(Ref ref) {
+    return swipeFileOps(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SwipeFileOps value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SwipeFileOps>(value),
+    );
+  }
+}
+
+String _$swipeFileOpsHash() => r'5eef643081d32e1efc0d7b7777b29009e05e8c46';
+
+/// Move/copy results for the swipe screen's snackbars (P2).
+
+@ProviderFor(swipeFileOpEvents)
+final swipeFileOpEventsProvider = SwipeFileOpEventsProvider._();
+
+/// Move/copy results for the swipe screen's snackbars (P2).
+
+final class SwipeFileOpEventsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SwipeFileOpEvent>,
+          SwipeFileOpEvent,
+          Stream<SwipeFileOpEvent>
+        >
+    with $FutureModifier<SwipeFileOpEvent>, $StreamProvider<SwipeFileOpEvent> {
+  /// Move/copy results for the swipe screen's snackbars (P2).
+  SwipeFileOpEventsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'swipeFileOpEventsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$swipeFileOpEventsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<SwipeFileOpEvent> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<SwipeFileOpEvent> create(Ref ref) {
+    return swipeFileOpEvents(ref);
+  }
+}
+
+String _$swipeFileOpEventsHash() => r'0e58284501316605de926e0e918255e4a56bad86';
 
 @ProviderFor(swipeActionDispatcher)
 final swipeActionDispatcherProvider = SwipeActionDispatcherProvider._();
@@ -151,7 +236,7 @@ final class SwipeActionDispatcherProvider
 }
 
 String _$swipeActionDispatcherHash() =>
-    r'cfea66867f0de912f306dba740566bf4b47f9bfa';
+    r'23eb8f11bcf3027e34ef408db90c2fb07277395b';
 
 /// D1: no active session and the setting is "delete permanently" → the
 /// user confirms once before the session starts (resumed sessions never ask).
@@ -227,7 +312,7 @@ final class SwipeDeckControllerProvider
 }
 
 String _$swipeDeckControllerHash() =>
-    r'eeb401fe865d4a5b1c83b55c6df08ae6ea830824';
+    r'82f909ceb6b7393e3c6bdb1c066956caae613309';
 
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.

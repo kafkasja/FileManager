@@ -113,6 +113,40 @@ void main() {
     },
   );
 
+  test('a photo added while a fresh deck is open shows the chip and '
+      'updates the count (device bug 2026-10-24)', () async {
+    final c = await launch();
+    addTearDown(c.dispose);
+    // Watched like the swipe screen does (unwatched providers are paused).
+    c.listen(swipeDeckControllerProvider, (_, _) {});
+    expect(deck(c).newFiles, 0);
+    expect(deck(c).remaining, 6);
+
+    files.addFile('/s/DCIM/live.jpg', modifiedAt: DateTime.now().toUtc());
+    await c.read(mediaIndexerProvider).incremental();
+    await Future<void>.delayed(const Duration(seconds: 2));
+
+    expect(deck(c).current!.name, 'p5.jpg');
+    expect(deck(c).newFiles, 1);
+    expect(deck(c).remaining, 7);
+    // Small library (window below the refill size): still not appended.
+    expect(deck(c).upcoming.map((f) => f.name), isNot(contains('live.jpg')));
+
+    // A second change must arrive too (equal `void` events were dropped).
+    files.addFile(
+      '/s/DCIM/live2.jpg',
+      modifiedAt: DateTime.now().toUtc().add(const Duration(seconds: 1)),
+    );
+    await c.read(mediaIndexerProvider).incremental();
+    await Future<void>.delayed(const Duration(seconds: 2));
+    expect(deck(c).newFiles, 2);
+    expect(deck(c).remaining, 8);
+
+    await c.read(swipeDeckControllerProvider.notifier).showNewFiles();
+    expect(deck(c).current!.name, 'live2.jpg');
+    expect(deck(c).newFiles, 0);
+  });
+
   test('no active session: a fresh one starts from the top', () async {
     final c = await launch();
     addTearDown(c.dispose);

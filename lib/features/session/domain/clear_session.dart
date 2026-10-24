@@ -1,3 +1,4 @@
+import 'package:kfm/features/rename/data/rename_batch_repository.dart';
 import 'package:kfm/features/session/data/session_repository.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -36,10 +37,13 @@ class ClearResult {
 /// SE3: reset action buttons and/or end the session (committing its
 /// pending deletes first, without asking: decided by the user).
 class ClearSessionUseCase {
-  new(this._sessions, this._deletes);
+  new(this._sessions, this._deletes, {this._renames});
 
   final SessionRepository _sessions;
   final DeleteQueue _deletes;
+
+  /// P3: a collecting rename batch is dropped when the session ends.
+  final RenameBatchRepository? _renames;
 
   Future<ClearResult> execute(Session session, ClearRequest request) async {
     SwipeLayout? before;
@@ -54,6 +58,7 @@ class ClearSessionUseCase {
     if (await _deletes.stillQueued(session.id) > 0) {
       return ClearResult(layoutBefore: before, commit: commit);
     }
+    await _renames?.discardForSession(session.id);
     await _sessions.endActive();
     return ClearResult(
       layoutBefore: before,

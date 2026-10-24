@@ -56,6 +56,12 @@ abstract interface class FileSource {
   /// dialog throws `userCancelled`.
   Future<void> deleteFromTrash(List<TrashedItem> items);
 
+  /// Asks once for write access to [files] where the platform needs it
+  /// (Android 11+ media files without All files access / Media management:
+  /// one system dialog per ≤500). False = declined. P3 calls this before a
+  /// batch, so the renames don't each ask.
+  Future<bool> requestWriteAccess(List<FileRef> files);
+
   /// Emitted whenever move/rename/restore gives a file a new id.
   Stream<FileIdChange> get idChanges;
 }

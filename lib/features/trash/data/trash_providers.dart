@@ -4,6 +4,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -32,6 +33,8 @@ Future<int> startupMaintenance(Ref ref) async {
   final access = await ref.watch(storageAccessControllerProvider.future);
   if (!access.canUseSwipe) return 0;
   await ref.read(deleteQueueProvider).recoverStuck();
+  // P3: finish a rename batch a crash left half-way.
+  await ref.read(renameRunnerProvider).recoverInterrupted();
   final folder = ref.read(pendingFolderProvider);
   if (folder == null || !access.canSeeAllFiles) return 0;
   await folder.rebuildIfEmpty([androidPrimaryRoot]);

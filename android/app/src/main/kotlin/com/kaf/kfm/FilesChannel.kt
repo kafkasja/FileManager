@@ -419,7 +419,35 @@ class FilesChannel(
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            launchRequest(result) { MediaStore.createDeleteRequest(context.contentResolver, uris) }
+            // Rows this app created (e.g. a swipe copy being undone) can be
+            // deleted directly; only other apps' files need the dialog.
+            io.execute {
+                val others = mutableListOf<Uri>()
+                try {
+                    for (uri in uris) {
+                        if (isOwnedByUs(uri)) {
+                            context.contentResolver.delete(uri, null, null)
+                        } else {
+                            others.add(uri)
+                        }
+                    }
+                } catch (e: SecurityException) {
+                    main.post { result.error("PERMISSION_DENIED", e.toString(), null) }
+                    return@execute
+                } catch (e: Exception) {
+                    main.post { result.error("IO", e.toString(), null) }
+                    return@execute
+                }
+                main.post {
+                    if (others.isEmpty()) {
+                        result.success(true)
+                    } else {
+                        launchRequest(result) {
+                            MediaStore.createDeleteRequest(context.contentResolver, others)
+                        }
+                    }
+                }
+            }
             return
         }
         io.execute {
@@ -437,6 +465,15 @@ class FilesChannel(
             }
         }
     }
+
+    private fun isOwnedByUs(uri: Uri): Boolean =
+        context.contentResolver.query(
+            uri,
+            arrayOf(MediaStore.MediaColumns.OWNER_PACKAGE_NAME),
+            null,
+            null,
+            null,
+        )?.use { c -> c.moveToFirst() && c.getString(0) == context.packageName } ?: false
 
     /** API 30+: everything in the system trash this app can see. */
     private fun listTrashed(): List<Map<String, Any?>> {
