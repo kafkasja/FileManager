@@ -65,6 +65,9 @@ Future<int> startupMaintenance(Ref ref) async {
   if (canUseFolder) await folder.reconcile([androidPrimaryRoot]);
   // 2. D2/H1: rows stuck in `committing` (also without All files access).
   await ref.read(deleteQueueProvider).recoverStuck();
+  // H2/V1: deletes the folder couldn't take try again once it works (e.g.
+  // after a permission fix); a file already gone is recorded as such.
+  if (canUseFolder) await ref.read(deleteQueueProvider).retryUnavailable();
   // P3: finish a rename batch a crash left half-way.
   await ref.read(renameRunnerProvider).recoverInterrupted();
   var purged = 0;

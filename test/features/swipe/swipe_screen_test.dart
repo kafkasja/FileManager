@@ -251,4 +251,29 @@ void main() {
     await tester.pump();
     expect(app.permissions.calls, contains('openAppSettings'));
   });
+
+  testWidgets('V1 bug 3: a touch during the fly-out never strands the card', (
+    tester,
+  ) async {
+    final app = await _pumpWithLibrary(tester, 5);
+    String? current() =>
+        app.container.read(swipeDeckControllerProvider).value?.current?.name;
+    expect(current(), 'p4.jpg');
+    final center = tester.getCenter(find.byType(SwipeCard));
+    await tester.dragFrom(center, const Offset(-500, 0));
+    await tester.pump(const Duration(milliseconds: 20));
+    // A second finger lands and drags while the first card is still flying.
+    final touch = await tester.startGesture(center);
+    await touch.moveBy(const Offset(-60, 0));
+    await touch.moveBy(const Offset(-60, 0));
+    await tester.pump(const Duration(milliseconds: 20));
+    await touch.up();
+    await tester.pumpAndSettle();
+    expect(current(), isNot('p4.jpg'), reason: 'first swipe recorded');
+    final before = current();
+    await tester.drag(find.byType(SwipeCard), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(current(), isNot(before), reason: 'the deck still swipes');
+    await tester.pump(const Duration(seconds: 2));
+  });
 }

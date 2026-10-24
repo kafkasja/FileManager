@@ -24,6 +24,7 @@ class AndroidPermissionService implements PermissionService {
   Future<StorageAccess> check() async {
     final sdk = await _sdkInt();
     final state = await PhotoManager.getPermissionState(requestOption: _option);
+    if (state == PermissionState.authorized) await _ensureLegacyWrite(sdk);
     return StorageAccess(
       media: await _mediaAccess(state, sdk),
       allFiles: sdk < 30
@@ -39,8 +40,25 @@ class AndroidPermissionService implements PermissionService {
   @override
   Future<StorageAccess> requestMedia() async {
     await _settings.write(AppSettings.mediaPermissionAsked, true);
-    await PhotoManager.requestPermissionExtend();
+    final state = await PhotoManager.getPermissionState(requestOption: _option);
+    if (state == PermissionState.limited) {
+      // API 34 "Select photos": a plain request returns "limited" at once,
+      // without a dialog. This shows the system picker again, which has
+      // "Allow all" (V1).
+      await PhotoManager.presentLimited(type: RequestType.common);
+    } else {
+      await PhotoManager.requestPermissionExtend();
+    }
     return await check();
+  }
+
+  /// API ≤29: photo_manager asks for READ only, but deleting to the
+  /// pending folder (and moves) need WRITE. It's in the same group as READ,
+  /// so Android grants it without a dialog (V1 bug 5).
+  Future<void> _ensureLegacyWrite(int sdk) async {
+    if (sdk > 29) return;
+    // Requests only what isn't granted yet (no-op once both are).
+    await ph.Permission.storage.request();
   }
 
   @override

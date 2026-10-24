@@ -90,6 +90,8 @@ void main() {
   test('foreign keys are on and journal mode is readable', () async {
     final fk = await db.customSelect('PRAGMA foreign_keys').getSingle();
     expect(fk.read<int>('foreign_keys'), 1);
+    final sync = await db.customSelect('PRAGMA synchronous').getSingle();
+    expect(sync.read<int>('synchronous'), 2, reason: 'FULL (V1 bug 4)');
     // In-memory databases report "memory"; on disk F2 sets WAL.
     expect(await db.journalMode(), 'memory');
   });

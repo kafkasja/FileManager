@@ -226,11 +226,17 @@ class _SwipeCardState extends State<SwipeCard>
       SwipeDirection.down => Offset(_from.dx, size.height * 1.5),
     };
     _controller.value = 0;
-    await _controller.animateTo(
-      1,
-      duration: SwipeCard.flyOutDuration,
-      curve: Curves.easeIn,
-    );
+    try {
+      await _controller
+          .animateTo(
+            1,
+            duration: SwipeCard.flyOutDuration,
+            curve: Curves.easeIn,
+          )
+          .orCancel;
+    } on TickerCanceled {
+      // Disposed (or stopped) mid-flight: the swipe still counts.
+    }
     if (mounted) widget.onSwiped(direction);
   }
 
@@ -274,7 +280,11 @@ class _SwipeCardState extends State<SwipeCard>
           onTap: widget.onTap,
           onDoubleTapDown: widget.onDoubleTapDown,
           onDoubleTap: widget.onDoubleTapDown == null ? null : () {},
-          onScaleStart: (_) => _controller.stop(),
+          // A touch stops a spring-back, never a fly-out: a stopped fly-out
+          // would leave the card half off-screen for good (V1 bug 3).
+          onScaleStart: (_) {
+            if (!_flying) _controller.stop();
+          },
           onScaleUpdate: (d) => _onScaleUpdate(d, size),
           onScaleEnd: (d) => _onScaleEnd(d, size),
           child: ValueListenableBuilder<Offset>(

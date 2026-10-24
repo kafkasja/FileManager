@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
+import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/pump_app.dart';
@@ -49,6 +50,26 @@ void main() {
     expect(find.text('All time'), findsOneWidget);
     expect(find.textContaining('1 file reviewed'), findsWidgets);
     expect(find.textContaining('in trash'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('V1 bug 2: after Done the deck shows the new session', (
+    tester,
+  ) async {
+    final app = await _pump(tester);
+    for (var i = 0; i < 2; i++) {
+      await tester.drag(find.byType(SwipeCard), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Finish'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'OK'));
+    await tester.pumpAndSettle();
+    final deck = app.container.read(swipeDeckControllerProvider).value!;
+    expect(deck.swiped, 0);
+    expect(find.text('0 done · 1 left'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
   });
 }

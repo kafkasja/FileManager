@@ -55,10 +55,12 @@ Future<(TestApp, _TrashSource)> _pumpTrash(WidgetTester tester) async {
 }
 
 void main() {
-  test('days left rounds down; under a day = today', () {
-    final now = DateTime.utc(2026);
-    expect(daysLeft(now.add(const Duration(hours: 10)), now), 0);
-    expect(daysLeft(now.add(const Duration(hours: 45)), now), 1);
+  test('days left counts calendar days; same day = today', () {
+    final now = DateTime(2026, 10, 24, 20);
+    expect(daysLeft(DateTime(2026, 10, 24, 23), now), 0);
+    expect(daysLeft(now.add(const Duration(days: 1)), now), 1);
+    expect(daysLeft(now.add(const Duration(days: 7)), now), 7);
+    expect(daysLeft(DateTime(2026, 10, 25, 1), now), 1);
     expect(daysLeft(now.subtract(const Duration(days: 1)), now), 0);
   });
 

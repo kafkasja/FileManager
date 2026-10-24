@@ -121,8 +121,17 @@ class SwipeDeckController extends _$SwipeDeckController {
   Set<String> _acted = {};
   bool _refilling = false;
 
+  /// Bumped by every build. Async updates that started before a rebuild
+  /// (e.g. Done → new session) must not write their old deck back: while
+  /// rebuilding, `state.value` still returns the previous deck (V1 bug 2).
+  int _generation = 0;
+
+  bool _stale(int generation) =>
+      generation != _generation || !ref.mounted || state.isLoading;
+
   @override
   Future<SwipeDeckState> build() async {
+    _generation++;
     final sessions = ref.watch(sessionRepositoryProvider);
     final undo = ref.watch(undoRepositoryProvider);
     // Rebuild when the queue's source changes (tests swap the index).
@@ -447,9 +456,17 @@ class SwipeDeckController extends _$SwipeDeckController {
         .read(clearSessionUseCaseProvider)
         .execute(deck.session, request);
     if (result.sessionEnded) {
-      ref
-        ..invalidate(needsDeleteModeChoiceProvider)
-        ..invalidateSelf();
+      ref.invalidate(needsDeleteModeChoiceProvider);
+      // D1: a permanent-mode setting asks before every new session. A
+      // rebuild here would create that session at once and skip the
+      // question (V1 bug 6); the choice starts it (startSessionWith).
+      // Read directly: an unlistened StreamProvider's future never completes.
+      final mode = DeleteMode.parse(
+        await ref.read(settingsRepositoryProvider).read(AppSettings.deleteMode),
+      );
+      if (mode != DeleteMode.permanent) {
+        ref.invalidateSelf();
+      }
     } else if (result.layoutBefore != null) {
       await reloadSession();
     }
@@ -519,8 +536,9 @@ class SwipeDeckController extends _$SwipeDeckController {
   /// Index changed (scan, camera, other apps): top up a low window, or at
   /// least refresh "N left" and the new-photos chip.
   Future<void> _onIndexChanged() async {
+    final generation = _generation;
     final deck = state.value;
-    if (deck == null) return;
+    if (deck == null || _stale(generation)) return;
     if (deck.upcoming.length < refillBelow) {
       // Re-read from the resume point: skipping by id stays correct when new
       // files were indexed anywhere after it; newer ones come via the chip.
@@ -531,7 +549,7 @@ class SwipeDeckController extends _$SwipeDeckController {
     final remaining = await _remaining();
     final newFiles = await _countNew(deck.upcoming);
     final latest = state.value;
-    if (latest == null) return;
+    if (latest == null || _stale(generation)) return;
     state = AsyncData(
       latest.copyWith(remaining: remaining, newFiles: newFiles),
     );
@@ -552,17 +570,22 @@ class SwipeDeckController extends _$SwipeDeckController {
 
   Future<void> _load({required IndexCursor? after}) async {
     if (_refilling) return;
+    final generation = _generation;
     _refilling = true;
     try {
       final before = state.value;
-      if (before == null) return;
+      if (before == null || _stale(generation)) return;
       final shown = {for (final f in before.upcoming) f.id};
       final window = await _window(skip: {..._acted, ...shown}, after: after);
+      if (_stale(generation)) return;
       _next = window.next;
       _newAfterMs ??= _newestMs([...before.upcoming, ...window.files]);
       final latest = state.value ?? before;
       final present = {for (final f in latest.upcoming) f.id};
       final added = await _reviewedAmong(window.files);
+      final remaining = await _remaining();
+      final newFiles = await _countNew(latest.upcoming);
+      if (_stale(generation)) return;
       state = AsyncData(
         latest.copyWith(
           upcoming: [
@@ -575,13 +598,13 @@ class SwipeDeckController extends _$SwipeDeckController {
             ),
           ],
           hasMore: window.next != null,
-          remaining: await _remaining(),
-          newFiles: await _countNew(latest.upcoming),
+          remaining: remaining,
+          newFiles: newFiles,
           reviewedIds: {...latest.reviewedIds, ...added},
         ),
       );
     } on Object catch (e, st) {
-      state = AsyncError(e, st);
+      if (!_stale(generation)) state = AsyncError(e, st);
     } finally {
       _refilling = false;
     }

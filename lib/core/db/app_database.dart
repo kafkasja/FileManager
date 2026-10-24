@@ -154,7 +154,11 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
-      await customStatement('PRAGMA synchronous = NORMAL');
+      // FULL: every commit (each swipe's undo row) is on disk before the
+      // next one; NORMAL lost the last seconds of swipes on a sudden power
+      // loss (V1 bug 4). Writes run off the UI thread, so the fsync is free
+      // for the user.
+      await customStatement('PRAGMA synchronous = FULL');
     },
   );
 

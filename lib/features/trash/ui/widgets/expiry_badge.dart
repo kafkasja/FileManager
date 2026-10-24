@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:kfm/app/l10n_ext.dart';
 
-/// Whole days left, rounded down; 0 = expires today.
+/// Calendar days until the expiry date (local time); 0 = expires today or
+/// already expired. A 7-day item reads "7 days left" right after trashing
+/// (V1: rounding down showed 6, and a fresh 1-day item "Expires today").
 int daysLeft(DateTime expiresAt, DateTime now) {
-  final left = expiresAt.difference(now);
-  return left.isNegative ? 0 : left.inDays;
+  final e = expiresAt.toLocal();
+  final n = now.toLocal();
+  final days =
+      (DateTime(
+                e.year,
+                e.month,
+                e.day,
+              ).difference(DateTime(n.year, n.month, n.day)).inHours /
+              24)
+          .round(); // DST days are 23 or 25 hours long
+  return days < 0 ? 0 : days;
 }
 
 /// "N days left" / "Expires today".
