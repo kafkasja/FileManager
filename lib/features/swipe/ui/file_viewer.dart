@@ -13,6 +13,9 @@ import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
+import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
+import 'package:kfm/features/swipe/ui/swipe_toast.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:kfm/features/swipe/ui/video_surface.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -44,6 +47,8 @@ Future<void> openViewer(
   BuildContext context,
   FileRef file, {
   bool swipeable = true,
+  String? title,
+  List<Widget> actions = const [],
 }) async {
   final open = ProviderScope.containerOf(
     context,
@@ -55,7 +60,12 @@ Future<void> openViewer(
         opaque: false,
         transitionDuration: const Duration(milliseconds: 150),
         reverseTransitionDuration: const Duration(milliseconds: 150),
-        pageBuilder: (_, _, _) => FileViewer(file: file, swipeable: swipeable),
+        pageBuilder: (_, _, _) => FileViewer(
+          file: file,
+          swipeable: swipeable,
+          title: title,
+          actions: actions,
+        ),
         transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
@@ -69,7 +79,20 @@ Future<void> openViewer(
 /// when not zoomed (and shows the next file), ✕ close button top-start that
 /// never hides. Reusable read-only (B7, N7) with [swipeable] false.
 class FileViewer extends ConsumerStatefulWidget {
-  const new({required this.file, this.swipeable = true, super.key});
+  const new({
+    required this.file,
+    this.swipeable = true,
+    this.title,
+    this.actions = const [],
+    super.key,
+  });
+
+  /// Info bar name instead of [FileRef.name] (H3: a trashed file's
+  /// original name).
+  final String? title;
+
+  /// Read-only only: buttons at the bottom-end, e.g. Restore (H3).
+  final List<Widget> actions;
 
   /// The file shown first (and always, when not [swipeable]).
   final FileRef file;
@@ -83,6 +106,9 @@ class FileViewer extends ConsumerStatefulWidget {
 
 class _FileViewerState extends ConsumerState<FileViewer> {
   final TransformationController _zoom = TransformationController();
+
+  /// H3: the same "→ Trash" pill as on the deck.
+  final SwipeToastController _toast = SwipeToastController();
   bool _chrome = true;
   double? _pinchBase;
   String? _shownId;
@@ -96,6 +122,7 @@ class _FileViewerState extends ConsumerState<FileViewer> {
   @override
   void dispose() {
     _zoom.dispose();
+    _toast.dispose();
     super.dispose();
   }
 
@@ -122,6 +149,8 @@ class _FileViewerState extends ConsumerState<FileViewer> {
     final deck = widget.swipeable
         ? ref.watch(swipeDeckControllerProvider).value
         : null;
+    // Keeps the vibration setting loaded, so a swipe never reads a default.
+    if (widget.swipeable) ref.watch(hapticsEnabledProvider);
     final file = widget.swipeable ? deck?.current : widget.file;
     if (file == null) {
       // The deck ran out while the viewer was open.
@@ -156,13 +185,21 @@ class _FileViewerState extends ConsumerState<FileViewer> {
         ),
       );
     } else {
-      final layout = deck?.session.layout;
       content = SwipeCard(
         key: ValueKey('viewer:${file.id}'),
-        canSwipe: (d) => layout?.actionFor(d) != null,
-        verticalEnabled: layout?.hasVertical ?? false,
-        onSwiped: (d) =>
-            ref.read(swipeDeckControllerProvider.notifier).swipe(d),
+        canSwipe: (d) => deck != null && SwipeFeedback.canSwipe(ref, deck, d),
+        onBlocked: (d) => SwipeFeedback.blocked(context, ref, d),
+        verticalEnabled: deck?.session.layout.hasVertical ?? false,
+        // H3: label, vibration, hint and tick like on the deck (S4).
+        hintFor: deck == null
+            ? null
+            : (d) => SwipeFeedback.hintFor(context, ref, deck, d),
+        onThresholdCrossed: () => SwipeFeedback.tick(ref),
+        onSwiped: (d) {
+          if (deck?.session.layout.actionFor(d) case final action?) {
+            SwipeFeedback.apply(context, ref, deck!, _toast, action);
+          }
+        },
         // Video: tap = sound (S5); images: tap toggles the info bar.
         onTap: file.kind == FileKind.video
             ? ref.read(videoMutedProvider.notifier).toggle
@@ -188,7 +225,30 @@ class _FileViewerState extends ConsumerState<FileViewer> {
         fit: StackFit.expand,
         children: [
           content,
-          if (_chrome) _InfoBar(file: file),
+          if (_chrome) _InfoBar(file: file, title: widget.title),
+          if (!widget.swipeable && widget.actions.isNotEmpty)
+            SafeArea(
+              child: Align(
+                alignment: AlignmentDirectional.bottomEnd,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.all(16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 8,
+                    children: widget.actions,
+                  ),
+                ),
+              ),
+            ),
+          SafeArea(
+            child: Align(
+              alignment: AlignmentDirectional.topCenter,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(top: 72),
+                child: SwipeToast(controller: _toast),
+              ),
+            ),
+          ),
           const ViewerCloseButton(),
         ],
       ),
@@ -252,9 +312,10 @@ class _ViewerImage extends StatelessWidget {
 }
 
 class _InfoBar extends ConsumerWidget {
-  const new({required this.file});
+  const new({required this.file, this.title});
 
   final FileRef file;
+  final String? title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -284,7 +345,7 @@ class _InfoBar extends ConsumerWidget {
           children: [
             Text(
               [
-                file.name,
+                title ?? file.name,
                 formatBytes(file.sizeBytes, locale: locale),
                 formatDate(file.sortDate, locale: locale),
               ].join('  ·  '),

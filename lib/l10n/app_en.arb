@@ -916,5 +916,9 @@
       }
     }
   },
-  "pendingUnavailableSection": "Couldn't move to the pending folder"
+  "pendingUnavailableSection": "Couldn't move to the pending folder",
+  "trashSort": "Sort",
+  "trashSortExpiry": "Expiring soonest",
+  "trashSortNewest": "Newest deleted",
+  "swipeEmptyLibraryHint": "If your phone has photos, KFM may not be allowed to see them. Check KFM's permissions in your phone's settings."
 }

@@ -6,6 +6,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/trash/ui/trash_controller.dart';
 import 'package:kfm/features/trash/ui/widgets/expiry_badge.dart';
 import 'package:kfm/features/undo/domain/previous_state.dart';
@@ -17,6 +18,9 @@ import '../../helpers/pump_app.dart';
 class _TrashSource extends FakeFileSource {
   final Map<String, TrashLocation> location = {};
 
+  /// Deletion time per file id (default: when trashBatch ran).
+  final Map<String, DateTime> deletedAt = {};
+
   @override
   Future<List<TrashedItem>> listTrashed() async => [
     for (final t in await super.listTrashed())
@@ -24,8 +28,8 @@ class _TrashSource extends FakeFileSource {
         trashId: t.trashId,
         original: t.original,
         location: location[t.original.id] ?? TrashLocation.systemTrash,
-        trashedAt: t.trashedAt,
-        expiresAt: t.trashedAt.add(
+        trashedAt: deletedAt[t.original.id] ?? t.trashedAt,
+        expiresAt: (deletedAt[t.original.id] ?? t.trashedAt).add(
           location[t.original.id] == TrashLocation.pendingFolder
               ? const Duration(days: 7)
               : const Duration(days: 30),
@@ -39,6 +43,10 @@ Future<(TestApp, _TrashSource)> _pumpTrash(WidgetTester tester) async {
   final photos = [for (var i = 0; i < 3; i++) files.addFile('/s/DCIM/p$i.jpg')];
   final pdf = files.addFile('/s/Download/a.pdf');
   files.location[pdf.id] = TrashLocation.pendingFolder;
+  // p0 was deleted first, p2 last.
+  for (var i = 0; i < 3; i++) {
+    files.deletedAt[photos[i].id] = DateTime.utc(2026, 10, 1 + i);
+  }
   await files.trashBatch([...photos, pdf]);
   final app = await pumpApp(tester, files: files);
   await tester.tap(find.text('Trash').last);
@@ -67,7 +75,7 @@ void main() {
     tester,
   ) async {
     final (app, files) = await _pumpTrash(tester);
-    await tester.tap(find.text('a.pdf'));
+    await tester.longPress(find.text('a.pdf'));
     await tester.pumpAndSettle();
     expect(find.text('1 selected'), findsOneWidget);
     await tester.tap(find.text('Restore'));
@@ -87,7 +95,7 @@ void main() {
   ) async {
     final (app, files) = await _pumpTrash(tester);
     files.declineDialogs = true;
-    await tester.tap(find.text('a.pdf'));
+    await tester.longPress(find.text('a.pdf'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Restore'));
     await tester.pumpAndSettle();
@@ -101,7 +109,7 @@ void main() {
 
   testWidgets('delete forever asks first, then removes', (tester) async {
     final (_, files) = await _pumpTrash(tester);
-    await tester.tap(find.text('a.pdf'));
+    await tester.longPress(find.text('a.pdf'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete forever'));
     await tester.pumpAndSettle();
@@ -136,12 +144,96 @@ void main() {
       const TrashPreviousState(mode: 'trash'),
     );
 
-    await tester.tap(find.text('a.pdf'));
+    await tester.longPress(find.text('a.pdf'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Restore'));
     await tester.pumpAndSettle();
     final rows = await app.db.select(app.db.sessionActions).get();
     expect(rows.single.status, ActionStatus.undone);
     expect(pdf.kind, FileKind.document);
+  });
+
+  testWidgets('H3: tap previews with the original name; Restore closes it', (
+    tester,
+  ) async {
+    final (app, files) = await _pumpTrash(tester);
+    await tester.tap(find.text('a.pdf'));
+    await tester.pumpAndSettle();
+    expect(find.byType(FileViewer), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(FileViewer),
+        matching: find.textContaining('a.pdf'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      app.container.read(trashControllerProvider).value!.selecting,
+      isFalse,
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(FileViewer),
+        matching: find.widgetWithText(FilledButton, 'Restore'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(FileViewer), findsNothing);
+    expect(find.text('1 item restored'), findsOneWidget);
+    expect(files.trash, hasLength(3), reason: 'only that item');
+    expect(await files.stat('path:/s/Download/a.pdf'), isNotNull);
+  });
+
+  testWidgets('H3: declined restore in the preview keeps the viewer open', (
+    tester,
+  ) async {
+    final (_, files) = await _pumpTrash(tester);
+    files.declineDialogs = true;
+    await tester.tap(find.text('a.pdf'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(FileViewer),
+        matching: find.widgetWithText(FilledButton, 'Restore'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(FileViewer), findsOneWidget);
+    // The app-wide messenger draws it on the viewer and the page below.
+    expect(find.text('Cancelled'), findsWidgets);
+    expect(files.trash, hasLength(4));
+  });
+
+  testWidgets('H3: long-press selects, then tap toggles', (tester) async {
+    final (app, _) = await _pumpTrash(tester);
+    await tester.longPress(find.text('a.pdf'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 selected'), findsOneWidget);
+    await tester.tap(find.text('a.pdf'));
+    await tester.pumpAndSettle();
+    expect(find.byType(FileViewer), findsNothing);
+    expect(
+      app.container.read(trashControllerProvider).value!.selecting,
+      isFalse,
+    );
+  });
+
+  testWidgets('H3: sort by newest deleted and back', (tester) async {
+    final (app, _) = await _pumpTrash(tester);
+    List<String> names() => [
+      for (final i in app.container.read(trashControllerProvider).value!.system)
+        i.original.name,
+    ];
+    expect(names(), ['p0.jpg', 'p1.jpg', 'p2.jpg'], reason: 'expiring first');
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Newest deleted'));
+    await tester.pumpAndSettle();
+    expect(names(), ['p2.jpg', 'p1.jpg', 'p0.jpg']);
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Expiring soonest'));
+    await tester.pumpAndSettle();
+    expect(names(), ['p0.jpg', 'p1.jpg', 'p2.jpg']);
   });
 }

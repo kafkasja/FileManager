@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -118,5 +120,103 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('p1.jpg'), findsNothing);
     expect(find.byTooltip('Close'), findsOneWidget);
+  });
+
+  group('feedback in the viewer (H3)', () {
+    late List<String> haptics;
+
+    setUp(() {
+      haptics = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'HapticFeedback.vibrate') {
+              haptics.add(call.arguments as String);
+            }
+            return null;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    Finder inViewer(Finder f) =>
+        find.descendant(of: find.byType(FileViewer), matching: f);
+
+    testWidgets('a left swipe shows "→ Trash", vibrates, logs the trash', (
+      tester,
+    ) async {
+      final app = await _pump(tester, 3);
+      await _openViewer(tester);
+      haptics.clear();
+      await tester.drag(
+        inViewer(find.byType(SwipeCard)),
+        const Offset(-500, 0),
+      );
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(inViewer(find.text('→ Trash')), findsOneWidget);
+      expect(haptics, contains('HapticFeedbackType.lightImpact'));
+      expect(haptics, contains('HapticFeedbackType.selectionClick'));
+      expect(_current(app), 'p1.jpg');
+      await app.container.read(dbWriteQueueProvider).flush();
+      final actions = await app.db.select(app.db.sessionActions).get();
+      expect(actions.single.actionType, 'trash');
+      // ✕ still works while the label is up.
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FileViewer), findsNothing);
+    });
+
+    testWidgets('past the threshold: edge hint with its label', (tester) async {
+      await _pump(tester, 3);
+      await _openViewer(tester);
+      haptics.clear();
+      final card = inViewer(find.byType(SwipeCard));
+      final gesture = await tester.startGesture(tester.getCenter(card));
+      await gesture.moveBy(const Offset(-300, 0));
+      await tester.pump();
+      expect(haptics, ['HapticFeedbackType.selectionClick']);
+      expect(inViewer(find.text('→ Trash')), findsOneWidget);
+      await gesture.moveBy(const Offset(300, 0));
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('vibration off: label shown, no vibration', (tester) async {
+      final app = await _pump(tester, 3);
+      await app.container
+          .read(settingsRepositoryProvider)
+          .write(AppSettings.hapticsEnabled, false);
+      await tester.pumpAndSettle();
+      await _openViewer(tester);
+      haptics.clear();
+      await tester.drag(
+        inViewer(find.byType(SwipeCard)),
+        const Offset(-500, 0),
+      );
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(inViewer(find.text('→ Trash')), findsOneWidget);
+      expect(haptics, isEmpty);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('an unmapped direction springs back silently', (tester) async {
+      final app = await _pump(tester, 3);
+      await _openViewer(tester);
+      haptics.clear();
+      await tester.drag(
+        inViewer(find.byType(SwipeCard)),
+        const Offset(0, -500),
+      );
+      await tester.pumpAndSettle();
+      expect(_current(app), 'p2.jpg');
+      expect(haptics, isEmpty);
+      expect(inViewer(find.textContaining('→')), findsNothing);
+    });
   });
 }

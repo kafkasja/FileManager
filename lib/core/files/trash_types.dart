@@ -1,3 +1,4 @@
+import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:meta/meta.dart';
@@ -12,6 +13,7 @@ class TrashedItem {
     required this.location,
     required this.trashedAt,
     this.expiresAt,
+    this.storedPath,
   });
 
   factory fromJson(Map<String, Object?> j) => TrashedItem(
@@ -39,6 +41,22 @@ class TrashedItem {
   final TrashLocation location;
   final DateTime trashedAt;
   final DateTime? expiresAt;
+
+  /// Where the bytes are while trashed, if not at [original]'s path (pending
+  /// folder: `pending_folder_items.storedPath`). Not in [toJson]: restore
+  /// goes through [trashId] (H3).
+  final String? storedPath;
+
+  /// A FileRef that can be displayed while the file is trashed (H3).
+  FileRef get preview => switch (storedPath) {
+    null => original,
+    final p => original.copyWith(
+      id: 'path:$p',
+      uri: p,
+      folderPath: parentOf(p),
+      name: nameOf(p),
+    ),
+  };
 
   /// Stored in `session_actions.previousState` so undo can restore (S2).
   Map<String, Object?> toJson() => {

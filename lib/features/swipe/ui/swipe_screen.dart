@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
@@ -12,6 +11,7 @@ import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
@@ -32,6 +32,7 @@ import 'package:kfm/features/swipe/ui/swipe_action_bar.dart';
 import 'package:kfm/features/swipe/ui/swipe_buttons_row.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_toast.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
@@ -310,48 +311,8 @@ class _DeckState extends ConsumerState<_Deck> {
   }
 
   /// A swipe or an action bar tap (P4): apply, then the same feedback.
-  bool _onApplied(SwipeAction action) {
-    final deck = widget.deck;
-    final done = ref.read(swipeDeckControllerProvider.notifier).apply(action);
-    if (!done) return false;
-    if (ref.read(hapticsEnabledProvider).value ?? true) {
-      HapticFeedback.lightImpact().ignore();
-    }
-    final label = actionLabel(
-      context.l10n,
-      action,
-      deleteMode: deck.session.deleteMode,
-      tagName: _tagName(action),
-    );
-    _toast.show(label);
-    SemanticsService.sendAnnouncement(
-      View.of(context),
-      label,
-      Directionality.of(context),
-    ).ignore();
-    return true;
-  }
-
-  SwipeHint? _hintFor(SwipeDirection d) {
-    final action = widget.deck.session.layout.actionFor(d);
-    if (action == null) return null;
-    final tokens = context.tokens;
-    final label = actionLabel(
-      context.l10n,
-      action,
-      deleteMode: widget.deck.session.deleteMode,
-      tagName: _tagName(action),
-    );
-    return (
-      color: switch (action.type) {
-        SwipeActionType.trash => tokens.swipeTrash,
-        SwipeActionType.keep => tokens.swipeKeep,
-        _ => tokens.swipeOther,
-      },
-      icon: swipeActionIcon(action.type),
-      label: label,
-    );
-  }
+  bool _onApplied(SwipeAction action) =>
+      SwipeFeedback.apply(context, ref, widget.deck, _toast, action);
 
   /// P9: what TalkBack reads for the card, and its actions (always on).
   Widget _cardSemantics(SwipeDeckState deck, FileRef current, Widget card) {
@@ -392,35 +353,6 @@ class _DeckState extends ConsumerState<_Deck> {
   Future<void> _undoFromSemantics() async {
     final outcome = await ref.read(swipeDeckControllerProvider.notifier).undo();
     if (mounted) showUndoOutcome(context, outcome);
-  }
-
-  String? _tagName(SwipeAction action) =>
-      ref.read(tagsByIdProvider).value?[action.tagId]?.name;
-
-  /// P2: released on a direction whose action can't run right now.
-  void _onBlocked(SwipeDirection direction) {
-    final problem = ref
-        .read(swipeDeckControllerProvider.notifier)
-        .problemFor(direction);
-    if (problem != null) _explain(problem); // unmapped: nothing to explain
-  }
-
-  void _explain(SwipeActionProblem problem) {
-    final l10n = context.l10n;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(switch (problem) {
-          SwipeActionProblem.tagMissing => l10n.swipeProblemTagMissing,
-          SwipeActionProblem.unsupported => l10n.swipeProblemUnsupported,
-        }),
-      ),
-    );
-  }
-
-  void _tick() {
-    if (ref.read(hapticsEnabledProvider).value ?? true) {
-      HapticFeedback.selectionClick().ignore();
-    }
   }
 
   @override
@@ -486,6 +418,25 @@ class _DeckState extends ConsumerState<_Deck> {
               text: deck.swiped > 0
                   ? l10n.swipeAllDone
                   : l10n.swipeEmptyLibrary,
+              // H3/F4: some phones report access but show 0 photos.
+              action: deck.swiped > 0
+                  ? null
+                  : Column(
+                      children: [
+                        SizedBox(height: spacing),
+                        Text(
+                          l10n.swipeEmptyLibraryHint,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        TextButton(
+                          onPressed: () => ref
+                              .read(storageAccessControllerProvider.notifier)
+                              .openAppSettings(),
+                          child: Text(l10n.permOpenSettings),
+                        ),
+                      ],
+                    ),
             );
     } else {
       final next = deck.upcoming.length > 1 ? deck.upcoming[1] : null;
@@ -515,23 +466,22 @@ class _DeckState extends ConsumerState<_Deck> {
                 SwipeCard(
                   key: ValueKey(current.id),
                   controller: _cardController,
-                  canSwipe: (d) =>
-                      deck.session.layout.actionFor(d) != null &&
-                      ref
-                              .read(swipeDeckControllerProvider.notifier)
-                              .problemFor(d) ==
-                          null,
-                  onBlocked: _onBlocked,
+                  canSwipe: (d) => SwipeFeedback.canSwipe(ref, deck, d),
+                  onBlocked: (d) => SwipeFeedback.blocked(context, ref, d),
                   verticalEnabled: deck.session.layout.hasVertical,
                   onSwiped: _onSwiped,
-                  hintFor: _hintFor,
-                  onThresholdCrossed: _tick,
+                  hintFor: (d) => SwipeFeedback.hintFor(context, ref, deck, d),
+                  onThresholdCrossed: () => SwipeFeedback.tick(ref),
                   // Video: tap = sound, double tap / expand = fullscreen (S5).
                   onTap: current.kind == FileKind.video
                       ? ref.read(videoMutedProvider.notifier).toggle
                       : () => openViewer(context, current).ignore(),
                   onDoubleTapDown: current.kind == FileKind.video
                       ? (_) => openViewer(context, current).ignore()
+                      : null,
+                  // S5/H3: outside the card's gestures, so no double-tap wait.
+                  foreground: current.kind == FileKind.video
+                      ? _ExpandButton(file: current)
                       : null,
                   child: _CardFace(
                     file: current,
@@ -607,7 +557,7 @@ class _DeckState extends ConsumerState<_Deck> {
             layout: deck.session.layout,
             deleteMode: deck.session.deleteMode,
             onApply: _onApplied,
-            onBlocked: _explain,
+            onBlocked: (p) => SwipeFeedback.explain(context, p),
           ),
         Padding(
           padding: EdgeInsetsDirectional.fromSTEB(
@@ -630,6 +580,33 @@ class _DeckState extends ConsumerState<_Deck> {
       ],
     );
   }
+}
+
+/// Opens a video fullscreen (S5). Only the button itself takes taps.
+class _ExpandButton extends StatelessWidget {
+  const new({required this.file});
+
+  final FileRef file;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    fit: StackFit.expand,
+    children: [
+      PositionedDirectional(
+        end: 4,
+        top: 4,
+        child: IconButton(
+          tooltip: context.l10n.videoOpenFullscreen,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.black54,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => openViewer(context, file).ignore(),
+          icon: const Icon(Icons.open_in_full),
+        ),
+      ),
+    ],
+  );
 }
 
 class _CardFace extends StatelessWidget {
@@ -675,20 +652,6 @@ class _CardFace extends StatelessWidget {
               start: 8,
               bottom: 12,
               child: ReviewedBadge(),
-            ),
-          if (hero && file.kind == FileKind.video)
-            PositionedDirectional(
-              end: 4,
-              top: 4,
-              child: IconButton(
-                tooltip: context.l10n.videoOpenFullscreen,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black54,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () => openViewer(context, file).ignore(),
-                icon: const Icon(Icons.open_in_full),
-              ),
             ),
         ],
       ),

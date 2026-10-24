@@ -5,13 +5,15 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/features/trash/ui/pending_unavailable_list.dart';
 import 'package:kfm/features/trash/ui/trash_controller.dart';
 import 'package:kfm/features/trash/ui/widgets/expiry_badge.dart';
 
 /// Trash tab (TASK-D5): system trash and the pending folder on one page.
-/// Tap or long-press selects (preview comes with S3).
+/// Tap previews (with Restore, H3); long-press starts selecting, then taps
+/// toggle.
 class TrashScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -37,6 +39,26 @@ class TrashScreen extends ConsumerWidget {
                 onPressed: controller.clearSelection,
               )
             : null,
+        actions: [
+          if (!selecting && value != null)
+            PopupMenuButton<TrashSort>(
+              icon: const Icon(Icons.sort),
+              tooltip: l10n.trashSort,
+              onSelected: controller.setSort,
+              itemBuilder: (_) => [
+                CheckedPopupMenuItem(
+                  value: TrashSort.expirySoonest,
+                  checked: value.sort == TrashSort.expirySoonest,
+                  child: Text(l10n.trashSortExpiry),
+                ),
+                CheckedPopupMenuItem(
+                  value: TrashSort.newestDeleted,
+                  checked: value.sort == TrashSort.newestDeleted,
+                  child: Text(l10n.trashSortNewest),
+                ),
+              ],
+            ),
+        ],
       ),
       body: switch (trash) {
         AsyncData(:final value) => RefreshIndicator(
@@ -178,12 +200,12 @@ class _Section extends ConsumerWidget {
             final item = items[i];
             final selected = state.selectedIds.contains(item.trashId);
             return GestureDetector(
-              onTap: () => controller.toggle(item.trashId),
+              onTap: () => _tap(context, ref, item),
               onLongPress: () => controller.toggle(item.trashId),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Thumbnail(file: item.original),
+                  Thumbnail(file: item.preview),
                   if (item.expiresAt != null)
                     PositionedDirectional(
                       start: 4,
@@ -207,14 +229,14 @@ class _Section extends ConsumerWidget {
             selected: selected,
             leading: SizedBox.square(
               dimension: 48,
-              child: Thumbnail(file: item.original),
+              child: Thumbnail(file: item.preview),
             ),
             title: Text(item.original.name),
             subtitle: Text(item.original.folderPath),
             trailing: item.expiresAt == null
                 ? null
                 : ExpiryBadge(expiresAt: item.expiresAt!),
-            onTap: () => controller.toggle(item.trashId),
+            onTap: () => _tap(context, ref, item),
             onLongPress: () => controller.toggle(item.trashId),
           );
         },
@@ -340,6 +362,35 @@ Future<void> _confirmDelete(
       .read(trashControllerProvider.notifier)
       .deleteForever(items);
   if (context.mounted && result.cancelled) _report(context, result);
+}
+
+/// Selecting: toggle. Otherwise: preview with a Restore button (H3).
+void _tap(BuildContext context, WidgetRef ref, TrashedItem item) {
+  final controller = ref.read(trashControllerProvider.notifier);
+  if (ref.read(trashControllerProvider).value?.selecting ?? false) {
+    controller.toggle(item.trashId);
+    return;
+  }
+  openViewer(
+    context,
+    item.preview,
+    swipeable: false,
+    title: item.original.name,
+    actions: [
+      Builder(
+        builder: (viewerContext) => FilledButton.tonal(
+          onPressed: () async {
+            final result = await controller.restore([item]);
+            if (!viewerContext.mounted) return;
+            // Declined: stay in the viewer so the user can try again.
+            if (!result.cancelled) Navigator.of(viewerContext).pop();
+            _report(viewerContext, result);
+          },
+          child: Text(viewerContext.l10n.trashRestore),
+        ),
+      ),
+    ],
+  ).ignore();
 }
 
 void _report(BuildContext context, TrashActionResult result) {

@@ -286,6 +286,7 @@ class AndroidFileSource implements FileSource {
             location: TrashLocation.pendingFolder,
             trashedAt: row.deletedAt,
             expiresAt: row.expiresAt,
+            storedPath: row.storedPath,
           ),
         );
         scanOld.add(f.path); // MediaStore drops the old entry
@@ -542,6 +543,7 @@ class AndroidFileSource implements FileSource {
           location: TrashLocation.pendingFolder,
           trashedAt: p.deletedAt.toUtc(),
           expiresAt: p.expiresAt.toUtc(),
+          storedPath: p.storedPath,
         ),
       for (final row in rows)
         if (_mediaRef(row) case final f)

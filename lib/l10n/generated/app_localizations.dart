@@ -2301,6 +2301,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t move to the pending folder'**
   String get pendingUnavailableSection;
+
+  /// No description provided for @trashSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get trashSort;
+
+  /// No description provided for @trashSortExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring soonest'**
+  String get trashSortExpiry;
+
+  /// No description provided for @trashSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest deleted'**
+  String get trashSortNewest;
+
+  /// No description provided for @swipeEmptyLibraryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone has photos, KFM may not be allowed to see them. Check KFM\'s permissions in your phone\'s settings.'**
+  String get swipeEmptyLibraryHint;
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
+import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 
 import '../../core/files/fake_file_source.dart';
@@ -96,13 +97,27 @@ void main() {
     expect(current.calls, contains('volume 1.0'));
   });
 
-  testWidgets('the expand button opens the viewer', (tester) async {
+  testWidgets('the expand button opens the viewer at once (H3)', (
+    tester,
+  ) async {
     await pumpVideos(tester);
     await tester.tap(find.byTooltip('Open fullscreen'));
-    // The card's double-tap window has to pass before the button's tap wins.
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
+    // Outside the card's gestures: no double-tap wait (was ~300 ms).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(FileViewer), findsOneWidget);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('a drag elsewhere on a video card still swipes', (tester) async {
+    final (app, _) = await pumpVideos(tester);
+    await tester.drag(find.byType(SwipeCard), const Offset(500, 0));
+    await tester.pumpAndSettle();
+    expect(
+      app.container.read(swipeDeckControllerProvider).value?.current?.name,
+      'v1.mp4',
+    );
+    await tester.pump(const Duration(seconds: 2));
   });
 
   testWidgets("a video that can't play says so and can still be swiped", (

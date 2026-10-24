@@ -237,4 +237,18 @@ void main() {
       await tester.pumpAndSettle();
     });
   });
+
+  testWidgets('H3: an empty library after the scan hints at permissions', (
+    tester,
+  ) async {
+    final app = await _pumpWithLibrary(tester, 0);
+    expect(find.text('No photos or videos found.'), findsOneWidget);
+    expect(
+      find.textContaining('KFM may not be allowed to see them'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Open settings'));
+    await tester.pump();
+    expect(app.permissions.calls, contains('openAppSettings'));
+  });
 }

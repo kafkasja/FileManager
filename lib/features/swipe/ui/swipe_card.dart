@@ -36,10 +36,16 @@ class SwipeCard extends StatefulWidget {
     this.onDoubleTapDown,
     this.onPinchUpdate,
     this.onPinchEnd,
+    this.foreground,
     super.key,
   });
 
   final Widget child;
+
+  /// Moves with the card but sits outside its gesture detector, so taps on
+  /// it (e.g. S5's expand button) don't wait for the double-tap timeout
+  /// (H3). Only its painted, hit-testable parts take pointers.
+  final Widget? foreground;
 
   /// Called after the fly-out animation.
   final void Function(SwipeDirection direction) onSwiped;
@@ -264,7 +270,7 @@ class _SwipeCardState extends State<SwipeCard>
         _lastSize = size;
         // Scale gestures: one finger drags the card, two fingers pinch
         // (S3 zoom). A plain tap opens the viewer.
-        return GestureDetector(
+        final card = GestureDetector(
           onTap: widget.onTap,
           onDoubleTapDown: widget.onDoubleTapDown,
           onDoubleTap: widget.onDoubleTapDown == null ? null : () {},
@@ -295,6 +301,27 @@ class _SwipeCardState extends State<SwipeCard>
               );
             },
           ),
+        );
+        if (widget.foreground == null) return card;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            card,
+            ValueListenableBuilder<Offset>(
+              valueListenable: _offset,
+              child: widget.foreground,
+              builder: (context, offset, child) {
+                final turn = (offset.dx / size.width).clamp(-1.0, 1.0);
+                return Transform.translate(
+                  offset: offset,
+                  child: Transform.rotate(
+                    angle: turn * SwipeCard.maxRotation,
+                    child: child,
+                  ),
+                );
+              },
+            ),
+          ],
         );
       },
     );

@@ -269,4 +269,17 @@ void main() {
       expect(items.single.location, TrashLocation.pendingFolder);
     },
   );
+
+  test('H3: listed pending items point at their stored bytes', () async {
+    final p = await file('Download/pic.jpg', 'img');
+    final ref = (await source.stat('path:$p'))!;
+    await source.trashBatch([ref]);
+    final item = (await source.listTrashed()).single;
+    expect(item.location, TrashLocation.pendingFolder);
+    expect(item.original.path, p, reason: 'restore target unchanged');
+    expect(item.storedPath, isNotNull);
+    expect(File(item.preview.path).readAsStringSync(), 'img');
+    expect(item.preview.name, endsWith('__pic.jpg'));
+    expect(item.toJson().containsKey('storedPath'), isFalse);
+  });
 }

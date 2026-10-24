@@ -1611,4 +1611,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pendingUnavailableSection =>
       'Couldn\'t move to the pending folder';
+
+  @override
+  String get trashSort => 'Sort';
+
+  @override
+  String get trashSortExpiry => 'Expiring soonest';
+
+  @override
+  String get trashSortNewest => 'Newest deleted';
+
+  @override
+  String get swipeEmptyLibraryHint =>
+      'If your phone has photos, KFM may not be allowed to see them. Check KFM\'s permissions in your phone\'s settings.';
 }

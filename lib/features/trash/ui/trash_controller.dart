@@ -10,6 +10,18 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'trash_controller.g.dart';
 
+/// Trash page order (session-only, H3).
+enum TrashSort { expirySoonest, newestDeleted }
+
+List<TrashedItem> _sorted(Iterable<TrashedItem> items, TrashSort sort) =>
+    items.toList()..sort(switch (sort) {
+      TrashSort.expirySoonest => (
+        a,
+        b,
+      ) => (a.expiresAt ?? a.trashedAt).compareTo(b.expiresAt ?? b.trashedAt),
+      TrashSort.newestDeleted => (a, b) => b.trashedAt.compareTo(a.trashedAt),
+    });
+
 @immutable
 class TrashViewState {
   const new({
@@ -17,11 +29,13 @@ class TrashViewState {
     required this.pending,
     this.selectedIds = const {},
     this.busy = false,
+    this.sort = TrashSort.expirySoonest,
   });
 
-  /// Soonest expiry first.
+  /// In [sort] order.
   final List<TrashedItem> system;
   final List<TrashedItem> pending;
+  final TrashSort sort;
 
   /// TrashedItem.trashId.
   final Set<String> selectedIds;
@@ -39,11 +53,13 @@ class TrashViewState {
     List<TrashedItem>? pending,
     Set<String>? selectedIds,
     bool? busy,
+    TrashSort? sort,
   }) => TrashViewState(
     system: system ?? this.system,
     pending: pending ?? this.pending,
     selectedIds: selectedIds ?? this.selectedIds,
     busy: busy ?? this.busy,
+    sort: sort ?? this.sort,
   );
 }
 
@@ -67,20 +83,32 @@ class TrashController extends _$TrashController {
     final items = await ref.watch(fileSourceProvider).listTrashed();
     // P8: the list we just loaded tells which trashed files are gone.
     ref.read(trashLedgerProvider).reconcile(items).ignore();
-    int byExpiry(TrashedItem a, TrashedItem b) =>
-        (a.expiresAt ?? a.trashedAt).compareTo(b.expiresAt ?? b.trashedAt);
     final previous = state.value?.selectedIds ?? const {};
+    final sort = state.value?.sort ?? TrashSort.expirySoonest;
     final ids = {for (final i in items) i.trashId};
     return TrashViewState(
-      system: [
-        for (final i in items)
-          if (i.location == TrashLocation.systemTrash) i,
-      ]..sort(byExpiry),
-      pending: [
-        for (final i in items)
-          if (i.location == TrashLocation.pendingFolder) i,
-      ]..sort(byExpiry),
+      system: _sorted(
+        items.where((i) => i.location == TrashLocation.systemTrash),
+        sort,
+      ),
+      pending: _sorted(
+        items.where((i) => i.location == TrashLocation.pendingFolder),
+        sort,
+      ),
       selectedIds: previous.intersection(ids),
+      sort: sort,
+    );
+  }
+
+  void setSort(TrashSort sort) {
+    final s = state.value;
+    if (s == null) return;
+    state = AsyncData(
+      s.copyWith(
+        sort: sort,
+        system: _sorted(s.system, sort),
+        pending: _sorted(s.pending, sort),
+      ),
     );
   }
 
@@ -110,15 +138,17 @@ class TrashController extends _$TrashController {
 
   /// One system dialog for all selected system-trash items; pending items
   /// without a dialog. Declined → selection kept.
-  Future<TrashActionResult> restoreSelected() async {
+  Future<TrashActionResult> restoreSelected() =>
+      restore(state.value?.selected ?? const []);
+
+  /// [items] back where they were (H3: also one item from the preview).
+  Future<TrashActionResult> restore(List<TrashedItem> items) async {
     final s = state.value;
-    if (s == null || s.selected.isEmpty) return const TrashActionResult();
+    if (s == null || items.isEmpty) return const TrashActionResult();
     state = AsyncData(s.copyWith(busy: true));
     try {
-      final result = await ref
-          .read(fileSourceProvider)
-          .restoreBatch(s.selected);
-      await _markRestoredInSession(s.selected, result);
+      final result = await ref.read(fileSourceProvider).restoreBatch(items);
+      await _markRestoredInSession(items, result);
       await ref
           .read(trashLedgerProvider)
           .markLeft(result.restored.keys, TrashExit.restored);
