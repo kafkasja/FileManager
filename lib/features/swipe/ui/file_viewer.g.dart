@@ -43,7 +43,7 @@ final class ViewerOpenProvider extends $NotifierProvider<ViewerOpen, bool> {
   }
 }
 
-String _$viewerOpenHash() => r'e37b44bb23889d214b9639d21de365c8945bfe11';
+String _$viewerOpenHash() => r'638378898d5199ce1df8cdc81798156da472aaa6';
 
 /// True while the fullscreen viewer is open (the deck hides undo then).
 

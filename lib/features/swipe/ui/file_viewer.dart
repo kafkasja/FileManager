@@ -155,6 +155,7 @@ class _FileViewerState extends ConsumerState<FileViewer> {
       content = SwipeCard(
         key: ValueKey('viewer:${file.id}'),
         canSwipe: (d) => layout?.actionFor(d) != null,
+        verticalEnabled: layout?.hasVertical ?? false,
         onSwiped: (d) =>
             ref.read(swipeDeckControllerProvider.notifier).swipe(d),
         // Video: tap = sound (S5); images: tap toggles the info bar.

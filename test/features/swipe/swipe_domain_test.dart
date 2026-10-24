@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/painting.dart';
@@ -163,5 +164,93 @@ void main() {
     await expectLater(b, throwsStateError);
     await c;
     expect(log, ['a', 'c']);
+  });
+
+  group('SwipeLayout.decode (P1)', () {
+    test("'' is basic", () {
+      expect(SwipeLayout.decode(''), SwipeLayout.basic);
+    });
+
+    test('round-trips a custom layout', () {
+      const custom = SwipeLayout(
+        directions: {
+          SwipeDirection.up: SwipeAction.keep,
+          SwipeDirection.down: SwipeAction.trash,
+        },
+      );
+      expect(SwipeLayout.decode(jsonEncode(custom.toJson())), custom);
+    });
+
+    test('corrupt data gives basic, never throws', () {
+      for (final raw in [
+        'not json',
+        '[]',
+        '{"directions": []}',
+        '{"directions": {"left": {"type": "explode"}}}',
+        '{"directions": {"left": {}}}',
+        '{"directions": {"left": {"type": "addTag", "tagId": "x"}}}',
+        '{"directions": {"left": 3}}',
+        '{"actionBar": {"a": 1}}',
+      ]) {
+        expect(SwipeLayout.decode(raw), SwipeLayout.basic, reason: raw);
+      }
+    });
+
+    test('unknown direction names are skipped', () {
+      final layout = SwipeLayout.decode(
+        '{"directions": {"left": {"type": "trash"}, "diagonal": '
+        '{"type": "keep"}}}',
+      );
+      expect(layout.directions, {SwipeDirection.left: SwipeAction.trash});
+    });
+
+    test('withDirection builds a new layout; hasVertical', () {
+      final up = SwipeLayout.basic.withDirection(
+        SwipeDirection.up,
+        SwipeAction.keep,
+      );
+      expect(up.hasVertical, isTrue);
+      expect(SwipeLayout.basic.hasVertical, isFalse);
+      expect(SwipeLayout.basic.directions, hasLength(2));
+      expect(up.withDirection(SwipeDirection.up, null), SwipeLayout.basic);
+    });
+  });
+
+  group('swipe commit rule with vertical actions (P1 diagonal guard)', () {
+    const size = Size(300, 600);
+    SwipeDirection? decide(Offset offset, [Offset velocity = Offset.zero]) =>
+        SwipeCard.directionFor(
+          offset: offset,
+          velocity: velocity,
+          size: size,
+          verticalEnabled: true,
+        );
+
+    test('the dominant axis must be 1.5x the other', () {
+      expect(decide(const Offset(-101, -60)), SwipeDirection.left);
+      expect(decide(const Offset(-150, -120)), isNull);
+      expect(decide(const Offset(-200, -200)), isNull);
+      expect(decide(const Offset(40, -201)), SwipeDirection.up);
+      expect(decide(const Offset(0, 201)), SwipeDirection.down);
+    });
+
+    test('a quick flick is judged by its velocity', () {
+      expect(
+        decide(const Offset(2, -3), const Offset(0, -900)),
+        SwipeDirection.up,
+      );
+      expect(decide(const Offset(2, -3), const Offset(900, -900)), isNull);
+    });
+
+    test('without vertical actions a diagonal still goes sideways', () {
+      expect(
+        SwipeCard.directionFor(
+          offset: const Offset(-200, -190),
+          velocity: Offset.zero,
+          size: size,
+        ),
+        SwipeDirection.left,
+      );
+    });
   });
 }

@@ -278,7 +278,7 @@ class SwipeDeckController extends _$SwipeDeckController {
         ..invalidate(needsDeleteModeChoiceProvider)
         ..invalidateSelf();
     } else if (result.layoutBefore != null) {
-      await _reloadSession();
+      await reloadSession();
     }
     return result;
   }
@@ -290,10 +290,12 @@ class SwipeDeckController extends _$SwipeDeckController {
     await ref
         .read(clearSessionUseCaseProvider)
         .undoLayoutReset(deck.session.id, before);
-    await _reloadSession();
+    await reloadSession();
   }
 
-  Future<void> _reloadSession() async {
+  /// Picks up layout changes (SE3 reset, P1 Customize swipes); applies from
+  /// the next swipe.
+  Future<void> reloadSession() async {
     final session = await ref.read(sessionRepositoryProvider).active();
     final latest = state.value;
     if (session != null && latest != null) {

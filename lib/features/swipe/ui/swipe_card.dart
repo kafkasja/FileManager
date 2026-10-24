@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -8,12 +9,15 @@ import 'package:kfm/features/swipe/domain/swipe_action.dart';
 /// A draggable card. The drag offset lives in a ValueNotifier, so dragging
 /// never rebuilds anything above the card. Commits past ⅓ of the width
 /// (height for up/down) or on a fling; otherwise springs back. Directions
-/// without an action ([canSwipe] false) always spring back.
+/// without an action ([canSwipe] false) always spring back. With
+/// [verticalEnabled] (P1) a drag must clearly favour one axis (diagonal
+/// guard); without it, left/right behave exactly as in the basic layout.
 class SwipeCard extends StatefulWidget {
   const new({
     required this.child,
     required this.onSwiped,
     required this.canSwipe,
+    this.verticalEnabled = false,
     this.hintFor,
     this.onThresholdCrossed,
     this.onTap,
@@ -28,6 +32,9 @@ class SwipeCard extends StatefulWidget {
   /// Called after the fly-out animation.
   final void Function(SwipeDirection direction) onSwiped;
   final bool Function(SwipeDirection direction) canSwipe;
+
+  /// Up or down has an action: turns on the diagonal guard.
+  final bool verticalEnabled;
 
   /// Colour + icon shown on the card while it is past the threshold (S4).
   final SwipeHint? Function(SwipeDirection direction)? hintFor;
@@ -51,13 +58,31 @@ class SwipeCard extends StatefulWidget {
   static const double maxRotation = 12 * math.pi / 180;
   static const flyOutDuration = Duration(milliseconds: 180);
 
+  /// With [verticalEnabled], the dominant axis must be this many times the
+  /// other one; anything closer to diagonal springs back.
+  static const dominance = 1.5;
+
   /// Decides what a released drag does; null = spring back.
   static SwipeDirection? directionFor({
     required Offset offset,
     required Offset velocity,
     required Size size,
+    bool verticalEnabled = false,
   }) {
-    final horizontal = offset.dx.abs() >= offset.dy.abs();
+    final bool horizontal;
+    if (verticalEnabled) {
+      // A quick flick barely moves the card: judge it by its velocity.
+      final v = offset.distance < kTouchSlop ? velocity : offset;
+      if (v.dx.abs() > v.dy.abs() * dominance) {
+        horizontal = true;
+      } else if (v.dy.abs() > v.dx.abs() * dominance) {
+        horizontal = false;
+      } else {
+        return null;
+      }
+    } else {
+      horizontal = offset.dx.abs() >= offset.dy.abs();
+    }
     if (horizontal) {
       final past = offset.dx.abs() > size.width * commitFraction;
       final fling =
@@ -77,8 +102,8 @@ class SwipeCard extends StatefulWidget {
   State<SwipeCard> createState() => _SwipeCardState();
 }
 
-/// What a direction looks like while dragging.
-typedef SwipeHint = ({Color color, IconData icon});
+/// What a direction looks like while dragging; `label` e.g. "→ Trash" (P1).
+typedef SwipeHint = ({Color color, IconData icon, String label});
 
 class _SwipeCardState extends State<SwipeCard>
     with SingleTickerProviderStateMixin {
@@ -135,6 +160,7 @@ class _SwipeCardState extends State<SwipeCard>
       offset: _offset.value,
       velocity: details.velocity.pixelsPerSecond,
       size: size,
+      verticalEnabled: widget.verticalEnabled,
     );
     if (direction != null && widget.canSwipe(direction)) {
       unawaited(_flyOut(direction, size));
@@ -167,6 +193,7 @@ class _SwipeCardState extends State<SwipeCard>
       offset: _offset.value,
       velocity: Offset.zero,
       size: size,
+      verticalEnabled: widget.verticalEnabled,
     );
     final armed = d != null && widget.canSwipe(d) ? d : null;
     if (armed != null && armed != _armed) widget.onThresholdCrossed?.call();
@@ -258,7 +285,31 @@ class _HintOverlay extends StatelessWidget {
           alignment: alignment,
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Icon(hint.icon, color: hint.color, size: 72),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(hint.icon, color: hint.color, size: 72),
+                DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: StadiumBorder(side: BorderSide(color: hint.color)),
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      hint.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(color: hint.color),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

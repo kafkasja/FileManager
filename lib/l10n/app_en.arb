@@ -324,5 +324,21 @@
   "viewerClose": "Close",
   "videoCantPlay": "Can't play this video",
   "videoTapForSound": "Tap for sound",
-  "videoOpenFullscreen": "Open fullscreen"
+    "videoOpenFullscreen": "Open fullscreen",
+  "customizeSwipes": "Customize swipes",
+  "customizeSwipesHelp": "Choose what each swipe direction does",
+  "customizeSwipesIntro": "Tap an arrow to change what swiping that way does.",
+  "swipeDirectionLeft": "Swipe left",
+  "swipeDirectionRight": "Swipe right",
+  "swipeDirectionUp": "Swipe up",
+  "swipeDirectionDown": "Swipe down",
+  "swipeActionNothing": "Nothing",
+  "swipeActionTrash": "Move to trash",
+  "swipeActionDelete": "Delete permanently",
+  "swipeActionKeep": "Keep",
+  "swipeActionNeedOne": "At least one direction needs an action",
+  "swipeLayoutReset": "Reset to basic",
+  "swipeLayoutResetTitle": "Reset swipes?",
+  "swipeLayoutResetBody": "Left goes back to trash and right to keep. Up and down will do nothing.",
+  "reset": "Reset"
 }

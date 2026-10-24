@@ -176,15 +176,6 @@ class SessionRepository {
     updatedAt: r.updatedAt,
   );
 
-  static SwipeLayout _parseLayout(String json) {
-    try {
-      final decoded = jsonDecode(json);
-      if (decoded is Map) {
-        return SwipeLayout.fromJson(decoded.cast<String, Object?>());
-      }
-    } on FormatException {
-      // Corrupt layout → basic below; the user's files are unaffected.
-    }
-    return SwipeLayout.basic;
-  }
+  /// Corrupt layout → basic (logged); the user's files are unaffected.
+  static SwipeLayout _parseLayout(String json) => SwipeLayout.decode(json);
 }

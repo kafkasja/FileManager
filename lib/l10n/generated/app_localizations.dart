@@ -951,6 +951,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open fullscreen'**
   String get videoOpenFullscreen;
+
+  /// No description provided for @customizeSwipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize swipes'**
+  String get customizeSwipes;
+
+  /// No description provided for @customizeSwipesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what each swipe direction does'**
+  String get customizeSwipesHelp;
+
+  /// No description provided for @customizeSwipesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an arrow to change what swiping that way does.'**
+  String get customizeSwipesIntro;
+
+  /// No description provided for @swipeDirectionLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left'**
+  String get swipeDirectionLeft;
+
+  /// No description provided for @swipeDirectionRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe right'**
+  String get swipeDirectionRight;
+
+  /// No description provided for @swipeDirectionUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe up'**
+  String get swipeDirectionUp;
+
+  /// No description provided for @swipeDirectionDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe down'**
+  String get swipeDirectionDown;
+
+  /// No description provided for @swipeActionNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get swipeActionNothing;
+
+  /// No description provided for @swipeActionTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to trash'**
+  String get swipeActionTrash;
+
+  /// No description provided for @swipeActionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get swipeActionDelete;
+
+  /// No description provided for @swipeActionKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get swipeActionKeep;
+
+  /// No description provided for @swipeActionNeedOne.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one direction needs an action'**
+  String get swipeActionNeedOne;
+
+  /// No description provided for @swipeLayoutReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to basic'**
+  String get swipeLayoutReset;
+
+  /// No description provided for @swipeLayoutResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset swipes?'**
+  String get swipeLayoutResetTitle;
+
+  /// No description provided for @swipeLayoutResetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Left goes back to trash and right to keep. Up and down will do nothing.'**
+  String get swipeLayoutResetBody;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
 }
 
 class _AppLocalizationsDelegate

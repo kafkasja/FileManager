@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+
 import 'package:meta/meta.dart';
 
 enum SwipeDirection { left, right, up, down }
@@ -18,12 +21,22 @@ enum SwipeActionType {
 class SwipeAction {
   const new(this.type, {this.targetFolder, this.tagId, this.deviceId});
 
-  factory fromJson(Map<String, Object?> j) => SwipeAction(
-    SwipeActionType.values.byName(j['type']! as String),
-    targetFolder: j['targetFolder'] as String?,
-    tagId: j['tagId'] as int?,
-    deviceId: j['deviceId'] as String?,
-  );
+  /// Throws [FormatException] for unknown types or wrong field types.
+  factory fromJson(Map<String, Object?> j) {
+    final type = switch (j['type']) {
+      final String name => SwipeActionType.values.asNameMap()[name],
+      _ => null,
+    };
+    if (type == null) {
+      throw FormatException('Unknown swipe action type: ${j['type']}');
+    }
+    return SwipeAction(
+      type,
+      targetFolder: _optional<String>(j, 'targetFolder'),
+      tagId: _optional<int>(j, 'tagId'),
+      deviceId: _optional<String>(j, 'deviceId'),
+    );
+  }
 
   final SwipeActionType type;
 
@@ -35,6 +48,13 @@ class SwipeAction {
 
   /// sendToDevice (N6 remembered device).
   final String? deviceId;
+
+  static T? _optional<T>(Map<String, Object?> j, String key) =>
+      switch (j[key]) {
+        null => null,
+        final T value => value,
+        final other => throw FormatException('Bad $key: $other'),
+      };
 
   static const trash = SwipeAction(SwipeActionType.trash);
   static const keep = SwipeAction(SwipeActionType.keep);
@@ -61,27 +81,63 @@ class SwipeAction {
   String toString() => 'SwipeAction(${type.name})';
 }
 
+/// Actions the "Customize swipes" picker offers (P1). P2 adds its types.
+const assignableSwipeActions = <SwipeAction>[
+  SwipeAction.trash,
+  SwipeAction.keep,
+];
+
 /// What each direction (and the optional action bar, P4) does.
 @immutable
 class SwipeLayout {
   const new({required this.directions, this.actionBar = const []});
 
+  /// Throws [FormatException] for corrupt data. Unknown direction names are
+  /// skipped (a newer version may add some).
   factory fromJson(Map<String, Object?> j) {
-    final dirs = (j['directions'] as Map?)?.cast<String, Object?>() ?? {};
-    final bar = (j['actionBar'] as List?) ?? const [];
+    final dirs = switch (j['directions']) {
+      null => const <String, Object?>{},
+      final Map<Object?, Object?> m => m,
+      final other => throw FormatException('Bad directions: $other'),
+    };
+    final bar = switch (j['actionBar']) {
+      null => const <Object?>[],
+      final List<Object?> l => l,
+      final other => throw FormatException('Bad actionBar: $other'),
+    };
     return SwipeLayout(
       directions: {
         for (final MapEntry(:key, :value) in dirs.entries)
-          ?SwipeDirection.values.asNameMap()[key]: SwipeAction.fromJson(
-            (value! as Map).cast<String, Object?>(),
-          ),
+          ?SwipeDirection.values.asNameMap()[key]: _action(value),
       },
-      actionBar: [
-        for (final a in bar)
-          SwipeAction.fromJson((a! as Map).cast<String, Object?>()),
-      ],
+      actionBar: [for (final a in bar) _action(a)],
     );
   }
+
+  /// Parses stored layout JSON. '' = [basic]; corrupt data is logged and
+  /// gives [basic], so a bad value never breaks swiping.
+  static SwipeLayout decode(String raw) {
+    if (raw.isEmpty) return basic;
+    try {
+      return switch (jsonDecode(raw)) {
+        final Map<String, Object?> j => SwipeLayout.fromJson(j),
+        final other => throw FormatException('Not a layout: $other'),
+      };
+    } on FormatException catch (e, st) {
+      developer.log(
+        'corrupt swipe layout, using basic',
+        name: 'kfm.swipe',
+        error: e,
+        stackTrace: st,
+      );
+      return basic;
+    }
+  }
+
+  static SwipeAction _action(Object? json) => switch (json) {
+    final Map<String, Object?> m => SwipeAction.fromJson(m),
+    _ => throw FormatException('Bad swipe action: $json'),
+  };
 
   final Map<SwipeDirection, SwipeAction> directions;
   final List<SwipeAction> actionBar;
@@ -96,6 +152,23 @@ class SwipeLayout {
 
   /// Null = unmapped: the card snaps back and nothing is recorded.
   SwipeAction? actionFor(SwipeDirection d) => directions[d];
+
+  /// Up or down does something: only then are vertical swipes recognised
+  /// strictly (P1 diagonal guard).
+  bool get hasVertical =>
+      directions.containsKey(SwipeDirection.up) ||
+      directions.containsKey(SwipeDirection.down);
+
+  /// A copy with [direction] set to [action] (null = nothing).
+  SwipeLayout withDirection(SwipeDirection direction, SwipeAction? action) =>
+      SwipeLayout(
+        directions: {
+          for (final MapEntry(:key, :value) in directions.entries)
+            if (key != direction) key: value,
+          direction: ?action,
+        },
+        actionBar: actionBar,
+      );
 
   Map<String, Object?> toJson() => {
     'directions': {

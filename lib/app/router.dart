@@ -6,6 +6,7 @@ import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/browse/ui/browse_placeholder.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
+import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
 import 'package:kfm/features/trash/ui/trash_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -22,6 +23,7 @@ abstract final class AppRoutes {
   static const browse = '/browse';
   static const trash = '/trash';
   static const settings = '/settings';
+  static const customizeSwipes = '/settings/swipes';
 }
 
 /// Where to go for [location] given the current [access]; null = stay.
@@ -103,6 +105,12 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: AppRoutes.settings,
                 builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'swipes',
+                    builder: (context, state) => const CustomizeSwipesScreen(),
+                  ),
+                ],
               ),
             ],
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -23,6 +25,13 @@ class SwipeSettingsSection extends ConsumerWidget {
     final l10n = context.l10n;
     return Column(
       children: [
+        ListTile(
+          leading: const Icon(Icons.swipe_outlined),
+          title: Text(l10n.customizeSwipes),
+          subtitle: Text(l10n.customizeSwipesHelp),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.go(AppRoutes.customizeSwipes),
+        ),
         SwitchListTile(
           secondary: const Icon(Icons.vibration),
           title: Text(l10n.settingsHaptics),

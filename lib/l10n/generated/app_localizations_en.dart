@@ -670,4 +670,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get videoOpenFullscreen => 'Open fullscreen';
+
+  @override
+  String get customizeSwipes => 'Customize swipes';
+
+  @override
+  String get customizeSwipesHelp => 'Choose what each swipe direction does';
+
+  @override
+  String get customizeSwipesIntro =>
+      'Tap an arrow to change what swiping that way does.';
+
+  @override
+  String get swipeDirectionLeft => 'Swipe left';
+
+  @override
+  String get swipeDirectionRight => 'Swipe right';
+
+  @override
+  String get swipeDirectionUp => 'Swipe up';
+
+  @override
+  String get swipeDirectionDown => 'Swipe down';
+
+  @override
+  String get swipeActionNothing => 'Nothing';
+
+  @override
+  String get swipeActionTrash => 'Move to trash';
+
+  @override
+  String get swipeActionDelete => 'Delete permanently';
+
+  @override
+  String get swipeActionKeep => 'Keep';
+
+  @override
+  String get swipeActionNeedOne => 'At least one direction needs an action';
+
+  @override
+  String get swipeLayoutReset => 'Reset to basic';
+
+  @override
+  String get swipeLayoutResetTitle => 'Reset swipes?';
+
+  @override
+  String get swipeLayoutResetBody =>
+      'Left goes back to trash and right to keep. Up and down will do nothing.';
+
+  @override
+  String get reset => 'Reset';
 }

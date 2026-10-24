@@ -217,13 +217,27 @@ class _DeckState extends ConsumerState<_Deck> {
     final action = widget.deck.session.layout.actionFor(d);
     if (action == null) return null;
     final tokens = context.tokens;
+    final label = actionLabel(
+      context.l10n,
+      action,
+      deleteMode: widget.deck.session.deleteMode,
+    );
     return switch (action.type) {
       SwipeActionType.trash => (
         color: tokens.swipeTrash,
         icon: Icons.delete_outline,
+        label: label,
       ),
-      SwipeActionType.keep => (color: tokens.swipeKeep, icon: Icons.check),
-      _ => (color: tokens.swipeOther, icon: Icons.drive_file_move_outline),
+      SwipeActionType.keep => (
+        color: tokens.swipeKeep,
+        icon: Icons.check,
+        label: label,
+      ),
+      _ => (
+        color: tokens.swipeOther,
+        icon: Icons.drive_file_move_outline,
+        label: label,
+      ),
     };
   }
 
@@ -276,6 +290,7 @@ class _DeckState extends ConsumerState<_Deck> {
             SwipeCard(
               key: ValueKey(current.id),
               canSwipe: (d) => deck.session.layout.actionFor(d) != null,
+              verticalEnabled: deck.session.layout.hasVertical,
               onSwiped: _onSwiped,
               hintFor: _hintFor,
               onThresholdCrossed: _tick,
