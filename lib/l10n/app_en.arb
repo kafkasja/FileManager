@@ -1,0 +1,328 @@
+{
+  "@@locale": "en",
+  "appTitle": "Kaf's File Manager",
+  "appTitleShort": "KFM",
+  "tabSwipe": "Swipe",
+  "tabBrowse": "Browse",
+  "tabTrash": "Trash",
+  "tabSettings": "Settings",
+  "browsePlaceholder": "Browsing is coming soon.",
+  "dbWriteError": "Couldn't save your last change.",
+  "dismiss": "Dismiss",
+  "retry": "Try again",
+  "indexingCount": "{count, plural, =1{Indexing 1 file…} other{Indexing {count} files…}}",
+  "@indexingCount": {
+    "description": "Chip shown while the media index scans the device.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "indexingPaused": "Indexing paused",
+  "settingsTitle": "Settings",
+  "settingsAppearance": "Appearance",
+  "themeLabel": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "languageLabel": "Language",
+  "languageSystem": "System",
+  "settingsAbout": "About",
+  "aboutVersion": "Version {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutPromise": "No ads, no account, no tracking. Everything stays on your device.",
+  "permGateTitle": "Let KFM see your photos and videos",
+  "permGateWhy": "Everything stays on your phone. No account, no upload.",
+  "permAllow": "Allow",
+  "permOpenSettings": "Open settings",
+  "permPermanentlyDeniedHelp": "Photo access is turned off. In settings, open Permissions and allow Photos and videos.",
+  "permCheckFailed": "Couldn't check the permissions.",
+  "limitedBanner": "KFM can only see some photos.",
+  "limitedAllowAll": "Allow all",
+  "allFilesSheetText": "To show documents and downloads too, turn on All files access.",
+  "allFilesTurnOn": "Turn on",
+  "notNow": "Not now",
+  "settingsPermissions": "Permissions",
+  "permRowMedia": "Photos and videos",
+  "permRowAllFiles": "All files access",
+  "permRowMediaManagement": "Skip confirmation dialogs",
+  "permRowMediaManagementHelp": "Optional. Lets KFM move and delete photos without asking each time (Media management).",
+  "permStatusGranted": "Allowed",
+  "permStatusLimited": "Some photos only",
+  "permStatusDenied": "Not allowed",
+  "permStatusNotAsked": "Not asked yet",
+  "permStatusNotRequired": "Not needed on this phone",
+  "permChange": "Change",
+  "settingsStorage": "Storage",
+  "thumbCacheTitle": "Thumbnail cache",
+  "thumbCacheSizeUnknown": "Size unknown",
+  "thumbCacheClear": "Clear",
+  "settingsDeveloper": "Developer",
+  "devIndexedFiles": "{count, plural, =1{1 file in the index} other{{count} files in the index}}",
+  "@devIndexedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "devRescan": "Full rescan",
+  "devIndexList": "Show indexed files",
+  "swipeAllDone": "All done! You've gone through every photo and video.",
+  "swipeEmptyLibrary": "No photos or videos found.",
+  "swipeLookingForPhotos": "Looking for photos…",
+  "swipeErrorGeneric": "Couldn't load your photos.",
+  "swipeDone": "Done",
+  "swipeFinishTitle": "Finish this session?",
+  "swipeFinishConfirm": "Finish",
+  "cancel": "Cancel",
+  "undo": "Undo",
+  "undoHistoryTitle": "Recent actions",
+  "undoRestored": "Restored from the trash",
+  "undoPermanentlyDeleted": "This file was permanently deleted and can't come back.",
+  "undoFailed": "Couldn't undo this step.",
+  "undoNotPossibleYet": "Undoing this isn't possible yet.",
+  "deleteBatchRetry": "Retry",
+  "deleteCommitFailed": "Couldn't delete files right now. They stay queued and nothing is lost.",
+  "swipeProgress": "{swiped} done · {remaining} left",
+  "@swipeProgress": {
+    "placeholders": {
+      "swiped": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "remaining": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "swipeFinishTrash": "{count, plural, =0{Nothing is waiting to be deleted.} =1{1 file will be moved to the trash.} other{{count} files will be moved to the trash.}}",
+  "@swipeFinishTrash": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "swipeFinishPermanent": "{count, plural, =0{Nothing is waiting to be deleted.} =1{1 file will be deleted permanently.} other{{count} files will be deleted permanently.}}",
+  "@swipeFinishPermanent": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "sessionSummary": "{count, plural, =0{Session finished.} =1{Session finished: 1 file deleted, {size} freed.} other{Session finished: {count} files deleted, {size} freed.}}",
+  "@sessionSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteBatchWaiting": "{count, plural, =1{1 file waiting to be deleted} other{{count} files waiting to be deleted}}",
+  "@deleteBatchWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "deleteBatchFailed": "{count, plural, =1{1 file couldn't be deleted} other{{count} files couldn't be deleted}}",
+  "@deleteBatchFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsDeleting": "Deleting",
+  "deleteModeTrash": "Move to trash (recommended)",
+  "deleteModeTrashHelp": "Swiped files go to the phone's trash and can be restored.",
+  "deleteModePermanent": "Delete permanently",
+  "deleteModePermanentHelp": "Swiped files are deleted for good. No recovery.",
+  "deleteModePermanentWarning": "Files deleted this way can't be restored, not even with undo.",
+  "deleteModeNextSession": "Applies to your next session.",
+  "pendingRetentionLabel": "Keep pending files for",
+  "pendingRetentionHelp": "Documents and other files (and photos on Android 10 and older) wait in a hidden folder before they are deleted for good.",
+  "pendingEmptyNow": "Empty pending folder now",
+  "pendingEmptyTitle": "Delete everything in the pending folder?",
+  "pendingEmptyBody": "These files can't be restored afterwards.",
+  "pendingEmptyConfirm": "Delete",
+  "permanentConfirmTitle": "Delete permanently this session?",
+  "permanentConfirmBody": "Files you swipe to trash will be deleted forever. They can't be restored.",
+  "permanentConfirmYes": "Delete permanently",
+  "permanentConfirmUseTrash": "Use trash instead",
+  "pendingRetentionDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@pendingRetentionDays": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "pendingEmptied": "{count, plural, =0{The pending folder is empty.} =1{1 file deleted.} other{{count} files deleted.}}",
+  "@pendingEmptied": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "trashSystem": "System trash",
+  "trashPending": "Pending delete",
+  "trashNothingHere": "Nothing here",
+  "trashExpiresToday": "Expires today",
+  "trashSelect": "Select",
+  "trashRestore": "Restore",
+  "trashDeleteForever": "Delete forever",
+  "trashDeleteForeverBody": "This can't be undone.",
+  "trashEmptySection": "Empty this section",
+  "trashCancelled": "Cancelled",
+  "trashAlreadyRemoved": "Some items were already removed.",
+  "trashSystemHelp": "Photos and videos are kept by Android for 30 days. Your gallery app may also have its own bin.",
+  "trashLoadFailed": "Couldn't load the trash.",
+  "trashNeedsPermission": "Allow access to photos and videos to see the trash.",
+  "trashDaysLeft": "{count, plural, =1{1 day left} other{{count} days left}}",
+  "@trashDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "trashDeleteForeverTitle": "{count, plural, =1{Delete 1 item forever?} other{Delete {count} items forever?}}",
+  "@trashDeleteForeverTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "trashRestored": "{count, plural, =1{1 item restored} other{{count} items restored}}",
+  "@trashRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "trashSelectedCount": "{count, plural, =1{1 selected} other{{count} selected}}",
+  "@trashSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "trashSectionSummary": "{count, plural, =1{1 item} other{{count} items}} · {size}",
+  "@trashSectionSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "labelTrash": "→ Trash",
+  "labelDelete": "→ Delete",
+  "labelKept": "→ Kept",
+  "labelFavorite": "★ Favorite",
+  "labelRenameBatch": "→ Rename batch",
+  "settingsSwipe": "Swiping",
+  "settingsHaptics": "Vibration",
+  "settingsHapticsHelp": "A short vibration when a swipe is done.",
+  "labelMovedTo": "→ {folder}",
+  "@labelMovedTo": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "labelCopiedTo": "⧉ {folder}",
+  "@labelCopiedTo": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "labelTagged": "# {tag}",
+  "@labelTagged": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "labelSentTo": "→ {device}",
+  "@labelSentTo": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "restoredSnack": "Continued where you left off",
+  "restoredStartFresh": "Start fresh",
+  "clearMenu": "Clear…",
+  "clearResetLayout": "Reset action buttons",
+  "clearResetLayoutHelp": "Back to: left = trash, right = keep",
+  "clearNewSession": "Start a new session",
+  "clearNewSessionHelp": "Ends the progress and undo history of this session.",
+  "clearConfirm": "Clear",
+  "layoutResetDone": "Action buttons reset",
+  "undoAction": "Undo",
+  "newSessionFailed": "Couldn't finish the deletes, so this session continues. Try again.",
+  "settingsFreshStart": "Clear / fresh start…",
+  "newFilesChip": "{count, plural, =1{1 new photo · Show} other{{count} new photos · Show}}",
+  "@newFilesChip": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "clearNewSessionDeletes": "{count, plural, =0{Nothing is waiting to be deleted.} =1{1 waiting delete will be done.} other{{count} waiting deletes will be done.}}",
+  "@clearNewSessionDeletes": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "viewerClose": "Close",
+  "videoCantPlay": "Can't play this video",
+  "videoTapForSound": "Tap for sound",
+  "videoOpenFullscreen": "Open fullscreen"
+}

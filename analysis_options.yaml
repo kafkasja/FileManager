@@ -12,6 +12,7 @@ analyzer:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - lib/l10n/generated/**
+    - test/core/db/generated/**
     - build/**
     - android/**
     - ios/**
@@ -21,6 +22,9 @@ linter:
   rules:
     public_member_api_docs: false # app, not a library
     lines_longer_than_80_chars: false
+    # Sync dart:io calls block the calling isolate; on Android shared storage
+    # (FUSE) a stat can take milliseconds. Rule 4: never block the UI thread.
+    avoid_slow_async_io: false
 
 plugins:
   riverpod_lint: ^3.1.9
