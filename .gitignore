@@ -9,7 +9,9 @@ CLAUDE.md
 CHANGES.md
 skills/
 tasks/
+docs/
 .claude/
+CLAUDE.local.md
 
 # ---------------------------------------------------------------
 # Flutter / Dart
@@ -27,6 +29,7 @@ build/
 .idea/
 .vscode/
 coverage/
+test/**/failures/
 
 # Android
 android/.gradle/
@@ -36,6 +39,8 @@ android/key.properties
 android/app/debug/
 android/app/profile/
 android/app/release/
+android/.kotlin/
+**/.cxx/
 *.jks
 *.keystore
 
@@ -61,6 +66,13 @@ desktop.ini
 *.log
 *.env
 .env*
+
+# Release outputs and device pulls (APKs sent to the phone, DBs pulled with adb)
+*.apk
+*.aab
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 # Flutter extras (from flutter create defaults)
 **/doc/api/

@@ -7,10 +7,10 @@ A fast, safe file and photo manager for Android, with Windows and iPhone version
 - Smooth with tens of thousands of photos.
 - No ads, no account, works offline.
 
-Simple by default, with more control available when you want it.
+Simple by default, with more control available when you want it: custom swipe directions, move/copy/tag/favorite actions, batch rename, filters, presets and swipe stats.
 
 ## Status
-Early development. See [docs/FEATURES.md](docs/FEATURES.md) for what's planned and what's done.
+Early development.
 
 ## Building
 Requires Flutter (stable) and the Android SDK.
