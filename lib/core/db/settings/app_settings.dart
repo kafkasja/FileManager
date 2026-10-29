@@ -1,4 +1,5 @@
 import 'package:kfm/core/db/settings/setting_key.dart';
+import 'package:kfm/core/files/file_query.dart';
 
 /// The settings registry: one entry per setting, owner task in the comment.
 abstract final class AppSettings {
@@ -61,6 +62,46 @@ abstract final class AppSettings {
   static final SettingKey<int> indexGeneration = SettingKey.integer(
     'indexGeneration',
     0,
+  );
+
+  /// B1. A full scan with hidden files ran while All files access was on
+  /// (reset when access is lost, so regaining it catches up once).
+  static final SettingKey<bool> indexHiddenScanned = SettingKey.boolean(
+    'index.hiddenScanned',
+    defaultValue: false,
+  );
+
+  /// B2. Browse sort field (one sort for every folder and filter).
+  static final SettingKey<FileSortField> browseSortField =
+      SettingKey.enumeration(
+        'browse.sort.field',
+        FileSortField.date,
+        FileSortField.values,
+      );
+
+  /// B2. Browse sort direction.
+  static final SettingKey<bool> browseSortDescending = SettingKey.boolean(
+    'browse.sort.descending',
+    defaultValue: true,
+  );
+
+  /// Browse: a size label on every photo/video tile (user request
+  /// 2026-10-29: sizes easy to see).
+  static final SettingKey<bool> browseShowSizes = SettingKey.boolean(
+    'browse.showSizes',
+    defaultValue: true,
+  );
+
+  /// Browse: files of 100 MB or more get a highlighted size label.
+  static final SettingKey<bool> browseHighlightBig = SettingKey.boolean(
+    'browse.highlightBig',
+    defaultValue: false,
+  );
+
+  /// Browse: the last searches (JSON list, `RecentSearchesRepository`).
+  static final SettingKey<String> browseRecentSearches = SettingKey.string(
+    'browse.recentSearches',
+    '',
   );
 
   /// F5. Disk cap for the thumbnail cache.

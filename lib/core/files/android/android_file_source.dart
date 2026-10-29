@@ -74,6 +74,7 @@ class AndroidFileSource implements FileSource {
   Stream<List<FileRef>> scan({FileQuery query = FileQuery.all}) async* {
     final root = query.rootPath == null ? null : _trimSlash(query.rootPath!);
     final mediaKinds = _mediaKinds.where(query.wants).toSet();
+    final walkHidden = query.includeHidden && _canSeeAllFiles();
 
     if (mediaKinds.isNotEmpty) {
       int? afterModified;
@@ -103,8 +104,11 @@ class AndroidFileSource implements FileSource {
                 when (query.recursive ||
                         root == null ||
                         f.folderPath == root) &&
-                    (query.includeHidden ||
-                        !isInHiddenFolder(f.path, root: root ?? primaryRoot)))
+                    (query.includeHidden
+                        // The walker lists hidden folders, media included:
+                        // skip them here so there are no duplicates.
+                        ? !(walkHidden && f.hidden)
+                        : !isInHiddenFolder(f.path, root: root ?? primaryRoot)))
               f,
         ];
         if (page.isNotEmpty) yield List.unmodifiable(page);
@@ -117,7 +121,7 @@ class AndroidFileSource implements FileSource {
     final wantsOther = FileKind.values.any(
       (k) => !_mediaKinds.contains(k) && query.wants(k),
     );
-    if ((wantsOther || query.includeHidden) && _canSeeAllFiles()) {
+    if (wantsOther && _canSeeAllFiles() || walkHidden) {
       yield* _walker(
         WalkOptions(
           root: root ?? primaryRoot,

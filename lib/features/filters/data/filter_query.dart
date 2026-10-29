@@ -34,19 +34,21 @@ IndexQuery? toIndexQuery(
   };
   return base.copyWith(
     kinds: kinds,
-    from: from?.toUtc(),
-    to: to?.toUtc(),
-    minSizeBytes: f.minSizeBytes,
-    maxSizeBytes: f.maxSizeBytes,
+    // Null keeps the base's value.
+    from: from?.toUtc,
+    to: to?.toUtc,
+    minSizeBytes: f.minSizeBytes == null ? null : () => f.minSizeBytes,
+    maxSizeBytes: f.maxSizeBytes == null ? null : () => f.maxSizeBytes,
     folderPaths: f.folderPaths,
     screenshotsOnly: f.screenshotsOnly,
     tagged: switch (f.tagMode) {
-      TagFilterMode.tagged => true,
-      TagFilterMode.untagged => false,
+      TagFilterMode.tagged => () => true,
+      TagFilterMode.untagged => () => false,
       TagFilterMode.any || TagFilterMode.hasTags => null,
     },
     anyTagIds: f.tagMode == TagFilterMode.hasTags ? f.tagIds : const {},
     favoritesOnly: f.favoritesOnly,
-    reviewed: reviewed,
+    reviewed: reviewed == null ? null : () => reviewed,
+    sources: f.sources,
   );
 }

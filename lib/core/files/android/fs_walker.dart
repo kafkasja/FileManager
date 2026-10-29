@@ -128,6 +128,7 @@ void _walk(WalkOptions o, void Function(Object?) send) {
       final name = path.substring(path.lastIndexOf('/') + 1);
       final dotted = name.startsWith('.');
       if (dotted && !o.includeHidden) continue;
+      if (_isSystemTemp(name)) continue;
 
       if (entity is Directory) {
         if (o.recursive && !_isExcludedFolder(path)) {
@@ -162,6 +163,7 @@ void _walk(WalkOptions o, void Function(Object?) send) {
           modifiedAt: modified,
           folderPath: dir,
           origin: o.origin,
+          hidden: hidden || dotted,
         ),
       );
       if (page.length >= o.pageSize) {
@@ -174,4 +176,13 @@ void _walk(WalkOptions o, void Function(Object?) send) {
 }
 
 bool _isExcludedFolder(String path) =>
-    path.endsWith('/Android/data') || path.endsWith('/Android/obb');
+    path.endsWith('/Android/data') ||
+    path.endsWith('/Android/obb') ||
+    // B1 (hidden files are indexed): KFM's own pending-delete folder and
+    // thumbnail caches are never shown as files.
+    path.endsWith('/.KFMTrash') ||
+    path.endsWith('/.thumbnails');
+
+/// MediaStore's trashed/pending files (Android 11+): not the user's files.
+bool _isSystemTemp(String name) =>
+    name.startsWith('.trashed-') || name.startsWith('.pending-');

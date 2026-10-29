@@ -162,6 +162,33 @@ void main() {
     );
   });
 
+  test('hidden files are indexed (flagged) with All files access; an old '
+      'index catches up once (B1)', () async {
+    addPhotos(2);
+    await indexer.start();
+    expect(await settings.read(AppSettings.indexHiddenScanned), isTrue);
+    // Lose access: the flag resets.
+    canSeeAll = false;
+    now = now.add(const Duration(minutes: 5));
+    await indexer.start();
+    expect(await settings.read(AppSettings.indexHiddenScanned), isFalse);
+
+    // An old hidden file (not modified since the last scan) is found by
+    // the one-time catch-up after access comes back.
+    source
+      ..addFile('/s/.private/old.jpg', modifiedAt: DateTime.utc(2020))
+      ..addFile('/s/Notes/.todo.txt', modifiedAt: DateTime.utc(2020));
+    canSeeAll = true;
+    now = now.add(const Duration(minutes: 5));
+    await indexer.start();
+    const hidden = IndexQuery(hidden: HiddenFilter.only);
+    final rows = (await dao.page(hidden)).items;
+    expect(rows.map((f) => f.name).toSet(), {'old.jpg', '.todo.txt'});
+    expect(rows.every((f) => f.hidden), isTrue);
+    // Normal views don't show them.
+    expect(await indexed(), hasLength(2));
+  });
+
   test('FileSource id changes re-key the index', () async {
     addPhotos(2);
     await indexer.start();

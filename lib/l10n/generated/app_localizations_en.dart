@@ -28,9 +28,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabSettings => 'Settings';
 
   @override
-  String get browsePlaceholder => 'Browsing is coming soon.';
-
-  @override
   String get dbWriteError => 'Couldn\'t save your last change.';
 
   @override
@@ -1624,4 +1621,210 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get swipeEmptyLibraryHint =>
       'If your phone has photos, KFM may not be allowed to see them. Check KFM\'s permissions in your phone\'s settings.';
+
+  @override
+  String get browseKindAll => 'All';
+
+  @override
+  String get browseKindImages => 'Images';
+
+  @override
+  String get browseKindVideos => 'Videos';
+
+  @override
+  String get browseKindAudio => 'Audio';
+
+  @override
+  String get browseKindDocuments => 'Documents';
+
+  @override
+  String get browseKindArchives => 'Archives';
+
+  @override
+  String get browseKindOther => 'Other';
+
+  @override
+  String get browseSourceCamera => 'Camera';
+
+  @override
+  String get browseSourceScreenshots => 'Screenshots';
+
+  @override
+  String get browseSourceWhatsapp => 'WhatsApp';
+
+  @override
+  String get browseSourceSnapchat => 'Snapchat';
+
+  @override
+  String get browseSourceDownloads => 'Downloads';
+
+  @override
+  String get browseSourceVideos => 'Videos';
+
+  @override
+  String get browseSourcePanoramas => 'Panoramas';
+
+  @override
+  String get browseSourceScreenRecordings => 'Screen recordings';
+
+  @override
+  String get browseSourceExpertRaw => 'Expert RAW';
+
+  @override
+  String get browseSourceGifs => 'GIFs';
+
+  @override
+  String get browseSourceCollages => 'Collages';
+
+  @override
+  String get browseSourceClippedImages => 'Clipped images';
+
+  @override
+  String get browseSourceLiveMessages => 'Live messages';
+
+  @override
+  String get browseSourceVideoCaptures => 'Video captures';
+
+  @override
+  String get browseSourceTelegram => 'Telegram';
+
+  @override
+  String get browseSourceInstagram => 'Instagram';
+
+  @override
+  String get browseSourceOther => 'Other apps';
+
+  @override
+  String get browseSourceHidden => 'Hidden';
+
+  @override
+  String get browsePanoramaHint => 'Best guess: wide photos and PANO files';
+
+  @override
+  String get browseModeAll => 'All files';
+
+  @override
+  String get browseModeFolders => 'Folders';
+
+  @override
+  String get browseShowHidden => 'Show hidden files';
+
+  @override
+  String get browseSwipeThese => 'Swipe these';
+
+  @override
+  String get browseNeedsAllFiles =>
+      'Grant access to see documents, downloads and hidden files';
+
+  @override
+  String get browseGrantAccess => 'Grant access';
+
+  @override
+  String get browseEmpty => 'No files here';
+
+  @override
+  String get browseLoadError => 'Couldn\'t load the files.';
+
+  @override
+  String get browseOtherHint =>
+      'Files from other apps and folders, grouped by folder';
+
+  @override
+  String get browseInternalStorage => 'Internal storage';
+
+  @override
+  String browseExternalVolume(String name) {
+    return 'SD card or USB ($name)';
+  }
+
+  @override
+  String browseFileCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browseStorageRoot => 'Storage';
+
+  @override
+  String get browseFolderMenu => 'Folder options';
+
+  @override
+  String get openWith => 'Open with';
+
+  @override
+  String get openWithNone => 'No app can open this file';
+
+  @override
+  String get openWithFailed => 'Couldn\'t open this file.';
+
+  @override
+  String get textViewerTruncated => 'Showing the first 1 MB';
+
+  @override
+  String get textViewerLatin1 => 'Shown as Latin-1 (not UTF-8)';
+
+  @override
+  String get textViewerBinary => 'This doesn\'t look like a text file';
+
+  @override
+  String get textViewerError => 'Couldn\'t read this file.';
+
+  @override
+  String get browseSortTitle => 'Sort by';
+
+  @override
+  String get browseSortDate => 'Date';
+
+  @override
+  String get browseSortSize => 'Size';
+
+  @override
+  String get browseSortName => 'Name';
+
+  @override
+  String get browseSortNewestFirst => 'Newest first';
+
+  @override
+  String get browseSortOldestFirst => 'Oldest first';
+
+  @override
+  String get browseSortLargestFirst => 'Largest first';
+
+  @override
+  String get browseSortSmallestFirst => 'Smallest first';
+
+  @override
+  String get browseSortNameAsc => 'A–Z';
+
+  @override
+  String get browseSortNameDesc => 'Z–A';
+
+  @override
+  String get browseRecent => 'Recent search';
+
+  @override
+  String get settingsBrowse => 'Browse';
+
+  @override
+  String get settingsShowSizes => 'Show file sizes';
+
+  @override
+  String get settingsShowSizesHelp => 'A size label on every photo and video';
+
+  @override
+  String get settingsHighlightBig => 'Highlight big files';
+
+  @override
+  String get settingsHighlightBigHelp =>
+      'Files of 100 MB or more get a red size label';
 }

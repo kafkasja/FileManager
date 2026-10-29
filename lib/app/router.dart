@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/app_scaffold.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
-import 'package:kfm/features/browse/ui/browse_placeholder.dart';
+import 'package:kfm/features/browse/domain/browse_source_chip.dart';
+import 'package:kfm/features/browse/ui/browse_screen.dart';
+import 'package:kfm/features/browse/ui/collection_screen.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
 import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
@@ -25,6 +27,9 @@ abstract final class AppRoutes {
   static const permission = '/permission';
   static const swipe = '/swipe';
   static const browse = '/browse';
+
+  /// A carousel card's page; `extra` is the `BrowseCollection`.
+  static const browseCollection = '/browse/collection';
   static const trash = '/trash';
   static const settings = '/settings';
   static const customizeSwipes = '/settings/swipes';
@@ -102,7 +107,20 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.browse,
-                builder: (context, state) => const BrowsePlaceholder(),
+                builder: (context, state) => const BrowseScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'collection',
+                    // `extra` is lost after process death: back to Browse.
+                    redirect: (context, state) =>
+                        state.extra is BrowseCollection
+                        ? null
+                        : AppRoutes.browse,
+                    builder: (context, state) => CollectionScreen(
+                      collection: state.extra! as BrowseCollection,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

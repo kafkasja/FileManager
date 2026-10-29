@@ -12,6 +12,8 @@ import 'package:kfm/core/db/tables/sessions_table.dart';
 import 'package:kfm/core/db/tables/settings_table.dart';
 import 'package:kfm/core/db/tables/tags_table.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/index/source_backfill.dart';
+import 'package:kfm/core/index/source_rule.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/common.dart' show CommonDatabase;
 
@@ -54,7 +56,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -150,6 +152,19 @@ class AppDatabase extends _$AppDatabase {
           'FROM session_actions sa WHERE sa.id = pending_deletes.action_id) '
           "WHERE status = 'committed' AND committed_mode = 'trash'",
         );
+      }
+      if (from < 13) {
+        // TASK-B1
+        // From < 2 the v2 block created media_index with these already.
+        if (from >= 2) {
+          await m.addColumn(mediaIndex, mediaIndex.source);
+          await m.addColumn(mediaIndex, mediaIndex.hidden);
+          await m.addColumn(mediaIndex, mediaIndex.extension);
+        }
+        await m.createIndex(miSourceDate);
+        await m.createIndex(miExt);
+        // Hidden files were never indexed before: `hidden` needs no backfill.
+        await backfillSourceAndExtension(this);
       }
     },
     beforeOpen: (details) async {

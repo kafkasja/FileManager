@@ -406,6 +406,41 @@ class $MediaIndexTable extends MediaIndex
     defaultValue: const Constant(false),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<SourceBucket, int> source =
+      GeneratedColumn<int>(
+        'source',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SourceBucket>($MediaIndexTable.$convertersource);
+  static const VerificationMeta _hiddenMeta = const VerificationMeta('hidden');
+  @override
+  late final GeneratedColumn<bool> hidden = GeneratedColumn<bool>(
+    'hidden',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("hidden" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _extensionMeta = const VerificationMeta(
+    'extension',
+  );
+  @override
+  late final GeneratedColumn<String> extension = GeneratedColumn<String>(
+    'extension',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     uri,
@@ -425,6 +460,9 @@ class $MediaIndexTable extends MediaIndex
     indexedAtMs,
     scanGeneration,
     screenshot,
+    source,
+    hidden,
+    extension,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -563,6 +601,18 @@ class $MediaIndexTable extends MediaIndex
         screenshot.isAcceptableOrUnknown(data['screenshot']!, _screenshotMeta),
       );
     }
+    if (data.containsKey('hidden')) {
+      context.handle(
+        _hiddenMeta,
+        hidden.isAcceptableOrUnknown(data['hidden']!, _hiddenMeta),
+      );
+    }
+    if (data.containsKey('extension')) {
+      context.handle(
+        _extensionMeta,
+        extension.isAcceptableOrUnknown(data['extension']!, _extensionMeta),
+      );
+    }
     return context;
   }
 
@@ -648,6 +698,20 @@ class $MediaIndexTable extends MediaIndex
         DriftSqlType.bool,
         data['${effectivePrefix}screenshot'],
       )!,
+      source: $MediaIndexTable.$convertersource.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}source'],
+        )!,
+      ),
+      hidden: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}hidden'],
+      )!,
+      extension: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}extension'],
+      )!,
     );
   }
 
@@ -660,6 +724,8 @@ class $MediaIndexTable extends MediaIndex
       const EnumIndexConverter<FileKind>(FileKind.values);
   static JsonTypeConverter2<FileOrigin, int, int> $converterorigin =
       const EnumIndexConverter<FileOrigin>(FileOrigin.values);
+  static JsonTypeConverter2<SourceBucket, int, int> $convertersource =
+      const EnumIndexConverter<SourceBucket>(SourceBucket.values);
 }
 
 class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
@@ -693,6 +759,16 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
 
   /// P5: see `isScreenshot` (set by the DAO on every write).
   final bool screenshot;
+
+  /// B1: where the file comes from (`sourceFor`, set by the DAO on every
+  /// write). intEnum stores the index: only ever APPEND values.
+  final SourceBucket source;
+
+  /// B1: dot-file, inside a dot-folder or inside a `.nomedia` folder.
+  final bool hidden;
+
+  /// B1: lower-case extension without the dot ('' = none), `extensionOf`.
+  final String extension;
   const MediaIndexRow({
     required this.id,
     required this.uri,
@@ -712,6 +788,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     required this.indexedAtMs,
     required this.scanGeneration,
     required this.screenshot,
+    required this.source,
+    required this.hidden,
+    required this.extension,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -750,6 +829,13 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     map['indexed_at_ms'] = Variable<int>(indexedAtMs);
     map['scan_generation'] = Variable<int>(scanGeneration);
     map['screenshot'] = Variable<bool>(screenshot);
+    {
+      map['source'] = Variable<int>(
+        $MediaIndexTable.$convertersource.toSql(source),
+      );
+    }
+    map['hidden'] = Variable<bool>(hidden);
+    map['extension'] = Variable<String>(extension);
     return map;
   }
 
@@ -783,6 +869,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       indexedAtMs: Value(indexedAtMs),
       scanGeneration: Value(scanGeneration),
       screenshot: Value(screenshot),
+      source: Value(source),
+      hidden: Value(hidden),
+      extension: Value(extension),
     );
   }
 
@@ -814,6 +903,11 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       indexedAtMs: serializer.fromJson<int>(json['indexedAtMs']),
       scanGeneration: serializer.fromJson<int>(json['scanGeneration']),
       screenshot: serializer.fromJson<bool>(json['screenshot']),
+      source: $MediaIndexTable.$convertersource.fromJson(
+        serializer.fromJson<int>(json['source']),
+      ),
+      hidden: serializer.fromJson<bool>(json['hidden']),
+      extension: serializer.fromJson<String>(json['extension']),
     );
   }
   @override
@@ -842,6 +936,11 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       'indexedAtMs': serializer.toJson<int>(indexedAtMs),
       'scanGeneration': serializer.toJson<int>(scanGeneration),
       'screenshot': serializer.toJson<bool>(screenshot),
+      'source': serializer.toJson<int>(
+        $MediaIndexTable.$convertersource.toJson(source),
+      ),
+      'hidden': serializer.toJson<bool>(hidden),
+      'extension': serializer.toJson<String>(extension),
     };
   }
 
@@ -864,6 +963,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     int? indexedAtMs,
     int? scanGeneration,
     bool? screenshot,
+    SourceBucket? source,
+    bool? hidden,
+    String? extension,
   }) => MediaIndexRow(
     id: id ?? this.id,
     uri: uri ?? this.uri,
@@ -883,6 +985,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     indexedAtMs: indexedAtMs ?? this.indexedAtMs,
     scanGeneration: scanGeneration ?? this.scanGeneration,
     screenshot: screenshot ?? this.screenshot,
+    source: source ?? this.source,
+    hidden: hidden ?? this.hidden,
+    extension: extension ?? this.extension,
   );
   MediaIndexRow copyWithCompanion(MediaIndexCompanion data) {
     return MediaIndexRow(
@@ -918,6 +1023,9 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
       screenshot: data.screenshot.present
           ? data.screenshot.value
           : this.screenshot,
+      source: data.source.present ? data.source.value : this.source,
+      hidden: data.hidden.present ? data.hidden.value : this.hidden,
+      extension: data.extension.present ? data.extension.value : this.extension,
     );
   }
 
@@ -941,13 +1049,16 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
           ..write('origin: $origin, ')
           ..write('indexedAtMs: $indexedAtMs, ')
           ..write('scanGeneration: $scanGeneration, ')
-          ..write('screenshot: $screenshot')
+          ..write('screenshot: $screenshot, ')
+          ..write('source: $source, ')
+          ..write('hidden: $hidden, ')
+          ..write('extension: $extension')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     uri,
     name,
@@ -966,7 +1077,10 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
     indexedAtMs,
     scanGeneration,
     screenshot,
-  );
+    source,
+    hidden,
+    extension,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -988,7 +1102,10 @@ class MediaIndexRow extends DataClass implements Insertable<MediaIndexRow> {
           other.origin == this.origin &&
           other.indexedAtMs == this.indexedAtMs &&
           other.scanGeneration == this.scanGeneration &&
-          other.screenshot == this.screenshot);
+          other.screenshot == this.screenshot &&
+          other.source == this.source &&
+          other.hidden == this.hidden &&
+          other.extension == this.extension);
 }
 
 class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
@@ -1010,6 +1127,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
   final Value<int> indexedAtMs;
   final Value<int> scanGeneration;
   final Value<bool> screenshot;
+  final Value<SourceBucket> source;
+  final Value<bool> hidden;
+  final Value<String> extension;
   final Value<int> rowid;
   const MediaIndexCompanion({
     this.id = const Value.absent(),
@@ -1030,6 +1150,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     this.indexedAtMs = const Value.absent(),
     this.scanGeneration = const Value.absent(),
     this.screenshot = const Value.absent(),
+    this.source = const Value.absent(),
+    this.hidden = const Value.absent(),
+    this.extension = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaIndexCompanion.insert({
@@ -1051,6 +1174,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     required int indexedAtMs,
     required int scanGeneration,
     this.screenshot = const Value.absent(),
+    this.source = const Value.absent(),
+    this.hidden = const Value.absent(),
+    this.extension = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        uri = Value(uri),
@@ -1083,6 +1209,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     Expression<int>? indexedAtMs,
     Expression<int>? scanGeneration,
     Expression<bool>? screenshot,
+    Expression<int>? source,
+    Expression<bool>? hidden,
+    Expression<String>? extension,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1104,6 +1233,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
       if (indexedAtMs != null) 'indexed_at_ms': indexedAtMs,
       if (scanGeneration != null) 'scan_generation': scanGeneration,
       if (screenshot != null) 'screenshot': screenshot,
+      if (source != null) 'source': source,
+      if (hidden != null) 'hidden': hidden,
+      if (extension != null) 'extension': extension,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1127,6 +1259,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     Value<int>? indexedAtMs,
     Value<int>? scanGeneration,
     Value<bool>? screenshot,
+    Value<SourceBucket>? source,
+    Value<bool>? hidden,
+    Value<String>? extension,
     Value<int>? rowid,
   }) {
     return MediaIndexCompanion(
@@ -1148,6 +1283,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
       indexedAtMs: indexedAtMs ?? this.indexedAtMs,
       scanGeneration: scanGeneration ?? this.scanGeneration,
       screenshot: screenshot ?? this.screenshot,
+      source: source ?? this.source,
+      hidden: hidden ?? this.hidden,
+      extension: extension ?? this.extension,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1213,6 +1351,17 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
     if (screenshot.present) {
       map['screenshot'] = Variable<bool>(screenshot.value);
     }
+    if (source.present) {
+      map['source'] = Variable<int>(
+        $MediaIndexTable.$convertersource.toSql(source.value),
+      );
+    }
+    if (hidden.present) {
+      map['hidden'] = Variable<bool>(hidden.value);
+    }
+    if (extension.present) {
+      map['extension'] = Variable<String>(extension.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1240,6 +1389,9 @@ class MediaIndexCompanion extends UpdateCompanion<MediaIndexRow> {
           ..write('indexedAtMs: $indexedAtMs, ')
           ..write('scanGeneration: $scanGeneration, ')
           ..write('screenshot: $screenshot, ')
+          ..write('source: $source, ')
+          ..write('hidden: $hidden, ')
+          ..write('extension: $extension, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6985,6 +7137,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'mi_screenshot_date',
     'CREATE INDEX mi_screenshot_date ON media_index (screenshot, sort_date_ms)',
   );
+  late final Index miSourceDate = Index(
+    'mi_source_date',
+    'CREATE INDEX mi_source_date ON media_index (source, sort_date_ms)',
+  );
+  late final Index miExt = Index(
+    'mi_ext',
+    'CREATE INDEX mi_ext ON media_index (extension)',
+  );
   late final Index oneActiveSession = Index(
     'one_active_session',
     'CREATE UNIQUE INDEX one_active_session ON sessions (is_active) WHERE is_active = 1',
@@ -7049,6 +7209,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     miDate,
     miName,
     miScreenshotDate,
+    miSourceDate,
+    miExt,
     oneActiveSession,
     oneOpenSessionPerPreset,
     saSessionStatusSeq,
@@ -7263,6 +7425,9 @@ typedef $$MediaIndexTableCreateCompanionBuilder = MediaIndexCompanion Function({
   required int indexedAtMs,
   required int scanGeneration,
   Value<bool> screenshot,
+  Value<SourceBucket> source,
+  Value<bool> hidden,
+  Value<String> extension,
   Value<int> rowid,
 });
 typedef $$MediaIndexTableUpdateCompanionBuilder = MediaIndexCompanion Function({
@@ -7284,6 +7449,9 @@ typedef $$MediaIndexTableUpdateCompanionBuilder = MediaIndexCompanion Function({
   Value<int> indexedAtMs,
   Value<int> scanGeneration,
   Value<bool> screenshot,
+  Value<SourceBucket> source,
+  Value<bool> hidden,
+  Value<String> extension,
   Value<int> rowid,
 });
 
@@ -7387,6 +7555,22 @@ class $$MediaIndexTableFilterComposer
     column: $table.screenshot,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<SourceBucket, SourceBucket, int> get source =>
+      $composableBuilder(
+        column: $table.source,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<bool> get hidden => $composableBuilder(
+    column: $table.hidden,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get extension => $composableBuilder(
+    column: $table.extension,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$MediaIndexTableOrderingComposer
@@ -7487,6 +7671,21 @@ class $$MediaIndexTableOrderingComposer
     column: $table.screenshot,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hidden => $composableBuilder(
+    column: $table.hidden,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get extension => $composableBuilder(
+    column: $table.extension,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaIndexTableAnnotationComposer
@@ -7565,6 +7764,15 @@ class $$MediaIndexTableAnnotationComposer
     column: $table.screenshot,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<SourceBucket, int> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<bool> get hidden =>
+      $composableBuilder(column: $table.hidden, builder: (column) => column);
+
+  GeneratedColumn<String> get extension =>
+      $composableBuilder(column: $table.extension, builder: (column) => column);
 }
 
 class $$MediaIndexTableTableManager
@@ -7616,6 +7824,9 @@ class $$MediaIndexTableTableManager
                 Value<int> indexedAtMs = const Value.absent(),
                 Value<int> scanGeneration = const Value.absent(),
                 Value<bool> screenshot = const Value.absent(),
+                Value<SourceBucket> source = const Value.absent(),
+                Value<bool> hidden = const Value.absent(),
+                Value<String> extension = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaIndexCompanion(
                 id: id,
@@ -7636,6 +7847,9 @@ class $$MediaIndexTableTableManager
                 indexedAtMs: indexedAtMs,
                 scanGeneration: scanGeneration,
                 screenshot: screenshot,
+                source: source,
+                hidden: hidden,
+                extension: extension,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7658,6 +7872,9 @@ class $$MediaIndexTableTableManager
                 required int indexedAtMs,
                 required int scanGeneration,
                 Value<bool> screenshot = const Value.absent(),
+                Value<SourceBucket> source = const Value.absent(),
+                Value<bool> hidden = const Value.absent(),
+                Value<String> extension = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaIndexCompanion.insert(
                 id: id,
@@ -7678,6 +7895,9 @@ class $$MediaIndexTableTableManager
                 indexedAtMs: indexedAtMs,
                 scanGeneration: scanGeneration,
                 screenshot: screenshot,
+                source: source,
+                hidden: hidden,
+                extension: extension,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

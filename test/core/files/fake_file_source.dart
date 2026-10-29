@@ -53,6 +53,7 @@ class FakeFileSource implements FileSource {
       takenAt: takenAt?.toUtc(),
       folderPath: folder,
       origin: FileOrigin.local,
+      hidden: name.startsWith('.') || isInHiddenFolder(path),
     );
     _files[ref.id] = ref;
     _bytes[ref.id] = List.unmodifiable(bytes);

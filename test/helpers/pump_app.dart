@@ -9,12 +9,14 @@ import 'package:kfm/app/app.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/files/open_with.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail_cache.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 
 import '../core/files/fake_file_source.dart';
+import '../core/files/fake_open_with.dart';
 import '../core/platform/permissions/fake_permission_service.dart';
 import '../features/swipe/fake_video.dart';
 
@@ -33,6 +35,7 @@ Future<TestApp> pumpApp(
   FakePermissionService? permissions,
   FakeFileSource? files,
   FakeVideoFactory? videos,
+  FakeOpenWith? openWith,
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   final db = AppDatabase(NativeDatabase.memory());
@@ -44,6 +47,7 @@ Future<TestApp> pumpApp(
       appDatabaseProvider.overrideWithValue(db),
       permissionServiceProvider.overrideWithValue(service),
       fileSourceProvider.overrideWithValue(fileSource),
+      openWithServiceProvider.overrideWithValue(openWith ?? FakeOpenWith()),
       videoHandleFactoryProvider.overrideWithValue(
         (videos ?? FakeVideoFactory()).call,
       ),

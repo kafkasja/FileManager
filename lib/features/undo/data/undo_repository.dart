@@ -156,6 +156,16 @@ class UndoRepository {
     return (await query.get()).map(_toAction).toList();
   }
 
+  /// Whether the session has any action, undone ones included.
+  Future<bool> hasAny(int sessionId) async {
+    final row =
+        await (_db.select(_db.sessionActions)
+              ..where((a) => a.sessionId.equals(sessionId))
+              ..limit(1))
+            .getSingleOrNull();
+    return row != null;
+  }
+
   Future<SessionAction?> top(int sessionId) async {
     final rows = await stack(sessionId, limit: 1);
     return rows.isEmpty ? null : rows.single;

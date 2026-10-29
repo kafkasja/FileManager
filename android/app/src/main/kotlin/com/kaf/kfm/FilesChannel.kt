@@ -1,6 +1,7 @@
 package com.kaf.kfm
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
@@ -15,6 +16,8 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.webkit.MimeTypeMap
+import androidx.core.content.FileProvider
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -107,6 +110,11 @@ class FilesChannel(
                     "storageVolumes" -> storageVolumes()
                     "hasAllFilesAccess" -> canUseFiles()
                     "listTrashed" -> listTrashed()
+                    "openWith" -> openWith(
+                        call.argument<String>("contentUri"),
+                        call.argument<String>("path"),
+                        call.argument<String>("mime"),
+                    )
                     "canManageMedia" -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                         MediaStore.canManageMedia(context)
                     else -> {
@@ -600,6 +608,35 @@ class FilesChannel(
 
     private fun MethodCall.stringArg(name: String): String =
         argument<String>(name) ?: throw FilesError("BAD_ARGS", "missing $name")
+
+    // ---- open with (TASK-B1) ----
+
+    /**
+     * Android "Open with" chooser for a MediaStore item ([contentUri]) or a plain file ([path],
+     * shared through the FileProvider). False when no app can open it.
+     */
+    private fun openWith(contentUri: String?, path: String?, mime: String?): Boolean {
+        val uri = when {
+            contentUri != null -> Uri.parse(contentUri)
+            path != null -> FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(path))
+            else -> throw FilesError("IO", "openWith: no uri or path")
+        }
+        val type = mime
+            ?: path?.let { MimeTypeMap.getSingleton().getMimeTypeFromExtension(File(it).extension.lowercase()) }
+            ?: "*/*"
+        val view = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, type)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        @Suppress("DEPRECATION")
+        if (context.packageManager.queryIntentActivities(view, 0).isEmpty()) return false
+        val chooser = Intent.createChooser(view, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            context.startActivity(chooser)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
 
     private class FilesError(val code: String, message: String) : Exception(message)
 

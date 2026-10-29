@@ -36,7 +36,7 @@ final class TrashControllerProvider
   TrashController create() => TrashController();
 }
 
-String _$trashControllerHash() => r'5df25f2092b3573ac3abd00826438b830a183722';
+String _$trashControllerHash() => r'a6b3fdf0e7def0b101aa5bbc53388922389b7ff3';
 
 /// Trash page (TASK-D5): system trash and pending folder on one page.
 

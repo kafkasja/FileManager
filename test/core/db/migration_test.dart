@@ -2,10 +2,12 @@ import 'package:drift/drift.dart';
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/index/source_rule.dart';
 
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v11.dart' as v11;
+import 'generated/schema_v12.dart' as v12;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -44,7 +46,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 12; from++) {
+  for (var from = 1; from < 13; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -218,5 +220,48 @@ void main() {
     final row = (await db.select(db.pendingDeletes).get()).single;
     expect(row.trashId, 'ms:1');
     expect(row.leftTrashAt, equals(null));
+  });
+
+  test('v12 -> v13 backfills source and extension; hidden = 0', () async {
+    final schema = await verifier.schemaAt(12);
+    final raw = v12.DatabaseAtV12(schema.newConnection());
+    for (final (id, folder, name, kind) in [
+      (
+        'a',
+        '/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/'
+            'WhatsApp Images',
+        'IMG-1.jpg',
+        0,
+      ),
+      ('b', '/storage/emulated/0/Download', 'a.PDF', 3),
+      ('c', '/storage/emulated/0/DCIM/Camera', 'x.jpg', 0),
+      ('d', '/storage/emulated/0/DCIM/Tapo', 'noext', 0),
+    ]) {
+      await raw.customStatement(
+        'INSERT INTO media_index (id, uri, name, name_lower, kind, size_bytes, '
+        'modified_at_ms, sort_date_ms, folder_path, origin, indexed_at_ms, '
+        "scan_generation) VALUES ('$id', 'u', '$name', '${name.toLowerCase()}', "
+        "$kind, 1, 1, 1, '$folder', 0, 1, 1)",
+      );
+    }
+    await raw.customStatement(
+      "INSERT INTO tags (name, color, created_at) VALUES ('T', 1, 1)",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    final rows = {
+      for (final r in await db.select(db.mediaIndex).get())
+        r.id: (r.source, r.extension, r.hidden),
+    };
+    expect(rows, {
+      'a': (SourceBucket.whatsapp, 'jpg', false),
+      'b': (SourceBucket.downloads, 'pdf', false),
+      'c': (SourceBucket.camera, 'jpg', false),
+      'd': (SourceBucket.none, '', false),
+    });
+    expect(await db.select(db.tags).get(), hasLength(1));
   });
 }

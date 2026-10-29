@@ -92,6 +92,25 @@ void main() {
     expect(deck(second).current!.name, 'p4.jpg');
   });
 
+  test('swipe 3, undo 3, restart: the deck starts at the first swiped file '
+      '(H4)', () async {
+    final first = await launch();
+    final controller = first.read(swipeDeckControllerProvider.notifier)
+      ..swipe(SwipeDirection.right)
+      ..swipe(SwipeDirection.left)
+      ..swipe(SwipeDirection.right);
+    for (var i = 0; i < 3; i++) {
+      await controller.undo();
+    }
+    expect(deck(first).current!.name, 'p5.jpg');
+    await close(first);
+
+    final second = await launch();
+    addTearDown(second.dispose);
+    expect(deck(second).current!.name, 'p5.jpg');
+    expect(deck(second).swiped, 0);
+  });
+
   test(
     'new photos are offered with a chip, not forced into the deck',
     () async {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/index/source_rule.dart';
 import 'package:meta/meta.dart';
 
 enum TagFilterMode { any, tagged, untagged, hasTags }
@@ -89,6 +90,7 @@ class FileFilter {
     this.favoritesOnly = false,
     this.reviewed = ReviewedFilterMode.any,
     this.includeReviewed,
+    this.sources = const {},
   });
 
   /// Throws [FormatException] on bad types or a newer version. Unknown keys
@@ -104,6 +106,7 @@ class FileFilter {
     final kinds = opt<List<Object?>>('kinds') ?? const [];
     final folders = opt<List<Object?>>('folders') ?? const [];
     final tags = opt<List<Object?>>('tagIds') ?? const [];
+    final sources = opt<List<Object?>>('sources') ?? const [];
     return FileFilter(
       kinds: {
         for (final k in kinds)
@@ -120,6 +123,11 @@ class FileFilter {
       favoritesOnly: opt<bool>('favorites') ?? false,
       reviewed: _enum(ReviewedFilterMode.values, opt<String>('reviewed')),
       includeReviewed: opt<bool>('inclRev'),
+      sources: {
+        for (final s in sources)
+          SourceBucket.values.asNameMap()[s] ??
+              (throw FormatException('Bad source: $s')),
+      },
     );
   }
 
@@ -144,6 +152,9 @@ class FileFilter {
   /// P7: session-only "include files already reviewed here"; null = the
   /// default (the preset's setting, or Basic's).
   final bool? includeReviewed;
+
+  /// B1: empty = any source; OR'ed.
+  final Set<SourceBucket> sources;
 
   static const none = FileFilter();
 
@@ -204,6 +215,8 @@ class FileFilter {
     if (favoritesOnly) 'favorites': true,
     if (reviewed != ReviewedFilterMode.any) 'reviewed': reviewed.name,
     'inclRev': ?includeReviewed,
+    if (sources.isNotEmpty)
+      'sources': [for (final s in sources) s.name]..sort(),
   };
 
   /// Sizes are set with [clearMinSize]/[clearMaxSize] to go back to "any".
@@ -222,6 +235,7 @@ class FileFilter {
     ReviewedFilterMode? reviewed,
     bool? includeReviewed,
     bool clearIncludeReviewed = false,
+    Set<SourceBucket>? sources,
   }) => FileFilter(
     kinds: kinds ?? this.kinds,
     screenshotsOnly: screenshotsOnly ?? this.screenshotsOnly,
@@ -236,6 +250,7 @@ class FileFilter {
     includeReviewed: clearIncludeReviewed
         ? null
         : includeReviewed ?? this.includeReviewed,
+    sources: sources ?? this.sources,
   );
 
   @override
@@ -251,7 +266,8 @@ class FileFilter {
       _setEquals(other.tagIds, tagIds) &&
       other.favoritesOnly == favoritesOnly &&
       other.reviewed == reviewed &&
-      other.includeReviewed == includeReviewed;
+      other.includeReviewed == includeReviewed &&
+      _setEquals(other.sources, sources);
 
   @override
   int get hashCode => Object.hash(
@@ -266,6 +282,7 @@ class FileFilter {
     favoritesOnly,
     reviewed,
     includeReviewed,
+    Object.hashAllUnordered(sources),
   );
 
   static T _of<T>(Object? value, String what) =>

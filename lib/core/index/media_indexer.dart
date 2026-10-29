@@ -95,12 +95,18 @@ class MediaIndexer {
     final lastFull = await _lastFullScan();
     if (lastFull == null) {
       await _fullScan(_allowedKinds(), isFirstScan: true);
+      await _markHiddenScanned();
       return;
     }
     await _incremental();
-    if (_clock().difference(lastFull) > fullScanInterval) {
+    final hiddenScanned = await _settings.read(AppSettings.indexHiddenScanned);
+    if (_clock().difference(lastFull) > fullScanInterval ||
+        (_canSeeAllFiles() && !hiddenScanned)) {
+      // B1: hidden files aren't modified "since the last scan": a full scan
+      // catches them up once.
       await _fullScan(_allowedKinds(), isFirstScan: false);
     }
+    await _markHiddenScanned();
   });
 
   Future<void> fullScan({Set<FileKind>? kinds}) => _serial(() async {
@@ -174,7 +180,8 @@ class MediaIndexer {
 
     var found = 0;
     _emit(IndexScanning(found: 0, isFirstScan: isFirstScan));
-    await for (final page in _source.scan(query: FileQuery(kinds: kinds))) {
+    final query = FileQuery(kinds: kinds, includeHidden: _canSeeAllFiles());
+    await for (final page in _source.scan(query: query)) {
       await _dao.upsertBatch(page, generation, now: _clock());
       found += page.length;
       _emit(IndexScanning(found: found, isFirstScan: isFirstScan));
@@ -199,6 +206,7 @@ class MediaIndexer {
     final query = FileQuery(
       kinds: _allowedKinds(),
       modifiedAfter: since.subtract(incrementalOverlap),
+      includeHidden: _canSeeAllFiles(),
     );
     var found = 0;
     await for (final page in _source.scan(query: query)) {
@@ -231,6 +239,10 @@ class MediaIndexer {
   /// never deleted just because access is off.
   Set<FileKind> _allowedKinds() =>
       _canSeeAllFiles() ? FileKind.values.toSet() : mediaKinds;
+
+  /// Losing All files access resets it, so regaining it catches up again.
+  Future<void> _markHiddenScanned() =>
+      _settings.write(AppSettings.indexHiddenScanned, _canSeeAllFiles());
 
   Future<DateTime?> _lastFullScan() async =>
       _parse(await _settings.read(AppSettings.indexLastFullScanAt));

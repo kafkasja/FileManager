@@ -5,11 +5,13 @@ import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
 import 'package:kfm/core/db/tables/reviewed_labels_table.dart';
 import 'package:kfm/core/db/tables/tags_table.dart';
+import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/screenshot_rule.dart';
+import 'package:kfm/core/index/source_rule.dart';
 
 part 'media_index_dao.g.dart';
 
@@ -91,19 +93,52 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Every indexed folder with its file count, sorted by path (P2 folder
-  /// picker: "Folders with photos").
-  Future<List<({String path, int count})>> folderSummaries() async {
+  /// picker: "Folders with photos"). B1: [scope] narrows the counted files
+  /// (null = every row, as before).
+  Future<List<({String path, int count})>> folderSummaries({
+    IndexQuery? scope,
+  }) async {
     final count = mediaIndex.id.count();
-    final rows =
-        await (selectOnly(mediaIndex)
-              ..addColumns([mediaIndex.folderPath, count])
-              ..groupBy([mediaIndex.folderPath])
-              ..orderBy([OrderingTerm.asc(mediaIndex.folderPath)]))
-            .get();
+    final query = selectOnly(mediaIndex)
+      ..addColumns([mediaIndex.folderPath, count])
+      ..groupBy([mediaIndex.folderPath])
+      ..orderBy([OrderingTerm.asc(mediaIndex.folderPath)]);
+    if (scope != null) query.where(_applyQuery(mediaIndex, scope));
+    final rows = await query.get();
     return [
       for (final r in rows)
         (path: r.read(mediaIndex.folderPath)!, count: r.read(count) ?? 0),
     ];
+  }
+
+  /// B1 folder mode: the direct child folders of [parent] (null = storage
+  /// volumes) holding files of [scope], with counts including subfolders.
+  /// [scope]'s own folder is ignored. Sorted by name, case-insensitive.
+  Future<List<FolderEntry>> folders({
+    required IndexQuery scope,
+    String? parent,
+  }) async {
+    final summaries = await folderSummaries(
+      scope: scope.copyWith(folderPath: () => null, folderPaths: const {}),
+    );
+    final counts = <String, int>{};
+    for (final (:path, :count) in summaries) {
+      final String child;
+      if (parent == null) {
+        child = volumeRootOf(path);
+      } else if (path.startsWith('$parent/')) {
+        final rest = path.substring(parent.length + 1);
+        final slash = rest.indexOf('/');
+        child = '$parent/${slash < 0 ? rest : rest.substring(0, slash)}';
+      } else {
+        continue;
+      }
+      counts[child] = (counts[child] ?? 0) + count;
+    }
+    return [
+      for (final MapEntry(:key, :value) in counts.entries)
+        FolderEntry(key, value),
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   /// Some indexed file in [folderPath] is called [name] (case-insensitive;
@@ -297,6 +332,32 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
             select(favorites)..where((f) => f.fileId.equalsExp(t.id)),
           );
     }
+    if (q.sources.isNotEmpty) {
+      where = where & t.source.isIn([for (final s in q.sources) s.index]);
+    }
+    switch (q.hidden) {
+      case HiddenFilter.exclude:
+        where = where & t.hidden.equals(false);
+      case HiddenFilter.include:
+        break;
+      case HiddenFilter.only:
+        where = where & t.hidden.equals(true);
+    }
+    if (q.extensions.isNotEmpty) {
+      where = where & t.extension.isIn(q.extensions);
+    }
+    if (q.panoramaOnly) {
+      final w = t.width;
+      final h = t.height;
+      where =
+          where &
+          t.kind.equals(FileKind.image.index) &
+          (t.nameLower.like(r'pano\_%', escapeChar: r'\') |
+              (w.isNotNull() &
+                  h.isNotNull() &
+                  (w.isBiggerOrEqual(h * const Constant(2)) |
+                      h.isBiggerOrEqual(w * const Constant(2)))));
+    }
     return where;
   }
 
@@ -384,6 +445,9 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     indexedAtMs: indexedAtMs,
     scanGeneration: generation,
     screenshot: Value(isScreenshot(f.kind, f.folderPath, f.name)),
+    source: Value(sourceFor(f.kind, f.folderPath, f.name)),
+    hidden: Value(f.hidden),
+    extension: Value(extensionOf(f.name)),
   );
 
   static FileRef _toRef(MediaIndexRow r) => FileRef(
@@ -405,5 +469,6 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     durationMs: r.durationMs,
     folderPath: r.folderPath,
     origin: r.origin,
+    hidden: r.hidden,
   );
 }

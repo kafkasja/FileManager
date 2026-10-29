@@ -130,12 +130,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get tabSettings;
 
-  /// No description provided for @browsePlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Browsing is coming soon.'**
-  String get browsePlaceholder;
-
   /// No description provided for @dbWriteError.
   ///
   /// In en, this message translates to:
@@ -2325,6 +2319,384 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'If your phone has photos, KFM may not be allowed to see them. Check KFM\'s permissions in your phone\'s settings.'**
   String get swipeEmptyLibraryHint;
+
+  /// No description provided for @browseKindAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get browseKindAll;
+
+  /// No description provided for @browseKindImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get browseKindImages;
+
+  /// No description provided for @browseKindVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get browseKindVideos;
+
+  /// No description provided for @browseKindAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get browseKindAudio;
+
+  /// No description provided for @browseKindDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get browseKindDocuments;
+
+  /// No description provided for @browseKindArchives.
+  ///
+  /// In en, this message translates to:
+  /// **'Archives'**
+  String get browseKindArchives;
+
+  /// No description provided for @browseKindOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get browseKindOther;
+
+  /// No description provided for @browseSourceCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get browseSourceCamera;
+
+  /// No description provided for @browseSourceScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get browseSourceScreenshots;
+
+  /// No description provided for @browseSourceWhatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get browseSourceWhatsapp;
+
+  /// No description provided for @browseSourceSnapchat.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapchat'**
+  String get browseSourceSnapchat;
+
+  /// No description provided for @browseSourceDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get browseSourceDownloads;
+
+  /// No description provided for @browseSourceVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get browseSourceVideos;
+
+  /// No description provided for @browseSourcePanoramas.
+  ///
+  /// In en, this message translates to:
+  /// **'Panoramas'**
+  String get browseSourcePanoramas;
+
+  /// No description provided for @browseSourceScreenRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen recordings'**
+  String get browseSourceScreenRecordings;
+
+  /// No description provided for @browseSourceExpertRaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Expert RAW'**
+  String get browseSourceExpertRaw;
+
+  /// No description provided for @browseSourceGifs.
+  ///
+  /// In en, this message translates to:
+  /// **'GIFs'**
+  String get browseSourceGifs;
+
+  /// No description provided for @browseSourceCollages.
+  ///
+  /// In en, this message translates to:
+  /// **'Collages'**
+  String get browseSourceCollages;
+
+  /// No description provided for @browseSourceClippedImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipped images'**
+  String get browseSourceClippedImages;
+
+  /// No description provided for @browseSourceLiveMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Live messages'**
+  String get browseSourceLiveMessages;
+
+  /// No description provided for @browseSourceVideoCaptures.
+  ///
+  /// In en, this message translates to:
+  /// **'Video captures'**
+  String get browseSourceVideoCaptures;
+
+  /// No description provided for @browseSourceTelegram.
+  ///
+  /// In en, this message translates to:
+  /// **'Telegram'**
+  String get browseSourceTelegram;
+
+  /// No description provided for @browseSourceInstagram.
+  ///
+  /// In en, this message translates to:
+  /// **'Instagram'**
+  String get browseSourceInstagram;
+
+  /// No description provided for @browseSourceOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other apps'**
+  String get browseSourceOther;
+
+  /// No description provided for @browseSourceHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get browseSourceHidden;
+
+  /// No description provided for @browsePanoramaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Best guess: wide photos and PANO files'**
+  String get browsePanoramaHint;
+
+  /// No description provided for @browseModeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All files'**
+  String get browseModeAll;
+
+  /// No description provided for @browseModeFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get browseModeFolders;
+
+  /// No description provided for @browseShowHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Show hidden files'**
+  String get browseShowHidden;
+
+  /// No description provided for @browseSwipeThese.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe these'**
+  String get browseSwipeThese;
+
+  /// No description provided for @browseNeedsAllFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant access to see documents, downloads and hidden files'**
+  String get browseNeedsAllFiles;
+
+  /// No description provided for @browseGrantAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant access'**
+  String get browseGrantAccess;
+
+  /// No description provided for @browseEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No files here'**
+  String get browseEmpty;
+
+  /// No description provided for @browseLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the files.'**
+  String get browseLoadError;
+
+  /// No description provided for @browseOtherHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Files from other apps and folders, grouped by folder'**
+  String get browseOtherHint;
+
+  /// No description provided for @browseInternalStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal storage'**
+  String get browseInternalStorage;
+
+  /// No description provided for @browseExternalVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'SD card or USB ({name})'**
+  String browseExternalVolume(String name);
+
+  /// No description provided for @browseFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String browseFileCount(int count);
+
+  /// No description provided for @browseStorageRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get browseStorageRoot;
+
+  /// No description provided for @browseFolderMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder options'**
+  String get browseFolderMenu;
+
+  /// No description provided for @openWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Open with'**
+  String get openWith;
+
+  /// No description provided for @openWithNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No app can open this file'**
+  String get openWithNone;
+
+  /// No description provided for @openWithFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open this file.'**
+  String get openWithFailed;
+
+  /// No description provided for @textViewerTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first 1 MB'**
+  String get textViewerTruncated;
+
+  /// No description provided for @textViewerLatin1.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown as Latin-1 (not UTF-8)'**
+  String get textViewerLatin1;
+
+  /// No description provided for @textViewerBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'This doesn\'t look like a text file'**
+  String get textViewerBinary;
+
+  /// No description provided for @textViewerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read this file.'**
+  String get textViewerError;
+
+  /// No description provided for @browseSortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get browseSortTitle;
+
+  /// No description provided for @browseSortDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get browseSortDate;
+
+  /// No description provided for @browseSortSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get browseSortSize;
+
+  /// No description provided for @browseSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get browseSortName;
+
+  /// No description provided for @browseSortNewestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get browseSortNewestFirst;
+
+  /// No description provided for @browseSortOldestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get browseSortOldestFirst;
+
+  /// No description provided for @browseSortLargestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest first'**
+  String get browseSortLargestFirst;
+
+  /// No description provided for @browseSortSmallestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Smallest first'**
+  String get browseSortSmallestFirst;
+
+  /// No description provided for @browseSortNameAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'A–Z'**
+  String get browseSortNameAsc;
+
+  /// No description provided for @browseSortNameDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Z–A'**
+  String get browseSortNameDesc;
+
+  /// No description provided for @browseRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent search'**
+  String get browseRecent;
+
+  /// No description provided for @settingsBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get settingsBrowse;
+
+  /// No description provided for @settingsShowSizes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show file sizes'**
+  String get settingsShowSizes;
+
+  /// No description provided for @settingsShowSizesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A size label on every photo and video'**
+  String get settingsShowSizesHelp;
+
+  /// No description provided for @settingsHighlightBig.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight big files'**
+  String get settingsHighlightBig;
+
+  /// No description provided for @settingsHighlightBigHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Files of 100 MB or more get a red size label'**
+  String get settingsHighlightBigHelp;
 }
 
 class _AppLocalizationsDelegate

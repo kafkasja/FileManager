@@ -121,6 +121,20 @@ class FilesChannel {
     return rows.map(_row).toList(growable: false);
   }
 
+  /// B1: Android "Open with" chooser. [contentUri] for MediaStore items,
+  /// else [path] (shared through the FileProvider). False = no app.
+  Future<bool> openWith({
+    String? contentUri,
+    String? path,
+    String? mime,
+  }) async =>
+      (await _invoke<bool>('openWith', {
+        'contentUri': contentUri,
+        'path': path,
+        'mime': mime,
+      })) ??
+      false;
+
   Future<T?> _invoke<T>(String method, [Map<String, Object?>? args]) async {
     try {
       return await _channel.invokeMethod<T>(method, args);

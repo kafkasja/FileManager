@@ -74,3 +74,23 @@ FileKind kindFor(String? mime, String name) {
   }
   return FileKind.other;
 }
+
+const _textExtensions = {
+  'txt', 'md', 'log', 'csv', 'tsv', 'json', 'xml', 'yaml', 'yml', 'ini', //
+  'cfg', 'conf', 'properties', 'srt', 'vtt', 'nfo',
+};
+
+/// B1: opens in KFM's text viewer (everything non-visual else goes to
+/// "Open with"). HTML is left to a browser.
+bool isTextFile(FileRef f) {
+  final m = f.mimeType?.toLowerCase();
+  if (m != null) {
+    if (m == 'text/html') return false;
+    if (m.startsWith('text/') ||
+        m == 'application/json' ||
+        m == 'application/xml') {
+      return true;
+    }
+  }
+  return _textExtensions.contains(extensionOf(f.name));
+}

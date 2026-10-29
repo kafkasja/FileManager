@@ -36,5 +36,6 @@ FileRef mediaRefFromRow(MediaRow row, {required String primaryRoot}) {
     origin: path.startsWith('$primaryRoot/')
         ? FileOrigin.local
         : FileOrigin.external,
+    hidden: name.startsWith('.') || isInHiddenFolder(path),
   );
 }

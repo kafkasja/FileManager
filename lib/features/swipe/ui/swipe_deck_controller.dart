@@ -193,15 +193,17 @@ class SwipeDeckController extends _$SwipeDeckController {
   /// gives the sort position.
   Future<IndexCursor?> _resumePoint(Session session) async {
     final dao = ref.read(mediaIndexDaoProvider);
-    final stack = await ref
-        .read(undoRepositoryProvider)
-        .stack(session.id, limit: 50);
+    final undo = ref.read(undoRepositoryProvider);
+    final stack = await undo.stack(session.id, limit: 50);
     for (final action in stack) {
       final file = await dao.byId(action.fileId) ?? _trashedOriginal(action);
       if (file != null) {
         return IndexCursor(file.sortDate.millisecondsSinceEpoch, file.id);
       }
     }
+    // H4: everything was undone. The saved cursor still points at the last
+    // (now undone) swipe: start from the top instead.
+    if (stack.isEmpty && await undo.hasAny(session.id)) return null;
     final saved = session.cursorFileId;
     final file = saved == null ? null : await dao.byId(saved);
     return file == null
@@ -226,7 +228,7 @@ class SwipeDeckController extends _$SwipeDeckController {
     final from = query.from;
     // Never widens a date filter.
     return query.copyWith(
-      from: from != null && from.isAfter(newFrom) ? from : newFrom,
+      from: () => from != null && from.isAfter(newFrom) ? from : newFrom,
     );
   }
 

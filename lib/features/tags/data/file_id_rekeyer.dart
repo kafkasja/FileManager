@@ -4,9 +4,11 @@ import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/files/file_source.dart';
 
-/// Moves tags and favorites to a file's new id when a move/rename changes it
-/// (`FileSource.idChanges`). Idempotent: copy rows to the new id (ignoring
-/// ones already there), then drop the old id's rows.
+/// Moves every file-id keyed row to a file's new id when a move/rename
+/// changes it (`FileSource.idChanges`): tags, favorites, reviewed labels and
+/// (H4) undo log, queued deletes and rename batch items. Idempotent: copy
+/// rows to the new id (ignoring ones already there), then drop the old id's
+/// rows.
 class FileIdRekeyer {
   new(this._db, this._queue);
 
@@ -51,6 +53,37 @@ class FileIdRekeyer {
           'file_modified_at_ms = COALESCE(?, file_modified_at_ms) '
           'WHERE file_id = ?',
           [newId, newModifiedMs, oldId],
+        );
+        // H4: undo and queued deletes look the file up by this id. Committed
+        // rows are history (P8 reads them by trash id).
+        await _db.customStatement(
+          'UPDATE session_actions SET file_id = ? '
+          "WHERE file_id = ? AND status <> 'committed'",
+          [newId, oldId],
+        );
+        // KFM moved it, the user didn't edit it: keep the delete valid.
+        await _db.customStatement(
+          'UPDATE pending_deletes SET file_id = ?, '
+          'file_modified_at_ms = COALESCE(?, file_modified_at_ms) '
+          "WHERE file_id = ? AND status IN ('queued', 'committing')",
+          [newId, newModifiedMs, oldId],
+        );
+        // `file_id` is the stable key while a batch applies/reverts (the
+        // runner tracks `current_file_id` itself): re-key only collecting
+        // batches. PK (batch_id, file_id): a leftover means the new id was
+        // already in the batch.
+        await _db.customStatement(
+          'UPDATE OR IGNORE rename_batch_items '
+          'SET file_id = ?, current_file_id = ? WHERE file_id = ? AND '
+          'batch_id IN (SELECT id FROM rename_batches '
+          "WHERE status = 'collecting')",
+          [newId, newId, oldId],
+        );
+        await _db.customStatement(
+          'DELETE FROM rename_batch_items WHERE file_id = ? AND '
+          'batch_id IN (SELECT id FROM rename_batches '
+          "WHERE status = 'collecting')",
+          [oldId],
         );
       }),
     );

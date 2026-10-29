@@ -75,6 +75,7 @@ void main() {
         const FileSort(FileSortField.size),
         const FileSort(FileSortField.size, descending: false),
         const FileSort(FileSortField.name, descending: false),
+        const FileSort(FileSortField.name),
       ]) {
         final ids = await allIds(dao, IndexQuery(sort: sort), 10);
         expect(ids.toSet(), hasLength(95), reason: '$sort');

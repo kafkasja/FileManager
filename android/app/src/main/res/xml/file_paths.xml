@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- B1 FileProvider: shared storage, SD cards / USB (/storage) and the cache. -->
+<paths>
+    <external-path name="external" path="." />
+    <root-path name="sd" path="/storage" />
+    <cache-path name="cache" path="." />
+</paths>

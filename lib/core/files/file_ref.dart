@@ -21,6 +21,7 @@ class FileRef {
     this.width,
     this.height,
     this.durationMs,
+    this.hidden = false,
   });
 
   factory fromJson(Map<String, Object?> j) => FileRef(
@@ -45,6 +46,7 @@ class FileRef {
     durationMs: j['durationMs'] as int?,
     folderPath: j['folderPath']! as String,
     origin: FileOrigin.values.byName(j['origin']! as String),
+    hidden: j['hidden'] as bool? ?? false,
   );
 
   /// Stable id. Formats:
@@ -77,6 +79,9 @@ class FileRef {
   final String folderPath;
   final FileOrigin origin;
 
+  /// B1: a dot-file, or inside a dot-folder or a `.nomedia` folder.
+  final bool hidden;
+
   /// Absolute path of the file itself.
   String get path => '$folderPath/$name';
 
@@ -99,6 +104,7 @@ class FileRef {
     'durationMs': durationMs,
     'folderPath': folderPath,
     'origin': origin.name,
+    if (hidden) 'hidden': true,
   };
 
   FileRef copyWith({
@@ -115,6 +121,7 @@ class FileRef {
     int? durationMs,
     String? folderPath,
     FileOrigin? origin,
+    bool? hidden,
   }) => FileRef(
     id: id ?? this.id,
     uri: uri ?? this.uri,
@@ -129,6 +136,7 @@ class FileRef {
     durationMs: durationMs ?? this.durationMs,
     folderPath: folderPath ?? this.folderPath,
     origin: origin ?? this.origin,
+    hidden: hidden ?? this.hidden,
   );
 
   // Deliberately ignores metadata that can't change without modifiedAt
