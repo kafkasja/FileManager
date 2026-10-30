@@ -6,7 +6,8 @@ import 'package:kfm/core/files/file_source.dart';
 
 /// Moves every file-id keyed row to a file's new id when a move/rename
 /// changes it (`FileSource.idChanges`): tags, favorites, reviewed labels and
-/// (H4) undo log, queued deletes and rename batch items. Idempotent: copy
+/// (H4) undo log, queued deletes and rename batch items, (B6) the
+/// selection and its Clear all snapshot. Idempotent: copy
 /// rows to the new id (ignoring ones already there), then drop the old id's
 /// rows.
 class FileIdRekeyer {
@@ -85,6 +86,17 @@ class FileIdRekeyer {
           "WHERE status = 'collecting')",
           [oldId],
         );
+        // B6: the selection keeps the file's place in the order.
+        for (final table in ['selection_items', 'selection_snapshots']) {
+          await _db.customStatement(
+            'INSERT OR IGNORE INTO $table (file_id, seq, added_at) '
+            'SELECT ?, seq, added_at FROM $table WHERE file_id = ?',
+            [newId, oldId],
+          );
+          await _db.customStatement('DELETE FROM $table WHERE file_id = ?', [
+            oldId,
+          ]);
+        }
       }),
     );
   }

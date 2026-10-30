@@ -15,6 +15,7 @@ import 'package:kfm/features/presets/domain/preset.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/reviewed/data/reviewed_repository.dart';
 import 'package:kfm/features/reviewed/domain/reviewed_rules.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
 import 'package:kfm/features/session/domain/session.dart';
@@ -44,6 +45,8 @@ ClearSessionUseCase clearSessionUseCase(Ref ref) => ClearSessionUseCase(
   ref.watch(sessionRepositoryProvider),
   ref.watch(deleteQueueProvider),
   renames: ref.watch(renameBatchRepositoryProvider),
+  clearSelection: () =>
+      ref.read(selectionControllerProvider.notifier).clearAll(),
 );
 
 @Riverpod(keepAlive: true)

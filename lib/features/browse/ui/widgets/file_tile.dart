@@ -17,7 +17,9 @@ class FileGridTile extends StatelessWidget {
   });
 
   final FileRef file;
-  final VoidCallback onTap;
+
+  /// Null = a tap does nothing (B6 Edit mode on an unselected file).
+  final VoidCallback? onTap;
 
   /// A size label (Settings → Browse, or sorted by size).
   final bool showSize;
@@ -137,7 +139,9 @@ class FileListRow extends StatelessWidget {
   });
 
   final FileRef file;
-  final VoidCallback onTap;
+
+  /// Null = a tap does nothing (B6 Edit mode on an unselected file).
+  final VoidCallback? onTap;
 
   /// Big files' size in the error color.
   final bool highlightBig;

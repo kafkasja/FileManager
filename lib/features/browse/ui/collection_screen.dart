@@ -13,6 +13,9 @@ import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:kfm/features/browse/ui/widgets/sort_sheet.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
+import 'package:kfm/features/selection/domain/selection_state.dart';
+import 'package:kfm/features/selection/ui/selection_bar.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 
 /// One carousel card's files (a source like WhatsApp, or a recent search):
 /// its own type chips, the global Browse sort. "Other apps" lists its
@@ -64,11 +67,23 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       if (needsAccess) const SliverToBoxAdapter(child: AccessBanner()),
     ];
 
+    final mode =
+        ref.watch(selectionControllerProvider.select((s) => s.value?.mode)) ??
+        SelectionMode.normal;
+    final selector = ref.read(selectionControllerProvider.notifier);
     return PopScope(
-      // Back leaves a folder group first.
-      canPop: group == null,
+      // Back leaves Edit / Select mode, then a folder group.
+      canPop: group == null && mode == SelectionMode.normal,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) setState(() => _group = null);
+        if (didPop) return;
+        switch (mode) {
+          case SelectionMode.edit:
+            selector.exitEdit();
+          case SelectionMode.select:
+            selector.exitSelect();
+          case SelectionMode.normal:
+            setState(() => _group = null);
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -94,6 +109,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               onSelect: (kind, {add = false}) =>
                   setState(() => _kinds = toggleKind(_kinds, kind, add: add)),
             ),
+            const SelectionHint(),
             if (collection is SourceCollection)
               Padding(
                 padding: EdgeInsetsDirectional.symmetric(
@@ -113,6 +129,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     )
                   : FileResultsView(query: query, leading: banner),
             ),
+            const SelectionBar(),
           ],
         ),
       ),

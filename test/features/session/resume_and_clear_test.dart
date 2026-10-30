@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -233,5 +234,24 @@ void main() {
         expect(rows.single.status, PendingDeleteStatus.queued);
       },
     );
+
+    test('clear selection, then Undo restores it', () async {
+      final c = await launch();
+      addTearDown(c.dispose);
+      c.listen(selectionControllerProvider, (_, _) {});
+      final selection = c.read(selectionControllerProvider.notifier);
+      await c.read(selectionControllerProvider.future);
+      selection.addAll(files.files.take(3));
+      final controller = c.read(swipeDeckControllerProvider.notifier);
+      final result = await controller.clear(
+        const ClearRequest(clearSelection: true),
+      );
+      expect(result.selectionCleared, 3);
+      expect(result.sessionEnded, isFalse);
+      expect(c.read(selectionControllerProvider).value!.isEmpty, isTrue);
+      await selection.restoreCleared();
+      expect(c.read(selectionControllerProvider).value!.count, 3);
+      await selection.flush();
+    });
   });
 }

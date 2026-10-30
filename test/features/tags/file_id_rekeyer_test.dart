@@ -144,4 +144,24 @@ void main() {
     )..where((a) => a.id.equals(id))).getSingle();
     expect(row.fileId, 'x');
   });
+
+  test('selection and its snapshot keep the file in place', () async {
+    for (final table in ['selection_items', 'selection_snapshots']) {
+      await db.customStatement(
+        'INSERT INTO $table (file_id, seq, added_at) '
+        "VALUES ('a', 7, 1), ('z', 8, 1)",
+      );
+    }
+    await db
+        .into(db.favorites)
+        .insert(FavoritesCompanion.insert(fileId: 'a', addedAt: now));
+
+    await rekeyer.rekey('a', 'b');
+
+    final items = await db.select(db.selectionItems).get();
+    expect({for (final r in items) r.fileId: r.seq}, {'b': 7, 'z': 8});
+    final snapshot = await db.select(db.selectionSnapshots).get();
+    expect({for (final r in snapshot) r.fileId: r.seq}, {'b': 7, 'z': 8});
+    expect((await db.select(db.favorites).get()).single.fileId, 'b');
+  });
 }

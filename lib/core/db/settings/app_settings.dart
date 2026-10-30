@@ -33,6 +33,12 @@ abstract final class AppSettings {
     '',
   );
 
+  /// B6. The "use Edit selection to remove" tip was shown.
+  static final SettingKey<bool> selectionTipShown = SettingKey.boolean(
+    'selection.tipShown',
+    defaultValue: false,
+  );
+
   /// B3.
   static final SettingKey<int> sameTimeWindowSeconds = SettingKey.integer(
     'sameTimeWindowSeconds',

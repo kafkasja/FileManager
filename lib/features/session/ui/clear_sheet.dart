@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -18,6 +19,7 @@ Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
   final renameCount = await ref.read(
     renameBatchCountProvider(deck.session.id).future,
   );
+  final selected = (await ref.read(selectionControllerProvider.future)).count;
   if (!context.mounted) return;
   final request = await showModalBottomSheet<ClearRequest>(
     context: context,
@@ -26,6 +28,7 @@ Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
       canResetLayout: deck.session.layout != SwipeLayout.basic,
       waitingDeletes: summary.queued + summary.failed,
       renameCount: renameCount,
+      selectedCount: selected,
     ),
   );
   if (request == null || request.isEmpty) return;
@@ -37,6 +40,22 @@ Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
   if (request.newSession && !result.sessionEnded) {
     messenger.showSnackBar(SnackBar(content: Text(l10n.newSessionFailed)));
     return;
+  }
+  if (result.selectionCleared > 0) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l10n.selectionCleared(result.selectionCleared)),
+        duration: const Duration(seconds: 10),
+        persist: false,
+        action: SnackBarAction(
+          label: l10n.undoAction,
+          onPressed: () => ref
+              .read(selectionControllerProvider.notifier)
+              .restoreCleared()
+              .ignore(),
+        ),
+      ),
+    );
   }
   final before = result.layoutBefore;
   if (before != null) {
@@ -60,6 +79,7 @@ class _ClearSheet extends StatefulWidget {
     required this.canResetLayout,
     required this.waitingDeletes,
     this.renameCount = 0,
+    this.selectedCount = 0,
   });
 
   final bool canResetLayout;
@@ -68,6 +88,9 @@ class _ClearSheet extends StatefulWidget {
   /// P3: files in the rename batch that a new session drops.
   final int renameCount;
 
+  /// B6: files in the selection (row hidden when 0).
+  final int selectedCount;
+
   @override
   State<_ClearSheet> createState() => _ClearSheetState();
 }
@@ -75,6 +98,7 @@ class _ClearSheet extends StatefulWidget {
 class _ClearSheetState extends State<_ClearSheet> {
   bool _resetLayout = false;
   bool _newSession = false;
+  bool _clearSelection = false;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +107,7 @@ class _ClearSheetState extends State<_ClearSheet> {
     final request = ClearRequest(
       resetLayout: _resetLayout,
       newSession: _newSession,
+      clearSelection: _clearSelection,
     );
     return SafeArea(
       child: Column(
@@ -117,6 +142,12 @@ class _ClearSheetState extends State<_ClearSheet> {
             ),
             isThreeLine: true,
           ),
+          if (widget.selectedCount > 0)
+            CheckboxListTile(
+              value: _clearSelection,
+              onChanged: (v) => setState(() => _clearSelection = v ?? false),
+              title: Text(l10n.clearSelectionRow(widget.selectedCount)),
+            ),
           Padding(
             padding: EdgeInsetsDirectional.all(spacing * 2),
             child: Row(

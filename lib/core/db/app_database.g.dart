@@ -7094,6 +7094,539 @@ class ReviewedLabelsCompanion extends UpdateCompanion<ReviewedLabelRow> {
   }
 }
 
+class $SelectionItemsTable extends SelectionItems
+    with TableInfo<$SelectionItemsTable, SelectionItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SelectionItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [fileId, seq, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'selection_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SelectionItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seqMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  SelectionItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SelectionItemRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SelectionItemsTable createAlias(String alias) {
+    return $SelectionItemsTable(attachedDatabase, alias);
+  }
+}
+
+class SelectionItemRow extends DataClass
+    implements Insertable<SelectionItemRow> {
+  /// FileRef.id (re-keyed on idChanges).
+  final String fileId;
+
+  /// Insertion order ("View selected", Swipe these, actions).
+  final int seq;
+  final DateTime addedAt;
+  const SelectionItemRow({
+    required this.fileId,
+    required this.seq,
+    required this.addedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['seq'] = Variable<int>(seq);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  SelectionItemsCompanion toCompanion(bool nullToAbsent) {
+    return SelectionItemsCompanion(
+      fileId: Value(fileId),
+      seq: Value(seq),
+      addedAt: Value(addedAt),
+    );
+  }
+
+  factory SelectionItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SelectionItemRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      seq: serializer.fromJson<int>(json['seq']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'seq': serializer.toJson<int>(seq),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  SelectionItemRow copyWith({String? fileId, int? seq, DateTime? addedAt}) =>
+      SelectionItemRow(
+        fileId: fileId ?? this.fileId,
+        seq: seq ?? this.seq,
+        addedAt: addedAt ?? this.addedAt,
+      );
+  SelectionItemRow copyWithCompanion(SelectionItemsCompanion data) {
+    return SelectionItemRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      seq: data.seq.present ? data.seq.value : this.seq,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SelectionItemRow(')
+          ..write('fileId: $fileId, ')
+          ..write('seq: $seq, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fileId, seq, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SelectionItemRow &&
+          other.fileId == this.fileId &&
+          other.seq == this.seq &&
+          other.addedAt == this.addedAt);
+}
+
+class SelectionItemsCompanion extends UpdateCompanion<SelectionItemRow> {
+  final Value<String> fileId;
+  final Value<int> seq;
+  final Value<DateTime> addedAt;
+  final Value<int> rowid;
+  const SelectionItemsCompanion({
+    this.fileId = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SelectionItemsCompanion.insert({
+    required String fileId,
+    required int seq,
+    required DateTime addedAt,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       seq = Value(seq),
+       addedAt = Value(addedAt);
+  static Insertable<SelectionItemRow> custom({
+    Expression<String>? fileId,
+    Expression<int>? seq,
+    Expression<DateTime>? addedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (seq != null) 'seq': seq,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SelectionItemsCompanion copyWith({
+    Value<String>? fileId,
+    Value<int>? seq,
+    Value<DateTime>? addedAt,
+    Value<int>? rowid,
+  }) {
+    return SelectionItemsCompanion(
+      fileId: fileId ?? this.fileId,
+      seq: seq ?? this.seq,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SelectionItemsCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('seq: $seq, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SelectionSnapshotsTable extends SelectionSnapshots
+    with TableInfo<$SelectionSnapshotsTable, SelectionSnapshotRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SelectionSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [fileId, seq, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'selection_snapshots';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SelectionSnapshotRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seqMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  SelectionSnapshotRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SelectionSnapshotRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SelectionSnapshotsTable createAlias(String alias) {
+    return $SelectionSnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class SelectionSnapshotRow extends DataClass
+    implements Insertable<SelectionSnapshotRow> {
+  final String fileId;
+  final int seq;
+  final DateTime addedAt;
+  const SelectionSnapshotRow({
+    required this.fileId,
+    required this.seq,
+    required this.addedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['seq'] = Variable<int>(seq);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  SelectionSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return SelectionSnapshotsCompanion(
+      fileId: Value(fileId),
+      seq: Value(seq),
+      addedAt: Value(addedAt),
+    );
+  }
+
+  factory SelectionSnapshotRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SelectionSnapshotRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      seq: serializer.fromJson<int>(json['seq']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'seq': serializer.toJson<int>(seq),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  SelectionSnapshotRow copyWith({
+    String? fileId,
+    int? seq,
+    DateTime? addedAt,
+  }) => SelectionSnapshotRow(
+    fileId: fileId ?? this.fileId,
+    seq: seq ?? this.seq,
+    addedAt: addedAt ?? this.addedAt,
+  );
+  SelectionSnapshotRow copyWithCompanion(SelectionSnapshotsCompanion data) {
+    return SelectionSnapshotRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      seq: data.seq.present ? data.seq.value : this.seq,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SelectionSnapshotRow(')
+          ..write('fileId: $fileId, ')
+          ..write('seq: $seq, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fileId, seq, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SelectionSnapshotRow &&
+          other.fileId == this.fileId &&
+          other.seq == this.seq &&
+          other.addedAt == this.addedAt);
+}
+
+class SelectionSnapshotsCompanion
+    extends UpdateCompanion<SelectionSnapshotRow> {
+  final Value<String> fileId;
+  final Value<int> seq;
+  final Value<DateTime> addedAt;
+  final Value<int> rowid;
+  const SelectionSnapshotsCompanion({
+    this.fileId = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SelectionSnapshotsCompanion.insert({
+    required String fileId,
+    required int seq,
+    required DateTime addedAt,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       seq = Value(seq),
+       addedAt = Value(addedAt);
+  static Insertable<SelectionSnapshotRow> custom({
+    Expression<String>? fileId,
+    Expression<int>? seq,
+    Expression<DateTime>? addedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (seq != null) 'seq': seq,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SelectionSnapshotsCompanion copyWith({
+    Value<String>? fileId,
+    Value<int>? seq,
+    Value<DateTime>? addedAt,
+    Value<int>? rowid,
+  }) {
+    return SelectionSnapshotsCompanion(
+      fileId: fileId ?? this.fileId,
+      seq: seq ?? this.seq,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SelectionSnapshotsCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('seq: $seq, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7113,6 +7646,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $PresetsTable presets = $PresetsTable(this);
   late final $ReviewedLabelsTable reviewedLabels = $ReviewedLabelsTable(this);
+  late final $SelectionItemsTable selectionItems = $SelectionItemsTable(this);
+  late final $SelectionSnapshotsTable selectionSnapshots =
+      $SelectionSnapshotsTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -7203,6 +7739,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     renameBatchItems,
     presets,
     reviewedLabels,
+    selectionItems,
+    selectionSnapshots,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -12055,6 +12593,369 @@ typedef $$ReviewedLabelsTableProcessedTableManager =
       ReviewedLabelRow,
       PrefetchHooks Function()
     >;
+typedef $$SelectionItemsTableCreateCompanionBuilder =
+    SelectionItemsCompanion Function({
+      required String fileId,
+      required int seq,
+      required DateTime addedAt,
+      Value<int> rowid,
+    });
+typedef $$SelectionItemsTableUpdateCompanionBuilder =
+    SelectionItemsCompanion Function({
+      Value<String> fileId,
+      Value<int> seq,
+      Value<DateTime> addedAt,
+      Value<int> rowid,
+    });
+
+class $$SelectionItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $SelectionItemsTable> {
+  $$SelectionItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SelectionItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SelectionItemsTable> {
+  $$SelectionItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SelectionItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SelectionItemsTable> {
+  $$SelectionItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$SelectionItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SelectionItemsTable,
+          SelectionItemRow,
+          $$SelectionItemsTableFilterComposer,
+          $$SelectionItemsTableOrderingComposer,
+          $$SelectionItemsTableAnnotationComposer,
+          $$SelectionItemsTableCreateCompanionBuilder,
+          $$SelectionItemsTableUpdateCompanionBuilder,
+          (
+            SelectionItemRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SelectionItemsTable,
+              SelectionItemRow
+            >,
+          ),
+          SelectionItemRow,
+          PrefetchHooks Function()
+        > {
+  $$SelectionItemsTableTableManager(
+    _$AppDatabase db,
+    $SelectionItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SelectionItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SelectionItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SelectionItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SelectionItemsCompanion(
+                fileId: fileId,
+                seq: seq,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required int seq,
+                required DateTime addedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SelectionItemsCompanion.insert(
+                fileId: fileId,
+                seq: seq,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SelectionItemsTable, SelectionItemRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SelectionItemsTable,
+                    SelectionItemRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SelectionItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SelectionItemsTable,
+      SelectionItemRow,
+      $$SelectionItemsTableFilterComposer,
+      $$SelectionItemsTableOrderingComposer,
+      $$SelectionItemsTableAnnotationComposer,
+      $$SelectionItemsTableCreateCompanionBuilder,
+      $$SelectionItemsTableUpdateCompanionBuilder,
+      (
+        SelectionItemRow,
+        BaseReferences<_$AppDatabase, $SelectionItemsTable, SelectionItemRow>,
+      ),
+      SelectionItemRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SelectionSnapshotsTableCreateCompanionBuilder =
+    SelectionSnapshotsCompanion Function({
+      required String fileId,
+      required int seq,
+      required DateTime addedAt,
+      Value<int> rowid,
+    });
+typedef $$SelectionSnapshotsTableUpdateCompanionBuilder =
+    SelectionSnapshotsCompanion Function({
+      Value<String> fileId,
+      Value<int> seq,
+      Value<DateTime> addedAt,
+      Value<int> rowid,
+    });
+
+class $$SelectionSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $SelectionSnapshotsTable> {
+  $$SelectionSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SelectionSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SelectionSnapshotsTable> {
+  $$SelectionSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SelectionSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SelectionSnapshotsTable> {
+  $$SelectionSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$SelectionSnapshotsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SelectionSnapshotsTable,
+          SelectionSnapshotRow,
+          $$SelectionSnapshotsTableFilterComposer,
+          $$SelectionSnapshotsTableOrderingComposer,
+          $$SelectionSnapshotsTableAnnotationComposer,
+          $$SelectionSnapshotsTableCreateCompanionBuilder,
+          $$SelectionSnapshotsTableUpdateCompanionBuilder,
+          (
+            SelectionSnapshotRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SelectionSnapshotsTable,
+              SelectionSnapshotRow
+            >,
+          ),
+          SelectionSnapshotRow,
+          PrefetchHooks Function()
+        > {
+  $$SelectionSnapshotsTableTableManager(
+    _$AppDatabase db,
+    $SelectionSnapshotsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SelectionSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SelectionSnapshotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SelectionSnapshotsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SelectionSnapshotsCompanion(
+                fileId: fileId,
+                seq: seq,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required int seq,
+                required DateTime addedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SelectionSnapshotsCompanion.insert(
+                fileId: fileId,
+                seq: seq,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SelectionSnapshotsTable, SelectionSnapshotRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SelectionSnapshotsTable,
+                    SelectionSnapshotRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SelectionSnapshotsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SelectionSnapshotsTable,
+      SelectionSnapshotRow,
+      $$SelectionSnapshotsTableFilterComposer,
+      $$SelectionSnapshotsTableOrderingComposer,
+      $$SelectionSnapshotsTableAnnotationComposer,
+      $$SelectionSnapshotsTableCreateCompanionBuilder,
+      $$SelectionSnapshotsTableUpdateCompanionBuilder,
+      (
+        SelectionSnapshotRow,
+        BaseReferences<
+          _$AppDatabase,
+          $SelectionSnapshotsTable,
+          SelectionSnapshotRow
+        >,
+      ),
+      SelectionSnapshotRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12084,4 +12985,8 @@ class $AppDatabaseManager {
       $$PresetsTableTableManager(_db, _db.presets);
   $$ReviewedLabelsTableTableManager get reviewedLabels =>
       $$ReviewedLabelsTableTableManager(_db, _db.reviewedLabels);
+  $$SelectionItemsTableTableManager get selectionItems =>
+      $$SelectionItemsTableTableManager(_db, _db.selectionItems);
+  $$SelectionSnapshotsTableTableManager get selectionSnapshots =>
+      $$SelectionSnapshotsTableTableManager(_db, _db.selectionSnapshots);
 }

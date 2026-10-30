@@ -15,6 +15,9 @@ import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:kfm/features/browse/ui/widgets/sort_sheet.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_carousel.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
+import 'package:kfm/features/selection/domain/selection_state.dart';
+import 'package:kfm/features/selection/ui/selection_bar.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 
 /// "Swipe these" needs SS1's swipe sources (Phase 4); SS1 turns it on.
 const swipeSourceAvailable = false;
@@ -34,31 +37,81 @@ class BrowseScreen extends ConsumerWidget {
         false;
     final spacing = context.tokens.spacing;
     final canGoUp = view.folder != null;
+    final selection = ref.watch(selectionControllerProvider).value;
+    final mode = selection?.mode ?? SelectionMode.normal;
+    final selecting = mode != SelectionMode.normal;
+    final canRestore =
+        (selection?.canRestoreCleared ?? false) &&
+        (selection?.isEmpty ?? false);
+    final selector = ref.read(selectionControllerProvider.notifier);
+    // Folder mode's storage list has no files to select.
+    final canSelectAll = !view.folderMode || view.folder != null;
 
     return PopScope(
-      // Back goes up a folder first.
-      canPop: !canGoUp,
+      // Back leaves Edit / Select mode, then goes up a folder.
+      canPop: !canGoUp && !selecting,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && canGoUp) _goUp(controller, view);
+        if (didPop) return;
+        switch (mode) {
+          case SelectionMode.edit:
+            selector.exitEdit();
+          case SelectionMode.select:
+            selector.exitSelect();
+          case SelectionMode.normal:
+            if (canGoUp) _goUp(controller, view);
+        }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(l10n.tabBrowse),
+          leading: selecting
+              ? IconButton(
+                  tooltip: l10n.selectionExit,
+                  icon: const Icon(Icons.close),
+                  onPressed: mode == SelectionMode.edit
+                      ? selector.exitEdit
+                      : selector.exitSelect,
+                )
+              : null,
+          title: Text(switch (mode) {
+            SelectionMode.normal => l10n.tabBrowse,
+            SelectionMode.select => l10n.selectionEnter,
+            SelectionMode.edit => l10n.selectionEditTitle,
+          }),
           actions: [
+            if (mode == SelectionMode.select && canSelectAll)
+              IconButton(
+                tooltip: l10n.selectionSelectAll,
+                icon: const Icon(Icons.select_all),
+                onPressed: () => unawaited(_selectAll(context, ref, view)),
+              ),
+            if (!selecting)
+              IconButton(
+                tooltip: l10n.selectionEnter,
+                icon: const Icon(Icons.checklist),
+                onPressed: selector.enterSelect,
+              ),
             IconButton(
               tooltip: l10n.browseSortTitle,
               icon: const Icon(Icons.sort),
               onPressed: () => unawaited(showSortSheet(context)),
             ),
-            if (canSeeAll || swipeSourceAvailable)
+            if (canSeeAll || swipeSourceAvailable || canRestore)
               PopupMenuButton<_MenuAction>(
                 onSelected: (action) => switch (action) {
                   _MenuAction.showHidden => controller.setShowHidden(
                     show: !view.showHidden,
                   ),
+                  _MenuAction.restoreSelection => unawaited(
+                    selector.restoreCleared(),
+                  ),
                   _MenuAction.swipeThese => null,
                 },
                 itemBuilder: (context) => [
+                  if (canRestore)
+                    PopupMenuItem(
+                      value: _MenuAction.restoreSelection,
+                      child: Text(l10n.selectionRestore),
+                    ),
                   if (canSeeAll)
                     CheckedPopupMenuItem(
                       value: _MenuAction.showHidden,
@@ -112,13 +165,30 @@ class BrowseScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.labelMedium,
               ),
             ),
+            const SelectionHint(),
             Expanded(
               child: _Body(view: view, canSeeAll: canSeeAll),
             ),
+            const SelectionBar(),
           ],
         ),
       ),
     );
+  }
+
+  static Future<void> _selectAll(
+    BuildContext context,
+    WidgetRef ref,
+    BrowseView view,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final added = await ref
+        .read(selectionControllerProvider.notifier)
+        .selectAll(view.query);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.selectionAdded(added))));
   }
 
   static void _goUp(BrowseViewController controller, BrowseView view) {
@@ -131,7 +201,7 @@ class BrowseScreen extends ConsumerWidget {
   }
 }
 
-enum _MenuAction { showHidden, swipeThese }
+enum _MenuAction { showHidden, restoreSelection, swipeThese }
 
 class _Body extends ConsumerWidget {
   const new({required this.view, required this.canSeeAll});

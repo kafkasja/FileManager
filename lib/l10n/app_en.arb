@@ -997,5 +997,66 @@
   "settingsShowSizes": "Show file sizes",
   "settingsShowSizesHelp": "A size label on every photo and video",
   "settingsHighlightBig": "Highlight big files",
-  "settingsHighlightBigHelp": "Files of 100 MB or more get a red size label"
+  "settingsHighlightBigHelp": "Files of 100 MB or more get a red size label",
+  "selectionCount": "{count, plural, =1{1 selected · {size}} other{{count} selected · {size}}}",
+  "@selectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCleared": "{count, plural, =1{Selection cleared (1 file)} other{Selection cleared ({count} files)}}",
+  "@selectionCleared": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "clearSelectionRow": "{count, plural, =1{Clear selection (1 file)} other{Clear selection ({count} files)}}",
+  "@clearSelectionRow": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "selectionAdded": "{count, plural, =0{Nothing new to add} =1{Added 1 file} other{Added {count} files}}",
+  "@selectionAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "selectionViewTitle": "{count, plural, =1{1 selected} other{{count} selected}}",
+  "@selectionViewTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "selectionEnter": "Select",
+  "selectionExit": "Leave select mode",
+  "selectionEditTitle": "Edit selection",
+  "selectionHint": "Tap to add · Long-press and drag to add many",
+  "selectionEditHint": "Tap selected files to remove them",
+  "selectionSelectAll": "Select all",
+  "selectionClearAll": "Clear all",
+  "selectionView": "View selected",
+  "selectionRestore": "Restore last selection",
+  "selectionDone": "Done",
+  "selectionRemoved": "Removed from selection",
+  "selectionTip": "Already selected. To remove files, use Edit selection.",
+  "selectionMore": "More"
 }

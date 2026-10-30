@@ -2697,6 +2697,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files of 100 MB or more get a red size label'**
   String get settingsHighlightBigHelp;
+
+  /// No description provided for @selectionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected · {size}} other{{count} selected · {size}}}'**
+  String selectionCount(int count, String size);
+
+  /// No description provided for @selectionCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Selection cleared (1 file)} other{Selection cleared ({count} files)}}'**
+  String selectionCleared(int count);
+
+  /// No description provided for @clearSelectionRow.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Clear selection (1 file)} other{Clear selection ({count} files)}}'**
+  String clearSelectionRow(int count);
+
+  /// No description provided for @selectionAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing new to add} =1{Added 1 file} other{Added {count} files}}'**
+  String selectionAdded(int count);
+
+  /// No description provided for @selectionViewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected} other{{count} selected}}'**
+  String selectionViewTitle(int count);
+
+  /// No description provided for @selectionEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectionEnter;
+
+  /// No description provided for @selectionExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave select mode'**
+  String get selectionExit;
+
+  /// No description provided for @selectionEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit selection'**
+  String get selectionEditTitle;
+
+  /// No description provided for @selectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add · Long-press and drag to add many'**
+  String get selectionHint;
+
+  /// No description provided for @selectionEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap selected files to remove them'**
+  String get selectionEditHint;
+
+  /// No description provided for @selectionSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get selectionSelectAll;
+
+  /// No description provided for @selectionClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get selectionClearAll;
+
+  /// No description provided for @selectionView.
+  ///
+  /// In en, this message translates to:
+  /// **'View selected'**
+  String get selectionView;
+
+  /// No description provided for @selectionRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore last selection'**
+  String get selectionRestore;
+
+  /// No description provided for @selectionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get selectionDone;
+
+  /// No description provided for @selectionRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from selection'**
+  String get selectionRemoved;
+
+  /// No description provided for @selectionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Already selected. To remove files, use Edit selection.'**
+  String get selectionTip;
+
+  /// No description provided for @selectionMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get selectionMore;
 }
 
 class _AppLocalizationsDelegate

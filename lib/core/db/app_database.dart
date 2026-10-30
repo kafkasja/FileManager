@@ -7,6 +7,7 @@ import 'package:kfm/core/db/tables/pending_folder_items_table.dart';
 import 'package:kfm/core/db/tables/presets_table.dart';
 import 'package:kfm/core/db/tables/rename_batches_table.dart';
 import 'package:kfm/core/db/tables/reviewed_labels_table.dart';
+import 'package:kfm/core/db/tables/selection_items_table.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/db/tables/sessions_table.dart';
 import 'package:kfm/core/db/tables/settings_table.dart';
@@ -36,6 +37,8 @@ part 'app_database.g.dart';
     RenameBatchItems,
     Presets,
     ReviewedLabels,
+    SelectionItems,
+    SelectionSnapshots,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -56,7 +59,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -165,6 +168,11 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(miExt);
         // Hidden files were never indexed before: `hidden` needs no backfill.
         await backfillSourceAndExtension(this);
+      }
+      if (from < 14) {
+        // TASK-B6
+        await m.createTable(selectionItems);
+        await m.createTable(selectionSnapshots);
       }
     },
     beforeOpen: (details) async {

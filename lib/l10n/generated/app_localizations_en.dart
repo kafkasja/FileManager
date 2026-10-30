@@ -1827,4 +1827,120 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsHighlightBigHelp =>
       'Files of 100 MB or more get a red size label';
+
+  @override
+  String selectionCount(int count, String size) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString selected · $size',
+      one: '1 selected · $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String selectionCleared(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Selection cleared ($countString files)',
+      one: 'Selection cleared (1 file)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String clearSelectionRow(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Clear selection ($countString files)',
+      one: 'Clear selection (1 file)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String selectionAdded(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $countString files',
+      one: 'Added 1 file',
+      zero: 'Nothing new to add',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String selectionViewTitle(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString selected',
+      one: '1 selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selectionEnter => 'Select';
+
+  @override
+  String get selectionExit => 'Leave select mode';
+
+  @override
+  String get selectionEditTitle => 'Edit selection';
+
+  @override
+  String get selectionHint => 'Tap to add · Long-press and drag to add many';
+
+  @override
+  String get selectionEditHint => 'Tap selected files to remove them';
+
+  @override
+  String get selectionSelectAll => 'Select all';
+
+  @override
+  String get selectionClearAll => 'Clear all';
+
+  @override
+  String get selectionView => 'View selected';
+
+  @override
+  String get selectionRestore => 'Restore last selection';
+
+  @override
+  String get selectionDone => 'Done';
+
+  @override
+  String get selectionRemoved => 'Removed from selection';
+
+  @override
+  String get selectionTip =>
+      'Already selected. To remove files, use Edit selection.';
+
+  @override
+  String get selectionMore => 'More';
 }

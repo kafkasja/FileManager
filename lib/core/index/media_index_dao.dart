@@ -247,6 +247,11 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
         .map((r) => r.read(count) ?? 0);
   }
 
+  /// [q]'s filters as a WHERE expression over [t], for queries built
+  /// outside this DAO (B6 select all). Same SQL as every page.
+  Expression<bool> whereFor($MediaIndexTable t, IndexQuery q) =>
+      _applyQuery(t, q);
+
   /// The one place query filters become SQL (P5 adds its joins here).
   Expression<bool> _applyQuery($MediaIndexTable t, IndexQuery q) {
     Expression<bool> where = const Constant(true);

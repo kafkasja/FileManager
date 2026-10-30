@@ -10,6 +10,7 @@ import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
 import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
 import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
+import 'package:kfm/features/selection/ui/selected_files_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
 import 'package:kfm/features/stats/ui/stats_screen.dart';
 import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
@@ -30,6 +31,9 @@ abstract final class AppRoutes {
 
   /// A carousel card's page; `extra` is the `BrowseCollection`.
   static const browseCollection = '/browse/collection';
+
+  /// B6 "View selected".
+  static const browseSelected = '/browse/selected';
   static const trash = '/trash';
   static const settings = '/settings';
   static const customizeSwipes = '/settings/swipes';
@@ -119,6 +123,10 @@ GoRouter router(Ref ref) {
                     builder: (context, state) => CollectionScreen(
                       collection: state.extra! as BrowseCollection,
                     ),
+                  ),
+                  GoRoute(
+                    path: 'selected',
+                    builder: (context, state) => const SelectedFilesScreen(),
                   ),
                 ],
               ),

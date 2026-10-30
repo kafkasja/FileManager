@@ -8,6 +8,7 @@ import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v11.dart' as v11;
 import 'generated/schema_v12.dart' as v12;
+import 'generated/schema_v13.dart' as v13;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -46,7 +47,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 13; from++) {
+  for (var from = 1; from < 14; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -263,5 +264,28 @@ void main() {
       'd': (SourceBucket.none, '', false),
     });
     expect(await db.select(db.tags).get(), hasLength(1));
+  });
+
+  test('v13 -> v14 adds empty selection tables; data intact', () async {
+    final schema = await verifier.schemaAt(13);
+    final raw = v13.DatabaseAtV13(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO media_index (id, uri, name, name_lower, kind, size_bytes, '
+      'modified_at_ms, sort_date_ms, folder_path, origin, indexed_at_ms, '
+      "scan_generation, source, hidden, extension) VALUES ('a', 'u', 'x.jpg', "
+      "'x.jpg', 0, 1, 1, 1, '/s/DCIM', 0, 1, 1, 0, 0, 'jpg')",
+    );
+    await raw.customStatement(
+      "INSERT INTO favorites (file_id, added_at) VALUES ('a', 1)",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    expect(await db.select(db.mediaIndex).get(), hasLength(1));
+    expect(await db.select(db.favorites).get(), hasLength(1));
+    expect(await db.select(db.selectionItems).get(), isEmpty);
+    expect(await db.select(db.selectionSnapshots).get(), isEmpty);
   });
 }

@@ -11,10 +11,12 @@ import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
+import 'package:kfm/features/selection/ui/drag_select_detector.dart';
 
 /// The results body (TASK-B1): grid (or list for non-visual kinds), paging,
 /// empty / error / unavailable states. Browse, B8's search and B9's
-/// collections render it with their own query. [leading] slivers scroll
+/// collections render it with their own query. Tiles follow B6's
+/// selection modes. [leading] slivers scroll
 /// with it (banner, folder list); [showFiles] false shows only them.
 class FileResultsView extends ConsumerWidget {
   const new({
@@ -91,11 +93,16 @@ class FileResultsView extends ConsumerWidget {
             itemBuilder: (context, i) {
               maybeLoadMore(i);
               final f = data.items[i];
-              return FileListRow(
+              return SelectableFile(
                 key: ValueKey(f.id),
-                file: f,
-                onTap: () => open(f),
-                highlightBig: highlightBig,
+                index: i,
+                items: data.items,
+                onOpen: () => open(f),
+                builder: (context, onTap) => FileListRow(
+                  file: f,
+                  onTap: onTap,
+                  highlightBig: highlightBig,
+                ),
               );
             },
           )
@@ -111,12 +118,18 @@ class FileResultsView extends ConsumerWidget {
               itemBuilder: (context, i) {
                 maybeLoadMore(i);
                 final f = data.items[i];
-                return FileGridTile(
+                return SelectableFile(
                   key: ValueKey(f.id),
-                  file: f,
-                  onTap: () => open(f),
-                  showSize: showSizes || query.sort.field == FileSortField.size,
-                  highlightBig: highlightBig,
+                  index: i,
+                  items: data.items,
+                  onOpen: () => open(f),
+                  builder: (context, onTap) => FileGridTile(
+                    file: f,
+                    onTap: onTap,
+                    showSize:
+                        showSizes || query.sort.field == FileSortField.size,
+                    highlightBig: highlightBig,
+                  ),
                 );
               },
             ),
