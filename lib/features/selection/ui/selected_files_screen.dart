@@ -6,6 +6,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/features/browse/ui/browse_preview.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
@@ -78,6 +79,18 @@ class _SelectedFilesScreenState extends ConsumerState<SelectedFilesScreen> {
 
   int _loaded = 0;
 
+  /// B7: pages through the selection from file [i], reusing what's loaded.
+  void _preview(int i) => unawaited(
+    openSelectionPreview(
+      context,
+      ref,
+      startAt: i,
+      ids: _ids,
+      loaded: _items,
+      loadedIds: _loaded,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -115,7 +128,10 @@ class _SelectedFilesScreenState extends ConsumerState<SelectedFilesScreen> {
             key: ValueKey(f.id),
             index: i,
             items: _items,
-            onOpen: () => unawaited(openFile(context, ref, f)),
+            onOpen: () => opensInPreview(f)
+                ? _preview(i)
+                : unawaited(openWithOrExplain(context, ref, f)),
+            onPreview: () => _preview(i),
             builder: (context, onTap) => FileGridTile(file: f, onTap: onTap),
           );
         },

@@ -81,7 +81,7 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
         fit: StackFit.expand,
         children: [
           Center(
-            child: Icon(_iconFor(widget.file.kind), color: scheme.outline),
+            child: Icon(fileKindIcon(widget.file.kind), color: scheme.outline),
           ),
           AnimatedOpacity(
             opacity: bytes == null ? 0 : 1,
@@ -99,13 +99,14 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
       ),
     );
   }
-
-  static IconData _iconFor(FileKind kind) => switch (kind) {
-    FileKind.image => Icons.image_outlined,
-    FileKind.video => Icons.movie_outlined,
-    FileKind.audio => Icons.audiotrack_outlined,
-    FileKind.document => Icons.description_outlined,
-    FileKind.archive => Icons.folder_zip_outlined,
-    FileKind.other => Icons.insert_drive_file_outlined,
-  };
 }
+
+/// The type icon shown when there is no thumbnail.
+IconData fileKindIcon(FileKind kind) => switch (kind) {
+  FileKind.image => Icons.image_outlined,
+  FileKind.video => Icons.movie_outlined,
+  FileKind.audio => Icons.audiotrack_outlined,
+  FileKind.document => Icons.description_outlined,
+  FileKind.archive => Icons.folder_zip_outlined,
+  FileKind.other => Icons.insert_drive_file_outlined,
+};

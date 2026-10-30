@@ -23,19 +23,28 @@ class DragSelectTarget {
 /// A file tile that follows the selection rules (TASK-B6): Normal = open,
 /// Select = add only (tapping a selected tile pulses), Edit = remove only.
 /// Long-press enters Select mode; keep holding and drag to add the whole
-/// range from the first tile (add-only in both directions).
+/// range from the first tile (add-only in both directions). B7: in Select
+/// and Edit mode a ⤢ button opens [onPreview] (the tile tap selects).
 class SelectableFile extends ConsumerStatefulWidget {
   const new({
     required this.index,
     required this.items,
     required this.onOpen,
     required this.builder,
+    this.onPreview,
+    this.listRow = false,
     super.key,
   });
 
   final int index;
   final List<FileRef> items;
   final VoidCallback onOpen;
+
+  /// Fullscreen preview without changing the selection (B7).
+  final VoidCallback? onPreview;
+
+  /// A list row: ⤢ sits centered at the end instead of the top-start.
+  final bool listRow;
 
   /// The tile; `onTap` is null when a tap does nothing (Edit mode,
   /// unselected).
@@ -135,6 +144,14 @@ class _SelectableFileState extends ConsumerState<SelectableFile>
                       ),
                     ),
                   ),
+                if (mode != SelectionMode.normal && widget.onPreview != null)
+                  PositionedDirectional(
+                    top: 0,
+                    bottom: widget.listRow ? 0 : null,
+                    start: widget.listRow ? null : 0,
+                    end: widget.listRow ? spacing * 4 : null,
+                    child: _PreviewButton(onPressed: widget.onPreview!),
+                  ),
               ],
             ),
           ),
@@ -205,4 +222,26 @@ class _SelectableFileState extends ConsumerState<SelectableFile>
       }
     }
   }
+}
+
+/// ⤢ with a 44×44 dp hit area on a small dark circle.
+class _PreviewButton extends StatelessWidget {
+  const new({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: context.l10n.previewOpen,
+    constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+    padding: EdgeInsets.zero,
+    onPressed: onPressed,
+    icon: const DecoratedBox(
+      decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+      child: Padding(
+        padding: EdgeInsets.all(4),
+        child: Icon(Icons.open_in_full, size: 16, color: Colors.white),
+      ),
+    ),
+  );
 }

@@ -1058,5 +1058,33 @@
   "selectionDone": "Done",
   "selectionRemoved": "Removed from selection",
   "selectionTip": "Already selected. To remove files, use Edit selection.",
-  "selectionMore": "More"
+  "selectionMore": "More",
+  "selectionPreview": "Preview selected",
+  "previewOpen": "Preview",
+  "previewSelect": "Select",
+  "previewSelected": "Selected",
+  "previewRemove": "Remove from selection",
+  "previewPlay": "Play",
+  "previewDetails": "Details",
+  "previewFileGone": "This file no longer exists",
+  "previewHeicUnsupported": "Can't preview HEIC on this Android version",
+  "previewDimensions": "{width} × {height}",
+  "@previewDimensions": {
+    "placeholders": {
+      "width": {"type": "int"},
+      "height": {"type": "int"}
+    }
+  },
+  "previewTaken": "Taken {date}",
+  "@previewTaken": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "previewModified": "Modified {date}",
+  "@previewModified": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  }
 }

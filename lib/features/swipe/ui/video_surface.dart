@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
+import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:video_player/video_player.dart';
 
@@ -27,6 +28,24 @@ class VideoSurface extends ConsumerStatefulWidget {
 class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   VideoHandle? _handle;
   Object? _error;
+
+  /// False while the tab is hidden (go_router turns tickers off there): a
+  /// hidden deck doesn't play, and plays again when shown (B7).
+  bool? _visible;
+
+  bool get _shouldPlay => widget.active && (_visible ?? true);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = TickerMode.valuesOf(context).enabled;
+    final was = _visible;
+    _visible = visible;
+    if (was == null || was == visible) return;
+    // A preview elsewhere may have paused or evicted the pooled player:
+    // obtain it again (same player if still alive).
+    unawaited(visible && widget.active ? _obtain() : _applyPlayback());
+  }
 
   @override
   void initState() {
@@ -71,7 +90,7 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   Future<void> _applyPlayback() async {
     final handle = _handle;
     if (handle == null) return;
-    if (widget.active) {
+    if (_shouldPlay) {
       await handle.setVolume(ref.read(videoMutedProvider) ? 0 : 1);
       await handle.play();
     } else {
@@ -105,7 +124,7 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
           child: handle == null
               ? _Pill(
                   icon: muted ? Icons.volume_off : Icons.volume_up,
-                  text: _formatDuration(
+                  text: formatDuration(
                     Duration(milliseconds: widget.file.durationMs ?? 0),
                   ),
                 )
@@ -115,7 +134,7 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
                   valueListenable: handle.state,
                   builder: (context, value, _) => _Pill(
                     icon: muted ? Icons.volume_off : Icons.volume_up,
-                    text: _formatDuration(
+                    text: formatDuration(
                       value.duration > Duration.zero
                           ? value.duration
                           : Duration(milliseconds: widget.file.durationMs ?? 0),
@@ -186,7 +205,7 @@ class _ScrubBarState extends State<_ScrubBar> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   if (_dragFraction != null)
-                    _Pill(text: _formatDuration(total * _dragFraction!)),
+                    _Pill(text: formatDuration(total * _dragFraction!)),
                   LinearProgressIndicator(
                     value: fraction.clamp(0.0, 1.0),
                     minHeight: 4,
@@ -226,12 +245,4 @@ class _Pill extends StatelessWidget {
       ],
     ),
   );
-}
-
-/// 1:23 / 1:02:03.
-String _formatDuration(Duration d) {
-  final h = d.inHours;
-  final m = d.inMinutes.remainder(60);
-  final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-  return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:$s' : '$m:$s';
 }

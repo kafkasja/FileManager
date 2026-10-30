@@ -18,3 +18,11 @@ String formatBytes(int bytes, {String? locale}) {
 /// Medium date in local time, e.g. "Oct 23, 2026".
 String formatDate(DateTime date, {String? locale}) =>
     DateFormat.yMMMd(locale).format(date.toLocal());
+
+/// 1:23 / 1:02:03.
+String formatDuration(Duration d) {
+  final h = d.inHours;
+  final m = d.inMinutes.remainder(60);
+  final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:$s' : '$m:$s';
+}

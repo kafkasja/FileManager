@@ -1943,4 +1943,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectionMore => 'More';
+
+  @override
+  String get selectionPreview => 'Preview selected';
+
+  @override
+  String get previewOpen => 'Preview';
+
+  @override
+  String get previewSelect => 'Select';
+
+  @override
+  String get previewSelected => 'Selected';
+
+  @override
+  String get previewRemove => 'Remove from selection';
+
+  @override
+  String get previewPlay => 'Play';
+
+  @override
+  String get previewDetails => 'Details';
+
+  @override
+  String get previewFileGone => 'This file no longer exists';
+
+  @override
+  String get previewHeicUnsupported =>
+      'Can\'t preview HEIC on this Android version';
+
+  @override
+  String previewDimensions(int width, int height) {
+    return '$width × $height';
+  }
+
+  @override
+  String previewTaken(String date) {
+    return 'Taken $date';
+  }
+
+  @override
+  String previewModified(String date) {
+    return 'Modified $date';
+  }
 }

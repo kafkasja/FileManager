@@ -106,7 +106,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(_tile('c3.jpg'));
     await tester.pumpAndSettle();
-    expect(find.byType(FileViewer), findsOneWidget);
+    expect(find.byType(PagedFileViewer), findsOneWidget);
     expect(state().count, 2);
   });
 }

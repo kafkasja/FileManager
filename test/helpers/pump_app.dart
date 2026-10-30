@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/app.dart';
 import 'package:kfm/core/db/app_database.dart';
@@ -36,6 +37,7 @@ Future<TestApp> pumpApp(
   FakeFileSource? files,
   FakeVideoFactory? videos,
   FakeOpenWith? openWith,
+  List<Override> overrides = const [],
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   final db = AppDatabase(NativeDatabase.memory());
@@ -44,6 +46,7 @@ Future<TestApp> pumpApp(
   final thumbDir = Directory.systemTemp.createTempSync('kfm_app_thumbs');
   final container = ProviderContainer(
     overrides: [
+      ...overrides,
       appDatabaseProvider.overrideWithValue(db),
       permissionServiceProvider.overrideWithValue(service),
       fileSourceProvider.overrideWithValue(fileSource),

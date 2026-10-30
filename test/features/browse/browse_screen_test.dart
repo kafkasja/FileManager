@@ -201,7 +201,7 @@ void main() {
     expect(find.text('Tapo'), findsOneWidget);
   });
 
-  testWidgets('tapping opens: photo → viewer, txt → text viewer, pdf → Open '
+  testWidgets('tapping opens: photo → preview, txt → text page, pdf → Open '
       'with; no app → message', (tester) async {
     final openWith = FakeOpenWith();
     await pumpApp(tester, files: _library(), openWith: openWith);
@@ -209,7 +209,7 @@ void main() {
 
     await tester.tap(_tile('c1.jpg'));
     await tester.pumpAndSettle();
-    expect(find.byType(FileViewer), findsOneWidget);
+    expect(find.byType(PagedFileViewer), findsOneWidget);
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
@@ -217,9 +217,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('notes.txt'));
     await tester.pumpAndSettle();
-    expect(find.byType(TextViewerScreen), findsOneWidget);
+    expect(find.byType(TextViewerBody), findsOneWidget);
     expect(find.text('hello KFM'), findsOneWidget);
-    await tester.pageBack();
+    await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('manual.pdf'));

@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
@@ -256,18 +259,462 @@ class _FileViewerState extends ConsumerState<FileViewer> {
   }
 }
 
-/// The display-size image (already cached by the deck → instant), then the
-/// full-resolution one fading in over it. Undecodable → thumbnail / icon.
-class _ViewerImage extends StatelessWidget {
+/// What a paged viewer flips through (B7). Browse: B1's `FilePages`.
+/// Selection: ids in selection order → `MediaIndexDao.byIds`, 200 per page.
+abstract interface class PagedViewerSource {
+  List<FileRef> get items;
+  bool get hasMore;
+  Future<void> loadMore();
+
+  /// [items] / [hasMore] changed.
+  Listenable get changes;
+}
+
+/// Builds the page for files that aren't images or videos (B7: text body,
+/// info card with "Open with").
+typedef ViewerPageBuilder = Widget Function(BuildContext context, FileRef file);
+
+/// Bottom-end buttons for the shown page (B7: Select / Remove).
+typedef ViewerActionsBuilder = List<Widget> Function(
+  BuildContext context,
+  FileRef file,
+);
+
+/// Opens a read-only viewer that pages through [source] from
+/// [initialIndex] (B7). Same route as [openViewer]: everything underneath
+/// stays mounted. Completes with the last file shown (null if none).
+Future<FileRef?> openPagedViewer(
+  BuildContext context, {
+  required PagedViewerSource source,
+  required int initialIndex,
+  required ViewerPageBuilder otherPage,
+  ViewerActionsBuilder? actions,
+}) async {
+  final open = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(viewerOpenProvider.notifier)..opened();
+  FileRef? last;
+  try {
+    await Navigator.of(context, rootNavigator: true).push(
+      PageRouteBuilder<void>(
+        opaque: false,
+        transitionDuration: const Duration(milliseconds: 150),
+        reverseTransitionDuration: const Duration(milliseconds: 150),
+        pageBuilder: (_, _, _) => PagedFileViewer(
+          source: source,
+          initialIndex: initialIndex,
+          otherPage: otherPage,
+          actions: actions,
+          onShown: (f) => last = f,
+        ),
+        transitionsBuilder: (_, animation, _, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  } finally {
+    open.closed();
+  }
+  return last;
+}
+
+/// B7's paged preview: swipe left/right through [source], pinch / double-tap
+/// zoom per page (paging stops while zoomed), videos paused until ▶.
+class PagedFileViewer extends ConsumerStatefulWidget {
+  const new({
+    required this.source,
+    required this.initialIndex,
+    required this.otherPage,
+    this.actions,
+    this.onShown,
+    super.key,
+  });
+
+  final PagedViewerSource source;
+  final int initialIndex;
+  final ViewerPageBuilder otherPage;
+  final ViewerActionsBuilder? actions;
+
+  /// Every page change (and the first page).
+  final ValueChanged<FileRef>? onShown;
+
+  @override
+  ConsumerState<PagedFileViewer> createState() => _PagedFileViewerState();
+}
+
+class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
+  late final PageController _pages = PageController(
+    initialPage: widget.initialIndex,
+  );
+  late int _index = widget.initialIndex;
+  String? _shownId;
+  bool _zoomed = false;
+  bool _chrome = true;
+
+  /// Load the next page this close to the end.
+  static const _prefetch = 3;
+
+  List<FileRef> get _items => widget.source.items;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.source.changes.addListener(_onSourceChanged);
+    _shownId = _items.elementAtOrNull(_index)?.id;
+    if (_items.elementAtOrNull(_index) case final f?) widget.onShown?.call(f);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _afterPageChange();
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.source.changes.removeListener(_onSourceChanged);
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _onSourceChanged() {
+    if (!mounted) return;
+    final items = _items;
+    if (items.isEmpty) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    // A reload can shift the list: stay on the same file.
+    final at = items.indexWhere((f) => f.id == _shownId);
+    final target = at >= 0 ? at : _index.clamp(0, items.length - 1);
+    setState(() => _index = target);
+    if (_pages.hasClients && _pages.page?.round() != target) {
+      _pages.jumpToPage(target);
+    }
+  }
+
+  void _onPageChanged(int i) {
+    setState(() {
+      _index = i;
+      _zoomed = false;
+      _shownId = _items.elementAtOrNull(i)?.id;
+    });
+    if (_items.elementAtOrNull(i) case final f?) widget.onShown?.call(f);
+    _afterPageChange();
+  }
+
+  void _afterPageChange() {
+    final items = _items;
+    if (widget.source.hasMore && _index >= items.length - _prefetch) {
+      final messenger = ScaffoldMessenger.of(context);
+      final error = context.l10n.browseLoadError;
+      unawaited(
+        widget.source.loadMore().catchError((Object _) {
+          messenger.showSnackBar(SnackBar(content: Text(error)));
+        }),
+      );
+    }
+    // Neighbours ±1: display size only, never the 4096 px decode.
+    final widthPx =
+        (MediaQuery.sizeOf(context).width *
+                MediaQuery.devicePixelRatioOf(context))
+            .round();
+    for (final i in [_index - 1, _index + 1]) {
+      if (i < 0 || i >= items.length) continue;
+      final f = items[i];
+      if (f.kind != FileKind.image) continue;
+      unawaited(
+        precacheImage(
+          displayImageProvider(f, widthPx),
+          context,
+          onError: (_, _) {},
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _items;
+    final file = items.elementAtOrNull(_index);
+    final actions = file == null
+        ? const <Widget>[]
+        : widget.actions?.call(context, file) ?? const <Widget>[];
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          PageView.builder(
+            controller: _pages,
+            physics: _zoomed ? const NeverScrollableScrollPhysics() : null,
+            itemCount: items.length,
+            onPageChanged: _onPageChanged,
+            itemBuilder: (context, i) {
+              final f = items[i];
+              return _ViewerPage(
+                key: ValueKey(f.id),
+                file: f,
+                otherPage: widget.otherPage,
+                onZoomChanged: (z) {
+                  if (i == _index && z != _zoomed) setState(() => _zoomed = z);
+                },
+                onTap: () => setState(() => _chrome = !_chrome),
+              );
+            },
+          ),
+          if (_chrome && file != null && file.isMedia) _InfoBar(file: file),
+          if (_chrome && file != null)
+            SafeArea(
+              child: Align(
+                alignment: AlignmentDirectional.bottomEnd,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.all(16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 8,
+                    children: [
+                      _DetailsButton(file: file),
+                      ...actions,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          const ViewerCloseButton(),
+        ],
+      ),
+    );
+  }
+}
+
+/// One page: zoomable image, paused video with ▶, or [otherPage]; "no
+/// longer exists" when the file is gone.
+class _ViewerPage extends ConsumerStatefulWidget {
+  const new({
+    required this.file,
+    required this.otherPage,
+    required this.onZoomChanged,
+    required this.onTap,
+    super.key,
+  });
+
+  final FileRef file;
+  final ViewerPageBuilder otherPage;
+  final ValueChanged<bool> onZoomChanged;
+  final VoidCallback onTap;
+
+  @override
+  ConsumerState<_ViewerPage> createState() => _ViewerPageState();
+}
+
+class _ViewerPageState extends ConsumerState<_ViewerPage> {
+  final TransformationController _zoom = TransformationController();
+  bool _playing = false;
+  bool _gone = false;
+
+  static const _doubleTapScale = 2.5;
+  static const _maxScale = 8.0;
+
+  bool get _zoomed => _zoom.value.getMaxScaleOnAxis() > 1.01;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_checkExists());
+  }
+
+  @override
+  void dispose() {
+    _zoom.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkExists() async {
+    try {
+      final f = await ref.read(fileSourceProvider).stat(widget.file.id);
+      if (mounted && f == null) setState(() => _gone = true);
+    } on Object {
+      // Can't tell: show the file as usual (its own error placeholders).
+    }
+  }
+
+  void _toggleZoom(TapDownDetails d) {
+    if (_zoomed) {
+      _zoom.value = Matrix4.identity();
+    } else {
+      const s = _doubleTapScale;
+      final p = d.localPosition;
+      _zoom.value = Matrix4.diagonal3Values(s, s, 1)
+        ..setTranslationRaw(-p.dx * (s - 1), -p.dy * (s - 1), 0);
+    }
+    widget.onZoomChanged(_zoomed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final file = widget.file;
+    if (_gone) {
+      return Center(
+        child: Text(
+          context.l10n.previewFileGone,
+          style: const TextStyle(color: Colors.white),
+        ),
+      );
+    }
+    if (!file.isMedia) {
+      return ColoredBox(
+        color: Theme.of(context).colorScheme.surface,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(top: 64),
+            child: widget.otherPage(context, file),
+          ),
+        ),
+      );
+    }
+    final image = Hero(
+      tag: fileHeroTag(file),
+      child: _ViewerImage(file: file, videoActive: _playing, paged: true),
+    );
+    if (file.kind == FileKind.video) {
+      return GestureDetector(
+        onTap: _playing
+            ? ref.read(videoMutedProvider.notifier).toggle
+            : () => setState(() => _playing = true),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            image,
+            if (!_playing)
+              Center(
+                child: Semantics(
+                  button: true,
+                  label: context.l10n.previewPlay,
+                  child: const Icon(
+                    Icons.play_circle_fill,
+                    size: 72,
+                    color: Colors.white,
+                    shadows: [Shadow(blurRadius: 8)],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    return InteractiveViewer(
+      transformationController: _zoom,
+      maxScale: _maxScale,
+      onInteractionEnd: (_) => widget.onZoomChanged(_zoomed),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onDoubleTapDown: _toggleZoom,
+        onDoubleTap: () {},
+        child: image,
+      ),
+    );
+  }
+}
+
+/// ⓘ: name, size, dimensions / duration, date, folder (B7).
+class _DetailsButton extends StatelessWidget {
+  const new({required this.file});
+
+  final FileRef file;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return IconButton(
+      tooltip: l10n.previewDetails,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.black54,
+        foregroundColor: Colors.white,
+      ),
+      icon: const Icon(Icons.info_outline),
+      onPressed: () => unawaited(
+        showModalBottomSheet<void>(
+          context: context,
+          builder: (_) => FileDetailsList(file: file),
+        ),
+      ),
+    );
+  }
+}
+
+/// The file's facts as list tiles (B7's details sheet and info card).
+class FileDetailsList extends StatelessWidget {
   const new({required this.file, super.key});
 
   final FileRef file;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final (w, h, ms) = (file.width, file.height, file.durationMs);
+    final taken = file.takenAt;
+    return SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          ListTile(title: Text(file.name)),
+          ListTile(
+            leading: const Icon(Icons.data_usage),
+            title: Text(formatBytes(file.sizeBytes, locale: locale)),
+          ),
+          if (w != null && h != null && w > 0 && h > 0)
+            ListTile(
+              leading: const Icon(Icons.aspect_ratio),
+              title: Text(l10n.previewDimensions(w, h)),
+            ),
+          if (ms != null && ms > 0)
+            ListTile(
+              leading: const Icon(Icons.timer_outlined),
+              title: Text(formatDuration(Duration(milliseconds: ms))),
+            ),
+          if (taken != null)
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l10n.previewTaken(formatDate(taken, locale: locale))),
+            ),
+          ListTile(
+            leading: const Icon(Icons.edit_calendar_outlined),
+            title: Text(
+              l10n.previewModified(formatDate(file.modifiedAt, locale: locale)),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.folder_outlined),
+            title: Text(file.folderPath),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The display-size image (already cached by the deck → instant), then the
+/// full-resolution one fading in over it. Undecodable → thumbnail / icon.
+class _ViewerImage extends StatelessWidget {
+  const new({
+    required this.file,
+    this.videoActive = true,
+    this.paged = false,
+    super.key,
+  });
+
+  final FileRef file;
+
+  /// B7: false = prepared, paused on the first frame.
+  final bool videoActive;
+
+  /// B7: say why an image can't be shown (HEIC before Android 9).
+  final bool paged;
+
+  @override
+  Widget build(BuildContext context) {
     if (file.kind == FileKind.video) {
       // Same pooled player as the card: playback continues (S5).
-      return VideoSurface(file: file, active: true);
+      return VideoSurface(file: file, active: videoActive);
     }
     if (file.kind != FileKind.image) {
       return Thumbnail(
@@ -288,7 +735,22 @@ class _ViewerImage extends StatelessWidget {
           image: displayImageProvider(file, widthPx),
           fit: BoxFit.contain,
           gaplessPlayback: true,
-          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          errorBuilder: (context, _, _) => paged && _isHeic(file)
+              ? Align(
+                  alignment: AlignmentDirectional.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(bottom: 96),
+                    child: Text(
+                      context.l10n.previewHeicUnsupported,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        shadows: [Shadow(blurRadius: 4)],
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
         Image(
           image: ResizeImage(
@@ -308,6 +770,12 @@ class _ViewerImage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// HEIC decodes natively from Android 9; before that only the thumbnail.
+  static bool _isHeic(FileRef f) {
+    final ext = extensionOf(f.name);
+    return ext == 'heic' || ext == 'heif';
   }
 }
 

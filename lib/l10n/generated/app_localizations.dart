@@ -2805,6 +2805,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More'**
   String get selectionMore;
+
+  /// No description provided for @selectionPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview selected'**
+  String get selectionPreview;
+
+  /// No description provided for @previewOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get previewOpen;
+
+  /// No description provided for @previewSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get previewSelect;
+
+  /// No description provided for @previewSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get previewSelected;
+
+  /// No description provided for @previewRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from selection'**
+  String get previewRemove;
+
+  /// No description provided for @previewPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get previewPlay;
+
+  /// No description provided for @previewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get previewDetails;
+
+  /// No description provided for @previewFileGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This file no longer exists'**
+  String get previewFileGone;
+
+  /// No description provided for @previewHeicUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t preview HEIC on this Android version'**
+  String get previewHeicUnsupported;
+
+  /// No description provided for @previewDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'{width} × {height}'**
+  String previewDimensions(int width, int height);
+
+  /// No description provided for @previewTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken {date}'**
+  String previewTaken(String date);
+
+  /// No description provided for @previewModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified {date}'**
+  String previewModified(String date);
 }
 
 class _AppLocalizationsDelegate

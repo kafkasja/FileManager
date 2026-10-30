@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -8,6 +9,7 @@ import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
+import 'package:kfm/features/browse/ui/browse_preview.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
@@ -18,7 +20,9 @@ import 'package:kfm/features/selection/ui/drag_select_detector.dart';
 /// collections render it with their own query. Tiles follow B6's
 /// selection modes. [leading] slivers scroll
 /// with it (banner, folder list); [showFiles] false shows only them.
-class FileResultsView extends ConsumerWidget {
+/// B7: taps open the paged preview; closing it scrolls the last-viewed file
+/// into view.
+class FileResultsView extends ConsumerStatefulWidget {
   const new({
     required this.query,
     this.leading = const [],
@@ -30,17 +34,76 @@ class FileResultsView extends ConsumerWidget {
   final List<Widget> leading;
   final bool showFiles;
 
+  @override
+  ConsumerState<FileResultsView> createState() => _FileResultsViewState();
+}
+
+class _FileResultsViewState extends ConsumerState<FileResultsView> {
   /// Load the next page this many tiles before the end.
   static const _prefetch = 60;
 
+  /// The grid / list sliver: where a file sits for [_reveal].
+  final GlobalKey _sliver = GlobalKey();
+
+  IndexQuery get query => widget.query;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) => CustomScrollView(
+  Widget build(BuildContext context) => CustomScrollView(
     // One scroll position per view; kept while the tab is switched away.
     key: PageStorageKey<IndexQuery>(query),
-    slivers: [...leading, if (showFiles) _results(context, ref)],
+    slivers: [...widget.leading, if (widget.showFiles) _results(context)],
   );
 
-  Widget _results(BuildContext context, WidgetRef ref) {
+  Future<void> _preview(int index) async {
+    final last = await openResultsPreview(context, query: query, index: index);
+    if (last == null || !mounted) return;
+    // After the route is gone, so the grid has laid out any new pages.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _reveal(last);
+    });
+  }
+
+  /// Jumps (no animation) so [f] is visible, unless it already is. Its
+  /// index comes from the loaded list (no DAO lookup); not loaded = stay.
+  void _reveal(FileRef f) {
+    final items = ref.read(filePagesProvider(query)).value?.items;
+    final index = items?.indexWhere((e) => e.id == f.id) ?? -1;
+    final sliverContext = _sliver.currentContext;
+    if (index < 0 || sliverContext == null) return;
+    final render = sliverContext.findRenderObject();
+    if (render is! RenderSliver || render.geometry == null) return;
+    final constraints = render.constraints;
+    final double start;
+    final double extent;
+    switch (render) {
+      case RenderSliverGrid(:final gridDelegate):
+        final geometry = gridDelegate
+            .getLayout(constraints)
+            .getGeometryForChildIndex(index);
+        start = geometry.scrollOffset;
+        extent = geometry.mainAxisExtent;
+      case RenderSliverMultiBoxAdaptor(:final firstChild?):
+        // List rows all have the same height.
+        extent = firstChild.size.height;
+        start = index * extent;
+      default:
+        return;
+    }
+    final position = Scrollable.of(sliverContext).position;
+    final top = constraints.precedingScrollExtent + start;
+    final viewport = position.viewportDimension;
+    if (top >= position.pixels && top + extent <= position.pixels + viewport) {
+      return;
+    }
+    position.jumpTo(
+      (top - (viewport - extent) / 2).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      ),
+    );
+  }
+
+  Widget _results(BuildContext context) {
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
     final pages = ref.watch(filePagesProvider(query));
@@ -83,21 +146,32 @@ class FileResultsView extends ConsumerWidget {
       }
     }
 
-    void open(FileRef f) => unawaited(openFile(context, ref, f));
+    void open(int i) {
+      final f = data.items[i];
+      if (opensInPreview(f)) {
+        unawaited(_preview(i));
+      } else {
+        unawaited(openWithOrExplain(context, ref, f));
+      }
+    }
+
     final asList =
         query.kinds.isNotEmpty &&
         !query.kinds.any((k) => k == FileKind.image || k == FileKind.video);
     final body = asList
         ? SliverList.builder(
+            key: _sliver,
             itemCount: data.items.length,
             itemBuilder: (context, i) {
               maybeLoadMore(i);
               final f = data.items[i];
               return SelectableFile(
+                listRow: true,
                 key: ValueKey(f.id),
                 index: i,
                 items: data.items,
-                onOpen: () => open(f),
+                onOpen: () => open(i),
+                onPreview: () => unawaited(_preview(i)),
                 builder: (context, onTap) => FileListRow(
                   file: f,
                   onTap: onTap,
@@ -109,6 +183,7 @@ class FileResultsView extends ConsumerWidget {
         : SliverPadding(
             padding: EdgeInsets.all(spacing / 4),
             sliver: SliverGrid.builder(
+              key: _sliver,
               gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 128,
                 mainAxisSpacing: spacing / 4,
@@ -122,7 +197,8 @@ class FileResultsView extends ConsumerWidget {
                   key: ValueKey(f.id),
                   index: i,
                   items: data.items,
-                  onOpen: () => open(f),
+                  onOpen: () => open(i),
+                  onPreview: () => unawaited(_preview(i)),
                   builder: (context, onTap) => FileGridTile(
                     file: f,
                     onTap: onTap,

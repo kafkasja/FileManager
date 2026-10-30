@@ -7,6 +7,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/browse/ui/browse_preview.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_actions.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
@@ -106,6 +107,12 @@ class SelectionBar extends ConsumerWidget {
                       value: () =>
                           unawaited(context.push(AppRoutes.browseSelected)),
                       child: Text(l10n.selectionView),
+                    ),
+                  if (!s.isEmpty)
+                    PopupMenuItem(
+                      value: () =>
+                          unawaited(openSelectionPreview(context, ref)),
+                      child: Text(l10n.selectionPreview),
                     ),
                   if (s.canRestoreCleared)
                     PopupMenuItem(
