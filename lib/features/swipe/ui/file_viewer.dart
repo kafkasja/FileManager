@@ -714,7 +714,7 @@ class _ViewerImage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (file.kind == FileKind.video) {
       // Same pooled player as the card: playback continues (S5).
-      return VideoSurface(file: file, active: videoActive);
+      return VideoSurface(file: file, active: videoActive, fullscreen: true);
     }
     if (file.kind != FileKind.image) {
       return Thumbnail(

@@ -150,7 +150,13 @@ void _walk(WalkOptions o, void Function(Object?) send) {
       }
       if (stat.type != FileSystemEntityType.file) continue;
       final modified = stat.modified.toUtc();
-      if (modifiedAfter != null && !modified.isAfter(modifiedAfter)) continue;
+      // `changed` (inode change time) moves when a file is copied or moved
+      // in, even if it keeps an old modified time.
+      if (modifiedAfter != null &&
+          !modified.isAfter(modifiedAfter) &&
+          !stat.changed.toUtc().isAfter(modifiedAfter)) {
+        continue;
+      }
       if (o.minSizeBytes != null && stat.size < o.minSizeBytes!) continue;
 
       page.add(

@@ -1986,4 +1986,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String previewModified(String date) {
     return 'Modified $date';
   }
+
+  @override
+  String get browseModeSameTime => 'Same time';
+
+  @override
+  String get sameTimeEmpty => 'No photos taken at the same time';
+
+  @override
+  String sameTimeDayHeader(String date, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+    );
+    return '$date · $_temp0';
+  }
+
+  @override
+  String sameTimeGroupTitle(int count, String start, String end) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0 · $start–$end';
+  }
+
+  @override
+  String sameTimeMore(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String get sameTimeSelectGroup => 'Select group';
+
+  @override
+  String get settingsSameTimeWindow => 'Same time window';
+
+  @override
+  String get settingsSameTimeWindowHelp =>
+      'Browse → Same time groups photos and videos taken within this many seconds';
+
+  @override
+  String seconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seconds',
+      one: '1 second',
+    );
+    return '$_temp0';
+  }
 }

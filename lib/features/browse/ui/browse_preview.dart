@@ -46,9 +46,10 @@ Future<FileRef?> openResultsPreview(
   }
 }
 
-/// Pages through the selection in selection order, from the file at
-/// [startAt] (B7 "Preview selected", and taps on "View selected").
-/// [loaded] = files already read in that order (skips re-reading them).
+/// Pages through [ids] (null = the selection, in selection order) from the
+/// file at [startAt]: B7 "Preview selected", taps on "View selected", B3
+/// group thumbnails. [loaded] = files already read for the first
+/// [loadedIds] ids (skips re-reading them).
 Future<void> openSelectionPreview(
   BuildContext context,
   WidgetRef ref, {
@@ -59,13 +60,13 @@ Future<void> openSelectionPreview(
 }) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
-  final SelectionViewerSource source;
+  final IdsViewerSource source;
   try {
     final ordered =
         ids ??
         await ref.read(selectionControllerProvider.notifier).orderedIds();
     if (ordered.isEmpty) return;
-    source = SelectionViewerSource(
+    source = IdsViewerSource(
       ref.read(mediaIndexDaoProvider),
       ordered,
       items: loaded,
@@ -140,10 +141,9 @@ class FilePagesViewerSource extends ChangeNotifier
   }
 }
 
-/// [PagedViewerSource] over selected ids (in selection order), read 200 at a
-/// time; ids that left the index are skipped.
-class SelectionViewerSource extends ChangeNotifier
-    implements PagedViewerSource {
+/// [PagedViewerSource] over a list of ids (the selection, a B3 group), read
+/// 200 at a time; ids that left the index are skipped.
+class IdsViewerSource extends ChangeNotifier implements PagedViewerSource {
   new(this._dao, this._ids, {this._items = const [], int loadedIds = 0})
     : _loaded = loadedIds;
 

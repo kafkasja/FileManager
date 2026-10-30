@@ -117,13 +117,25 @@ Set<FileKind> toggleKind(
   return current.length == 1 && current.contains(kind) ? const {} : {kind};
 }
 
+/// How the Browse tab lays its files out.
+enum BrowseLayout {
+  /// One flat grid (with the sources carousel).
+  all,
+
+  /// Breadcrumb + folder list.
+  folders,
+
+  /// B3: groups of photos/videos taken within a few seconds, by day.
+  sameTime,
+}
+
 /// What the Browse tab's main page shows. Immutable; [query] is what gets
 /// paged.
 @immutable
 class BrowseView {
   const new({
     this.kinds = const {},
-    this.folderMode = false,
+    this.layout = BrowseLayout.all,
     this.folder,
     this.showHidden = false,
     this.sort = FileSort.newestFirst,
@@ -132,8 +144,10 @@ class BrowseView {
   /// Empty = all kinds.
   final Set<FileKind> kinds;
 
+  final BrowseLayout layout;
+
   /// Folders (breadcrumb + folder list) instead of one flat list.
-  final bool folderMode;
+  bool get folderMode => layout == BrowseLayout.folders;
 
   /// Folder mode: the folder whose files are listed.
   final String? folder;
@@ -156,13 +170,13 @@ class BrowseView {
 
   BrowseView copyWith({
     Set<FileKind>? kinds,
-    bool? folderMode,
+    BrowseLayout? layout,
     String? Function()? folder,
     bool? showHidden,
     FileSort? sort,
   }) => BrowseView(
     kinds: kinds ?? this.kinds,
-    folderMode: folderMode ?? this.folderMode,
+    layout: layout ?? this.layout,
     folder: folder == null ? this.folder : folder(),
     showHidden: showHidden ?? this.showHidden,
     sort: sort ?? this.sort,
@@ -173,7 +187,7 @@ class BrowseView {
       other is BrowseView &&
       other.kinds.length == kinds.length &&
       other.kinds.containsAll(kinds) &&
-      other.folderMode == folderMode &&
+      other.layout == layout &&
       other.folder == folder &&
       other.showHidden == showHidden &&
       other.sort.field == sort.field &&
@@ -182,7 +196,7 @@ class BrowseView {
   @override
   int get hashCode => Object.hash(
     Object.hashAllUnordered(kinds),
-    folderMode,
+    layout,
     folder,
     showHidden,
     sort.field,

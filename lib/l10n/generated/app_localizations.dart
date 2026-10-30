@@ -2877,6 +2877,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Modified {date}'**
   String previewModified(String date);
+
+  /// No description provided for @browseModeSameTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Same time'**
+  String get browseModeSameTime;
+
+  /// No description provided for @sameTimeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos taken at the same time'**
+  String get sameTimeEmpty;
+
+  /// No description provided for @sameTimeDayHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · {count, plural, =1{1 group} other{{count} groups}}'**
+  String sameTimeDayHeader(String date, int count);
+
+  /// No description provided for @sameTimeGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}} · {start}–{end}'**
+  String sameTimeGroupTitle(int count, String start, String end);
+
+  /// No description provided for @sameTimeMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String sameTimeMore(int count);
+
+  /// No description provided for @sameTimeSelectGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Select group'**
+  String get sameTimeSelectGroup;
+
+  /// No description provided for @settingsSameTimeWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Same time window'**
+  String get settingsSameTimeWindow;
+
+  /// No description provided for @settingsSameTimeWindowHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse → Same time groups photos and videos taken within this many seconds'**
+  String get settingsSameTimeWindowHelp;
+
+  /// No description provided for @seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
+  String seconds(int count);
 }
 
 class _AppLocalizationsDelegate

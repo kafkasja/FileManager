@@ -1086,5 +1086,37 @@
     "placeholders": {
       "date": {"type": "String"}
     }
+  },
+  "browseModeSameTime": "Same time",
+  "sameTimeEmpty": "No photos taken at the same time",
+  "sameTimeDayHeader": "{date} · {count, plural, =1{1 group} other{{count} groups}}",
+  "@sameTimeDayHeader": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "sameTimeGroupTitle": "{count, plural, =1{1 file} other{{count} files}} · {start}–{end}",
+  "@sameTimeGroupTitle": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "start": {"type": "String"},
+      "end": {"type": "String"}
+    }
+  },
+  "sameTimeMore": "+{count} more",
+  "@sameTimeMore": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "sameTimeSelectGroup": "Select group",
+  "settingsSameTimeWindow": "Same time window",
+  "settingsSameTimeWindowHelp": "Browse → Same time groups photos and videos taken within this many seconds",
+  "seconds": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@seconds": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
   }
 }

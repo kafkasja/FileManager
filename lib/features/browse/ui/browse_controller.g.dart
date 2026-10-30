@@ -128,7 +128,7 @@ final class BrowseViewControllerProvider
 }
 
 String _$browseViewControllerHash() =>
-    r'fe844bcf42ab605741d0095b2958122d5cc1c433';
+    r'319bea1122b3e9170b19c09213b53e9420effff8';
 
 /// What the Browse tab shows (TASK-B1). Kept while the tab is alive.
 

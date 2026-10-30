@@ -7,12 +7,18 @@ import 'package:kfm/features/trash/ui/deleting_section.dart';
 
 import '../../helpers/pump_app.dart';
 
+/// The retention dropdown (Settings → Browse has another `DropdownButton<int>`).
+final Finder _retention = find.descendant(
+  of: find.byType(DeletingSection),
+  matching: find.byType(DropdownButton<int>),
+);
+
 Future<TestApp> _open(WidgetTester tester) async {
   final app = await pumpApp(tester);
   app.container.read(routerProvider).go(AppRoutes.settings);
   await tester.pumpAndSettle();
   await tester.scrollUntilVisible(
-    find.byType(DropdownButton<int>),
+    _retention,
     300,
     scrollable: find.byType(Scrollable).first,
   );
@@ -25,7 +31,7 @@ Future<int> _days(TestApp app) => app.container
     .read(AppSettings.pendingFolderRetentionDays);
 
 Future<void> _openCustom(WidgetTester tester) async {
-  await tester.tap(find.byType(DropdownButton<int>));
+  await tester.tap(_retention);
   await tester.pumpAndSettle();
   await tester.tap(find.text('Custom…').last);
   await tester.pumpAndSettle();

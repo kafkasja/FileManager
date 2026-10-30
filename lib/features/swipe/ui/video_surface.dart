@@ -14,12 +14,21 @@ import 'package:video_player/video_player.dart';
 /// badge, scrub bar along the bottom (drags there seek, never swipe). The
 /// viewer gets the same pooled player, so playback continues where it was.
 class VideoSurface extends ConsumerStatefulWidget {
-  const new({required this.file, required this.active, super.key});
+  const new({
+    required this.file,
+    required this.active,
+    this.fullscreen = false,
+    super.key,
+  });
 
   final FileRef file;
 
   /// Only the current card plays; others are prepared but paused.
   final bool active;
+
+  /// In a fullscreen viewer the sound/duration pill sits bottom-start, clear
+  /// of the status bar and the ✕ (B7, seen on the S22).
+  final bool fullscreen;
 
   @override
   ConsumerState<VideoSurface> createState() => _VideoSurfaceState();
@@ -119,8 +128,11 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
         if (_error != null)
           Center(child: _Pill(text: context.l10n.videoCantPlay)),
         PositionedDirectional(
-          start: 8,
-          top: 8,
+          start: widget.fullscreen ? 16 : 8,
+          top: widget.fullscreen ? null : 8,
+          bottom: widget.fullscreen
+              ? MediaQuery.paddingOf(context).bottom + 28
+              : null,
           child: handle == null
               ? _Pill(
                   icon: muted ? Icons.volume_off : Icons.volume_up,

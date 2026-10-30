@@ -7,6 +7,7 @@ import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_query.dart';
+import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
 import 'package:kfm/features/swipe/data/swipe_queue_repository.dart';
@@ -78,7 +79,7 @@ void main() {
   testWidgets('changing the sort keeps the open folder', (tester) async {
     final app = await pumpApp(tester, files: _library());
     app.container.read(browseViewControllerProvider.notifier)
-      ..setFolderMode(on: true)
+      ..setLayout(BrowseLayout.folders)
       ..openFolder('$_root/DCIM/Camera')
       ..setSort(const FileSort(FileSortField.size));
     final view = app.container.read(browseViewControllerProvider);

@@ -64,8 +64,8 @@ class BrowseViewController extends _$BrowseViewController {
   void setKind(FileKind? kind, {bool add = false}) =>
       state = state.copyWith(kinds: toggleKind(state.kinds, kind, add: add));
 
-  void setFolderMode({required bool on}) =>
-      state = state.copyWith(folderMode: on, folder: () => null);
+  void setLayout(BrowseLayout layout) =>
+      state = state.copyWith(layout: layout, folder: () => null);
 
   /// Folder mode: the folder to list (null = storage volumes).
   void openFolder(String? path) => state = state.copyWith(folder: () => path);

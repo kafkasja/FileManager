@@ -176,8 +176,14 @@ class FilesChannel(
             args.add(escapeLike(it.trimEnd('/')) + "/%")
         }
         call.argument<Number>("modifiedAfter")?.let {
-            // Inclusive: DATE_MODIFIED has 1 s resolution; the F5 index dedupes by id.
-            where.append(" AND ${MediaStore.Files.FileColumns.DATE_MODIFIED} >= ?")
+            // Inclusive: 1 s resolution; the F5 index dedupes by id. DATE_ADDED
+            // too: files copied in with their old modified time (from a PC, a
+            // backup, a zip) are new to the index all the same.
+            where.append(
+                " AND (${MediaStore.Files.FileColumns.DATE_MODIFIED} >= ?" +
+                    " OR ${MediaStore.Files.FileColumns.DATE_ADDED} >= ?)",
+            )
+            args.add(it.toLong().toString())
             args.add(it.toLong().toString())
         }
         call.argument<Number>("minSize")?.let {

@@ -67,6 +67,21 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     return query.getSingle().then((row) => row.read(sum) ?? 0);
   }
 
+  /// B3: `(id, sortDateMs)` of every row matching [q], ordered by capture
+  /// time ascending, then id (the input `clusterByTime` expects). [q] must
+  /// already be `visible()`; [q]'s own sort is ignored.
+  Future<List<(String, int)>> captureTimes(IndexQuery q) async {
+    final id = mediaIndex.id;
+    final ms = mediaIndex.sortDateMs;
+    final rows =
+        await (selectOnly(mediaIndex)
+              ..addColumns([id, ms])
+              ..where(_applyQuery(mediaIndex, q))
+              ..orderBy([OrderingTerm.asc(ms), OrderingTerm.asc(id)]))
+            .get();
+    return [for (final r in rows) (r.read(id)!, r.read(ms)!)];
+  }
+
   /// Emits (debounced) after any change to the index. Views reload their
   /// visible pages. Not filtered per query: a cheap reload beats tracking.
   /// Each event is a new number: Riverpod skips equal values, so a plain

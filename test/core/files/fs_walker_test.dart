@@ -86,6 +86,23 @@ void main() {
     expect(await names(WalkOptions(root: root, minSizeBytes: 2)), ['a.pdf']);
   });
 
+  test(
+    'modifiedAfter also finds files copied in with an old modified time',
+    () async {
+      final old = DateTime.now().subtract(const Duration(days: 400));
+      final since = DateTime.now().subtract(const Duration(hours: 1));
+      // "Copied in" keeping an old modified time: its change/creation
+      // time is now.
+      File('$root/copied.pdf')
+        ..writeAsBytesSync([1])
+        ..setLastModifiedSync(old);
+      final listed = await names(
+        WalkOptions(root: root, recursive: false, modifiedAfter: since),
+      );
+      expect(listed, contains('copied.pdf'));
+    },
+  );
+
   test('fills FileRef fields', () async {
     final all = await walkFiles(WalkOptions(root: root, recursive: false))
         .expand((p) => p)

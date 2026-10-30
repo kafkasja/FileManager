@@ -36,7 +36,8 @@ class FileQuery {
   final String? rootPath;
   final bool recursive;
 
-  /// Incremental scan: only files changed after this instant (F5 uses it).
+  /// Incremental scan: only files modified or added after this instant
+  /// (F5 uses it; a copied-in file keeps its old modified time).
   final DateTime? modifiedAfter;
   final int? minSizeBytes;
 

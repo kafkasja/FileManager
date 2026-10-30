@@ -46,7 +46,7 @@ final class SelectionControllerProvider
 }
 
 String _$selectionControllerHash() =>
-    r'4877e9353193d295765af939f9c63b36a74299e5';
+    r'e5efbbafa25ed16f5ce78541c18ad7a3fe26df25';
 
 /// The one global selection (TASK-B6), used by Browse, collections and
 /// search. State changes at once; writes follow through the write queue.

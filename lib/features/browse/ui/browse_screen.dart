@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/folder_menu.dart';
+import 'package:kfm/features/browse/ui/same_time_view.dart';
 import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:kfm/features/browse/ui/widgets/sort_sheet.dart';
@@ -44,8 +46,15 @@ class BrowseScreen extends ConsumerWidget {
         (selection?.canRestoreCleared ?? false) &&
         (selection?.isEmpty ?? false);
     final selector = ref.read(selectionControllerProvider.notifier);
-    // Folder mode's storage list has no files to select.
-    final canSelectAll = !view.folderMode || view.folder != null;
+    // Folder mode's storage list has no files to select; Same time selects
+    // per group.
+    final canSelectAll = switch (view.layout) {
+      BrowseLayout.all => true,
+      BrowseLayout.folders => view.folder != null,
+      BrowseLayout.sameTime => false,
+    };
+    final newestFirst =
+        view.sort.field != FileSortField.date || view.sort.descending;
 
     return PopScope(
       // Back leaves Edit / Select mode, then goes up a folder.
@@ -135,22 +144,27 @@ class BrowseScreen extends ConsumerWidget {
                 horizontal: spacing * 2,
                 vertical: spacing / 2,
               ),
-              child: SegmentedButton<bool>(
+              child: SegmentedButton<BrowseLayout>(
+                showSelectedIcon: false,
                 segments: [
                   ButtonSegment(
-                    value: false,
+                    value: BrowseLayout.all,
                     label: Text(l10n.browseModeAll),
                     icon: const Icon(Icons.grid_view),
                   ),
                   ButtonSegment(
-                    value: true,
+                    value: BrowseLayout.folders,
                     label: Text(l10n.browseModeFolders),
                     icon: const Icon(Icons.folder_outlined),
                   ),
+                  ButtonSegment(
+                    value: BrowseLayout.sameTime,
+                    label: Text(l10n.browseModeSameTime),
+                    icon: const Icon(Icons.burst_mode_outlined),
+                  ),
                 ],
-                selected: {view.folderMode},
-                onSelectionChanged: (s) =>
-                    controller.setFolderMode(on: s.first),
+                selected: {view.layout},
+                onSelectionChanged: (s) => controller.setLayout(s.first),
               ),
             ),
             KindChipsRow(
@@ -161,7 +175,13 @@ class BrowseScreen extends ConsumerWidget {
             Padding(
               padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
               child: Text(
-                sortLabel(l10n, view.sort),
+                // Same time always goes by date (B3).
+                view.layout == BrowseLayout.sameTime
+                    ? sortLabel(
+                        l10n,
+                        FileSort(FileSortField.date, descending: newestFirst),
+                      )
+                    : sortLabel(l10n, view.sort),
                 style: Theme.of(context).textTheme.labelMedium,
               ),
             ),
@@ -218,6 +238,14 @@ class _Body extends ConsumerWidget {
     final banner = [
       if (needsAccess) const SliverToBoxAdapter(child: AccessBanner()),
     ];
+    if (view.layout == BrowseLayout.sameTime) {
+      return SameTimeView(
+        query: view.query,
+        newestFirst:
+            view.sort.field != FileSortField.date || view.sort.descending,
+        leading: banner,
+      );
+    }
     if (view.folderMode) {
       return FileResultsView(
         query: view.query,
