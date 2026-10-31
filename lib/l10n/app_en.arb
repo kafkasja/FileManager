@@ -1071,20 +1071,28 @@
   "previewDimensions": "{width} × {height}",
   "@previewDimensions": {
     "placeholders": {
-      "width": {"type": "int"},
-      "height": {"type": "int"}
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
     }
   },
   "previewTaken": "Taken {date}",
   "@previewTaken": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "previewModified": "Modified {date}",
   "@previewModified": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "browseModeSameTime": "Same time",
@@ -1092,22 +1100,34 @@
   "sameTimeDayHeader": "{date} · {count, plural, =1{1 group} other{{count} groups}}",
   "@sameTimeDayHeader": {
     "placeholders": {
-      "date": {"type": "String"},
-      "count": {"type": "int"}
+      "date": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
   "sameTimeGroupTitle": "{count, plural, =1{1 file} other{{count} files}} · {start}–{end}",
   "@sameTimeGroupTitle": {
     "placeholders": {
-      "count": {"type": "int"},
-      "start": {"type": "String"},
-      "end": {"type": "String"}
+      "count": {
+        "type": "int"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
   "sameTimeMore": "+{count} more",
   "@sameTimeMore": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "sameTimeSelectGroup": "Select group",
@@ -1116,7 +1136,289 @@
   "seconds": "{count, plural, =1{1 second} other{{count} seconds}}",
   "@seconds": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileMenuTooltip": "File actions",
+  "fileMenuRename": "Rename",
+  "fileMenuDuplicate": "Duplicate",
+  "fileMenuCopyTo": "Copy to…",
+  "fileMenuMoveTo": "Move to…",
+  "fileMenuDelete": "Delete",
+  "selectionActionMove": "Move to…",
+  "selectionActionCopy": "Copy to…",
+  "selectionActionDuplicate": "Duplicate",
+  "selectionActionDelete": "Delete",
+  "renameFolderTitle": "Rename folder",
+  "renameAction": "Rename",
+  "nameLabel": "Name",
+  "nameInvalid": "Names can't be empty, contain / \\ : * ? \" < > | or be longer than 255 bytes",
+  "nameExists": "Something with that name already exists here",
+  "opMovedSummary": "{done, plural, =1{Moved 1 file to {folder}} other{Moved {done} files to {folder}}}",
+  "@opMovedSummary": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "opCopiedSummary": "{done, plural, =1{Copied 1 file to {folder}} other{Copied {done} files to {folder}}}",
+  "@opCopiedSummary": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "opDuplicatedSummary": "{done, plural, =1{Duplicated 1 file} other{Duplicated {done} files}}",
+  "@opDuplicatedSummary": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "opRenamedSummary": "Renamed to {name}",
+  "@opRenamedSummary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "opTrashedSummary": "{done, plural, =1{Moved 1 file to trash} other{Moved {done} files to trash}}",
+  "@opTrashedSummary": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "opDeletedSummary": "{done, plural, =1{Deleted 1 file permanently} other{Deleted {done} files permanently}}",
+  "@opDeletedSummary": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "opFailedSummary": "{failed, plural, =1{1 failed} other{{failed} failed}}",
+  "@opFailedSummary": {
+    "placeholders": {
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "opSkippedSummary": "{skipped, plural, =1{1 skipped} other{{skipped} skipped}}",
+  "@opSkippedSummary": {
+    "placeholders": {
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "opCancelledSummary": "Stopped: {done} of {total} done",
+  "@opCancelledSummary": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "opSkippedNeedAccess": "{count, plural, =1{1 file skipped (needs All files access)} other{{count} files skipped (need All files access)}}",
+  "@opSkippedNeedAccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "opUndone": "Undone",
+  "opUndoStopped": "Undo stopped: {done} of {total} undone",
+  "@opUndoStopped": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "opUndoLast": "Undo last file operation",
+  "opUndoMissing": "{count, plural, =1{1 file no longer exists and wasn't undone} other{{count} files no longer exist and weren't undone}}",
+  "@opUndoMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "opSpaceRefused": "Not enough space (needs {needed}, {free} free)",
+  "@opSpaceRefused": {
+    "placeholders": {
+      "needed": {
+        "type": "String"
+      },
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+  "opFolderRenamed": "Folder renamed to {name}",
+  "@opFolderRenamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "collisionTitle": "Name already used",
+  "collisionBody": "{name} already exists in {folder}",
+  "@collisionBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "collisionReplace": "Replace",
+  "collisionKeepBoth": "Keep both",
+  "collisionSkip": "Skip",
+  "collisionApplyAll": "Do this for all remaining",
+  "progressMoving": "Moving {done} of {total}",
+  "@progressMoving": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "progressCopying": "Copying {done} of {total}",
+  "@progressCopying": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "progressDeleting": "Deleting {done} of {total}",
+  "@progressDeleting": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "progressUndoing": "Undoing {done} of {total}",
+  "@progressUndoing": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "progressWorking": "Working…",
+  "permanentConfirmAction": "Delete",
+  "opPermanentConfirmTitle": "Delete permanently?",
+  "opPermanentConfirmBody": "{count, plural, =1{Permanently delete 1 file ({size})? This can't be undone.} other{Permanently delete {count} files ({size})? This can't be undone.}}",
+  "@opPermanentConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingFallbackTitle": "Couldn't use the trash folder",
+  "pendingFallbackBody": "{count, plural, =1{Couldn't move 1 file to the trash folder. Delete it permanently instead?} other{Couldn't move {count} files to the trash folder. Delete them permanently instead?}}",
+  "@pendingFallbackBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingFallbackAction": "Delete permanently",
+  "pickerMoveTitle": "Move to",
+  "pickerCopyTitle": "Copy to",
+  "pickerAllFolders": "All folders",
+  "pickerMoveHere": "Move here",
+  "pickerCopyHere": "Copy here",
+  "pickerChooseHere": "Use this folder",
+  "pickerCurrentFolder": "Current folder",
+  "browseNewFolder": "New folder",
+  "browseFolderCreated": "Created {name}",
+  "@browseFolderCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsFiles": "Files",
+  "settingsDropAction": "Dropping files on a folder",
+  "dropActionMove": "Moves them",
+  "dropActionCopy": "Copies them",
+  "fileOpRenameFailed": "Couldn't rename {name}",
+  "@fileOpRenameFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileOpFailedGeneric": "Couldn't finish for {name}",
+  "@fileOpFailedGeneric": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileOpNotFound": "{name} no longer exists",
+  "@fileOpNotFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileOpPermission": "No permission to change {name}",
+  "@fileOpPermission": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
     }
   }
 }

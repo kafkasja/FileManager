@@ -146,7 +146,7 @@ final class MediaIndexerProvider
   }
 }
 
-String _$mediaIndexerHash() => r'ad2b6103602f02685c4e6fc33a3dd87c6b4fc37c';
+String _$mediaIndexerHash() => r'dab3ef771966e9a59f72eff63386bc68c4da4fc4';
 
 @ProviderFor(indexStatus)
 final indexStatusProvider = IndexStatusProvider._();

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:kfm/core/files/file_op_exception.dart';
 
 /// Splits "photo.jpg" into ("photo", ".jpg"); dot-files keep their name.
@@ -21,14 +23,45 @@ Future<String> uniqueName(
   }
 }
 
-/// Throws `invalidName` for names that can't be a single path segment.
+/// Name prefix of KFM's unfinished copies (B4, `TempFileLedger`). Hidden
+/// (dot) and skipped by the walker.
+const tempFilePrefix = '.kfm-tmp-';
+
+/// Longest name the file systems take (ext4, FAT/exFAT via FUSE), in UTF-8
+/// bytes.
+const maxFileNameBytes = 255;
+
+/// Characters shared storage (FAT/exFAT, Windows) refuses in a name.
+final _forbidden = RegExp(r'[/\\:*?"<>|\x00-\x1F]');
+
+/// For names the user types (rename/new-folder dialogs, `createFolder`).
+/// Throws `invalidName` for names that can't be a single path segment on
+/// every volume: empty, `.`/`..`, any of `/ \ : * ? " < > |`, control
+/// characters, or more than [maxFileNameBytes] UTF-8 bytes.
+///
+/// FileSource `rename`/`renameFolder` only use [checkPathSegment]: undo must
+/// be able to restore a name that already exists on disk (`What?.pdf`).
 void validateFileName(String name) {
   if (name.trim().isEmpty ||
       name == '.' ||
       name == '..' ||
+      _forbidden.hasMatch(name) ||
+      utf8.encode(name).length > maxFileNameBytes) {
+    throw FileOpException(FileOpFailure.invalidName, 'invalid name: "$name"');
+  }
+}
+
+/// Lenient check for FileSource renames: throws `invalidName` only for names
+/// that can't be one path segment at all: empty (or only spaces), `.`/`..`,
+/// containing `/` or NUL, or more than [maxFileNameBytes] UTF-8 bytes.
+/// Anything else the file system refuses fails as an I/O error.
+void checkPathSegment(String name) {
+  if (name.trim().isEmpty ||
+      name == '.' ||
+      name == '..' ||
       name.contains('/') ||
-      name.contains(r'\') ||
-      name.contains('\u0000')) {
+      name.contains('\u0000') ||
+      utf8.encode(name).length > maxFileNameBytes) {
     throw FileOpException(FileOpFailure.invalidName, 'invalid name: "$name"');
   }
 }

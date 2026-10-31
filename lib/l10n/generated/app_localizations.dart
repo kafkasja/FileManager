@@ -2931,6 +2931,396 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
   String seconds(int count);
+
+  /// No description provided for @fileMenuTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'File actions'**
+  String get fileMenuTooltip;
+
+  /// No description provided for @fileMenuRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get fileMenuRename;
+
+  /// No description provided for @fileMenuDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get fileMenuDuplicate;
+
+  /// No description provided for @fileMenuCopyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to…'**
+  String get fileMenuCopyTo;
+
+  /// No description provided for @fileMenuMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get fileMenuMoveTo;
+
+  /// No description provided for @fileMenuDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get fileMenuDelete;
+
+  /// No description provided for @selectionActionMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get selectionActionMove;
+
+  /// No description provided for @selectionActionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to…'**
+  String get selectionActionCopy;
+
+  /// No description provided for @selectionActionDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get selectionActionDuplicate;
+
+  /// No description provided for @selectionActionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get selectionActionDelete;
+
+  /// No description provided for @renameFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename folder'**
+  String get renameFolderTitle;
+
+  /// No description provided for @renameAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameAction;
+
+  /// No description provided for @nameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameLabel;
+
+  /// No description provided for @nameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Names can\'t be empty, contain / \\ : * ? \" < > | or be longer than 255 bytes'**
+  String get nameInvalid;
+
+  /// No description provided for @nameExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Something with that name already exists here'**
+  String get nameExists;
+
+  /// No description provided for @opMovedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done, plural, =1{Moved 1 file to {folder}} other{Moved {done} files to {folder}}}'**
+  String opMovedSummary(int done, String folder);
+
+  /// No description provided for @opCopiedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done, plural, =1{Copied 1 file to {folder}} other{Copied {done} files to {folder}}}'**
+  String opCopiedSummary(int done, String folder);
+
+  /// No description provided for @opDuplicatedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done, plural, =1{Duplicated 1 file} other{Duplicated {done} files}}'**
+  String opDuplicatedSummary(int done);
+
+  /// No description provided for @opRenamedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed to {name}'**
+  String opRenamedSummary(String name);
+
+  /// No description provided for @opTrashedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done, plural, =1{Moved 1 file to trash} other{Moved {done} files to trash}}'**
+  String opTrashedSummary(int done);
+
+  /// No description provided for @opDeletedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done, plural, =1{Deleted 1 file permanently} other{Deleted {done} files permanently}}'**
+  String opDeletedSummary(int done);
+
+  /// No description provided for @opFailedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{failed, plural, =1{1 failed} other{{failed} failed}}'**
+  String opFailedSummary(int failed);
+
+  /// No description provided for @opSkippedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{skipped, plural, =1{1 skipped} other{{skipped} skipped}}'**
+  String opSkippedSummary(int skipped);
+
+  /// No description provided for @opCancelledSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped: {done} of {total} done'**
+  String opCancelledSummary(int done, int total);
+
+  /// No description provided for @opSkippedNeedAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file skipped (needs All files access)} other{{count} files skipped (need All files access)}}'**
+  String opSkippedNeedAccess(int count);
+
+  /// No description provided for @opUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Undone'**
+  String get opUndone;
+
+  /// No description provided for @opUndoStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo stopped: {done} of {total} undone'**
+  String opUndoStopped(int done, int total);
+
+  /// No description provided for @opUndoLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo last file operation'**
+  String get opUndoLast;
+
+  /// No description provided for @opUndoMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file no longer exists and wasn\'t undone} other{{count} files no longer exist and weren\'t undone}}'**
+  String opUndoMissing(int count);
+
+  /// No description provided for @opSpaceRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space (needs {needed}, {free} free)'**
+  String opSpaceRefused(String needed, String free);
+
+  /// No description provided for @opFolderRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder renamed to {name}'**
+  String opFolderRenamed(String name);
+
+  /// No description provided for @collisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Name already used'**
+  String get collisionTitle;
+
+  /// No description provided for @collisionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} already exists in {folder}'**
+  String collisionBody(String name, String folder);
+
+  /// No description provided for @collisionReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get collisionReplace;
+
+  /// No description provided for @collisionKeepBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep both'**
+  String get collisionKeepBoth;
+
+  /// No description provided for @collisionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get collisionSkip;
+
+  /// No description provided for @collisionApplyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Do this for all remaining'**
+  String get collisionApplyAll;
+
+  /// No description provided for @progressMoving.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving {done} of {total}'**
+  String progressMoving(int done, int total);
+
+  /// No description provided for @progressCopying.
+  ///
+  /// In en, this message translates to:
+  /// **'Copying {done} of {total}'**
+  String progressCopying(int done, int total);
+
+  /// No description provided for @progressDeleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting {done} of {total}'**
+  String progressDeleting(int done, int total);
+
+  /// No description provided for @progressUndoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Undoing {done} of {total}'**
+  String progressUndoing(int done, int total);
+
+  /// No description provided for @progressWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get progressWorking;
+
+  /// No description provided for @permanentConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get permanentConfirmAction;
+
+  /// No description provided for @opPermanentConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently?'**
+  String get opPermanentConfirmTitle;
+
+  /// No description provided for @opPermanentConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Permanently delete 1 file ({size})? This can\'t be undone.} other{Permanently delete {count} files ({size})? This can\'t be undone.}}'**
+  String opPermanentConfirmBody(int count, String size);
+
+  /// No description provided for @pendingFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t use the trash folder'**
+  String get pendingFallbackTitle;
+
+  /// No description provided for @pendingFallbackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Couldn\'t move 1 file to the trash folder. Delete it permanently instead?} other{Couldn\'t move {count} files to the trash folder. Delete them permanently instead?}}'**
+  String pendingFallbackBody(int count);
+
+  /// No description provided for @pendingFallbackAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get pendingFallbackAction;
+
+  /// No description provided for @pickerMoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to'**
+  String get pickerMoveTitle;
+
+  /// No description provided for @pickerCopyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to'**
+  String get pickerCopyTitle;
+
+  /// No description provided for @pickerAllFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'All folders'**
+  String get pickerAllFolders;
+
+  /// No description provided for @pickerMoveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move here'**
+  String get pickerMoveHere;
+
+  /// No description provided for @pickerCopyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy here'**
+  String get pickerCopyHere;
+
+  /// No description provided for @pickerChooseHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this folder'**
+  String get pickerChooseHere;
+
+  /// No description provided for @pickerCurrentFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Current folder'**
+  String get pickerCurrentFolder;
+
+  /// No description provided for @browseNewFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get browseNewFolder;
+
+  /// No description provided for @browseFolderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {name}'**
+  String browseFolderCreated(String name);
+
+  /// No description provided for @settingsFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get settingsFiles;
+
+  /// No description provided for @settingsDropAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropping files on a folder'**
+  String get settingsDropAction;
+
+  /// No description provided for @dropActionMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves them'**
+  String get dropActionMove;
+
+  /// No description provided for @dropActionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies them'**
+  String get dropActionCopy;
+
+  /// No description provided for @fileOpRenameFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t rename {name}'**
+  String fileOpRenameFailed(String name);
+
+  /// No description provided for @fileOpFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t finish for {name}'**
+  String fileOpFailedGeneric(String name);
+
+  /// No description provided for @fileOpNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} no longer exists'**
+  String fileOpNotFound(String name);
+
+  /// No description provided for @fileOpPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'No permission to change {name}'**
+  String fileOpPermission(String name);
 }
 
 class _AppLocalizationsDelegate

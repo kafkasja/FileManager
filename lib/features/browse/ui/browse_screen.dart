@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
+import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
@@ -17,6 +18,9 @@ import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:kfm/features/browse/ui/widgets/sort_sheet.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_carousel.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
+import 'package:kfm/features/folders/ui/file_drag.dart';
+import 'package:kfm/features/folders/ui/file_op_flow.dart';
+import 'package:kfm/features/folders/ui/last_operation_undo.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_bar.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
@@ -46,6 +50,7 @@ class BrowseScreen extends ConsumerWidget {
         (selection?.canRestoreCleared ?? false) &&
         (selection?.isEmpty ?? false);
     final selector = ref.read(selectionControllerProvider.notifier);
+    final canUndo = ref.watch(lastOperationUndoProvider) != null;
     // Folder mode's storage list has no files to select; Same time selects
     // per group.
     final canSelectAll = switch (view.layout) {
@@ -104,36 +109,54 @@ class BrowseScreen extends ConsumerWidget {
               icon: const Icon(Icons.sort),
               onPressed: () => unawaited(showSortSheet(context)),
             ),
-            if (canSeeAll || swipeSourceAvailable || canRestore)
-              PopupMenuButton<_MenuAction>(
-                onSelected: (action) => switch (action) {
-                  _MenuAction.showHidden => controller.setShowHidden(
-                    show: !view.showHidden,
+            PopupMenuButton<_MenuAction>(
+              onSelected: (action) => switch (action) {
+                _MenuAction.newFolder => unawaited(
+                  createFolderIn(
+                    context,
+                    ref,
+                    view.folder ?? ref.read(defaultNewFolderParentProvider),
                   ),
-                  _MenuAction.restoreSelection => unawaited(
-                    selector.restoreCleared(),
+                ),
+                _MenuAction.undoLast => unawaited(
+                  undoLastFileOperation(context),
+                ),
+                _MenuAction.showHidden => controller.setShowHidden(
+                  show: !view.showHidden,
+                ),
+                _MenuAction.restoreSelection => unawaited(
+                  selector.restoreCleared(),
+                ),
+                _MenuAction.swipeThese => null,
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _MenuAction.newFolder,
+                  child: Text(l10n.browseNewFolder),
+                ),
+                if (canUndo)
+                  PopupMenuItem(
+                    value: _MenuAction.undoLast,
+                    child: Text(l10n.opUndoLast),
                   ),
-                  _MenuAction.swipeThese => null,
-                },
-                itemBuilder: (context) => [
-                  if (canRestore)
-                    PopupMenuItem(
-                      value: _MenuAction.restoreSelection,
-                      child: Text(l10n.selectionRestore),
-                    ),
-                  if (canSeeAll)
-                    CheckedPopupMenuItem(
-                      value: _MenuAction.showHidden,
-                      checked: view.showHidden,
-                      child: Text(l10n.browseShowHidden),
-                    ),
-                  if (swipeSourceAvailable)
-                    PopupMenuItem(
-                      value: _MenuAction.swipeThese,
-                      child: Text(l10n.browseSwipeThese),
-                    ),
-                ],
-              ),
+                if (canRestore)
+                  PopupMenuItem(
+                    value: _MenuAction.restoreSelection,
+                    child: Text(l10n.selectionRestore),
+                  ),
+                if (canSeeAll)
+                  CheckedPopupMenuItem(
+                    value: _MenuAction.showHidden,
+                    checked: view.showHidden,
+                    child: Text(l10n.browseShowHidden),
+                  ),
+                if (swipeSourceAvailable)
+                  PopupMenuItem(
+                    value: _MenuAction.swipeThese,
+                    child: Text(l10n.browseSwipeThese),
+                  ),
+              ],
+            ),
           ],
         ),
         body: Column(
@@ -221,7 +244,13 @@ class BrowseScreen extends ConsumerWidget {
   }
 }
 
-enum _MenuAction { showHidden, restoreSelection, swipeThese }
+enum _MenuAction {
+  newFolder,
+  undoLast,
+  showHidden,
+  restoreSelection,
+  swipeThese,
+}
 
 class _Body extends ConsumerWidget {
   const new({required this.view, required this.canSeeAll});
@@ -337,8 +366,7 @@ class _FolderList extends ConsumerWidget {
             for (final item in menu)
               if (item.isAvailable(entry)) item,
           ];
-          return ListTile(
-            key: ValueKey(entry.path),
+          final tile = ListTile(
             leading: Icon(
               parent == null ? Icons.sd_storage_outlined : Icons.folder,
             ),
@@ -365,6 +393,14 @@ class _FolderList extends ConsumerWidget {
                   ),
             onTap: () => controller.openFolder(entry.path),
           );
+          // B4: selected files can be dropped here (not on volumes).
+          return parent == null
+              ? KeyedSubtree(key: ValueKey(entry.path), child: tile)
+              : FolderDropTarget(
+                  key: ValueKey(entry.path),
+                  folder: entry.path,
+                  child: tile,
+                );
         },
       ),
       AsyncError() => SliverToBoxAdapter(

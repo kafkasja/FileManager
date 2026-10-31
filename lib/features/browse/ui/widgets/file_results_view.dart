@@ -12,8 +12,11 @@ import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/browse_preview.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
+import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
+import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/drag_select_detector.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 
 /// The results body (TASK-B1): grid (or list for non-visual kinds), paging,
 /// empty / error / unavailable states. Browse, B8's search and B9's
@@ -136,6 +139,14 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
     final notifier = ref.read(filePagesProvider(query).notifier);
     final showSizes = ref.watch(browseShowSizesProvider).value ?? true;
     final highlightBig = ref.watch(browseHighlightBigProvider).value ?? false;
+    // B4: the ⋮ only in Normal mode (tiles select in the other modes).
+    final normal =
+        ref.watch(
+          selectionControllerProvider.select(
+            (s) => s.value?.mode ?? SelectionMode.normal,
+          ),
+        ) ==
+        SelectionMode.normal;
     void maybeLoadMore(int index) {
       if (data.hasMore &&
           !data.loadingMore &&
@@ -176,6 +187,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                   file: f,
                   onTap: onTap,
                   highlightBig: highlightBig,
+                  menu: normal ? FileActionsMenuButton(file: f) : null,
                 ),
               );
             },
@@ -205,6 +217,9 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                     showSize:
                         showSizes || query.sort.field == FileSortField.size,
                     highlightBig: highlightBig,
+                    menu: normal
+                        ? FileActionsMenuButton(file: f, overlay: true)
+                        : null,
                   ),
                 );
               },

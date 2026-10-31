@@ -28,10 +28,15 @@ Future<List<int>> _read(FileSource s, FileRef f) async => [
 ];
 
 /// Behaviour every [FileSource] must have. Run against each implementation.
+///
+/// [diskRefusesWindowsChars]: the implementation writes to the host disk
+/// and the host is Windows (NTFS refuses `? : *`…), so tests that need such
+/// names are skipped.
 void fileSourceContract(
   String name,
-  Future<ContractHarness> Function() create,
-) {
+  Future<ContractHarness> Function() create, {
+  bool diskRefusesWindowsChars = false,
+}) {
   group('FileSource contract: $name', () {
     late ContractHarness h;
     late FileSource s;
@@ -155,6 +160,76 @@ void fileSourceContract(
       final f = await h.addFile('${h.root}/x.pdf', [1]);
       await expectLater(s.rename(f, 'a/b'), _fails(FileOpFailure.invalidName));
       await expectLater(s.rename(f, ' '), _fails(FileOpFailure.invalidName));
+    });
+
+    test('rename keeps a name only user input may not use (B4 undo)', () async {
+      final f = await h.addFile('${h.root}/x.pdf', [1]);
+      // Undo restores names that already exist on disk: only the dialogs
+      // apply the strict validateFileName.
+      final renamed = await s.rename(f, 'What?.pdf');
+      expect(renamed.name, 'What?.pdf');
+      expect(await s.statPath('${h.root}/What?.pdf'), isNotNull);
+    }, skip: diskRefusesWindowsChars ? 'the host disk refuses "?"' : null);
+
+    test('rename still rejects names that are no path segment', () async {
+      final f = await h.addFile('${h.root}/x.pdf', [1]);
+      for (final bad in ['', '.', '..', 'a\u0000b', '${'é' * 128}.pdf']) {
+        await expectLater(
+          s.rename(f, bad),
+          _fails(FileOpFailure.invalidName),
+          reason: bad,
+        );
+      }
+      expect((await s.stat(f.id))?.name, 'x.pdf');
+    });
+
+    test('statPath finds a file, null for nothing or a folder', () async {
+      final f = await h.addFile('${h.root}/a/doc.pdf', [1, 2]);
+      final hit = await s.statPath('${h.root}/a/doc.pdf');
+      expect(hit?.id, f.id);
+      expect(hit?.sizeBytes, 2);
+      expect(await s.statPath('${h.root}/a/none.pdf'), isNull);
+      expect(await s.statPath('${h.root}/a'), isNull);
+    });
+
+    test('renameFolder moves the children and reports id changes', () async {
+      final a = await h.addFile('${h.root}/old/a.pdf', [1]);
+      final b = await h.addFile('${h.root}/old/sub/b.txt', [2, 2]);
+      final changes = <FileIdChange>[];
+      final sub = s.idChanges.listen(changes.add);
+      addTearDown(sub.cancel);
+
+      final result = await s.renameFolder('${h.root}/old', 'new');
+      expect(result.path, '${h.root}/new');
+      expect(
+        {for (final f in result.files) f.path},
+        {'${h.root}/new/a.pdf', '${h.root}/new/sub/b.txt'},
+      );
+      expect(await s.stat(a.id), isNull);
+      expect(await s.statPath('${h.root}/new/sub/b.txt'), isNotNull);
+      await Future<void>.delayed(Duration.zero);
+      final byOld = {for (final c in changes) c.oldId: c.newRef.path};
+      expect(byOld[a.id], '${h.root}/new/a.pdf');
+      expect(byOld[b.id], '${h.root}/new/sub/b.txt');
+    });
+
+    test('renameFolder refuses an existing name and a bad name', () async {
+      await h.addFile('${h.root}/one/a.pdf', [1]);
+      await h.addFile('${h.root}/two/b.pdf', [1]);
+      await expectLater(
+        s.renameFolder('${h.root}/one', 'two'),
+        _fails(FileOpFailure.targetExists),
+      );
+      await expectLater(
+        s.renameFolder('${h.root}/one', 'a/b'),
+        _fails(FileOpFailure.invalidName),
+      );
+      expect(await s.statPath('${h.root}/one/a.pdf'), isNotNull);
+    });
+
+    test('freeBytes is null or not negative', () async {
+      final free = await s.freeBytes(h.root);
+      expect(free == null || free >= 0, isTrue);
     });
 
     test('createFolder creates, then refuses a duplicate', () async {

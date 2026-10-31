@@ -224,4 +224,184 @@ void main() {
     expect(ids, isNot(contains('ms:42')));
     expect(ids, contains('path:/s/DCIM/z.jpg'));
   });
+
+  group('start reconciliation with MediaStore counts', () {
+    /// MediaStore rows the index never keeps (hidden folders…).
+    var extraInStore = 0;
+    var countCalls = 0;
+
+    Future<Map<FileKind, int>?> storeCounts() async {
+      countCalls++;
+      final out = {for (final k in mediaKinds) k: 0};
+      const query = FileQuery(kinds: mediaKinds, includeHidden: true);
+      await for (final page in source.scan(query: query)) {
+        for (final f in page) {
+          out[f.kind] = out[f.kind]! + 1;
+        }
+      }
+      out[FileKind.image] = out[FileKind.image]! + extraInStore;
+      return out;
+    }
+
+    Future<void> useCounter() async {
+      await indexer.dispose();
+      extraInStore = 0;
+      countCalls = 0;
+      indexer = MediaIndexer(
+        dao: dao,
+        source: source,
+        settings: settings,
+        canSeeAllFiles: () => canSeeAll,
+        mediaStoreCounts: storeCounts,
+        clock: () => now,
+      );
+    }
+
+    Future<int> generation() => settings.read(AppSettings.indexGeneration);
+
+    test(
+      'files deleted while the app was closed are removed on start',
+      () async {
+        await useCounter();
+        addPhotos(30);
+        await indexer.start(); // first full scan records the offsets
+        expect(await indexed(), hasLength(30));
+
+        // App closed; 10 photos deleted elsewhere (no live change events).
+        for (var i = 0; i < 10; i++) {
+          source.removeExternally('path:/s/DCIM/p$i.jpg');
+        }
+        now = now.add(const Duration(hours: 1)); // well within 24 h
+        await indexer.start();
+
+        final ids = await indexed();
+        expect(ids, hasLength(20));
+        expect(ids, isNot(contains('path:/s/DCIM/p0.jpg')));
+        expect(indexer.current, isA<IndexIdle>());
+      },
+    );
+
+    test('equal counts: no full scan on start', () async {
+      await useCounter();
+      addPhotos(5);
+      await indexer.start();
+      final before = await generation();
+
+      now = now.add(const Duration(hours: 1));
+      source.addFile('/s/DCIM/new.jpg', modifiedAt: now);
+      await indexer.start(); // incremental picks up the new file
+
+      expect(await indexed(), hasLength(6));
+      expect(await generation(), before, reason: 'no full scan ran');
+      expect(countCalls, 2); // once after the full scan, once on start
+    });
+
+    test(
+      'a constant MediaStore surplus (hidden rows) is not a mismatch',
+      () async {
+        await useCounter();
+        extraInStore = 3;
+        addPhotos(5);
+        await indexer.start();
+        final before = await generation();
+
+        now = now.add(const Duration(hours: 1));
+        await indexer.start();
+        expect(await generation(), before);
+      },
+    );
+
+    test('only the kinds that changed get the full scan', () async {
+      await useCounter();
+      addPhotos(3);
+      source.addFile('/s/Music/a.mp3', modifiedAt: DateTime.utc(2025));
+      await indexer.start();
+
+      source.removeExternally('path:/s/Music/a.mp3');
+      // Not media, so a full scan of all kinds would remove it; an
+      // audio-only scan must not.
+      await dao.upsertBatch([
+        FakeFileSource().addFile('/gone.pdf'),
+      ], await generation());
+      now = now.add(const Duration(hours: 1));
+      await indexer.start();
+
+      final ids = await indexed();
+      expect(ids, isNot(contains('path:/s/Music/a.mp3')));
+      expect(ids, contains('path:/gone.pdf'));
+      expect(ids, contains('path:/s/DCIM/p0.jpg'));
+    });
+
+    test(
+      'a reconciliation scan does not postpone the 24 h full scan',
+      () async {
+        await useCounter();
+        addPhotos(3);
+        source.addFile('/s/Download/a.pdf', modifiedAt: DateTime.utc(2025));
+        await indexer.start();
+        final firstFull = await settings.read(AppSettings.indexLastFullScanAt);
+
+        // Photos deleted elsewhere every day: each start runs an image scan.
+        source
+          ..removeExternally('path:/s/DCIM/p0.jpg')
+          ..removeExternally('path:/s/Download/a.pdf');
+        now = now.add(const Duration(hours: 12));
+        await indexer.start();
+        expect(await indexed(), isNot(contains('path:/s/DCIM/p0.jpg')));
+        expect(await indexed(), contains('path:/s/Download/a.pdf'));
+        expect(
+          await settings.read(AppSettings.indexLastFullScanAt),
+          firstFull,
+          reason: 'an image-only scan is not a full scan',
+        );
+
+        source.removeExternally('path:/s/DCIM/p1.jpg');
+        now = now.add(const Duration(hours: 13)); // 25 h after the full scan
+        await indexer.start();
+        final ids = await indexed();
+        expect(ids, isNot(contains('path:/s/Download/a.pdf')));
+        expect(ids, isNot(contains('path:/s/DCIM/p1.jpg')));
+        expect(
+          await settings.read(AppSettings.indexLastFullScanAt),
+          isNot(firstFull),
+        );
+      },
+    );
+
+    test('no recorded offsets (upgrade) runs one media full scan', () async {
+      addPhotos(5);
+      await indexer.start(); // without a counter: no offsets recorded
+      await dao.upsertBatch([
+        FakeFileSource().addFile('/s/DCIM/ghost.jpg'),
+      ], await generation());
+      await useCounter();
+
+      now = now.add(const Duration(hours: 1));
+      await indexer.start();
+      expect(await indexed(), isNot(contains('path:/s/DCIM/ghost.jpg')));
+
+      final after = await generation();
+      now = now.add(const Duration(hours: 1));
+      await indexer.start();
+      expect(await generation(), after, reason: 'offsets now recorded');
+    });
+
+    test('no MediaStore (null counts): reconciliation is skipped', () async {
+      await indexer.dispose();
+      indexer = MediaIndexer(
+        dao: dao,
+        source: source,
+        settings: settings,
+        canSeeAllFiles: () => canSeeAll,
+        mediaStoreCounts: () async => null,
+        clock: () => now,
+      );
+      addPhotos(5);
+      await indexer.start();
+      final before = await generation();
+      now = now.add(const Duration(hours: 1));
+      await indexer.start();
+      expect(await generation(), before);
+    });
+  });
 }

@@ -8,12 +8,14 @@ part of 'selection_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Sorted by [SelectionAction.order]. Empty until B4/B5/B9.
+/// Sorted by [SelectionAction.order] (the bar sorts too). B4: move,
+/// delete, copy, duplicate.
 
 @ProviderFor(selectionActions)
 final selectionActionsProvider = SelectionActionsProvider._();
 
-/// Sorted by [SelectionAction.order]. Empty until B4/B5/B9.
+/// Sorted by [SelectionAction.order] (the bar sorts too). B4: move,
+/// delete, copy, duplicate.
 
 final class SelectionActionsProvider
     extends
@@ -23,7 +25,8 @@ final class SelectionActionsProvider
           List<SelectionAction>
         >
     with $Provider<List<SelectionAction>> {
-  /// Sorted by [SelectionAction.order]. Empty until B4/B5/B9.
+  /// Sorted by [SelectionAction.order] (the bar sorts too). B4: move,
+  /// delete, copy, duplicate.
   SelectionActionsProvider._()
     : super(
         from: null,
@@ -58,4 +61,4 @@ final class SelectionActionsProvider
   }
 }
 
-String _$selectionActionsHash() => r'2546c126f175a732bb750194e035081866187a04';
+String _$selectionActionsHash() => r'1b18f44a9485e6f6b0ba26acc94d0691654fab34';

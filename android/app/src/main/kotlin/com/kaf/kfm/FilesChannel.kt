@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.os.StatFs
 import android.provider.MediaStore
 import android.util.Log
 import android.webkit.MimeTypeMap
@@ -103,6 +104,8 @@ class FilesChannel(
                     "sdkInt" -> Build.VERSION.SDK_INT
                     "queryMedia" -> queryMedia(call)
                     "statMedia" -> statMedia(call.longArg("id"))
+                    "statMediaByPath" -> statMediaByPath(call.stringArg("path"))
+                    "freeBytes" -> freeBytes(call.stringArg("path"))
                     "moveMedia" -> moveMedia(call.longArg("id"), call.stringArg("targetDir"), call.stringArg("displayName"))
                     "renameMedia" -> renameMedia(call.longArg("id"), call.stringArg("displayName"))
                     "copyMedia" -> copyMedia(call.longArg("id"), call.stringArg("targetDir"), call.stringArg("displayName"))
@@ -386,6 +389,34 @@ class FilesChannel(
         @Suppress("DEPRECATION")
         val col = MediaStore.Files.FileColumns.DATA
         return query("$col = ?", arrayOf(path), null, 1).use { readAll(it).firstOrNull() }
+    }
+
+    /**
+     * B4: the image/video/audio row at [path], or null (non-media rows are `path:` files).
+     * Shared storage is case-insensitive while `_data = ?` is not: a miss retries with LIKE
+     * (case-insensitive for ASCII, wildcards escaped). The row carries the stored path.
+     */
+    private fun statMediaByPath(path: String): Map<String, Any?>? {
+        val type = MediaStore.Files.FileColumns.MEDIA_TYPE
+        val media = listOf(
+            MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
+            MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO,
+            MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO,
+        ).joinToString(",")
+        @Suppress("DEPRECATION")
+        val col = MediaStore.Files.FileColumns.DATA
+        query("$col = ? AND $type IN ($media)", arrayOf(path), null, 1)
+            .use { readAll(it).firstOrNull() }
+            ?.let { return it }
+        return query("$col LIKE ? ESCAPE '\\' AND $type IN ($media)", arrayOf(escapeLike(path)), null, 1)
+            .use { readAll(it).firstOrNull() }
+    }
+
+    /** B4: free bytes on the volume holding [path]; null when the path can't be measured. */
+    private fun freeBytes(path: String): Long? = try {
+        StatFs(path).availableBytes
+    } catch (e: IllegalArgumentException) {
+        null
     }
 
     // ---- consent ----

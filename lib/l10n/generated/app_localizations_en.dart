@@ -2040,4 +2040,319 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get fileMenuTooltip => 'File actions';
+
+  @override
+  String get fileMenuRename => 'Rename';
+
+  @override
+  String get fileMenuDuplicate => 'Duplicate';
+
+  @override
+  String get fileMenuCopyTo => 'Copy to…';
+
+  @override
+  String get fileMenuMoveTo => 'Move to…';
+
+  @override
+  String get fileMenuDelete => 'Delete';
+
+  @override
+  String get selectionActionMove => 'Move to…';
+
+  @override
+  String get selectionActionCopy => 'Copy to…';
+
+  @override
+  String get selectionActionDuplicate => 'Duplicate';
+
+  @override
+  String get selectionActionDelete => 'Delete';
+
+  @override
+  String get renameFolderTitle => 'Rename folder';
+
+  @override
+  String get renameAction => 'Rename';
+
+  @override
+  String get nameLabel => 'Name';
+
+  @override
+  String get nameInvalid =>
+      'Names can\'t be empty, contain / \\ : * ? \" < > | or be longer than 255 bytes';
+
+  @override
+  String get nameExists => 'Something with that name already exists here';
+
+  @override
+  String opMovedSummary(int done, String folder) {
+    String _temp0 = intl.Intl.pluralLogic(
+      done,
+      locale: localeName,
+      other: 'Moved $done files to $folder',
+      one: 'Moved 1 file to $folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opCopiedSummary(int done, String folder) {
+    String _temp0 = intl.Intl.pluralLogic(
+      done,
+      locale: localeName,
+      other: 'Copied $done files to $folder',
+      one: 'Copied 1 file to $folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opDuplicatedSummary(int done) {
+    String _temp0 = intl.Intl.pluralLogic(
+      done,
+      locale: localeName,
+      other: 'Duplicated $done files',
+      one: 'Duplicated 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opRenamedSummary(String name) {
+    return 'Renamed to $name';
+  }
+
+  @override
+  String opTrashedSummary(int done) {
+    String _temp0 = intl.Intl.pluralLogic(
+      done,
+      locale: localeName,
+      other: 'Moved $done files to trash',
+      one: 'Moved 1 file to trash',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opDeletedSummary(int done) {
+    String _temp0 = intl.Intl.pluralLogic(
+      done,
+      locale: localeName,
+      other: 'Deleted $done files permanently',
+      one: 'Deleted 1 file permanently',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opFailedSummary(int failed) {
+    String _temp0 = intl.Intl.pluralLogic(
+      failed,
+      locale: localeName,
+      other: '$failed failed',
+      one: '1 failed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opSkippedSummary(int skipped) {
+    String _temp0 = intl.Intl.pluralLogic(
+      skipped,
+      locale: localeName,
+      other: '$skipped skipped',
+      one: '1 skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opCancelledSummary(int done, int total) {
+    return 'Stopped: $done of $total done';
+  }
+
+  @override
+  String opSkippedNeedAccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files skipped (need All files access)',
+      one: '1 file skipped (needs All files access)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get opUndone => 'Undone';
+
+  @override
+  String opUndoStopped(int done, int total) {
+    return 'Undo stopped: $done of $total undone';
+  }
+
+  @override
+  String get opUndoLast => 'Undo last file operation';
+
+  @override
+  String opUndoMissing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files no longer exist and weren\'t undone',
+      one: '1 file no longer exists and wasn\'t undone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opSpaceRefused(String needed, String free) {
+    return 'Not enough space (needs $needed, $free free)';
+  }
+
+  @override
+  String opFolderRenamed(String name) {
+    return 'Folder renamed to $name';
+  }
+
+  @override
+  String get collisionTitle => 'Name already used';
+
+  @override
+  String collisionBody(String name, String folder) {
+    return '$name already exists in $folder';
+  }
+
+  @override
+  String get collisionReplace => 'Replace';
+
+  @override
+  String get collisionKeepBoth => 'Keep both';
+
+  @override
+  String get collisionSkip => 'Skip';
+
+  @override
+  String get collisionApplyAll => 'Do this for all remaining';
+
+  @override
+  String progressMoving(int done, int total) {
+    return 'Moving $done of $total';
+  }
+
+  @override
+  String progressCopying(int done, int total) {
+    return 'Copying $done of $total';
+  }
+
+  @override
+  String progressDeleting(int done, int total) {
+    return 'Deleting $done of $total';
+  }
+
+  @override
+  String progressUndoing(int done, int total) {
+    return 'Undoing $done of $total';
+  }
+
+  @override
+  String get progressWorking => 'Working…';
+
+  @override
+  String get permanentConfirmAction => 'Delete';
+
+  @override
+  String get opPermanentConfirmTitle => 'Delete permanently?';
+
+  @override
+  String opPermanentConfirmBody(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Permanently delete $count files ($size)? This can\'t be undone.',
+      one: 'Permanently delete 1 file ($size)? This can\'t be undone.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingFallbackTitle => 'Couldn\'t use the trash folder';
+
+  @override
+  String pendingFallbackBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Couldn\'t move $count files to the trash folder. Delete them permanently instead?',
+      one: 'Couldn\'t move 1 file to the trash folder. Delete it permanently instead?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingFallbackAction => 'Delete permanently';
+
+  @override
+  String get pickerMoveTitle => 'Move to';
+
+  @override
+  String get pickerCopyTitle => 'Copy to';
+
+  @override
+  String get pickerAllFolders => 'All folders';
+
+  @override
+  String get pickerMoveHere => 'Move here';
+
+  @override
+  String get pickerCopyHere => 'Copy here';
+
+  @override
+  String get pickerChooseHere => 'Use this folder';
+
+  @override
+  String get pickerCurrentFolder => 'Current folder';
+
+  @override
+  String get browseNewFolder => 'New folder';
+
+  @override
+  String browseFolderCreated(String name) {
+    return 'Created $name';
+  }
+
+  @override
+  String get settingsFiles => 'Files';
+
+  @override
+  String get settingsDropAction => 'Dropping files on a folder';
+
+  @override
+  String get dropActionMove => 'Moves them';
+
+  @override
+  String get dropActionCopy => 'Copies them';
+
+  @override
+  String fileOpRenameFailed(String name) {
+    return 'Couldn\'t rename $name';
+  }
+
+  @override
+  String fileOpFailedGeneric(String name) {
+    return 'Couldn\'t finish for $name';
+  }
+
+  @override
+  String fileOpNotFound(String name) {
+    return '$name no longer exists';
+  }
+
+  @override
+  String fileOpPermission(String name) {
+    return 'No permission to change $name';
+  }
 }

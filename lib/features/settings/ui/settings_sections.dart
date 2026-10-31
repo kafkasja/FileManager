@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
+import 'package:kfm/features/folders/ui/folders_settings_section.dart';
 import 'package:kfm/features/settings/ui/about_section.dart';
 import 'package:kfm/features/settings/ui/appearance_section.dart';
 import 'package:kfm/features/settings/ui/developer_section.dart';
@@ -37,6 +38,11 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 300,
       titleBuilder: (c) => c.l10n.settingsDeleting,
       builder: (_) => const DeletingSection(),
+    ),
+    SettingsSection(
+      order: 350,
+      titleBuilder: (c) => c.l10n.settingsFiles,
+      builder: (_) => const FoldersSettingsSection(),
     ),
     SettingsSection(
       order: 400,

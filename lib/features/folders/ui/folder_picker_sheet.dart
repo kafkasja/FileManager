@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show FutureProviderFamily;
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -10,20 +12,42 @@ import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
+
+/// What the picked folder is for: sets the default title and the label of
+/// the "… here" button in the All folders section.
+enum FolderPickerMode { choose, move, copy }
 
 /// Picks a target folder for move/copy (TASK-P2; B4 extends it). Returns
 /// the absolute path, or null when dismissed.
-Future<String?> showFolderPicker(BuildContext context) =>
-    showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => const _FolderPicker(),
-    );
+///
+/// [disabledFolder] (B4 Move: the files' current folder) is shown greyed
+/// out and can't be picked. [title] overrides the mode's default title.
+Future<String?> showFolderPicker(
+  BuildContext context, {
+  String? disabledFolder,
+  String? title,
+  FolderPickerMode mode = FolderPickerMode.choose,
+}) => showModalBottomSheet<String>(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (_) =>
+      _FolderPicker(disabledFolder: disabledFolder, title: title, mode: mode),
+);
 
 const _maxRecent = 5;
+
+/// Whether [path] is in DCIM / Pictures / Movies, where photos can be
+/// moved without All files access (B4's New folder uses it too).
+bool isMediaFolderPath(String path) {
+  final rel = path.replaceFirst(RegExp(r'^/storage/[^/]+(/\d+)?/'), '');
+  return _mediaRoots.any((r) => rel == r || rel.startsWith('$r/'));
+}
 
 /// Media folders MediaStore lets KFM move photos into without All files
 /// access.
@@ -32,6 +56,15 @@ const _mediaRoots = ['DCIM', 'Pictures', 'Movies'];
 final FutureProvider<List<({String path, int count})>> _folderSummaries =
     FutureProvider.autoDispose<List<({String path, int count})>>(
       (ref) => ref.watch(mediaIndexDaoProvider).folderSummaries(),
+    );
+
+/// B4 "All folders": the child folders of a folder (null = volumes) that
+/// hold indexed files.
+final FutureProviderFamily<List<FolderEntry>, String?> _childFolders =
+    FutureProvider.autoDispose.family<List<FolderEntry>, String?>(
+      (ref, parent) => ref
+          .watch(mediaIndexDaoProvider)
+          .folders(scope: IndexQuery.all, parent: parent),
     );
 
 final FutureProvider<List<String>> _recentTargets =
@@ -53,24 +86,63 @@ Object? _decode(String raw) {
   }
 }
 
-class _FolderPicker extends ConsumerWidget {
-  const new();
+class _FolderPicker extends ConsumerStatefulWidget {
+  const new({
+    required this.disabledFolder,
+    required this.title,
+    required this.mode,
+  });
+
+  final String? disabledFolder;
+  final String? title;
+  final FolderPickerMode mode;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_FolderPicker> createState() => _FolderPickerState();
+}
+
+class _FolderPickerState extends ConsumerState<_FolderPicker> {
+  /// The folder open in the All folders section; null = the start page.
+  String? _at;
+
+  bool get _browsing => _at != null;
+
+  bool _isDisabled(String path) => path == widget.disabledFolder;
+
+  void _open(String? path) => setState(() => _at = path);
+
+  void _up() {
+    final at = _at;
+    if (at == null) return;
+    final root = volumeRootOf(at);
+    _open(at == root ? null : at.substring(0, at.lastIndexOf('/')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final recent = ref.watch(_recentTargets).value ?? const [];
-    final folders = ref.watch(_folderSummaries).value ?? const [];
     final canSeeAll =
         ref.watch(storageAccessControllerProvider).value?.canSeeAllFiles ??
         false;
+    final title =
+        widget.title ??
+        switch (widget.mode) {
+          FolderPickerMode.choose => l10n.folderPickerTitle,
+          FolderPickerMode.move => l10n.pickerMoveTitle,
+          FolderPickerMode.copy => l10n.pickerCopyTitle,
+        };
+
     Widget folder(String path, {int? count}) {
+      final disabled = _isDisabled(path);
       final needsAccess = !canSeeAll && !_isMediaFolder(path);
       return ListTile(
         leading: const Icon(Icons.folder_outlined),
         title: Text(_leaf(path)),
+        enabled: !disabled,
         subtitle: Text(
-          needsAccess
+          disabled
+              ? l10n.pickerCurrentFolder
+              : needsAccess
               ? l10n.folderNeedsAllFiles
               : count == null
               ? path
@@ -78,48 +150,121 @@ class _FolderPicker extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        onTap: () => _pick(context, ref, path, needsAccess: needsAccess),
+        onTap: () => _pick(path, needsAccess: needsAccess),
       );
     }
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      maxChildSize: 0.95,
-      builder: (context, scroll) => ListView(
-        controller: scroll,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
-            child: Text(
-              l10n.folderPickerTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.create_new_folder_outlined),
-            title: Text(l10n.folderPickerNew),
-            onTap: () => _newFolder(context, ref),
-          ),
-          if (recent.isNotEmpty) ...[
-            _Header(l10n.folderPickerRecent),
-            for (final path in recent) folder(path),
-          ],
-          if (folders.isNotEmpty) ...[
-            _Header(l10n.folderPickerWithPhotos),
-            for (final f in folders) folder(f.path, count: f.count),
-          ],
+    final newFolder = ListTile(
+      leading: const Icon(Icons.create_new_folder_outlined),
+      title: Text(l10n.folderPickerNew),
+      onTap: _newFolder,
+    );
+
+    final List<Widget> children;
+    final at = _at;
+    if (at == null) {
+      final recent = ref.watch(_recentTargets).value ?? const [];
+      final folders = ref.watch(_folderSummaries).value ?? const [];
+      final volumes = ref.watch(_childFolders(null)).value ?? const [];
+      children = [
+        newFolder,
+        if (recent.isNotEmpty) ...[
+          _Header(l10n.folderPickerRecent),
+          for (final path in recent) folder(path),
         ],
+        if (volumes.isNotEmpty) ...[
+          _Header(l10n.pickerAllFolders),
+          for (final v in volumes)
+            _BrowseTile(
+              label: nameOfFolder(l10n, v.path),
+              count: v.fileCount,
+              icon: Icons.sd_storage_outlined,
+              onTap: () => _open(v.path),
+            ),
+        ],
+        if (folders.isNotEmpty) ...[
+          _Header(l10n.folderPickerWithPhotos),
+          for (final f in folders) folder(f.path, count: f.count),
+        ],
+      ];
+    } else {
+      final sub = ref.watch(_childFolders(at)).value ?? const [];
+      children = [
+        _Breadcrumb(folder: at, onOpen: _open),
+        newFolder,
+        for (final f in sub)
+          _BrowseTile(
+            label: f.name,
+            count: f.fileCount,
+            icon: Icons.folder_outlined,
+            onTap: () => _open(f.path),
+          ),
+      ];
+    }
+
+    final spacing = context.tokens.spacing;
+    return PopScope(
+      canPop: !_browsing,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _up();
+      },
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        maxChildSize: 0.95,
+        builder: (context, scroll) => Column(
+          children: [
+            Expanded(
+              child: ListView(
+                controller: scroll,
+                children: [
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      spacing * 2,
+                      0,
+                      spacing * 2,
+                      spacing,
+                    ),
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  ...children,
+                ],
+              ),
+            ),
+            if (at != null)
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsetsDirectional.all(spacing * 2),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _isDisabled(at)
+                          ? null
+                          : () => _pick(
+                              at,
+                              needsAccess: !canSeeAll && !_isMediaFolder(at),
+                            ),
+                      child: Text(switch (widget.mode) {
+                        FolderPickerMode.move => l10n.pickerMoveHere,
+                        FolderPickerMode.copy => l10n.pickerCopyHere,
+                        FolderPickerMode.choose => l10n.pickerChooseHere,
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _pick(
-    BuildContext context,
-    WidgetRef ref,
-    String path, {
-    required bool needsAccess,
-  }) async {
+  Future<void> _pick(String path, {required bool needsAccess}) async {
+    if (_isDisabled(path)) return;
     if (needsAccess && !await ensureAllFilesAccess(context, ref)) return;
     final recent = await ref.read(_recentTargets.future);
     final next = [
@@ -130,34 +275,136 @@ class _FolderPicker extends ConsumerWidget {
         .read(settingsRepositoryProvider)
         .write(AppSettings.swipeRecentTargets, jsonEncode(next))
         .fireAndForget();
-    if (context.mounted) Navigator.of(context).pop(path);
+    if (mounted) Navigator.of(context).pop(path);
   }
 
-  Future<void> _newFolder(BuildContext context, WidgetRef ref) async {
-    final parent = ref.read(defaultNewFolderParentProvider);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (_) => _NewFolderDialog(parent: parent),
-    );
-    if (name == null || !context.mounted) return;
-    String path;
+  /// Creates the folder inside the folder being shown (or the default
+  /// parent on the start page) and picks it.
+  Future<void> _newFolder() async {
+    final parent = _at ?? ref.read<String>(defaultNewFolderParentProvider);
+    final canSeeAll =
+        ref.read(storageAccessControllerProvider).value?.canSeeAllFiles ??
+        false;
+    if (!canSeeAll &&
+        !_isMediaFolder(parent) &&
+        !await ensureAllFilesAccess(context, ref)) {
+      return;
+    }
+    String? taken;
+    while (true) {
+      if (!mounted) return;
+      final name = await showDialog<String>(
+        context: context,
+        builder: (_) => _NewFolderDialog(parent: parent, taken: taken),
+      );
+      if (name == null || !mounted) return;
+      final path = await _createOrFind(parent, name);
+      if (!mounted) return;
+      if (path != null) {
+        await _pick(path, needsAccess: false);
+        return;
+      }
+      taken = name; // a file has that name: ask again
+    }
+  }
+
+  /// Creates [name] in [parent]. If it exists, returns the existing folder
+  /// with its real spelling (shared storage is case-insensitive: "camera"
+  /// finds "Camera"), or null when a file has that name.
+  Future<String?> _createOrFind(String parent, String name) async {
+    final files = ref.read(fileSourceProvider);
     try {
-      path = await ref.read(fileSourceProvider).createFolder(parent, name);
+      return await files.createFolder(parent, name);
     } on FileOpException catch (e) {
       if (e.failure != FileOpFailure.targetExists) rethrow;
-      path = '$parent/$name';
     }
-    if (context.mounted) await _pick(context, ref, path, needsAccess: false);
+    final lower = name.toLowerCase();
+    final known = await ref
+        .read(mediaIndexDaoProvider)
+        .folders(scope: IndexQuery.all, parent: parent);
+    for (final f in known) {
+      if (f.name.toLowerCase() == lower) return f.path;
+    }
+    if (await files.statPath('$parent/$name') != null) return null;
+    // A folder the index doesn't know (empty, or only hidden files): its
+    // spelling can't be looked up, so the typed one is used.
+    return '$parent/$name';
   }
 
-  static bool _isMediaFolder(String path) {
-    final rel = path.replaceFirst(RegExp(r'^/storage/[^/]+(/\d+)?/'), '');
-    return _mediaRoots.any((r) => rel == r || rel.startsWith('$r/'));
-  }
+  static bool _isMediaFolder(String path) => isMediaFolderPath(path);
 
   static String _leaf(String path) {
     final parts = path.split('/').where((p) => p.isNotEmpty);
     return parts.isEmpty ? path : parts.last;
+  }
+}
+
+/// A folder row in All folders: tapping opens it (doesn't pick it).
+class _BrowseTile extends StatelessWidget {
+  const new({
+    required this.label,
+    required this.count,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    leading: Icon(icon),
+    title: Text(label),
+    subtitle: Text(context.l10n.folderFileCount(count)),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: onTap,
+  );
+}
+
+/// All folders › Internal storage › DCIM › Camera.
+class _Breadcrumb extends StatelessWidget {
+  const new({required this.folder, required this.onOpen});
+
+  final String folder;
+  final ValueChanged<String?> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final root = volumeRootOf(folder);
+    final crumbs = <(String, String?)>[
+      (l10n.pickerAllFolders, null),
+      (nameOfFolder(l10n, root), root),
+    ];
+    if (folder != root) {
+      final segments = folder.substring(root.length + 1).split('/');
+      for (var i = 0; i < segments.length; i++) {
+        crumbs.add((
+          segments[i],
+          '$root/${segments.sublist(0, i + 1).join('/')}',
+        ));
+      }
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      reverse: true,
+      padding: EdgeInsetsDirectional.symmetric(
+        horizontal: context.tokens.spacing,
+      ),
+      child: Row(
+        children: [
+          for (final (i, (label, path)) in crumbs.indexed) ...[
+            if (i > 0) const Icon(Icons.chevron_right, size: 18),
+            TextButton(
+              onPressed: i == crumbs.length - 1 ? null : () => onOpen(path),
+              child: Text(label),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 
@@ -178,17 +425,21 @@ class _Header extends StatelessWidget {
 }
 
 class _NewFolderDialog extends StatefulWidget {
-  const new({required this.parent});
+  const new({required this.parent, this.taken});
 
   final String parent;
+
+  /// A name the last attempt found taken by a file: shown with an error.
+  final String? taken;
 
   @override
   State<_NewFolderDialog> createState() => _NewFolderDialogState();
 }
 
 class _NewFolderDialogState extends State<_NewFolderDialog> {
-  final _name = TextEditingController();
+  late final _name = TextEditingController(text: widget.taken);
   bool _invalid = false;
+  late bool _taken = widget.taken != null;
 
   @override
   void dispose() {
@@ -201,7 +452,10 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
     try {
       validateFileName(name);
     } on FileOpException {
-      setState(() => _invalid = true);
+      setState(() {
+        _invalid = true;
+        _taken = false;
+      });
       return;
     }
     Navigator.of(context).pop(name);
@@ -222,8 +476,15 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
             autofocus: true,
             decoration: InputDecoration(
               hintText: l10n.folderNameHint,
-              errorText: _invalid ? l10n.folderNameInvalid : null,
+              errorText: _invalid
+                  ? l10n.folderNameInvalid
+                  : _taken
+                  ? l10n.nameExists
+                  : null,
             ),
+            onChanged: (_) {
+              if (_taken) setState(() => _taken = false);
+            },
             onSubmitted: (_) => _submit(),
           ),
         ],

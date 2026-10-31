@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/features/folders/ui/folder_selection_actions.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -42,6 +43,10 @@ class SelectionAction {
   static bool _always(SelectionState _) => true;
 }
 
-/// Sorted by [SelectionAction.order]. Empty until B4/B5/B9.
+/// Sorted by [SelectionAction.order] (the bar sorts too). B4: move,
+/// delete, copy, duplicate.
 @Riverpod(keepAlive: true)
-List<SelectionAction> selectionActions(Ref ref) => const [];
+List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
+  <SelectionAction>[...folderSelectionActions]
+    ..sort((a, b) => a.order.compareTo(b.order)),
+);

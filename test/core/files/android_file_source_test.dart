@@ -8,6 +8,7 @@ import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/files/trash_types.dart';
 
 import 'file_source_contract.dart';
@@ -34,6 +35,12 @@ class _TempHarness implements ContractHarness {
           return <Object?>[];
         case 'scanPaths':
           return <Object?, Object?>{};
+        case 'statMediaByPath':
+          return null;
+        case 'sdkInt':
+          return 34;
+        case 'freeBytes':
+          return 123456789;
       }
       throw MissingPluginException(call.method);
     });
@@ -98,7 +105,11 @@ void main() {
 
   tearDown(() => _mockChannel((_) async => null));
 
-  fileSourceContract('AndroidFileSource (path files)', _TempHarness.create);
+  fileSourceContract(
+    'AndroidFileSource (path files)',
+    _TempHarness.create,
+    diskRefusesWindowsChars: Platform.isWindows,
+  );
 
   group('MediaStore half (mocked channel)', () {
     late AndroidFileSource source;
@@ -374,6 +385,224 @@ void main() {
       });
     });
   });
+  group('B4 folder tools', () {
+    test('statPath prefers the MediaStore row (ms: ref)', () async {
+      _mockChannel(
+        (call) async => switch (call.method) {
+          'statMediaByPath' => _row(
+            5,
+            path: (call.arguments as Map)['path'] as String,
+          ),
+          _ => null,
+        },
+      );
+      final source = AndroidFileSource(channel: FilesChannel());
+      addTearDown(source.dispose);
+      final f = await source.statPath(
+        '/storage/emulated/0/DCIM/Camera/img.jpg/',
+      );
+      expect(f?.id, 'ms:5');
+      expect(f?.path, '/storage/emulated/0/DCIM/Camera/img.jpg');
+    });
+
+    test('statPath: a case-insensitive MediaStore hit keeps the stored path '
+        '(FilesChannel.kt matches "IMG.JPG" to "img.jpg")', () async {
+      _mockChannel(
+        (call) async => switch (call.method) {
+          'statMediaByPath' => _row(5),
+          _ => null,
+        },
+      );
+      final source = AndroidFileSource(channel: FilesChannel());
+      addTearDown(source.dispose);
+      final f = await source.statPath(
+        '/storage/emulated/0/DCIM/Camera/IMG.JPG',
+      );
+      expect(f?.id, 'ms:5');
+      expect(f?.name, 'img.jpg');
+    });
+
+    test('freeBytes asks StatFs for the folder; null passes through', () async {
+      final asked = <Object?>[];
+      int? value = 42;
+      _mockChannel((call) async {
+        asked.add((call.arguments as Map)['path']);
+        return value;
+      });
+      final source = AndroidFileSource(channel: FilesChannel());
+      addTearDown(source.dispose);
+      expect(await source.freeBytes('/storage/emulated/0/DCIM/'), 42);
+      value = null;
+      expect(await source.freeBytes('/storage/1234-ABCD'), isNull);
+      expect(asked, ['/storage/emulated/0/DCIM', '/storage/1234-ABCD']);
+    });
+
+    test(
+      'renameFolder refuses volume roots and needs All files access',
+      () async {
+        _mockChannel((_) async => null);
+        final source = AndroidFileSource(channel: FilesChannel());
+        addTearDown(source.dispose);
+        await expectLater(
+          source.renameFolder('/storage/emulated/0/', 'x'),
+          _fails(FileOpFailure.unsupported),
+        );
+        await expectLater(
+          source.renameFolder('/storage/1234-ABCD', 'x'),
+          _fails(FileOpFailure.unsupported),
+        );
+        final limited = AndroidFileSource(
+          channel: FilesChannel(),
+          canSeeAllFiles: () => false,
+        );
+        addTearDown(limited.dispose);
+        await expectLater(
+          limited.renameFolder('/storage/emulated/0/DCIM/Old', 'New'),
+          _fails(FileOpFailure.permissionDenied),
+        );
+      },
+    );
+
+    group('on a temp folder', () {
+      late Directory dir;
+      late String root;
+
+      setUp(() async {
+        dir = await Directory.systemTemp.createTemp('kfm_b4');
+        root = dir.path.replaceAll(r'\', '/');
+      });
+      tearDown(() => dir.delete(recursive: true));
+
+      /// MediaStore knows `old/a.jpg` as id 5; after the rename it reports
+      /// [newId] for `new/a.jpg`. Returns the id changes and the scanned
+      /// path lists.
+      Future<(List<FileIdChange>, List<Object?>)> renameWithMedia(
+        int newId, {
+        int sdk = 34,
+      }) async {
+        await File('$root/old/a.jpg').create(recursive: true);
+        await File('$root/old/b.txt').writeAsBytes([1, 2]);
+        final scanned = <Object?>[];
+        _mockChannel((call) async {
+          final args = call.arguments is Map
+              ? call.arguments as Map
+              : const <Object?, Object?>{};
+          switch (call.method) {
+            case 'queryMedia':
+              return args['root'] == '$root/old' && args['afterId'] == null
+                  ? [_row(5, path: '$root/old/a.jpg')]
+                  : <Object?>[];
+            case 'scanPaths':
+              scanned.add(args['paths']);
+              return <Object?, Object?>{};
+            case 'statMediaByPath':
+              return args['path'] == '$root/new/a.jpg'
+                  ? _row(newId, path: '$root/new/a.jpg')
+                  : null;
+            case 'sdkInt':
+              return sdk;
+          }
+          return null;
+        });
+        final source = AndroidFileSource(
+          channel: FilesChannel(),
+          primaryRoot: root,
+        );
+        addTearDown(source.dispose);
+        final changes = <FileIdChange>[];
+        final sub = source.idChanges.listen(changes.add);
+        addTearDown(sub.cancel);
+        final result = await source.renameFolder('$root/old', 'new');
+        await Future<void>.delayed(Duration.zero);
+        expect(result.path, '$root/new');
+        expect(
+          {for (final f in result.files) f.id},
+          {'ms:$newId', 'path:$root/new/b.txt'},
+        );
+        expect(Directory('$root/old').existsSync(), isFalse);
+        return (changes, scanned);
+      }
+
+      test('kept MediaStore ids are not announced, path: ids are', () async {
+        final (changes, scanned) = await renameWithMedia(5);
+        expect(changes.map((c) => c.oldId), ['path:$root/old/b.txt']);
+        expect(scanned, [
+          ['$root/old', '$root/new'],
+        ], reason: 'API 30+: the folder paths are enough');
+      });
+
+      test('MediaStore ids re-created by the scan are announced', () async {
+        final (changes, _) = await renameWithMedia(6);
+        expect(
+          {for (final c in changes) c.oldId: c.newRef.id},
+          {'ms:5': 'ms:6', 'path:$root/old/b.txt': 'path:$root/new/b.txt'},
+        );
+      });
+
+      test('API <=29: old and new media paths are scanned one by one '
+          '(the legacy scanner does not recurse)', () async {
+        final (changes, scanned) = await renameWithMedia(6, sdk: 28);
+        expect(scanned, [
+          ['$root/old/a.jpg', '$root/new/a.jpg'],
+        ]);
+        expect(
+          {for (final c in changes) c.oldId: c.newRef.id},
+          {'ms:5': 'ms:6', 'path:$root/old/b.txt': 'path:$root/new/b.txt'},
+        );
+      });
+
+      test('a case-only folder rename is allowed', () async {
+        await File('$root/photos/a.txt').create(recursive: true);
+        _mockChannel(
+          (call) async => switch (call.method) {
+            'queryMedia' => <Object?>[],
+            'sdkInt' => 34,
+            _ => null,
+          },
+        );
+        final source = AndroidFileSource(
+          channel: FilesChannel(),
+          primaryRoot: root,
+        );
+        addTearDown(source.dispose);
+        final result = await source.renameFolder('$root/photos', 'Photos');
+        expect(result.path, '$root/Photos');
+        expect(result.files.single.name, 'a.txt');
+      });
+
+      test(
+        'copy writes a temp file, renames it and clears the ledger',
+        () async {
+          await File('$root/src/doc.pdf').create(recursive: true);
+          await File('$root/src/doc.pdf').writeAsBytes([1, 2, 3]);
+          await Directory('$root/dst').create();
+          _mockChannel(
+            (call) async =>
+                call.method == 'scanPaths' ? <Object?, Object?>{} : null,
+          );
+          final ledger = _RecordingLedger(File('$root/ledger.json'));
+          final source = AndroidFileSource(
+            channel: FilesChannel(),
+            primaryRoot: root,
+            tempLedger: Future.value(ledger),
+          );
+          addTearDown(source.dispose);
+          final original = (await source.stat('path:$root/src/doc.pdf'))!;
+          final copy = await source.copy(original, '$root/dst');
+          expect(copy.path, '$root/dst/doc.pdf');
+          expect(await File(copy.path).readAsBytes(), [1, 2, 3]);
+          expect(ledger.added.single, startsWith('$root/dst/.kfm-tmp-'));
+          expect(ledger.removed, ledger.added);
+          expect(await ledger.entries(), isEmpty);
+          expect(
+            Directory('$root/dst').listSync().map((e) => e.path),
+            hasLength(1),
+            reason: 'no temp file left',
+          );
+        },
+      );
+    });
+  });
 }
 
 FileRef _ref(int id) => FileRef(
@@ -386,3 +615,22 @@ FileRef _ref(int id) => FileRef(
   folderPath: '/storage/emulated/0/DCIM/Camera',
   origin: FileOrigin.local,
 );
+
+class _RecordingLedger extends TempFileLedger {
+  new(super.file);
+
+  final added = <String>[];
+  final removed = <String>[];
+
+  @override
+  Future<void> add(String path) {
+    added.add(path);
+    return super.add(path);
+  }
+
+  @override
+  Future<void> remove(String path) {
+    removed.add(path);
+    return super.remove(path);
+  }
+}

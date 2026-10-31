@@ -7,6 +7,7 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/media_change_source.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/core/index/media_store_counts.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail_cache.dart';
@@ -53,6 +54,7 @@ MediaIndexer mediaIndexer(Ref ref) {
     settings: ref.watch(settingsRepositoryProvider),
     canSeeAllFiles: () => _canSeeAllFiles(ref),
     changes: ref.watch(mediaChangesProvider),
+    mediaStoreCounts: Platform.isAndroid ? photoManagerMediaCounts : null,
   );
   ref
     ..onDispose(indexer.dispose)

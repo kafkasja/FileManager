@@ -8,6 +8,7 @@ import 'package:kfm/core/files/android/android_file_source.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/pending_folder.dart';
+import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -50,6 +51,7 @@ FileSource fileSource(Ref ref) {
           ref.read(storageAccessControllerProvider).value?.canSeeAllFiles ??
           false,
       pendingFolder: ref.watch(pendingFolderProvider),
+      tempLedger: ref.watch(tempFileLedgerProvider.future),
     );
     ref.onDispose(source.dispose);
     return source;

@@ -182,4 +182,15 @@ abstract final class AppSettings {
     'swipe.actionBar.enabled',
     defaultValue: false,
   );
+
+  /// B4. What dropping dragged files on a folder does.
+  static final SettingKey<DropAction> foldersDropAction =
+      SettingKey.enumeration(
+        'folders.dropAction',
+        DropAction.move,
+        DropAction.values,
+      );
 }
+
+/// B4: the action of a drag & drop onto a folder.
+enum DropAction { move, copy }

@@ -62,6 +62,23 @@ abstract interface class FileSource {
   /// batch, so the renames don't each ask.
   Future<bool> requestWriteAccess(List<FileRef> files);
 
+  /// B4: the file at [path], or null if nothing is there. Media known to
+  /// MediaStore come back as `ms:` refs (so a Replace trashes them through
+  /// the system trash), everything else as `path:`.
+  Future<FileRef?> statPath(String path);
+
+  /// B4: renames the folder at [folderPath] (not a volume root). Returns the
+  /// new path and every file now inside it (ids may have changed: those are
+  /// also announced on [idChanges]). Throws `targetExists`, `invalidName`,
+  /// `permissionDenied` (no All files access).
+  Future<({String path, List<FileRef> files})> renameFolder(
+    String folderPath,
+    String newName,
+  );
+
+  /// B4: free bytes on the volume holding [folderPath]; null when unknown.
+  Future<int?> freeBytes(String folderPath);
+
   /// Emitted whenever move/rename/restore gives a file a new id.
   Stream<FileIdChange> get idChanges;
 }

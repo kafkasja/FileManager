@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/file_op_messages.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
-import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
@@ -809,20 +809,15 @@ String fileOpFailureText(
   FileRef file,
   SwipeAction action,
   Object error,
-) {
-  final failure = error is FileOpException ? error.failure : null;
-  return switch (failure) {
-    FileOpFailure.notFound => l.fileOpFolderMissing,
-    FileOpFailure.userCancelled => l.fileOpDeclined,
-    FileOpFailure.noSpace => l.fileOpNoSpace,
-    FileOpFailure.unsupported ||
-    FileOpFailure.permissionDenied => l.fileOpNeedsAllFiles,
-    _ =>
-      action.type == SwipeActionType.copyTo
-          ? l.fileOpCopyFailed(file.name)
-          : l.fileOpMoveFailed(file.name),
-  };
-}
+) => fileOpFailureMessage(
+  l,
+  error,
+  file,
+  verb: action.type == SwipeActionType.copyTo
+      ? FileOpVerb.copy
+      : FileOpVerb.move,
+  swipeTarget: true,
+);
 
 /// Undo: the card that came back slides in from the side it left by (or
 /// fades in when unknown). Plays once per undo ([UndoMark.tick]).

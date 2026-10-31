@@ -83,6 +83,18 @@ class FilesChannel {
     return row == null ? null : _row(row);
   }
 
+  /// B4: the image/video/audio row at [path], or null.
+  Future<MediaRow?> statMediaByPath(String path) async {
+    final row = await _invoke<Map<Object?, Object?>>('statMediaByPath', {
+      'path': path,
+    });
+    return row == null ? null : _row(row);
+  }
+
+  /// B4: free bytes on the volume holding [path] (StatFs); null if unknown.
+  Future<int?> freeBytes(String path) =>
+      _invoke<int>('freeBytes', {'path': path});
+
   Future<MediaRow> moveMedia(int id, String targetDir, String displayName) =>
       _invokeRow('moveMedia', {
         'id': id,

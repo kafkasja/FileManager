@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/features/folders/ui/file_drag.dart';
+import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 
@@ -25,6 +27,8 @@ class DragSelectTarget {
 /// Long-press enters Select mode; keep holding and drag to add the whole
 /// range from the first tile (add-only in both directions). B7: in Select
 /// and Edit mode a ⤢ button opens [onPreview] (the tile tap selects).
+/// B4: in Select mode a long-press on an already-selected tile drags the
+/// whole selection onto a folder row (`FolderDropTarget`) instead.
 class SelectableFile extends ConsumerStatefulWidget {
   const new({
     required this.index,
@@ -62,6 +66,10 @@ class _SelectableFileState extends ConsumerState<SelectableFile>
   );
   int? _anchor;
 
+  /// B4: a selection drag is running.
+  FileDragFeedback? _feedback;
+  FileDrag? _drag;
+
   FileRef get _file => widget.items[widget.index];
 
   SelectionController get _controller =>
@@ -69,6 +77,12 @@ class _SelectableFileState extends ConsumerState<SelectableFile>
 
   @override
   void dispose() {
+    if (_feedback != null) {
+      _feedback?.remove();
+      final drag = _drag;
+      // Not while the tree is being torn down.
+      if (drag != null) scheduleMicrotask(drag.end);
+    }
     _pulse.dispose();
     super.dispose();
   }
@@ -97,9 +111,10 @@ class _SelectableFileState extends ConsumerState<SelectableFile>
       metaData: DragSelectTarget(widget.index, widget.items),
       behavior: HitTestBehavior.translucent,
       child: GestureDetector(
-        onLongPressStart: editing ? null : (_) => _startDrag(),
-        onLongPressMoveUpdate: editing ? null : _dragTo,
-        onLongPressEnd: editing ? null : (_) => _anchor = null,
+        onLongPressStart: editing ? null : _longPressStart,
+        onLongPressMoveUpdate: editing ? null : _longPressMove,
+        onLongPressEnd: editing ? null : (_) => _longPressEnd(drop: true),
+        onLongPressCancel: editing ? null : () => _longPressEnd(drop: false),
         child: Semantics(
           selected: selected,
           child: ScaleTransition(
@@ -191,6 +206,49 @@ class _SelectableFileState extends ConsumerState<SelectableFile>
           ),
         ),
       );
+  }
+
+  void _longPressStart(LongPressStartDetails details) {
+    final s = ref.read(selectionControllerProvider).value;
+    if (s != null &&
+        s.mode == SelectionMode.select &&
+        s.contains(_file.id) &&
+        s.count > 0) {
+      _startFileDrag(details.globalPosition, s.count);
+    } else {
+      _startDrag();
+    }
+  }
+
+  void _longPressMove(LongPressMoveUpdateDetails details) {
+    final feedback = _feedback;
+    if (feedback == null) {
+      _dragTo(details);
+      return;
+    }
+    feedback.moveTo(details.globalPosition);
+    _drag?.hover(folderAt(context, details.globalPosition));
+  }
+
+  void _longPressEnd({required bool drop}) {
+    _anchor = null;
+    final feedback = _feedback;
+    if (feedback == null) return;
+    feedback.remove();
+    _feedback = null;
+    final folder = _drag?.end();
+    _drag = null;
+    // Released outside a folder = cancel; the selection stays.
+    if (drop && folder != null) {
+      unawaited(dropSelectionOnFolder(context, ref, folder));
+    }
+  }
+
+  void _startFileDrag(Offset position, int count) {
+    unawaited(HapticFeedback.mediumImpact());
+    final drag = ref.read(fileDragProvider.notifier)..start(count);
+    _drag = drag;
+    _feedback = FileDragFeedback(context, position, count);
   }
 
   void _startDrag() {

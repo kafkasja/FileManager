@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:kfm/core/files/file_kind_resolver.dart';
+import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/io_errors.dart';
@@ -190,5 +191,8 @@ bool _isExcludedFolder(String path) =>
     path.endsWith('/.thumbnails');
 
 /// MediaStore's trashed/pending files (Android 11+): not the user's files.
+/// KFM's unfinished copies (B4, [tempFilePrefix]) aren't either.
 bool _isSystemTemp(String name) =>
-    name.startsWith('.trashed-') || name.startsWith('.pending-');
+    name.startsWith('.trashed-') ||
+    name.startsWith('.pending-') ||
+    name.startsWith(tempFilePrefix);

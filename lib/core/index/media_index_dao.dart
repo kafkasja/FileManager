@@ -59,6 +59,24 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
 
   Stream<int> watchCount(IndexQuery q) => _countQuery(q).watchSingle();
 
+  /// Rows per kind, unfiltered (every row, hidden ones too). Kinds without
+  /// rows map to 0. Used to reconcile the index with MediaStore on start.
+  Future<Map<FileKind, int>> countByKind(Set<FileKind> kinds) async {
+    final count = mediaIndex.id.count();
+    final rows =
+        await (selectOnly(mediaIndex)
+              ..addColumns([mediaIndex.kind, count])
+              ..where(mediaIndex.kind.isIn([for (final k in kinds) k.index]))
+              ..groupBy([mediaIndex.kind]))
+            .get();
+    final out = {for (final k in kinds) k: 0};
+    for (final r in rows) {
+      final kind = r.readWithConverter(mediaIndex.kind);
+      if (kind != null) out[kind] = r.read(count) ?? 0;
+    }
+    return out;
+  }
+
   Future<int> totalBytes(IndexQuery q) {
     final sum = mediaIndex.sizeBytes.sum();
     final query = selectOnly(mediaIndex)

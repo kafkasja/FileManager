@@ -160,7 +160,10 @@ class FakeFileSource implements FileSource {
       throw FileOpException(FileOpFailure.notFound, parentPath);
     }
     final path = '$parentPath/$name';
-    if (_folders.contains(path) || _files.containsKey('path:$path')) {
+    // Shared storage is case-insensitive: "camera" clashes with "Camera".
+    final lower = path.toLowerCase();
+    if (_folders.any((p) => p.toLowerCase() == lower) ||
+        _files.values.any((f) => f.path.toLowerCase() == lower)) {
       throw FileOpException(FileOpFailure.targetExists, path);
     }
     _folders.add(path);
@@ -204,7 +207,7 @@ class FakeFileSource implements FileSource {
 
   @override
   Future<FileRef> rename(FileRef f, String newName) async {
-    validateFileName(newName);
+    checkPathSegment(newName);
     calls.add('rename ${f.id} $newName');
     final current = _require(f);
     if (newName == current.name) return current;
@@ -327,6 +330,49 @@ class FakeFileSource implements FileSource {
 
   bool _taken(String path) =>
       _files.containsKey('path:$path') || _folders.contains(path);
+
+  /// B4: what [freeBytes] reports (null = unknown).
+  int? freeBytesValue;
+
+  @override
+  Future<FileRef?> statPath(String path) async => _files['path:$path'];
+
+  @override
+  Future<({String path, List<FileRef> files})> renameFolder(
+    String folderPath,
+    String newName,
+  ) async {
+    checkPathSegment(newName);
+    calls.add('renameFolder $folderPath $newName');
+    _requireFolder(folderPath);
+    final newPath = '${parentOf(folderPath)}/$newName';
+    if (_folders.contains(newPath) || _files.containsKey('path:$newPath')) {
+      throw FileOpException(FileOpFailure.targetExists, newPath);
+    }
+    String moved(String p) => p == folderPath
+        ? newPath
+        : p.startsWith('$folderPath/')
+        ? '$newPath${p.substring(folderPath.length)}'
+        : p;
+    final folders = _folders.map(moved).toSet();
+    _folders
+      ..clear()
+      ..addAll(folders);
+    final inside = [
+      for (final f in _files.values)
+        if (f.folderPath == folderPath ||
+            f.folderPath.startsWith('$folderPath/'))
+          f,
+    ];
+    final now = <FileRef>[];
+    for (final f in inside) {
+      now.add(_relocate(f, moved(f.folderPath), f.name));
+    }
+    return (path: newPath, files: now);
+  }
+
+  @override
+  Future<int?> freeBytes(String folderPath) async => freeBytesValue;
 
   FileRef _relocate(FileRef current, String folder, String name) {
     _addFolders(folder);

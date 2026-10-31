@@ -13,6 +13,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/io_errors.dart';
 import 'package:kfm/core/files/pending_folder.dart';
+import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/files/trash_types.dart';
 
 const Set<FileKind> _mediaKinds = {
@@ -32,7 +33,12 @@ class AndroidFileSource implements FileSource {
     this._canSeeAllFiles = _always,
     this._pendingFolder,
     this._folderExists = _dirExists,
+    this._tempLedger,
   });
+
+  /// B4: lists `path:` copies in flight so the next start can remove a
+  /// half-written one. Null = no ledger (tests); copies still use temp names.
+  final Future<TempFileLedger?>? _tempLedger;
 
   static bool _always() => true;
   static Future<bool> _dirExists(String path) => Directory(path).exists();
@@ -62,6 +68,118 @@ class AndroidFileSource implements FileSource {
 
   final StreamController<FileIdChange> _idChanges =
       StreamController<FileIdChange>.broadcast();
+
+  @override
+  Future<FileRef?> statPath(String path) async {
+    final p = _trimSlash(path);
+    final row = await _guard(null, () => _channel.statMediaByPath(p));
+    if (row != null) return _mediaRef(row);
+    return await _statPath(p);
+  }
+
+  @override
+  Future<({String path, List<FileRef> files})> renameFolder(
+    String folderPath,
+    String newName,
+  ) async {
+    checkPathSegment(newName);
+    final from = _trimSlash(folderPath);
+    if (from == volumeRootOf(from) || from == primaryRoot) {
+      throw FileOpException(FileOpFailure.unsupported, 'volume root: $from');
+    }
+    if (!_canSeeAllFiles()) {
+      throw FileOpException(
+        FileOpFailure.permissionDenied,
+        'folder rename needs All files access: $from',
+      );
+    }
+    if (!await Directory(from).exists()) {
+      throw FileOpException(FileOpFailure.notFound, 'no folder: $from');
+    }
+    final to = '${parentOf(from)}/$newName';
+    // Shared storage is case-insensitive: "a" -> "A" is not a clash.
+    final caseOnly =
+        to != from && newName.toLowerCase() == nameOf(from).toLowerCase();
+    if (to != from && !caseOnly && await _exists(to)) {
+      throw FileOpException(FileOpFailure.targetExists, to);
+    }
+
+    // Old MediaStore ids by path, to report the ones that change.
+    final oldIds = <String, String>{};
+    if (to != from) {
+      int? afterModified;
+      int? afterId;
+      while (true) {
+        final rows = await _guard(
+          null,
+          () => _channel.queryMedia(
+            kinds: {for (final k in _mediaKinds) k.name},
+            limit: 500,
+            root: from,
+            afterModified: afterModified,
+            afterId: afterId,
+          ),
+        );
+        if (rows.isEmpty) break;
+        for (final row in rows) {
+          oldIds[row['path']! as String] = 'ms:${row['id']}';
+        }
+        afterModified = rows.last['modified']! as int;
+        afterId = rows.last['id']! as int;
+        if (rows.length < 500) break;
+      }
+      try {
+        await Directory(from).rename(to);
+      } on FileSystemException catch (e) {
+        throw fileOpExceptionFromIo(e, from);
+      }
+    }
+
+    final walked = <FileRef>[
+      await for (final page in _walker(
+        WalkOptions(root: to, includeHidden: true, origin: _originOf(to)),
+      ))
+        ...page,
+    ];
+    if (to != from) {
+      // API 30+: the FUSE rename moves MediaStore's rows (ids kept); the
+      // modern scanner also walks folders. API ≤29: the scanner doesn't
+      // recurse into a folder path, so every old row (dropped: file gone)
+      // and every new media path (indexed) is scanned one by one.
+      final paths = await _sdkInt() <= 29
+          ? [
+              ...oldIds.keys,
+              for (final f in walked)
+                if (_mediaKinds.contains(f.kind)) f.path,
+            ]
+          : [from, to];
+      for (var i = 0; i < paths.length; i += _scanChunk) {
+        final chunk = paths.sublist(
+          i,
+          i + _scanChunk > paths.length ? paths.length : i + _scanChunk,
+        );
+        await _guard(null, () => _channel.scanPaths(chunk));
+      }
+    }
+
+    final files = <FileRef>[];
+    for (final w in walked) {
+      final row = _mediaKinds.contains(w.kind)
+          ? await _guard(null, () => _channel.statMediaByPath(w.path))
+          : null;
+      final now = row == null ? w : _mediaRef(row);
+      files.add(now);
+      if (to == from) continue;
+      final oldPath = '$from${w.path.substring(to.length)}';
+      final oldId = oldIds[oldPath] ?? 'path:$oldPath';
+      if (oldId != now.id) _idChanges.add(FileIdChange(oldId, now));
+    }
+    return (path: to, files: List<FileRef>.unmodifiable(files));
+  }
+
+  @override
+  Future<int?> freeBytes(String folderPath) =>
+      _guard(null, () => _channel.freeBytes(_trimSlash(folderPath)));
 
   @override
   Stream<FileIdChange> get idChanges => _idChanges.stream;
@@ -241,7 +359,7 @@ class AndroidFileSource implements FileSource {
 
   @override
   Future<FileRef> rename(FileRef f, String newName) async {
-    validateFileName(newName);
+    checkPathSegment(newName);
     if (newName == f.name) return f;
     // Shared storage is case-insensitive: "a.jpg" -> "A.jpg" is not a clash.
     final name = newName.toLowerCase() == f.name.toLowerCase()
@@ -568,6 +686,10 @@ class AndroidFileSource implements FileSource {
   /// Binder transactions are ~1 MB: at most this many URIs per request.
   static const maxUrisPerRequest = 500;
 
+  /// Paths per media-scan request: FilesChannel.kt waits at most 30 s for
+  /// each request's callbacks.
+  static const _scanChunk = 200;
+
   int? _sdk;
   Future<int> _sdkInt() async {
     if (_sdk case final sdk?) return sdk;
@@ -656,24 +778,40 @@ class AndroidFileSource implements FileSource {
         (throw const FileOpException(FileOpFailure.ioError, 'gone after copy'));
   }
 
-  /// Copies, keeps the modified time, and checks the size. On any failure the
-  /// partial copy is removed and the error rethrown.
+  /// Copies to a hidden temp name in the target folder (listed in the
+  /// [TempFileLedger] meanwhile), keeps the modified time, checks the size,
+  /// then renames it to [newPath]. A kill mid-copy leaves only the temp file,
+  /// which the next start removes. On any failure the partial copy is removed
+  /// and the error rethrown; [newPath] is never overwritten.
   Future<void> _copyVerified(File from, String newPath) async {
-    final copy = File(newPath);
+    final ledger = await _tempLedger;
+    final tempPath = tempPathIn(
+      parentOf(newPath),
+      extension: splitExtension(nameOf(newPath)).$2,
+    );
+    final temp = File(tempPath);
+    await ledger?.add(tempPath);
     try {
       final stat = await from.stat();
-      await from.copy(newPath);
-      await copy.setLastModified(stat.modified);
-      final copied = await copy.length();
+      await from.copy(tempPath);
+      await temp.setLastModified(stat.modified);
+      final copied = await temp.length();
       if (copied != stat.size) {
         throw FileOpException(
           FileOpFailure.ioError,
           'size mismatch after copy: $copied != ${stat.size}',
         );
       }
+      // rename() would replace a file that appeared meanwhile.
+      if (await _exists(newPath)) {
+        throw FileOpException(FileOpFailure.targetExists, newPath);
+      }
+      await temp.rename(newPath);
     } on Object {
-      if (await copy.exists()) await copy.delete();
+      if (await temp.exists()) await temp.delete();
       rethrow;
+    } finally {
+      await ledger?.remove(tempPath);
     }
   }
 

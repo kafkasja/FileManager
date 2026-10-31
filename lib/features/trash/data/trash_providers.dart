@@ -6,6 +6,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -58,6 +59,8 @@ Stream<List<UnavailableDelete>> folderUnavailable(Ref ref) {
 Future<int> startupMaintenance(Ref ref) async {
   final access = await ref.watch(storageAccessControllerProvider.future);
   if (!access.canUseSwipe) return 0;
+  // 0. B4: a copy cut off by a kill leaves a hidden temp file: remove it.
+  await (await ref.read(tempFileLedgerProvider.future))?.cleanUp();
   final folder = ref.read(pendingFolderProvider);
   final canUseFolder = folder != null && access.canSeeAllFiles;
   // 1. H2: files moved in just before a kill get rows, so H1's lookup sees

@@ -8,6 +8,7 @@ import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/media_change_source.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
+import 'package:kfm/core/index/media_store_counts.dart';
 import 'package:meta/meta.dart';
 
 @immutable
@@ -41,6 +42,10 @@ class IndexFailed extends IndexStatus {
 ///   completes, rows of the scanned kinds with an older generation are
 ///   deleted. A failed or killed scan deletes nothing.
 /// - Incremental scan: files modified since the last scan (no deletions).
+/// - Start reconciliation: after the incremental scan, per media kind,
+///   MediaStore's count minus the index count must equal the difference
+///   recorded after the last full scan of that kind; otherwise files were
+///   deleted while the app wasn't running, and those kinds get a full scan.
 /// - Live changes: MediaStore deletes by id; inserts/updates → incremental.
 /// - FileSource.idChanges re-key rows.
 ///
@@ -53,6 +58,7 @@ class MediaIndexer {
     required this._settings,
     required this._canSeeAllFiles,
     Stream<MediaChange> changes = const Stream.empty(),
+    this._mediaStoreCounts,
     this._clock = DateTime.now,
   }) : _source = source {
     _idSub = source.idChanges.listen(
@@ -74,6 +80,9 @@ class MediaIndexer {
   final bool Function() _canSeeAllFiles;
   final DateTime Function() _clock;
 
+  /// Null = no MediaStore (tests, desktop): no start reconciliation.
+  final MediaStoreCounts? _mediaStoreCounts;
+
   final StreamController<IndexStatus> _status =
       StreamController<IndexStatus>.broadcast();
   IndexStatus _current = const IndexIdle(null);
@@ -90,7 +99,8 @@ class MediaIndexer {
   IndexStatus get current => _current;
 
   /// App start / access granted: full scan the first time, otherwise an
-  /// incremental scan, plus a full scan if the last one is >24 h old.
+  /// incremental scan, plus a full scan if the last one is >24 h old, or of
+  /// the media kinds whose MediaStore count no longer matches the index.
   Future<void> start() => _serial(() async {
     final lastFull = await _lastFullScan();
     if (lastFull == null) {
@@ -105,8 +115,12 @@ class MediaIndexer {
       // B1: hidden files aren't modified "since the last scan": a full scan
       // catches them up once.
       await _fullScan(_allowedKinds(), isFirstScan: false);
+      await _markHiddenScanned();
+      return;
     }
     await _markHiddenScanned();
+    final stale = await _kindsOutOfSync();
+    if (stale.isNotEmpty) await _fullScan(stale, isFirstScan: false);
   });
 
   Future<void> fullScan({Set<FileKind>? kinds}) => _serial(() async {
@@ -187,9 +201,16 @@ class MediaIndexer {
       _emit(IndexScanning(found: found, isFirstScan: isFirstScan));
     }
     await _dao.deleteOlderThanGeneration(generation, kinds: kinds);
-    final stamp = startedAt.toIso8601String();
-    await _settings.write(AppSettings.indexLastFullScanAt, stamp);
-    await _settings.write(AppSettings.indexLastIncrementalAt, stamp);
+    // Only a scan of every allowed kind counts as "the" full scan: a
+    // reconciliation or live-change scan of some media kinds must not push
+    // back the 24 h scan of the rest (non-media walker files), nor move the
+    // incremental cursor past changes in kinds it didn't look at.
+    if (kinds.containsAll(_allowedKinds())) {
+      final stamp = startedAt.toIso8601String();
+      await _settings.write(AppSettings.indexLastFullScanAt, stamp);
+      await _settings.write(AppSettings.indexLastIncrementalAt, stamp);
+    }
+    await _recordCountOffsets(kinds.intersection(mediaKinds));
     _emit(IndexIdle(startedAt));
   }
 
@@ -219,6 +240,42 @@ class MediaIndexer {
       startedAt.toIso8601String(),
     );
     _emit(IndexIdle(startedAt));
+  }
+
+  // ---- start reconciliation ----
+
+  /// Media kinds whose MediaStore − index difference changed since their
+  /// last full scan (or was never recorded).
+  Future<Set<FileKind>> _kindsOutOfSync() async {
+    final counter = _mediaStoreCounts;
+    if (counter == null) return const {};
+    final store = await counter();
+    if (store == null) return const {};
+    final indexed = await _dao.countByKind(mediaKinds);
+    final offsets = await _settings.read(indexMediaCountOffsets);
+    return {
+      for (final k in mediaKinds)
+        if (offsets[k.name] case final offset
+            when offset == null ||
+                (store[k] ?? 0) - (indexed[k] ?? 0) != offset)
+          k,
+    };
+  }
+
+  /// After a full scan of [kinds]: remember MediaStore − index per kind. A
+  /// file added between the scan and this count skews it by one, which only
+  /// costs one extra full scan on a later start.
+  Future<void> _recordCountOffsets(Set<FileKind> kinds) async {
+    final counter = _mediaStoreCounts;
+    if (counter == null || kinds.isEmpty) return;
+    final store = await counter();
+    if (store == null) return;
+    final indexed = await _dao.countByKind(kinds);
+    final offsets = {
+      ...await _settings.read(indexMediaCountOffsets),
+      for (final k in kinds) k.name: (store[k] ?? 0) - (indexed[k] ?? 0),
+    };
+    await _settings.write(indexMediaCountOffsets, offsets);
   }
 
   // ---- helpers ----

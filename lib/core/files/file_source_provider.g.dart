@@ -98,7 +98,7 @@ final class FileSourceProvider
   }
 }
 
-String _$fileSourceHash() => r'10b3cb6789beec59f21c8837d1779718427dc48b';
+String _$fileSourceHash() => r'bfba4028f4e52f4fb90dd575d74d6a9863dd05eb';
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
 

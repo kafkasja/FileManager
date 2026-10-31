@@ -13,6 +13,7 @@ import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/text_viewer_screen.dart';
+import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
@@ -231,12 +232,17 @@ class FileInfoCard extends ConsumerWidget {
         SizedBox(height: spacing * 2),
         Icon(fileKindIcon(file.kind), size: 72, color: scheme.primary),
         SizedBox(height: spacing * 2),
-        Center(
-          child: FilledButton.icon(
-            onPressed: () => unawaited(openWithOrExplain(context, ref, file)),
-            icon: const Icon(Icons.open_in_new),
-            label: Text(context.l10n.openWith),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FilledButton.icon(
+              onPressed: () => unawaited(openWithOrExplain(context, ref, file)),
+              icon: const Icon(Icons.open_in_new),
+              label: Text(context.l10n.openWith),
+            ),
+            // B4's single-file menu (B5 adds its zip items there).
+            FileActionsMenuButton(file: file),
+          ],
         ),
         SizedBox(height: spacing),
         Expanded(child: FileDetailsList(file: file)),
@@ -246,9 +252,11 @@ class FileInfoCard extends ConsumerWidget {
 }
 
 /// The shown page's buttons: Select / Remove (B6 rules) and, for photos and
-/// videos, "Open with".
+/// videos, "Open with"; B4's ⋮ file menu for photos, videos and text
+/// (other files have it on their info card).
 List<Widget> previewActions(BuildContext context, FileRef f) => [
   if (f.isMedia) _OpenWithAction(file: f),
+  if (opensInPreview(f)) FileActionsMenuButton(file: f, overlay: true),
   PreviewSelectButton(file: f),
 ];
 
