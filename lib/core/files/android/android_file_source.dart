@@ -182,6 +182,46 @@ class AndroidFileSource implements FileSource {
       _guard(null, () => _channel.freeBytes(_trimSlash(folderPath)));
 
   @override
+  Future<List<FileRef>> registerCreated(List<String> paths) async {
+    final refs = <FileRef>[];
+    for (var i = 0; i < paths.length; i += _registerChunk) {
+      final chunk = [
+        for (final p in paths.sublist(
+          i,
+          i + _registerChunk > paths.length ? paths.length : i + _registerChunk,
+        ))
+          _trimSlash(p),
+      ];
+      // A failed scan leaves the files as `path:` refs (still usable).
+      Map<String, int?> ids;
+      try {
+        ids = await _channel.scanPaths(chunk);
+      } on FilesChannelException catch (e) {
+        developer.log('media scan failed: $e', name: 'kfm.files');
+        ids = const {};
+      }
+      for (final path in chunk) {
+        FileRef? ref;
+        // The scan also returns Files-table ids for documents and zips:
+        // those stay `path:` refs like everywhere else.
+        if (ids[path] case final id?
+            when _mediaKinds.contains(kindFor(null, nameOf(path)))) {
+          final row = await _guard(null, () => _channel.statMedia(id));
+          if (row != null && _mediaTypes.contains(row['mediaType'])) {
+            ref = _mediaRef(row);
+          }
+        }
+        ref ??= await _statPath(path);
+        if (ref != null) refs.add(ref);
+      }
+    }
+    return refs;
+  }
+
+  static const _registerChunk = 500;
+  static const _mediaTypes = {'image', 'video', 'audio'};
+
+  @override
   Stream<FileIdChange> get idChanges => _idChanges.stream;
 
   Future<void> dispose() => _idChanges.close();

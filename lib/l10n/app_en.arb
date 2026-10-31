@@ -1420,5 +1420,129 @@
         "type": "String"
       }
     }
+  },
+  "progressCompressing": "Zipping {done} of {total}",
+  "@progressCompressing": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "progressExtracting": "Extracting {done} of {total}",
+  "@progressExtracting": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "progressEtaMinutes": "{minutes, plural, =1{About 1 minute left} other{About {minutes} minutes left}}",
+  "@progressEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "archiveCompress": "Compress",
+  "archiveViewContents": "View contents",
+  "archiveExtractHere": "Extract here",
+  "archiveExtractTo": "Extract to…",
+  "archiveExtractThis": "Extract this",
+  "archiveExtractToTitle": "Extract to",
+  "archiveCompressTitle": "Compress to zip",
+  "archiveCompressAction": "Compress",
+  "archiveSaveIn": "Saved in {folder}",
+  "@archiveSaveIn": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveSaveTo": "Save to…",
+  "archiveSaveToTitle": "Save zip in",
+  "archiveWrongPlace": "Can't zip files from this place yet",
+  "archiveCreated": "Created {name}",
+  "@archiveCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveExtracted": "{count, plural, =0{Nothing to extract} =1{Extracted 1 file to {folder}} other{Extracted {count} files to {folder}}}",
+  "@archiveExtracted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveBombTitle": "Very large archive",
+  "archiveBombBody": "This archive expands to {size}. Extract anyway?",
+  "@archiveBombBody": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveBombAction": "Extract anyway",
+  "archiveUnsafePaths": "This archive contains unsafe paths and was not extracted",
+  "archiveCorrupt": "This zip is damaged or not a zip file",
+  "archiveCancelled": "Stopped. Nothing was saved",
+  "archiveIoError": "Couldn't read or write {name}",
+  "@archiveIoError": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "archivePasswordTitle": "Password needed",
+  "archivePasswordBody": "{name} is protected with a password",
+  "@archivePasswordBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "archivePasswordLabel": "Password",
+  "archivePasswordAction": "Extract",
+  "archiveWrongPassword": "Wrong password, try again",
+  "archivePasswordShow": "Show password",
+  "archivePasswordHide": "Hide password",
+  "archiveSummary": "{count, plural, =1{1 item · {size}} other{{count} items · {size}}}",
+  "@archiveSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveEmpty": "This zip is empty",
+  "archiveWrongDestination": "Can't save to this place yet. Pick a folder on internal storage",
+  "archiveReplaceFailed": "The old zip was kept. The new one is saved as {name}",
+  "@archiveReplaceFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

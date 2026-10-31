@@ -236,6 +236,42 @@ void main() {
       expect(changes.single.oldId, 'ms:7');
     });
 
+    test('registerCreated: scanned media come back as ms:, the rest as '
+        'path:, missing paths are skipped', () async {
+      final dir = await Directory.systemTemp.createTemp('kfm_reg');
+      addTearDown(() => dir.delete(recursive: true));
+      final root = dir.path.replaceAll(r'\', '/');
+      await File('$root/doc.zip').writeAsBytes([1, 2, 3]);
+      const media = '/storage/emulated/0/DCIM/Camera/img.jpg';
+      create((call) async {
+        switch (call.method) {
+          case 'scanPaths':
+            // The scanner gives Files-table ids for non-media too.
+            return <Object?, Object?>{
+              media: 7,
+              '$root/doc.zip': 99,
+              '$root/missing.txt': null,
+            };
+          case 'statMedia':
+            return _row(7);
+        }
+        return null;
+      });
+      final refs = await source.registerCreated([
+        media,
+        '$root/doc.zip',
+        '$root/missing.txt',
+      ]);
+      expect(refs.map((f) => f.id), ['ms:7', 'path:$root/doc.zip']);
+      expect(refs.last.sizeBytes, 3);
+      expect(
+        calls.where((c) => c.method == 'statMedia').map((c) => c.arguments),
+        [
+          {'id': 7},
+        ],
+      );
+    });
+
     test('platform errors map to FileOpFailure', () async {
       create((call) async {
         throw PlatformException(code: 'NOT_FOUND');

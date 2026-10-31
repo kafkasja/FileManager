@@ -54,4 +54,4 @@ final class FolderMenuItemsProvider
   }
 }
 
-String _$folderMenuItemsHash() => r'd6f4186fb81c4b307944a647881230e3e1e021be';
+String _$folderMenuItemsHash() => r'48668fc9d6f503075dd478a1a8e1b0d15b809ab0';

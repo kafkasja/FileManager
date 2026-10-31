@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -78,6 +79,7 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
       icon: Icons.delete_outline,
       onSelected: (context, ref, f) => deleteFiles(context, ref, [f]),
     ),
+    ...archiveFileMenuItems,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );
 

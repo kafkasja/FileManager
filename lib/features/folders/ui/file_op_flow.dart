@@ -542,7 +542,12 @@ class _Host {
     final last = container.read(lastOperationUndoProvider);
     if (last == null) return;
     final undo = container.read(lastOperationUndoProvider.notifier);
-    final count = last is FileOpDone ? last.done.results.length : 0;
+    final count = switch (last) {
+      FileOpDone(:final done) => done.results.length,
+      ExtractDone(:final files) => files.length,
+      CompressDone() => 1,
+      FolderRenameDone() => 0,
+    };
     final cancel = CancelToken();
     final UndoOutcome? outcome;
     try {

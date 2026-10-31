@@ -3,10 +3,10 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:kfm/core/files/file_kind_resolver.dart';
-import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/io_errors.dart';
+import 'package:kfm/core/files/system_files.dart';
 import 'package:meta/meta.dart';
 
 /// What [walkFiles] lists. Sent to the walker isolate, so plain data only.
@@ -129,10 +129,10 @@ void _walk(WalkOptions o, void Function(Object?) send) {
       final name = path.substring(path.lastIndexOf('/') + 1);
       final dotted = name.startsWith('.');
       if (dotted && !o.includeHidden) continue;
-      if (_isSystemTemp(name)) continue;
+      if (isSystemTempName(name)) continue;
 
       if (entity is Directory) {
-        if (o.recursive && !_isExcludedFolder(path)) {
+        if (o.recursive && !isExcludedFolderPath(path)) {
           stack.add((path, hidden || dotted));
         }
         continue;
@@ -181,18 +181,3 @@ void _walk(WalkOptions o, void Function(Object?) send) {
   }
   if (page.isNotEmpty) send(List<FileRef>.unmodifiable(page));
 }
-
-bool _isExcludedFolder(String path) =>
-    path.endsWith('/Android/data') ||
-    path.endsWith('/Android/obb') ||
-    // B1 (hidden files are indexed): KFM's own pending-delete folder and
-    // thumbnail caches are never shown as files.
-    path.endsWith('/.KFMTrash') ||
-    path.endsWith('/.thumbnails');
-
-/// MediaStore's trashed/pending files (Android 11+): not the user's files.
-/// KFM's unfinished copies (B4, [tempFilePrefix]) aren't either.
-bool _isSystemTemp(String name) =>
-    name.startsWith('.trashed-') ||
-    name.startsWith('.pending-') ||
-    name.startsWith(tempFilePrefix);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
+import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -41,4 +42,5 @@ List<FolderMenuItem> folderMenuItems(Ref ref) => [
     // Not a volume (storage list).
     isAvailable: (f) => f.path != volumeRootOf(f.path),
   ),
+  compressFolderMenuItem,
 ];

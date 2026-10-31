@@ -2355,4 +2355,152 @@ class AppLocalizationsEn extends AppLocalizations {
   String fileOpPermission(String name) {
     return 'No permission to change $name';
   }
+
+  @override
+  String progressCompressing(String done, String total) {
+    return 'Zipping $done of $total';
+  }
+
+  @override
+  String progressExtracting(String done, String total) {
+    return 'Extracting $done of $total';
+  }
+
+  @override
+  String progressEtaMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'About $minutes minutes left',
+      one: 'About 1 minute left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveCompress => 'Compress';
+
+  @override
+  String get archiveViewContents => 'View contents';
+
+  @override
+  String get archiveExtractHere => 'Extract here';
+
+  @override
+  String get archiveExtractTo => 'Extract to…';
+
+  @override
+  String get archiveExtractThis => 'Extract this';
+
+  @override
+  String get archiveExtractToTitle => 'Extract to';
+
+  @override
+  String get archiveCompressTitle => 'Compress to zip';
+
+  @override
+  String get archiveCompressAction => 'Compress';
+
+  @override
+  String archiveSaveIn(String folder) {
+    return 'Saved in $folder';
+  }
+
+  @override
+  String get archiveSaveTo => 'Save to…';
+
+  @override
+  String get archiveSaveToTitle => 'Save zip in';
+
+  @override
+  String get archiveWrongPlace => 'Can\'t zip files from this place yet';
+
+  @override
+  String archiveCreated(String name) {
+    return 'Created $name';
+  }
+
+  @override
+  String archiveExtracted(int count, String folder) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extracted $count files to $folder',
+      one: 'Extracted 1 file to $folder',
+      zero: 'Nothing to extract',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveBombTitle => 'Very large archive';
+
+  @override
+  String archiveBombBody(String size) {
+    return 'This archive expands to $size. Extract anyway?';
+  }
+
+  @override
+  String get archiveBombAction => 'Extract anyway';
+
+  @override
+  String get archiveUnsafePaths =>
+      'This archive contains unsafe paths and was not extracted';
+
+  @override
+  String get archiveCorrupt => 'This zip is damaged or not a zip file';
+
+  @override
+  String get archiveCancelled => 'Stopped. Nothing was saved';
+
+  @override
+  String archiveIoError(String name) {
+    return 'Couldn\'t read or write $name';
+  }
+
+  @override
+  String get archivePasswordTitle => 'Password needed';
+
+  @override
+  String archivePasswordBody(String name) {
+    return '$name is protected with a password';
+  }
+
+  @override
+  String get archivePasswordLabel => 'Password';
+
+  @override
+  String get archivePasswordAction => 'Extract';
+
+  @override
+  String get archiveWrongPassword => 'Wrong password, try again';
+
+  @override
+  String get archivePasswordShow => 'Show password';
+
+  @override
+  String get archivePasswordHide => 'Hide password';
+
+  @override
+  String archiveSummary(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items · $size',
+      one: '1 item · $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveEmpty => 'This zip is empty';
+
+  @override
+  String get archiveWrongDestination =>
+      'Can\'t save to this place yet. Pick a folder on internal storage';
+
+  @override
+  String archiveReplaceFailed(String name) {
+    return 'The old zip was kept. The new one is saved as $name';
+  }
 }

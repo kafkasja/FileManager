@@ -66,6 +66,20 @@ void fileSourceContract(
       expect(await s.stat(f.id), isNull);
     });
 
+    test('registerCreated returns the files, skipping missing paths', () async {
+      await h.addFile('${h.root}/out/a.zip', [1, 2, 3]);
+      await h.addFile('${h.root}/out/b/notes.txt', [1]);
+      final refs = await s.registerCreated([
+        '${h.root}/out/a.zip',
+        '${h.root}/out/missing.txt',
+        '${h.root}/out/b/notes.txt',
+      ]);
+      expect(refs.map((f) => f.name), ['a.zip', 'notes.txt']);
+      expect(refs.first.sizeBytes, 3);
+      expect(refs.first.folderPath, '${h.root}/out');
+      expect(await s.registerCreated(const []), isEmpty);
+    });
+
     test('openRead returns the bytes', () async {
       final f = await h.addFile('${h.root}/a.bin', [7, 8, 9]);
       expect(await _read(s, f), [7, 8, 9]);

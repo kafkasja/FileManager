@@ -374,6 +374,14 @@ class FakeFileSource implements FileSource {
   @override
   Future<int?> freeBytes(String folderPath) async => freeBytesValue;
 
+  /// B5: refs of the given paths from the in-memory map (tests add the
+  /// files first with [addFile]); unknown paths are skipped.
+  @override
+  Future<List<FileRef>> registerCreated(List<String> paths) async {
+    calls.add('registerCreated ${paths.length}');
+    return [for (final p in paths) ?_files['path:$p']];
+  }
+
   FileRef _relocate(FileRef current, String folder, String name) {
     _addFolders(folder);
     final path = '$folder/$name';

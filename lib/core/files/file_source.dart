@@ -79,6 +79,12 @@ abstract interface class FileSource {
   /// B4: free bytes on the volume holding [folderPath]; null when unknown.
   Future<int?> freeBytes(String folderPath);
 
+  /// B5: makes files KFM just wrote with dart:io (zip / unzip) known to the
+  /// platform (Android: MediaStore scan) and returns their refs (`ms:` when
+  /// MediaStore indexed them, else `path:`). Missing paths are skipped. The
+  /// caller adds the refs to the index (`MediaIndexer.addFiles`).
+  Future<List<FileRef>> registerCreated(List<String> paths);
+
   /// Emitted whenever move/rename/restore gives a file a new id.
   Stream<FileIdChange> get idChanges;
 }

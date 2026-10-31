@@ -3,14 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/background/cancel_token.dart';
+import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 
 /// Batches with more files than this show the progress sheet; smaller ones
 /// only get the end snackbar (TASK-B4 §5).
 const progressSheetThreshold = 20;
 
-/// Which "… {done} of {total}" line the sheet shows.
-enum ProgressLabel { moving, copying, deleting, undoing, working }
+/// Which "… {done} of {total}" line the sheet shows. [compressing] and
+/// [extracting] (B5) count bytes ("Zipping 1.2 MB of 3 GB") and add an ETA.
+enum ProgressLabel {
+  moving,
+  copying,
+  deleting,
+  undoing,
+  working,
+  compressing,
+  extracting;
+
+  bool get byBytes => this == compressing || this == extracting;
+}
 
 /// Shows [OperationProgressSheet] while [task] runs and closes it when the
 /// task ends (also on an error, which is rethrown). [task] gets the
@@ -80,6 +92,9 @@ class OperationProgressSheet extends StatefulWidget {
 class _OperationProgressSheetState extends State<OperationProgressSheet> {
   late bool _cancelled = widget.cancel.isCancelled;
 
+  /// Started at the first byte-based event, for the ETA.
+  Stopwatch? _clock;
+
   void _cancel() {
     widget.cancel.cancel();
     setState(() => _cancelled = true);
@@ -88,6 +103,13 @@ class _OperationProgressSheetState extends State<OperationProgressSheet> {
   String _line(OperationProgress? p) {
     final l10n = context.l10n;
     if (p == null || p.total == 0) return l10n.progressWorking;
+    if (widget.label.byBytes) {
+      final done = formatBytes(p.bytesDone, locale: l10n.localeName);
+      final total = formatBytes(p.bytesTotal, locale: l10n.localeName);
+      return widget.label == ProgressLabel.compressing
+          ? l10n.progressCompressing(done, total)
+          : l10n.progressExtracting(done, total);
+    }
     // The file being worked on is number done + 1.
     final n = (p.done + 1).clamp(1, p.total);
     return switch (widget.label) {
@@ -95,8 +117,22 @@ class _OperationProgressSheetState extends State<OperationProgressSheet> {
       ProgressLabel.copying => l10n.progressCopying(n, p.total),
       ProgressLabel.deleting => l10n.progressDeleting(n, p.total),
       ProgressLabel.undoing => l10n.progressUndoing(n, p.total),
-      ProgressLabel.working => l10n.progressWorking,
+      ProgressLabel.working ||
+      ProgressLabel.compressing ||
+      ProgressLabel.extracting => l10n.progressWorking,
     };
+  }
+
+  /// "About 3 minutes left" for byte-based labels, once a few percent are
+  /// done (earlier estimates jump around).
+  String? _eta(OperationProgress? p) {
+    if (!widget.label.byBytes || p == null || p.bytesTotal <= 0) return null;
+    if (p.bytesDone <= 0) return null;
+    final clock = _clock ??= Stopwatch()..start();
+    final elapsed = clock.elapsedMilliseconds;
+    if (elapsed < 1000 || p.bytesDone < p.bytesTotal * 0.02) return null;
+    final leftMs = elapsed * (p.bytesTotal - p.bytesDone) / p.bytesDone;
+    return context.l10n.progressEtaMinutes((leftMs / 60000).ceil());
   }
 
   static double? _fraction(OperationProgress? p) {
@@ -127,6 +163,10 @@ class _OperationProgressSheetState extends State<OperationProgressSheet> {
                 Text(_line(p), style: theme.textTheme.titleMedium),
                 SizedBox(height: spacing * 2),
                 LinearProgressIndicator(value: _fraction(p)),
+                if (_eta(p) case final eta?) ...[
+                  SizedBox(height: spacing),
+                  Text(eta, style: theme.textTheme.bodySmall),
+                ],
                 if (p?.current case final current?) ...[
                   SizedBox(height: spacing),
                   Text(

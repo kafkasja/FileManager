@@ -3321,6 +3321,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No permission to change {name}'**
   String fileOpPermission(String name);
+
+  /// No description provided for @progressCompressing.
+  ///
+  /// In en, this message translates to:
+  /// **'Zipping {done} of {total}'**
+  String progressCompressing(String done, String total);
+
+  /// No description provided for @progressExtracting.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting {done} of {total}'**
+  String progressExtracting(String done, String total);
+
+  /// No description provided for @progressEtaMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{About 1 minute left} other{About {minutes} minutes left}}'**
+  String progressEtaMinutes(int minutes);
+
+  /// No description provided for @archiveCompress.
+  ///
+  /// In en, this message translates to:
+  /// **'Compress'**
+  String get archiveCompress;
+
+  /// No description provided for @archiveViewContents.
+  ///
+  /// In en, this message translates to:
+  /// **'View contents'**
+  String get archiveViewContents;
+
+  /// No description provided for @archiveExtractHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract here'**
+  String get archiveExtractHere;
+
+  /// No description provided for @archiveExtractTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract to…'**
+  String get archiveExtractTo;
+
+  /// No description provided for @archiveExtractThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract this'**
+  String get archiveExtractThis;
+
+  /// No description provided for @archiveExtractToTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract to'**
+  String get archiveExtractToTitle;
+
+  /// No description provided for @archiveCompressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compress to zip'**
+  String get archiveCompressTitle;
+
+  /// No description provided for @archiveCompressAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Compress'**
+  String get archiveCompressAction;
+
+  /// No description provided for @archiveSaveIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved in {folder}'**
+  String archiveSaveIn(String folder);
+
+  /// No description provided for @archiveSaveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to…'**
+  String get archiveSaveTo;
+
+  /// No description provided for @archiveSaveToTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save zip in'**
+  String get archiveSaveToTitle;
+
+  /// No description provided for @archiveWrongPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t zip files from this place yet'**
+  String get archiveWrongPlace;
+
+  /// No description provided for @archiveCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {name}'**
+  String archiveCreated(String name);
+
+  /// No description provided for @archiveExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing to extract} =1{Extracted 1 file to {folder}} other{Extracted {count} files to {folder}}}'**
+  String archiveExtracted(int count, String folder);
+
+  /// No description provided for @archiveBombTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Very large archive'**
+  String get archiveBombTitle;
+
+  /// No description provided for @archiveBombBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This archive expands to {size}. Extract anyway?'**
+  String archiveBombBody(String size);
+
+  /// No description provided for @archiveBombAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract anyway'**
+  String get archiveBombAction;
+
+  /// No description provided for @archiveUnsafePaths.
+  ///
+  /// In en, this message translates to:
+  /// **'This archive contains unsafe paths and was not extracted'**
+  String get archiveUnsafePaths;
+
+  /// No description provided for @archiveCorrupt.
+  ///
+  /// In en, this message translates to:
+  /// **'This zip is damaged or not a zip file'**
+  String get archiveCorrupt;
+
+  /// No description provided for @archiveCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped. Nothing was saved'**
+  String get archiveCancelled;
+
+  /// No description provided for @archiveIoError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read or write {name}'**
+  String archiveIoError(String name);
+
+  /// No description provided for @archivePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Password needed'**
+  String get archivePasswordTitle;
+
+  /// No description provided for @archivePasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is protected with a password'**
+  String archivePasswordBody(String name);
+
+  /// No description provided for @archivePasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get archivePasswordLabel;
+
+  /// No description provided for @archivePasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract'**
+  String get archivePasswordAction;
+
+  /// No description provided for @archiveWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password, try again'**
+  String get archiveWrongPassword;
+
+  /// No description provided for @archivePasswordShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get archivePasswordShow;
+
+  /// No description provided for @archivePasswordHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get archivePasswordHide;
+
+  /// No description provided for @archiveSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item · {size}} other{{count} items · {size}}}'**
+  String archiveSummary(int count, String size);
+
+  /// No description provided for @archiveEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This zip is empty'**
+  String get archiveEmpty;
+
+  /// No description provided for @archiveWrongDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t save to this place yet. Pick a folder on internal storage'**
+  String get archiveWrongDestination;
+
+  /// No description provided for @archiveReplaceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The old zip was kept. The new one is saved as {name}'**
+  String archiveReplaceFailed(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -62,7 +62,7 @@ final class LastOperationUndoProvider
   }
 }
 
-String _$lastOperationUndoHash() => r'969a8a60798644efd4acc8bb5c3c4c39849fe9a8';
+String _$lastOperationUndoHash() => r'04eed4b00e2edf126e4b36050b7010a7266c8b9d';
 
 /// Undo of the last Browse file operation (TASK-B4 §8; not S2's swipe
 /// `UndoService`). Memory only: lost on restart (Decision 1). A new

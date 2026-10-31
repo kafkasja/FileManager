@@ -96,6 +96,31 @@ void main() {
     expect(run.results, ['ok']);
   });
 
+  testWidgets('B5 byte labels show bytes done of total and a byte bar', (
+    tester,
+  ) async {
+    final run = await _pump(tester, ProgressLabel.compressing);
+    run.report!(
+      const OperationProgress(
+        done: 0,
+        total: 1,
+        bytesDone: 1024,
+        bytesTotal: 4096,
+        current: 'a.jpg',
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Zipping 1 KB of 4 KB'), findsOneWidget);
+    expect(find.text('a.jpg'), findsOneWidget);
+    final bar = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+    expect(bar.value, closeTo(0.25, 1e-9));
+    run.done.complete('ok');
+    await _settle(tester);
+    expect(run.results, ['ok']);
+  });
+
   testWidgets('Cancel sets the token once; the sheet stays until the task '
       'stops', (tester) async {
     final run = await _pump(tester, ProgressLabel.copying);
