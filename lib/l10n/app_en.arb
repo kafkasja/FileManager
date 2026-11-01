@@ -953,6 +953,165 @@
   "browseNeedsAllFiles": "Grant access to see documents, downloads and hidden files",
   "browseGrantAccess": "Grant access",
   "browseEmpty": "No files here",
+  "searchKwType": "Type: {name}",
+  "@searchKwType": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchKwSource": "Source: {name}",
+  "@searchKwSource": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchKwHidden": "Hidden files",
+  "searchKwTiny": "Tiny (< 10 KB)",
+  "searchKwLarge": "Large (> 100 MB)",
+  "searchKwToday": "Today",
+  "searchKwWeek": "Last 7 days",
+  "searchTermsLoadError": "Search words for {language} couldn't be loaded",
+  "@searchTermsLoadError": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSettingsTitle": "Search",
+  "searchSettingsAlsoSearchIn": "Also search in",
+  "searchSettingsAlsoSearchInHelp": "Smart words like 'video' or 'cloud' also work in this language.",
+  "searchSettingsNone": "None",
+  "searchSettingsAlreadyIncluded": "{language} (already included)",
+  "@searchSettingsAlreadyIncluded": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSettingsTip": "Type words like 'video', 'pdf', 'whatsapp', 'hidden' or 'large' to filter. Tap ✕ on a chip to search the name instead.",
+  "searchOpen": "Search",
+  "searchHint": "Search files",
+  "searchClearText": "Clear search",
+  "searchChipType": "Type",
+  "searchChipTypes": "{count} types",
+  "@searchChipTypes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchChipSource": "Source",
+  "searchChipDate": "Date",
+  "searchDateToday": "Today",
+  "searchDateWeek": "Last 7 days",
+  "searchDateMonth": "This month",
+  "searchDateYear": "This year",
+  "searchDateCustom": "Custom…",
+  "searchDateRange": "{from} – {to}",
+  "@searchDateRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "searchDateSince": "Since {from}",
+  "@searchDateSince": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "searchChipSize": "Size",
+  "searchSizeOver": "> {size}",
+  "@searchSizeOver": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSizeUnder": "< {size}",
+  "@searchSizeUnder": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSizeTiny": "Tiny (< 10 KB)",
+  "searchSizeBetween": "{min} – {max}",
+  "@searchSizeBetween": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSizeCustom": "Custom…",
+  "searchSizeCustomTitle": "File size",
+  "searchSizeMinLabel": "At least (MB)",
+  "searchSizeMaxLabel": "At most (MB)",
+  "searchSizeInvalid": "The minimum can't be larger than the maximum",
+  "searchChipHidden": "Hidden files",
+  "searchHiddenInclude": "Include hidden files",
+  "searchHiddenOnly": "Only hidden files",
+  "searchOnlyIn": "Only in {folder}",
+  "@searchOnlyIn": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "searchTokenExtension": "Type: .{ext}",
+  "@searchTokenExtension": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "searchTokenAsName": "Search names for “{word}” instead",
+  "@searchTokenAsName": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "searchRecent": "Recent searches",
+  "searchSuggestions": "Try",
+  "searchSuggestLarge": "Large files",
+  "searchSuggestDownloads": "Downloads",
+  "searchSuggestPdfs": "PDFs",
+  "searchSuggestHidden": "Hidden files",
+  "searchSuggestWeek": "This week",
+  "searchNoMatch": "No files match",
+  "searchClearFilters": "Clear filters",
+  "searchWordsLoadError": "Search words for {languages} couldn't be loaded",
+  "@searchWordsLoadError": {
+    "placeholders": {
+      "languages": {
+        "type": "String"
+      }
+    }
+  },
+  "searchDone": "Done",
   "browseLoadError": "Couldn't load the files.",
   "browseOtherHint": "Files from other apps and folders, grouped by folder",
   "browseInternalStorage": "Internal storage",
@@ -1544,5 +1703,106 @@
         "type": "String"
       }
     }
-  }
+  },
+  "collectionsOpen": "Tags & favorites",
+  "collectionsTitle": "Tags & favorites",
+  "collectionsFavorites": "Favorites",
+  "collectionsTags": "Tags",
+  "collectionsEmpty": "No tags yet. Tag files from Browse, or set a swipe direction to “Add tag” in swipe settings.",
+  "collectionsFileCount": "{count, plural, =0{No files} =1{1 file} other{{count} files}}",
+  "@collectionsFileCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collectionsTagMenu": "Tag options",
+  "tagMenuEdit": "Rename or change color",
+  "tagMenuDelete": "Delete tag",
+  "tagEditTitle": "Edit tag",
+  "tagSave": "Save",
+  "tagDeleteTitle": "Delete tag “{name}”?",
+  "@tagDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagDeleteBody": "{count, plural, =0{No files have this tag.} =1{The file stays; only the tag is removed.} other{The {count} files stay; only the tag is removed.}}",
+  "@tagDeleteBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagDeleteUsedIn": "Used in: {places}. That direction will show “Tag no longer exists” until you pick another.",
+  "@tagDeleteUsedIn": {
+    "placeholders": {
+      "places": {
+        "type": "String"
+      }
+    }
+  },
+  "tagUsedCurrentSetup": "current swipe setup",
+  "tagDeleteConfirm": "Delete",
+  "tagDeleted": "Tag “{name}” deleted",
+  "@tagDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagGone": "This tag was deleted",
+  "fileMenuFavoriteAdd": "Add to favorites",
+  "fileMenuFavoriteRemove": "Remove from favorites",
+  "fileMenuTags": "Tags…",
+  "selectionTagsMenu": "Tags & favorites…",
+  "selectionTagAdd": "Add tag…",
+  "selectionTagRemove": "Remove tag…",
+  "tagRemoveTitle": "Remove a tag",
+  "tagRemoveNone": "None of these files have tags",
+  "fileTagsTitle": "Tags",
+  "tagAddedSummary": "{count, plural, =0{All files already had “{tag}”} =1{Tagged 1 file “{tag}”} other{Tagged {count} files “{tag}”}}",
+  "@tagAddedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagRemovedSummary": "{count, plural, =0{No file had “{tag}”} =1{Removed “{tag}” from 1 file} other{Removed “{tag}” from {count} files}}",
+  "@tagRemovedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "favoriteAddedSummary": "{count, plural, =0{Already in favorites} =1{Added 1 file to favorites} other{Added {count} files to favorites}}",
+  "@favoriteAddedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "favoriteRemovedSummary": "{count, plural, =0{Not in favorites} =1{Removed 1 file from favorites} other{Removed {count} files from favorites}}",
+  "@favoriteRemovedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagWriteError": "Couldn't save the change. Try again"
 }

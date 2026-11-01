@@ -75,6 +75,14 @@ class DbWriteQueue {
     return job.completer.future;
   }
 
+  /// Publishes a failure of a write that couldn't go through [enqueue] as a
+  /// single job (e.g. the read half of a read-modify-write), so the UI
+  /// shows it like any other failed write.
+  void report(String? coalesceKey, Object error, StackTrace stackTrace) {
+    if (_errors.isClosed) return;
+    _errors.add(DbWriteError(coalesceKey, error, stackTrace));
+  }
+
   /// Waits for every queued write (app pause, before a batch delete, tests).
   Future<void> flush() async {
     while (_draining != null) {

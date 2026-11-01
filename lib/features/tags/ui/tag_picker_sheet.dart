@@ -13,6 +13,10 @@ Future<int?> showTagPicker(BuildContext context) => showModalBottomSheet<int>(
   builder: (_) => const _TagPicker(),
 );
 
+/// Creates a tag (name + color). Returns it, or null when cancelled.
+Future<Tag?> showNewTagDialog(BuildContext context) =>
+    showDialog<Tag>(context: context, builder: (_) => const _NewTagDialog());
+
 class _TagPicker extends ConsumerWidget {
   const new();
 
@@ -37,10 +41,7 @@ class _TagPicker extends ConsumerWidget {
             leading: const Icon(Icons.new_label_outlined),
             title: Text(l10n.tagPickerNew),
             onTap: () async {
-              final tag = await showDialog<Tag>(
-                context: context,
-                builder: (_) => const _NewTagDialog(),
-              );
+              final tag = await showNewTagDialog(context);
               if (tag != null && context.mounted) {
                 Navigator.of(context).pop(tag.id);
               }

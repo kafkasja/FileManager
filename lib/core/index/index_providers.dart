@@ -99,6 +99,18 @@ Future<IndexPage> indexPage(
 Stream<int> mediaIndexChanges(Ref ref) =>
     ref.watch(mediaIndexDaoProvider).watchChanges();
 
+/// Like [mediaIndexChanges], plus tag and favorite changes (B9).
+@Riverpod(keepAlive: true)
+Stream<int> indexAndTagChanges(Ref ref) =>
+    ref.watch(mediaIndexDaoProvider).watchChanges(withTags: true);
+
+/// The change signal a view of [query] reloads on: tag/favorite changes
+/// only matter when it filters on them.
+ProviderListenable<AsyncValue<int>> changesFor(IndexQuery query) =>
+    query.anyTagIds.isNotEmpty || query.favoritesOnly || query.tagged != null
+    ? indexAndTagChangesProvider
+    : mediaIndexChangesProvider;
+
 @Riverpod(keepAlive: true)
 Future<ThumbnailCache> thumbnailCache(Ref ref) async {
   final base = await getApplicationCacheDirectory();

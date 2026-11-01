@@ -41,3 +41,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true # l10n codegen (F6 adds l10n.yaml + ARB files)
+  assets:
+    - assets/search/ # B8: search term files terms_<lang>.json (L2 adds more)

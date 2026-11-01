@@ -59,6 +59,32 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
 
   Stream<int> watchCount(IndexQuery q) => _countQuery(q).watchSingle();
 
+  /// B9: visible files per tag (tag id → count). Joins `media_index`, so rows
+  /// for files missing from the index aren't counted, and filters with
+  /// [scope] like every page. A null [scope] (`visible()` found nothing
+  /// visible) emits `{}`. Tags without visible files are absent. Reads
+  /// `file_tags` + `media_index`, so it updates live.
+  Stream<Map<int, int>> watchTagCounts(IndexQuery? scope) {
+    if (scope == null) return Stream.value(const {});
+    final count = fileTags.fileId.count();
+    final query =
+        selectOnly(fileTags).join([
+            innerJoin(
+              mediaIndex,
+              mediaIndex.id.equalsExp(fileTags.fileId),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([fileTags.tagId, count])
+          ..where(_applyQuery(mediaIndex, scope))
+          ..groupBy([fileTags.tagId]);
+    return query.watch().map(
+      (rows) => {
+        for (final r in rows) r.read(fileTags.tagId)!: r.read(count) ?? 0,
+      },
+    );
+  }
+
   /// Rows per kind, unfiltered (every row, hidden ones too). Kinds without
   /// rows map to 0. Used to reconcile the index with MediaStore on start.
   Future<Map<FileKind, int>> countByKind(Set<FileKind> kinds) async {
@@ -104,9 +130,18 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
   /// visible pages. Not filtered per query: a cheap reload beats tracking.
   /// Each event is a new number: Riverpod skips equal values, so a plain
   /// `void` event would only ever be delivered once.
-  Stream<int> watchChanges() {
+  ///
+  /// [withTags] (B9): tag and favorite changes count too, for views that
+  /// filter on them (Favorites, a tag's files).
+  Stream<int> watchChanges({bool withTags = false}) {
     final updates = attachedDatabase.tableUpdates(
-      TableUpdateQuery.onTable(mediaIndex),
+      withTags
+          ? TableUpdateQuery.allOf([
+              TableUpdateQuery.onTable(mediaIndex),
+              TableUpdateQuery.onTable(fileTags),
+              TableUpdateQuery.onTable(favorites),
+            ])
+          : TableUpdateQuery.onTable(mediaIndex),
     );
     late StreamController<int> controller;
     var tick = 0;
@@ -317,13 +352,14 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
       where =
           where & t.sortDateMs.isSmallerThanValue(to.millisecondsSinceEpoch);
     }
+    // B8: every whitespace-separated word must occur (AND), in any order.
     if (q.nameContains case final name? when name.isNotEmpty) {
-      where =
-          where &
-          t.nameLower.like(
-            '%${_escapeLike(name.toLowerCase())}%',
-            escapeChar: r'\',
-          );
+      for (final word in name.toLowerCase().split(_whitespace)) {
+        if (word.isEmpty) continue;
+        where =
+            where &
+            t.nameLower.like('%${_escapeLike(word)}%', escapeChar: r'\');
+      }
     }
     if (q.mimePrefix case final prefix?) {
       where =
@@ -456,6 +492,8 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
       }(),
     };
   }
+
+  static final _whitespace = RegExp(r'\s+');
 
   static String _escapeLike(String s) =>
       s.replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_');

@@ -187,3 +187,214 @@ final class FileIdRekeyerProvider
 }
 
 String _$fileIdRekeyerHash() => r'aad83444832102c6160ebc0f23fbd4d6f08cb316';
+
+/// Every favorite file id (B9: ♡ state in the preview and ⋮ menu).
+
+@ProviderFor(favoriteIds)
+final favoriteIdsProvider = FavoriteIdsProvider._();
+
+/// Every favorite file id (B9: ♡ state in the preview and ⋮ menu).
+
+final class FavoriteIdsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>>,
+          Set<String>,
+          Stream<Set<String>>
+        >
+    with $FutureModifier<Set<String>>, $StreamProvider<Set<String>> {
+  /// Every favorite file id (B9: ♡ state in the preview and ⋮ menu).
+  FavoriteIdsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'favoriteIdsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$favoriteIdsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Set<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Set<String>> create(Ref ref) {
+    return favoriteIds(ref);
+  }
+}
+
+String _$favoriteIdsHash() => r'6afba2752b107841be6eb54484bd9ac8ede430ee';
+
+/// B9: one file's tag ids, live (the Tags sheet).
+
+@ProviderFor(fileTagIds)
+final fileTagIdsProvider = FileTagIdsFamily._();
+
+/// B9: one file's tag ids, live (the Tags sheet).
+
+final class FileTagIdsProvider
+    extends
+        $FunctionalProvider<AsyncValue<Set<int>>, Set<int>, Stream<Set<int>>>
+    with $FutureModifier<Set<int>>, $StreamProvider<Set<int>> {
+  /// B9: one file's tag ids, live (the Tags sheet).
+  FileTagIdsProvider._({
+    required FileTagIdsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'fileTagIdsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$fileTagIdsHash();
+
+  @override
+  String toString() {
+    return r'fileTagIdsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Set<int>> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Set<int>> create(Ref ref) {
+    final argument = this.argument as String;
+    return fileTagIds(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FileTagIdsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$fileTagIdsHash() => r'867043a4df8bf17dc69723ccfe1753fe7adb1148';
+
+/// B9: one file's tag ids, live (the Tags sheet).
+
+final class FileTagIdsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Set<int>>, String> {
+  FileTagIdsFamily._()
+    : super(
+        retry: null,
+        name: r'fileTagIdsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// B9: one file's tag ids, live (the Tags sheet).
+
+  FileTagIdsProvider call(String fileId) =>
+      FileTagIdsProvider._(argument: fileId, from: this);
+
+  @override
+  String toString() => r'fileTagIdsProvider';
+}
+
+/// B9: visible files per tag (what each tag's view would show).
+
+@ProviderFor(tagCounts)
+final tagCountsProvider = TagCountsProvider._();
+
+/// B9: visible files per tag (what each tag's view would show).
+
+final class TagCountsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<int, int>>,
+          Map<int, int>,
+          Stream<Map<int, int>>
+        >
+    with $FutureModifier<Map<int, int>>, $StreamProvider<Map<int, int>> {
+  /// B9: visible files per tag (what each tag's view would show).
+  TagCountsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tagCountsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$tagCountsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<int, int>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<int, int>> create(Ref ref) {
+    return tagCounts(ref);
+  }
+}
+
+String _$tagCountsHash() => r'e7de8e6989aeea0dfe522a08bd1e110f9fa6854d';
+
+/// B9: up to 4 newest visible favorites (the Favorites card).
+
+@ProviderFor(favoriteThumbs)
+final favoriteThumbsProvider = FavoriteThumbsProvider._();
+
+/// B9: up to 4 newest visible favorites (the Favorites card).
+
+final class FavoriteThumbsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<FileRef>>,
+          List<FileRef>,
+          FutureOr<List<FileRef>>
+        >
+    with $FutureModifier<List<FileRef>>, $FutureProvider<List<FileRef>> {
+  /// B9: up to 4 newest visible favorites (the Favorites card).
+  FavoriteThumbsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'favoriteThumbsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$favoriteThumbsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<FileRef>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<FileRef>> create(Ref ref) {
+    return favoriteThumbs(ref);
+  }
+}
+
+String _$favoriteThumbsHash() => r'b463b02f514111c623cef7709eae496746089969';

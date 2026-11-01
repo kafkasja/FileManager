@@ -1,0 +1,11 @@
+{
+  "lang": "xx",
+  "v": 1,
+  "keywords": {
+    "vidxx": "type:video",
+    "both": "type:video",
+    "kopek": "attr:hidden",
+    "screen grab": "source:screenshots",
+    "futurexx": "label:dog"
+  }
+}

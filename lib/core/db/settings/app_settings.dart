@@ -110,6 +110,13 @@ abstract final class AppSettings {
     '',
   );
 
+  /// B8. Language tag of the secondary search language ('' = none): its
+  /// term file's smart words also match.
+  static final SettingKey<String> searchSecondaryLanguage = SettingKey.string(
+    'search.secondaryLanguage',
+    '',
+  );
+
   /// F5. Disk cap for the thumbnail cache.
   static final SettingKey<int> thumbCacheMaxMb = SettingKey.integer(
     'thumbCacheMaxMb',

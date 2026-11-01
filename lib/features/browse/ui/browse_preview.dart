@@ -17,6 +17,9 @@ import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
+import 'package:kfm/features/tags/data/tag_providers.dart';
+import 'package:kfm/features/tags/ui/file_tags_sheet.dart';
+import 'package:kfm/features/tags/ui/tag_actions.dart';
 
 /// Files the paged preview opens itself (TASK-B7); the rest go straight to
 /// "Open with" on a Normal-mode tap.
@@ -255,10 +258,54 @@ class FileInfoCard extends ConsumerWidget {
 /// videos, "Open with"; B4's ⋮ file menu for photos, videos and text
 /// (other files have it on their info card).
 List<Widget> previewActions(BuildContext context, FileRef f) => [
+  if (opensInPreview(f)) ...[_FavoriteAction(file: f), _TagsAction(file: f)],
   if (f.isMedia) _OpenWithAction(file: f),
   if (opensInPreview(f)) FileActionsMenuButton(file: f, overlay: true),
   PreviewSelectButton(file: f),
 ];
+
+/// B9: ♡ toggle for the shown file (with Undo).
+class _FavoriteAction extends ConsumerWidget {
+  const new({required this.file});
+
+  final FileRef file;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final isFav = ref.watch(
+      favoriteIdsProvider.select((s) => s.value?.contains(file.id) ?? false),
+    );
+    return IconButton(
+      tooltip: isFav ? l10n.fileMenuFavoriteRemove : l10n.fileMenuFavoriteAdd,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.black54,
+        foregroundColor: isFav ? Colors.redAccent : Colors.white,
+      ),
+      icon: Icon(isFav ? Icons.favorite : Icons.favorite_border),
+      onPressed: () =>
+          unawaited(setFavorites(context, [file.id], favorite: !isFav)),
+    );
+  }
+}
+
+/// B9: the shown file's Tags sheet.
+class _TagsAction extends StatelessWidget {
+  const new({required this.file});
+
+  final FileRef file;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: context.l10n.fileTagsTitle,
+    style: IconButton.styleFrom(
+      backgroundColor: Colors.black54,
+      foregroundColor: Colors.white,
+    ),
+    icon: const Icon(Icons.label_outline),
+    onPressed: () => unawaited(showFileTagsSheet(context, file.id)),
+  );
+}
 
 class _OpenWithAction extends ConsumerWidget {
   const new({required this.file});

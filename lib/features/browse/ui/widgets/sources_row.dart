@@ -36,6 +36,8 @@ extension BrowseCollectionTitle on BrowseCollection {
   String title(AppLocalizations l10n) => switch (this) {
     SourceCollection(:final source) => source.label(l10n),
     RecentCollection(:final search) => search.title,
+    TagCollection(:final tag) => tag.name,
+    FavoritesCollection() => l10n.collectionsFavorites,
   };
 }
 

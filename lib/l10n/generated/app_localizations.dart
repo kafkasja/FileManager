@@ -2518,6 +2518,336 @@ abstract class AppLocalizations {
   /// **'No files here'**
   String get browseEmpty;
 
+  /// No description provided for @searchKwType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type: {name}'**
+  String searchKwType(String name);
+
+  /// No description provided for @searchKwSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {name}'**
+  String searchKwSource(String name);
+
+  /// No description provided for @searchKwHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden files'**
+  String get searchKwHidden;
+
+  /// No description provided for @searchKwTiny.
+  ///
+  /// In en, this message translates to:
+  /// **'Tiny (< 10 KB)'**
+  String get searchKwTiny;
+
+  /// No description provided for @searchKwLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large (> 100 MB)'**
+  String get searchKwLarge;
+
+  /// No description provided for @searchKwToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get searchKwToday;
+
+  /// No description provided for @searchKwWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get searchKwWeek;
+
+  /// No description provided for @searchTermsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Search words for {language} couldn\'t be loaded'**
+  String searchTermsLoadError(String language);
+
+  /// No description provided for @searchSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchSettingsTitle;
+
+  /// No description provided for @searchSettingsAlsoSearchIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Also search in'**
+  String get searchSettingsAlsoSearchIn;
+
+  /// No description provided for @searchSettingsAlsoSearchInHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart words like \'video\' or \'cloud\' also work in this language.'**
+  String get searchSettingsAlsoSearchInHelp;
+
+  /// No description provided for @searchSettingsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get searchSettingsNone;
+
+  /// No description provided for @searchSettingsAlreadyIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'{language} (already included)'**
+  String searchSettingsAlreadyIncluded(String language);
+
+  /// No description provided for @searchSettingsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Type words like \'video\', \'pdf\', \'whatsapp\', \'hidden\' or \'large\' to filter. Tap ✕ on a chip to search the name instead.'**
+  String get searchSettingsTip;
+
+  /// No description provided for @searchOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchOpen;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search files'**
+  String get searchHint;
+
+  /// No description provided for @searchClearText.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get searchClearText;
+
+  /// No description provided for @searchChipType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get searchChipType;
+
+  /// No description provided for @searchChipTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} types'**
+  String searchChipTypes(int count);
+
+  /// No description provided for @searchChipSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get searchChipSource;
+
+  /// No description provided for @searchChipDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get searchChipDate;
+
+  /// No description provided for @searchDateToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get searchDateToday;
+
+  /// No description provided for @searchDateWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get searchDateWeek;
+
+  /// No description provided for @searchDateMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get searchDateMonth;
+
+  /// No description provided for @searchDateYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get searchDateYear;
+
+  /// No description provided for @searchDateCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get searchDateCustom;
+
+  /// No description provided for @searchDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} – {to}'**
+  String searchDateRange(String from, String to);
+
+  /// No description provided for @searchDateSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Since {from}'**
+  String searchDateSince(String from);
+
+  /// No description provided for @searchChipSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get searchChipSize;
+
+  /// No description provided for @searchSizeOver.
+  ///
+  /// In en, this message translates to:
+  /// **'> {size}'**
+  String searchSizeOver(String size);
+
+  /// No description provided for @searchSizeUnder.
+  ///
+  /// In en, this message translates to:
+  /// **'< {size}'**
+  String searchSizeUnder(String size);
+
+  /// No description provided for @searchSizeTiny.
+  ///
+  /// In en, this message translates to:
+  /// **'Tiny (< 10 KB)'**
+  String get searchSizeTiny;
+
+  /// No description provided for @searchSizeBetween.
+  ///
+  /// In en, this message translates to:
+  /// **'{min} – {max}'**
+  String searchSizeBetween(String min, String max);
+
+  /// No description provided for @searchSizeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get searchSizeCustom;
+
+  /// No description provided for @searchSizeCustomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get searchSizeCustomTitle;
+
+  /// No description provided for @searchSizeMinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'At least (MB)'**
+  String get searchSizeMinLabel;
+
+  /// No description provided for @searchSizeMaxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'At most (MB)'**
+  String get searchSizeMaxLabel;
+
+  /// No description provided for @searchSizeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The minimum can\'t be larger than the maximum'**
+  String get searchSizeInvalid;
+
+  /// No description provided for @searchChipHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden files'**
+  String get searchChipHidden;
+
+  /// No description provided for @searchHiddenInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Include hidden files'**
+  String get searchHiddenInclude;
+
+  /// No description provided for @searchHiddenOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only hidden files'**
+  String get searchHiddenOnly;
+
+  /// No description provided for @searchOnlyIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Only in {folder}'**
+  String searchOnlyIn(String folder);
+
+  /// No description provided for @searchTokenExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'Type: .{ext}'**
+  String searchTokenExtension(String ext);
+
+  /// No description provided for @searchTokenAsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Search names for “{word}” instead'**
+  String searchTokenAsName(String word);
+
+  /// No description provided for @searchRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches'**
+  String get searchRecent;
+
+  /// No description provided for @searchSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Try'**
+  String get searchSuggestions;
+
+  /// No description provided for @searchSuggestLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large files'**
+  String get searchSuggestLarge;
+
+  /// No description provided for @searchSuggestDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get searchSuggestDownloads;
+
+  /// No description provided for @searchSuggestPdfs.
+  ///
+  /// In en, this message translates to:
+  /// **'PDFs'**
+  String get searchSuggestPdfs;
+
+  /// No description provided for @searchSuggestHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden files'**
+  String get searchSuggestHidden;
+
+  /// No description provided for @searchSuggestWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get searchSuggestWeek;
+
+  /// No description provided for @searchNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No files match'**
+  String get searchNoMatch;
+
+  /// No description provided for @searchClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get searchClearFilters;
+
+  /// No description provided for @searchWordsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Search words for {languages} couldn\'t be loaded'**
+  String searchWordsLoadError(String languages);
+
+  /// No description provided for @searchDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get searchDone;
+
   /// No description provided for @browseLoadError.
   ///
   /// In en, this message translates to:
@@ -3531,6 +3861,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The old zip was kept. The new one is saved as {name}'**
   String archiveReplaceFailed(String name);
+
+  /// No description provided for @collectionsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags & favorites'**
+  String get collectionsOpen;
+
+  /// No description provided for @collectionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags & favorites'**
+  String get collectionsTitle;
+
+  /// No description provided for @collectionsFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get collectionsFavorites;
+
+  /// No description provided for @collectionsTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get collectionsTags;
+
+  /// No description provided for @collectionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Tag files from Browse, or set a swipe direction to “Add tag” in swipe settings.'**
+  String get collectionsEmpty;
+
+  /// No description provided for @collectionsFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files} =1{1 file} other{{count} files}}'**
+  String collectionsFileCount(int count);
+
+  /// No description provided for @collectionsTagMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag options'**
+  String get collectionsTagMenu;
+
+  /// No description provided for @tagMenuEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename or change color'**
+  String get tagMenuEdit;
+
+  /// No description provided for @tagMenuDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag'**
+  String get tagMenuDelete;
+
+  /// No description provided for @tagEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit tag'**
+  String get tagEditTitle;
+
+  /// No description provided for @tagSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get tagSave;
+
+  /// No description provided for @tagDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag “{name}”?'**
+  String tagDeleteTitle(String name);
+
+  /// No description provided for @tagDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files have this tag.} =1{The file stays; only the tag is removed.} other{The {count} files stay; only the tag is removed.}}'**
+  String tagDeleteBody(int count);
+
+  /// No description provided for @tagDeleteUsedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Used in: {places}. That direction will show “Tag no longer exists” until you pick another.'**
+  String tagDeleteUsedIn(String places);
+
+  /// No description provided for @tagUsedCurrentSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'current swipe setup'**
+  String get tagUsedCurrentSetup;
+
+  /// No description provided for @tagDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get tagDeleteConfirm;
+
+  /// No description provided for @tagDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag “{name}” deleted'**
+  String tagDeleted(String name);
+
+  /// No description provided for @tagGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This tag was deleted'**
+  String get tagGone;
+
+  /// No description provided for @fileMenuFavoriteAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get fileMenuFavoriteAdd;
+
+  /// No description provided for @fileMenuFavoriteRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get fileMenuFavoriteRemove;
+
+  /// No description provided for @fileMenuTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags…'**
+  String get fileMenuTags;
+
+  /// No description provided for @selectionTagsMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags & favorites…'**
+  String get selectionTagsMenu;
+
+  /// No description provided for @selectionTagAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag…'**
+  String get selectionTagAdd;
+
+  /// No description provided for @selectionTagRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove tag…'**
+  String get selectionTagRemove;
+
+  /// No description provided for @tagRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove a tag'**
+  String get tagRemoveTitle;
+
+  /// No description provided for @tagRemoveNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None of these files have tags'**
+  String get tagRemoveNone;
+
+  /// No description provided for @fileTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get fileTagsTitle;
+
+  /// No description provided for @tagAddedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{All files already had “{tag}”} =1{Tagged 1 file “{tag}”} other{Tagged {count} files “{tag}”}}'**
+  String tagAddedSummary(int count, String tag);
+
+  /// No description provided for @tagRemovedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No file had “{tag}”} =1{Removed “{tag}” from 1 file} other{Removed “{tag}” from {count} files}}'**
+  String tagRemovedSummary(int count, String tag);
+
+  /// No description provided for @favoriteAddedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Already in favorites} =1{Added 1 file to favorites} other{Added {count} files to favorites}}'**
+  String favoriteAddedSummary(int count);
+
+  /// No description provided for @favoriteRemovedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Not in favorites} =1{Removed 1 file from favorites} other{Removed {count} files from favorites}}'**
+  String favoriteRemovedSummary(int count);
+
+  /// No description provided for @tagWriteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the change. Try again'**
+  String get tagWriteError;
 }
 
 class _AppLocalizationsDelegate

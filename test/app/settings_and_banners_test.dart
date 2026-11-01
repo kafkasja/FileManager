@@ -64,11 +64,13 @@ void main() {
       for (final s in app.container.read(settingsSectionsProvider)) s.order,
     ];
     expect(orders, [...orders]..sort());
-    expect(orders.take(8), [100, 200, 250, 300, 350, 400, 500, 900]);
+    expect(orders.take(9), [100, 200, 250, 260, 300, 350, 400, 500, 900]);
     expect(find.text('Appearance'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Version 0.1.0'), 200);
     expect(find.text('About'), findsOneWidget);
     expect(find.text('Version 0.1.0'), findsOneWidget);
+    // Scrolling disposed list rows' drift streams: let their close timers run.
+    await tester.pumpAndSettle();
   });
 
   testWidgets('Permissions section shows each state and its action', (

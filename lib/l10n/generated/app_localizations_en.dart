@@ -1723,6 +1723,202 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browseEmpty => 'No files here';
 
   @override
+  String searchKwType(String name) {
+    return 'Type: $name';
+  }
+
+  @override
+  String searchKwSource(String name) {
+    return 'Source: $name';
+  }
+
+  @override
+  String get searchKwHidden => 'Hidden files';
+
+  @override
+  String get searchKwTiny => 'Tiny (< 10 KB)';
+
+  @override
+  String get searchKwLarge => 'Large (> 100 MB)';
+
+  @override
+  String get searchKwToday => 'Today';
+
+  @override
+  String get searchKwWeek => 'Last 7 days';
+
+  @override
+  String searchTermsLoadError(String language) {
+    return 'Search words for $language couldn\'t be loaded';
+  }
+
+  @override
+  String get searchSettingsTitle => 'Search';
+
+  @override
+  String get searchSettingsAlsoSearchIn => 'Also search in';
+
+  @override
+  String get searchSettingsAlsoSearchInHelp =>
+      'Smart words like \'video\' or \'cloud\' also work in this language.';
+
+  @override
+  String get searchSettingsNone => 'None';
+
+  @override
+  String searchSettingsAlreadyIncluded(String language) {
+    return '$language (already included)';
+  }
+
+  @override
+  String get searchSettingsTip =>
+      'Type words like \'video\', \'pdf\', \'whatsapp\', \'hidden\' or \'large\' to filter. Tap ✕ on a chip to search the name instead.';
+
+  @override
+  String get searchOpen => 'Search';
+
+  @override
+  String get searchHint => 'Search files';
+
+  @override
+  String get searchClearText => 'Clear search';
+
+  @override
+  String get searchChipType => 'Type';
+
+  @override
+  String searchChipTypes(int count) {
+    return '$count types';
+  }
+
+  @override
+  String get searchChipSource => 'Source';
+
+  @override
+  String get searchChipDate => 'Date';
+
+  @override
+  String get searchDateToday => 'Today';
+
+  @override
+  String get searchDateWeek => 'Last 7 days';
+
+  @override
+  String get searchDateMonth => 'This month';
+
+  @override
+  String get searchDateYear => 'This year';
+
+  @override
+  String get searchDateCustom => 'Custom…';
+
+  @override
+  String searchDateRange(String from, String to) {
+    return '$from – $to';
+  }
+
+  @override
+  String searchDateSince(String from) {
+    return 'Since $from';
+  }
+
+  @override
+  String get searchChipSize => 'Size';
+
+  @override
+  String searchSizeOver(String size) {
+    return '> $size';
+  }
+
+  @override
+  String searchSizeUnder(String size) {
+    return '< $size';
+  }
+
+  @override
+  String get searchSizeTiny => 'Tiny (< 10 KB)';
+
+  @override
+  String searchSizeBetween(String min, String max) {
+    return '$min – $max';
+  }
+
+  @override
+  String get searchSizeCustom => 'Custom…';
+
+  @override
+  String get searchSizeCustomTitle => 'File size';
+
+  @override
+  String get searchSizeMinLabel => 'At least (MB)';
+
+  @override
+  String get searchSizeMaxLabel => 'At most (MB)';
+
+  @override
+  String get searchSizeInvalid =>
+      'The minimum can\'t be larger than the maximum';
+
+  @override
+  String get searchChipHidden => 'Hidden files';
+
+  @override
+  String get searchHiddenInclude => 'Include hidden files';
+
+  @override
+  String get searchHiddenOnly => 'Only hidden files';
+
+  @override
+  String searchOnlyIn(String folder) {
+    return 'Only in $folder';
+  }
+
+  @override
+  String searchTokenExtension(String ext) {
+    return 'Type: .$ext';
+  }
+
+  @override
+  String searchTokenAsName(String word) {
+    return 'Search names for “$word” instead';
+  }
+
+  @override
+  String get searchRecent => 'Recent searches';
+
+  @override
+  String get searchSuggestions => 'Try';
+
+  @override
+  String get searchSuggestLarge => 'Large files';
+
+  @override
+  String get searchSuggestDownloads => 'Downloads';
+
+  @override
+  String get searchSuggestPdfs => 'PDFs';
+
+  @override
+  String get searchSuggestHidden => 'Hidden files';
+
+  @override
+  String get searchSuggestWeek => 'This week';
+
+  @override
+  String get searchNoMatch => 'No files match';
+
+  @override
+  String get searchClearFilters => 'Clear filters';
+
+  @override
+  String searchWordsLoadError(String languages) {
+    return 'Search words for $languages couldn\'t be loaded';
+  }
+
+  @override
+  String get searchDone => 'Done';
+
+  @override
   String get browseLoadError => 'Couldn\'t load the files.';
 
   @override
@@ -2503,4 +2699,161 @@ class AppLocalizationsEn extends AppLocalizations {
   String archiveReplaceFailed(String name) {
     return 'The old zip was kept. The new one is saved as $name';
   }
+
+  @override
+  String get collectionsOpen => 'Tags & favorites';
+
+  @override
+  String get collectionsTitle => 'Tags & favorites';
+
+  @override
+  String get collectionsFavorites => 'Favorites';
+
+  @override
+  String get collectionsTags => 'Tags';
+
+  @override
+  String get collectionsEmpty =>
+      'No tags yet. Tag files from Browse, or set a swipe direction to “Add tag” in swipe settings.';
+
+  @override
+  String collectionsFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+      zero: 'No files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get collectionsTagMenu => 'Tag options';
+
+  @override
+  String get tagMenuEdit => 'Rename or change color';
+
+  @override
+  String get tagMenuDelete => 'Delete tag';
+
+  @override
+  String get tagEditTitle => 'Edit tag';
+
+  @override
+  String get tagSave => 'Save';
+
+  @override
+  String tagDeleteTitle(String name) {
+    return 'Delete tag “$name”?';
+  }
+
+  @override
+  String tagDeleteBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The $count files stay; only the tag is removed.',
+      one: 'The file stays; only the tag is removed.',
+      zero: 'No files have this tag.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tagDeleteUsedIn(String places) {
+    return 'Used in: $places. That direction will show “Tag no longer exists” until you pick another.';
+  }
+
+  @override
+  String get tagUsedCurrentSetup => 'current swipe setup';
+
+  @override
+  String get tagDeleteConfirm => 'Delete';
+
+  @override
+  String tagDeleted(String name) {
+    return 'Tag “$name” deleted';
+  }
+
+  @override
+  String get tagGone => 'This tag was deleted';
+
+  @override
+  String get fileMenuFavoriteAdd => 'Add to favorites';
+
+  @override
+  String get fileMenuFavoriteRemove => 'Remove from favorites';
+
+  @override
+  String get fileMenuTags => 'Tags…';
+
+  @override
+  String get selectionTagsMenu => 'Tags & favorites…';
+
+  @override
+  String get selectionTagAdd => 'Add tag…';
+
+  @override
+  String get selectionTagRemove => 'Remove tag…';
+
+  @override
+  String get tagRemoveTitle => 'Remove a tag';
+
+  @override
+  String get tagRemoveNone => 'None of these files have tags';
+
+  @override
+  String get fileTagsTitle => 'Tags';
+
+  @override
+  String tagAddedSummary(int count, String tag) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tagged $count files “$tag”',
+      one: 'Tagged 1 file “$tag”',
+      zero: 'All files already had “$tag”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tagRemovedSummary(int count, String tag) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Removed “$tag” from $count files',
+      one: 'Removed “$tag” from 1 file',
+      zero: 'No file had “$tag”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String favoriteAddedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count files to favorites',
+      one: 'Added 1 file to favorites',
+      zero: 'Already in favorites',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String favoriteRemovedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Removed $count files from favorites',
+      one: 'Removed 1 file from favorites',
+      zero: 'Not in favorites',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagWriteError => 'Couldn\'t save the change. Try again';
 }

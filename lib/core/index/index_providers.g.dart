@@ -317,6 +317,45 @@ final class MediaIndexChangesProvider
 
 String _$mediaIndexChangesHash() => r'd90f8857232154c1cc2f73138647765ab3d65e93';
 
+/// Like [mediaIndexChanges], plus tag and favorite changes (B9).
+
+@ProviderFor(indexAndTagChanges)
+final indexAndTagChangesProvider = IndexAndTagChangesProvider._();
+
+/// Like [mediaIndexChanges], plus tag and favorite changes (B9).
+
+final class IndexAndTagChangesProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// Like [mediaIndexChanges], plus tag and favorite changes (B9).
+  IndexAndTagChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'indexAndTagChangesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$indexAndTagChangesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return indexAndTagChanges(ref);
+  }
+}
+
+String _$indexAndTagChangesHash() =>
+    r'a227a0fd573cd4b1cf16ea09f35041feef01e76e';
+
 @ProviderFor(thumbnailCache)
 final thumbnailCacheProvider = ThumbnailCacheProvider._();
 

@@ -3,6 +3,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/features/browse/data/recent_searches.dart';
+import 'package:kfm/features/tags/domain/tag.dart';
 import 'package:meta/meta.dart';
 
 /// The source cards on the All files page (TASK-B1), in display order.
@@ -202,4 +203,35 @@ class BrowseView {
     sort.field,
     sort.descending,
   );
+}
+
+/// B9: the files with one tag. Equal by tag id, so a rename keeps the view.
+class TagCollection extends BrowseCollection {
+  const new(this.tag);
+
+  final Tag tag;
+
+  @override
+  IndexQuery get query => IndexQuery(anyTagIds: {tag.id});
+
+  @override
+  bool operator ==(Object other) =>
+      other is TagCollection && other.tag.id == tag.id;
+
+  @override
+  int get hashCode => tag.id.hashCode;
+}
+
+/// B9: all favorites.
+class FavoritesCollection extends BrowseCollection {
+  const new();
+
+  @override
+  IndexQuery get query => const IndexQuery(favoritesOnly: true);
+
+  @override
+  bool operator ==(Object other) => other is FavoritesCollection;
+
+  @override
+  int get hashCode => (FavoritesCollection).hashCode;
 }

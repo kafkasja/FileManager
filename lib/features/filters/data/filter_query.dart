@@ -17,26 +17,12 @@ IndexQuery? toIndexQuery(
       : (base.kinds.isEmpty ? f.kinds : f.kinds.intersection(base.kinds));
   // `kinds: {}` would mean "all", never "none".
   if (f.kinds.isNotEmpty && kinds.isEmpty) return null;
-  final (from, to) = switch (f.date) {
-    DateAny() => (null, null),
-    DateThisMonth() => (
-      DateTime(now.year, now.month),
-      DateTime(now.year, now.month + 1),
-    ),
-    DateLastDays(:final days) => (
-      DateTime(now.year, now.month, now.day - days + 1),
-      null,
-    ),
-    DateRange(:final from, :final to) => (
-      DateTime(from.year, from.month, from.day),
-      DateTime(to.year, to.month, to.day + 1),
-    ),
-  };
+  final (:from, :to) = dateBounds(f.date, now);
   return base.copyWith(
     kinds: kinds,
     // Null keeps the base's value.
-    from: from?.toUtc,
-    to: to?.toUtc,
+    from: from == null ? null : () => from,
+    to: to == null ? null : () => to,
     minSizeBytes: f.minSizeBytes == null ? null : () => f.minSizeBytes,
     maxSizeBytes: f.maxSizeBytes == null ? null : () => f.maxSizeBytes,
     folderPaths: f.folderPaths,
@@ -51,4 +37,25 @@ IndexQuery? toIndexQuery(
     reviewed: reviewed == null ? null : () => reviewed,
     sources: f.sources,
   );
+}
+
+/// The bounds of [f] as UTC instants: local calendar days computed from
+/// [now], `from` inclusive, `to` exclusive. Null = no bound on that side.
+({DateTime? from, DateTime? to}) dateBounds(DateFilter f, DateTime now) {
+  final (from, to) = switch (f) {
+    DateAny() => (null, null),
+    DateThisMonth() => (
+      DateTime(now.year, now.month),
+      DateTime(now.year, now.month + 1),
+    ),
+    DateLastDays(:final days) => (
+      DateTime(now.year, now.month, now.day - days + 1),
+      null,
+    ),
+    DateRange(:final from, :final to) => (
+      DateTime(from.year, from.month, from.day),
+      DateTime(to.year, to.month, to.day + 1),
+    ),
+  };
+  return (from: from?.toUtc(), to: to?.toUtc());
 }

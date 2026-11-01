@@ -30,12 +30,24 @@ class FileResultsView extends ConsumerStatefulWidget {
     required this.query,
     this.leading = const [],
     this.showFiles = true,
+    this.highlight = const [],
+    this.empty,
+    this.asList,
     super.key,
   });
 
   final IndexQuery query;
   final List<Widget> leading;
   final bool showFiles;
+
+  /// B8: name words highlighted on the tiles.
+  final List<String> highlight;
+
+  /// B8: shown instead of "No files here" when nothing matches.
+  final WidgetBuilder? empty;
+
+  /// List rows instead of the grid; null = list only for non-visual kinds.
+  final bool? asList;
 
   @override
   ConsumerState<FileResultsView> createState() => _FileResultsViewState();
@@ -126,6 +138,9 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
       );
     }
     if (data.unavailable || data.items.isEmpty) {
+      if (widget.empty case final empty?) {
+        return SliverFillRemaining(hasScrollBody: false, child: empty(context));
+      }
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
@@ -167,8 +182,11 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
     }
 
     final asList =
-        query.kinds.isNotEmpty &&
-        !query.kinds.any((k) => k == FileKind.image || k == FileKind.video);
+        widget.asList ??
+        (query.kinds.isNotEmpty &&
+            !query.kinds.any(
+              (k) => k == FileKind.image || k == FileKind.video,
+            ));
     final body = asList
         ? SliverList.builder(
             key: _sliver,
@@ -187,6 +205,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                   file: f,
                   onTap: onTap,
                   highlightBig: highlightBig,
+                  highlight: widget.highlight,
                   menu: normal ? FileActionsMenuButton(file: f) : null,
                 ),
               );
@@ -217,6 +236,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                     showSize:
                         showSizes || query.sort.field == FileSortField.size,
                     highlightBig: highlightBig,
+                    highlight: widget.highlight,
                     menu: normal
                         ? FileActionsMenuButton(file: f, overlay: true)
                         : null,

@@ -41,6 +41,23 @@ const _audioExtensions = {
   'mp3', 'm4a', 'aac', 'wav', 'ogg', 'opus', 'flac', 'amr', 'mid', //
 };
 
+/// B8: extensions a bare search word is read as (`pdf`, `jpg`): every kind
+/// set above plus common other types. Any other extension still works when
+/// typed with a dot (`.xyz`).
+final Set<String> kKnownExtensions = Set.unmodifiable(<String>{
+  ..._imageExtensions,
+  ..._videoExtensions,
+  ..._audioExtensions,
+  ..._archiveExtensions,
+  ..._documentExtensions,
+  ...const {
+    'apk', 'html', 'htm', 'json', 'xml', 'log', 'csv', 'txt', 'svg', 'ics', //
+    'vcf', 'srt', 'torrent', 'exe', 'iso',
+    // Spellings of the search aliases (jpeg/jpg, tif/tiff, …).
+    'tif', 'tiff', 'mpg', 'mpeg', 'yml', 'yaml',
+  },
+});
+
 /// Lower-case extension without the dot, or '' when there is none.
 String extensionOf(String name) {
   final dot = name.lastIndexOf('.');

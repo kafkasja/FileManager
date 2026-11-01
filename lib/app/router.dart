@@ -10,11 +10,14 @@ import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
 import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
 import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
+import 'package:kfm/features/search/ui/search_screen.dart';
 import 'package:kfm/features/selection/ui/selected_files_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
 import 'package:kfm/features/stats/ui/stats_screen.dart';
 import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
+import 'package:kfm/features/tags/ui/collections_screen.dart';
+import 'package:kfm/features/tags/ui/tag_files_screen.dart';
 import 'package:kfm/features/trash/ui/trash_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -34,6 +37,14 @@ abstract final class AppRoutes {
 
   /// B6 "View selected".
   static const browseSelected = '/browse/selected';
+
+  /// B8 search; `extra` is the folder it was opened from (or null).
+  static const search = '/browse/search';
+
+  /// B9 Tags & favorites.
+  static const collections = '/browse/collections';
+  static const collectionFavorites = '/browse/collections/favorites';
+  static String collectionTagFor(int id) => '/browse/collections/tag/$id';
   static const trash = '/trash';
   static const settings = '/settings';
   static const customizeSwipes = '/settings/swipes';
@@ -127,6 +138,38 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'selected',
                     builder: (context, state) => const SelectedFilesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'collections',
+                    builder: (context, state) => const CollectionsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'favorites',
+                        builder: (context, state) => const CollectionScreen(
+                          collection: FavoritesCollection(),
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'tag/:id',
+                        redirect: (context, state) =>
+                            int.tryParse(state.pathParameters['id'] ?? '') ==
+                                null
+                            ? AppRoutes.collections
+                            : null,
+                        builder: (context, state) => TagFilesScreen(
+                          tagId: int.parse(state.pathParameters['id']!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'search',
+                    builder: (context, state) => SearchScreen(
+                      folder: switch (state.extra) {
+                        final String folder => folder,
+                        _ => null,
+                      },
+                    ),
                   ),
                 ],
               ),

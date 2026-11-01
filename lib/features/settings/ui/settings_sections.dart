@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
+import 'package:kfm/features/search/ui/search_settings_section.dart';
 import 'package:kfm/features/settings/ui/about_section.dart';
 import 'package:kfm/features/settings/ui/appearance_section.dart';
 import 'package:kfm/features/settings/ui/developer_section.dart';
@@ -33,6 +34,11 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 250,
       titleBuilder: (c) => c.l10n.settingsBrowse,
       builder: (_) => const BrowseSettingsSection(),
+    ),
+    SettingsSection(
+      order: 260,
+      titleBuilder: (c) => c.l10n.searchSettingsTitle,
+      builder: (_) => const SearchSettingsSection(),
     ),
     SettingsSection(
       order: 300,

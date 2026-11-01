@@ -55,7 +55,7 @@ final class RecentSearchesRepositoryProvider
 }
 
 String _$recentSearchesRepositoryHash() =>
-    r'f3c6902d15498d7468848cd41c0daa0da381c64c';
+    r'8d701a32ab51032f8591cb33c5603156c91071d2';
 
 @ProviderFor(recentSearches)
 final recentSearchesProvider = RecentSearchesProvider._();

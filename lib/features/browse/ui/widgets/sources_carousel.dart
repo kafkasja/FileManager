@@ -100,7 +100,9 @@ class _CollectionCard extends ConsumerWidget {
                     .read(recentSearchesRepositoryProvider)
                     .remove(search)
                     .fireAndForget(),
-              SourceCollection() => null,
+              SourceCollection() ||
+              TagCollection() ||
+              FavoritesCollection() => null,
             },
             child: Stack(
               fit: StackFit.expand,

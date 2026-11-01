@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
@@ -97,6 +99,24 @@ class BrowseScreen extends ConsumerWidget {
                 tooltip: l10n.selectionSelectAll,
                 icon: const Icon(Icons.select_all),
                 onPressed: () => unawaited(_selectAll(context, ref, view)),
+              ),
+            if (!selecting)
+              IconButton(
+                tooltip: l10n.searchOpen,
+                icon: const Icon(Icons.search),
+                onPressed: () => unawaited(
+                  context.push<void>(
+                    AppRoutes.search,
+                    extra: view.folderMode ? view.folder : null,
+                  ),
+                ),
+              ),
+            if (!selecting)
+              IconButton(
+                tooltip: l10n.collectionsOpen,
+                icon: const Icon(Icons.label_outline),
+                onPressed: () =>
+                    unawaited(context.push<void>(AppRoutes.collections)),
               ),
             if (!selecting)
               IconButton(

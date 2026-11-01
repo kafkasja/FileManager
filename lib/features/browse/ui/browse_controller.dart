@@ -134,7 +134,7 @@ class FilePages extends _$FilePages {
         false;
     ref
       ..listen(
-        mediaIndexChangesProvider,
+        changesFor(query),
         (_, _) => _reload.run(() => unawaited(_reloadNow())),
       )
       ..onDispose(_reload.cancel);
@@ -208,7 +208,7 @@ class FilePages extends _$FilePages {
 /// visible without All files access. Refreshes with the index (debounced).
 @riverpod
 Future<int> browseCount(Ref ref, IndexQuery query) async {
-  ref.watch(mediaIndexChangesProvider);
+  ref.watch(changesFor(query));
   final canSeeAll =
       ref.watch(storageAccessControllerProvider).value?.canSeeAllFiles ?? false;
   final visible = query.visible(canSeeAllFiles: canSeeAll);
@@ -255,7 +255,7 @@ Future<List<FolderEntry>> otherFolders(Ref ref, IndexQuery scope) async {
 /// newest file of any kind (shown as a type icon). Null = empty.
 @riverpod
 Future<FileRef?> collectionCover(Ref ref, IndexQuery query) async {
-  ref.watch(mediaIndexChangesProvider);
+  ref.watch(changesFor(query));
   final canSeeAll =
       ref.watch(storageAccessControllerProvider).value?.canSeeAllFiles ?? false;
   final dao = ref.watch(mediaIndexDaoProvider);

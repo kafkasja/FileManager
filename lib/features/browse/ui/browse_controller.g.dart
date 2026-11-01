@@ -204,7 +204,7 @@ final class FilePagesProvider
   }
 }
 
-String _$filePagesHash() => r'504618ee54348eb6efd7eebbdd1248d90704643e';
+String _$filePagesHash() => r'78039a7ebaa126ae98817ffcdb6d3c2bed143179';
 
 /// Keyset-paged results for any [IndexQuery] (Browse, B8 search, B9
 /// collections). Contract for B7's paged viewer: `items`, `hasMore`,
@@ -324,7 +324,7 @@ final class BrowseCountProvider
   }
 }
 
-String _$browseCountHash() => r'1063a31378824053bec2013239b8605bea23b5a6';
+String _$browseCountHash() => r'4bbb1b8ff2b4737b48f041943a3b79a2c0aa4f04';
 
 /// How many files [query] shows now (chip counts). 0 when nothing of it is
 /// visible without All files access. Refreshes with the index (debounced).
@@ -589,7 +589,7 @@ final class CollectionCoverProvider
   }
 }
 
-String _$collectionCoverHash() => r'699ea71e6447cc59ef6f1536e55b7f1554eddead';
+String _$collectionCoverHash() => r'892fa514d7d9b4e34f5bab0f38f10847a8402527';
 
 /// A carousel card's cover: the newest photo or video of [query], else its
 /// newest file of any kind (shown as a type icon). Null = empty.

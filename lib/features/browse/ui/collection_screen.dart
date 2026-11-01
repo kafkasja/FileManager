@@ -47,9 +47,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         ref.watch(storageAccessControllerProvider).value?.canSeeAllFiles ??
         false;
     final spacing = context.tokens.spacing;
-    // A recent search keeps its own sort; sources follow the Browse sort.
+    // A recent search keeps its own sort; sources, tags and Favorites
+    // follow the Browse sort.
     final scope = switch (collection) {
-      SourceCollection() => collection.query.copyWith(sort: sort),
+      SourceCollection() ||
+      TagCollection() ||
+      FavoritesCollection() => collection.query.copyWith(sort: sort),
       RecentCollection() => collection.query,
     };
     final base = _kinds.isEmpty ? scope : scope.copyWith(kinds: _kinds);
@@ -61,7 +64,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             _kinds.any((k) => !mediaKinds.contains(k)) ||
             switch (collection) {
               SourceCollection(:final source) => source.needsAllFiles,
-              RecentCollection() => false,
+              RecentCollection() ||
+              TagCollection() ||
+              FavoritesCollection() => false,
             });
     final banner = [
       if (needsAccess) const SliverToBoxAdapter(child: AccessBanner()),
@@ -110,7 +115,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   setState(() => _kinds = toggleKind(_kinds, kind, add: add)),
             ),
             const SelectionHint(),
-            if (collection is SourceCollection)
+            if (collection is! RecentCollection)
               Padding(
                 padding: EdgeInsetsDirectional.symmetric(
                   horizontal: spacing * 2,

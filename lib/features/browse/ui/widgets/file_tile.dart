@@ -4,6 +4,7 @@ import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/core/utils/text_ranges.dart';
 
 /// Grid tile (TASK-B1): the thumbnail; non-media files show their name and
 /// an extension badge over the type icon.
@@ -14,6 +15,7 @@ class FileGridTile extends StatelessWidget {
     this.showSize = false,
     this.highlightBig = false,
     this.menu,
+    this.highlight = const [],
     super.key,
   });
 
@@ -21,6 +23,9 @@ class FileGridTile extends StatelessWidget {
 
   /// Null = a tap does nothing (B6 Edit mode on an unselected file).
   final VoidCallback? onTap;
+
+  /// B8: name words to highlight (search matches).
+  final List<String> highlight;
 
   /// B4's ⋮ at the bottom-end (Normal mode only).
   final Widget? menu;
@@ -123,10 +128,10 @@ class FileGridTile extends StatelessWidget {
                     start: spacing / 2,
                     end: spacing / 2,
                     bottom: spacing / 2,
-                    child: Text(
-                      file.name,
+                    child: HighlightedName(
+                      name: file.name,
+                      words: highlight,
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: text.labelSmall,
                     ),
@@ -150,6 +155,7 @@ class FileListRow extends StatelessWidget {
     required this.onTap,
     this.highlightBig = false,
     this.menu,
+    this.highlight = const [],
     super.key,
   });
 
@@ -157,6 +163,9 @@ class FileListRow extends StatelessWidget {
 
   /// Null = a tap does nothing (B6 Edit mode on an unselected file).
   final VoidCallback? onTap;
+
+  /// B8: name words to highlight (search matches).
+  final List<String> highlight;
 
   /// B4's ⋮ as the trailing widget (Normal mode only).
   final Widget? menu;
@@ -177,7 +186,7 @@ class FileListRow extends StatelessWidget {
           child: Thumbnail(file: file),
         ),
       ),
-      title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: HighlightedName(name: file.name, words: highlight),
       subtitle: Text(
         [
           formatBytes(file.sizeBytes, locale: locale),
@@ -190,6 +199,57 @@ class FileListRow extends StatelessWidget {
               )
             : null,
       ),
+    );
+  }
+}
+
+/// A file name with the parts matching [words] in bold, primary color (B8).
+class HighlightedName extends StatelessWidget {
+  const new({
+    required this.name,
+    this.words = const [],
+    this.maxLines = 1,
+    this.textAlign = TextAlign.start,
+    this.style,
+    super.key,
+  });
+
+  final String name;
+  final List<String> words;
+  final int maxLines;
+  final TextAlign textAlign;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final ranges = highlightRanges(name, words);
+    if (ranges.isEmpty) {
+      return Text(
+        name,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+        textAlign: textAlign,
+        style: style,
+      );
+    }
+    final strong = TextStyle(
+      fontWeight: FontWeight.bold,
+      color: Theme.of(context).colorScheme.primary,
+    );
+    final spans = <TextSpan>[];
+    var at = 0;
+    for (final (start, end) in ranges) {
+      if (start > at) spans.add(TextSpan(text: name.substring(at, start)));
+      spans.add(TextSpan(text: name.substring(start, end), style: strong));
+      at = end;
+    }
+    if (at < name.length) spans.add(TextSpan(text: name.substring(at)));
+    return Text.rich(
+      TextSpan(children: spans),
+      maxLines: maxLines,
+      overflow: TextOverflow.ellipsis,
+      textAlign: textAlign,
+      style: style,
     );
   }
 }

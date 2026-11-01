@@ -7,6 +7,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
+import 'package:kfm/features/tags/ui/tag_actions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'file_actions_menu.g.dart';
@@ -23,9 +24,13 @@ class FileMenuItem {
     required this.onSelected,
     this.order = 0,
     this.isAvailable = _always,
+    this.labelFor,
   });
 
   final String Function(BuildContext context) label;
+
+  /// A label that depends on the file (B9: Add to / Remove from favorites).
+  final String Function(BuildContext context, FileRef file)? labelFor;
   final IconData icon;
 
   /// Lower first.
@@ -80,6 +85,7 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
       onSelected: (context, ref, f) => deleteFiles(context, ref, [f]),
     ),
     ...archiveFileMenuItems,
+    ...tagFileMenuItems,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );
 
@@ -120,7 +126,9 @@ class FileActionsMenuButton extends ConsumerWidget {
             value: item,
             child: ListTile(
               leading: Icon(item.icon),
-              title: Text(item.label(context)),
+              title: Text(
+                item.labelFor?.call(context, file) ?? item.label(context),
+              ),
             ),
           ),
       ],

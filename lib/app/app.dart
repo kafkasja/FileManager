@@ -52,7 +52,10 @@ class _AppState extends ConsumerState<App> {
       // P2: tags/favorites follow files whose id changes.
       ..watch(fileIdRekeyerProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).
-      ..watch(startupMaintenanceProvider);
+      ..watch(startupMaintenanceProvider)
+      // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
+      // the set stays loaded without rebuilding the app on each change.
+      ..listen(favoriteIdsProvider, (_, _) {});
     return MaterialApp.router(
       routerConfig: ref.watch(routerProvider),
       onGenerateTitle: (context) => context.l10n.appTitle,
