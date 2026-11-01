@@ -6182,6 +6182,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{No folders shared} =1{1 shared folder} other{{count} shared folders}}'**
   String shareClientFolders(int count);
+
+  /// No description provided for @connectDisconnectedStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} stopped sharing.'**
+  String connectDisconnectedStopped(String name);
+
+  /// No description provided for @connectDisconnectedNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Lost the connection to {name}. Check that both devices are on the same Wi-Fi.'**
+  String connectDisconnectedNetwork(String name);
+
+  /// No description provided for @shareKeepOpenDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing stops when you leave this screen.'**
+  String get shareKeepOpenDesktop;
 }
 
 class _AppLocalizationsDelegate

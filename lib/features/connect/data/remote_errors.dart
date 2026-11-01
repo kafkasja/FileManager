@@ -17,8 +17,12 @@ class RemoteApiException implements Exception {
 
 /// Why a remote device couldn't be reached.
 enum RemoteUnavailableReason {
-  /// Connection refused, reset, no route, DNS, TLS failure other than the pin.
+  /// Connection reset, no route, DNS, TLS failure other than the pin.
   network,
+
+  /// Nothing listens on the port any more (N5: the other device stopped
+  /// sharing).
+  refused,
 
   /// Connect or request timeout.
   timeout,

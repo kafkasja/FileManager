@@ -27,6 +27,15 @@ abstract final class ApiRoutes {
   static const roots = '/v1/roots';
   static const files = '/v1/files';
   static const uploads = '/v1/uploads';
+
+  /// `GET /v1/files/<id>/content` (N7 serves it; N5's media proxy calls
+  /// it). The server id is percent-encoded into one path segment.
+  static String fileContent(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/content';
+
+  /// `GET /v1/files/<id>/thumb` (N7; N5's remote thumbnails).
+  static String fileThumb(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/thumb';
 }
 
 /// Routes that skip `authenticate` (exact method + path).

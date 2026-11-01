@@ -944,6 +944,56 @@ final class CameraAccessProvider
 
 String _$cameraAccessHash() => r'e2a5b19d99a79e0546291460a0c93d9c5312f0a4';
 
+/// Whether going to the background stops sharing (N5): phones yes; on
+/// desktop the share screen stays usable behind other windows.
+
+@ProviderFor(lifecycleStopsSharing)
+final lifecycleStopsSharingProvider = LifecycleStopsSharingProvider._();
+
+/// Whether going to the background stops sharing (N5): phones yes; on
+/// desktop the share screen stays usable behind other windows.
+
+final class LifecycleStopsSharingProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Whether going to the background stops sharing (N5): phones yes; on
+  /// desktop the share screen stays usable behind other windows.
+  LifecycleStopsSharingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lifecycleStopsSharingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lifecycleStopsSharingHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return lifecycleStopsSharing(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$lifecycleStopsSharingHash() =>
+    r'87d7f3f8e8c4fa810e7f992a77d7f7f83fe44a81';
+
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 
 @ProviderFor(shareServerRoutes)
@@ -994,7 +1044,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'795ec49e93d23823b1ca93d4ee0e70fc386e8f64';
+String _$shareServerRoutesHash() => r'629dc93c02a3f18cab225a4f62eba32b436700b5';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

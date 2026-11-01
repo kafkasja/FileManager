@@ -18,6 +18,7 @@ import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/routes/roots_routes.dart';
+import 'package:kfm/features/connect/data/routes/session_routes.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/data/share_scope_store.dart';
@@ -201,6 +202,11 @@ PairingClient pairingClient(Ref ref) =>
 @Riverpod(keepAlive: true)
 CameraAccess cameraAccess(Ref ref) => const PlatformCameraAccess();
 
+/// Whether going to the background stops sharing (N5): phones yes; on
+/// desktop the share screen stays usable behind other windows.
+@Riverpod(keepAlive: true)
+bool lifecycleStopsSharing(Ref ref) => Platform.isAndroid || Platform.isIOS;
+
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 @Riverpod(keepAlive: true)
 List<ServerRoute> shareServerRoutes(Ref ref) {
@@ -226,6 +232,7 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
     ),
     pairCancelRoute(ref.watch(acceptGateProvider)),
     rootsRoute(ref.watch(shareScopeStoreProvider)),
+    ...sessionRoutes(ref.watch(clientSessionStoreProvider)),
   ];
 }
 

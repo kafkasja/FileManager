@@ -2846,5 +2846,22 @@
         "type": "int"
       }
     }
-  }
+  },
+  "connectDisconnectedStopped": "{name} stopped sharing.",
+  "@connectDisconnectedStopped": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectDisconnectedNetwork": "Lost the connection to {name}. Check that both devices are on the same Wi-Fi.",
+  "@connectDisconnectedNetwork": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareKeepOpenDesktop": "Sharing stops when you leave this screen."
 }

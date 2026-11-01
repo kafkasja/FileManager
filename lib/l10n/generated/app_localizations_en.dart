@@ -4332,4 +4332,18 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String connectDisconnectedStopped(String name) {
+    return '$name stopped sharing.';
+  }
+
+  @override
+  String connectDisconnectedNetwork(String name) {
+    return 'Lost the connection to $name. Check that both devices are on the same Wi-Fi.';
+  }
+
+  @override
+  String get shareKeepOpenDesktop =>
+      'Sharing stops when you leave this screen.';
 }

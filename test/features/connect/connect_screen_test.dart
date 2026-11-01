@@ -244,16 +244,37 @@ void main() {
       findsOneWidget,
     );
 
-    // Polls GET /v1/roots every 5 s while empty; 404 (N4 not built) is
-    // ignored.
+    // N5: a 5 s heartbeat (GET /v1/session) with the token; while no
+    // roots are shared each beat also re-reads them.
+    http
+      ..on('GET', ApiRoutes.session, (_) => const {})
+      ..on(
+        'GET',
+        ApiRoutes.roots,
+        (_) => const {
+          'roots': [
+            {'id': 'r1', 'label': 'Camera', 'readOnly': true},
+          ],
+        },
+      );
     await tester.pump(const Duration(seconds: 5));
     await _settle(tester);
-    expect(http.calls.last.path, ApiRoutes.roots);
-    expect(http.calls.last.token, 't');
+    expect(
+      http.calls.map((c) => c.path),
+      containsAllInOrder([ApiRoutes.session, ApiRoutes.roots]),
+    );
+    expect(http.calls.first.token, 't');
+    expect(find.text('1 shared folder'), findsOneWidget);
+
+    // N5: the connection outlives the screen.
+    await tester.pageBack();
+    await _settle(tester);
+    await tester.tap(find.text('Connect to a device'));
+    await _settle(tester);
     expect(find.text('Connected to Phone A'), findsOneWidget);
 
-    // Revoked on the other device: the next request gets 401.
-    http.fail('GET', ApiRoutes.roots, ApiErrorCode.unauthorized);
+    // Revoked on the other device: the next heartbeat gets 401.
+    http.fail('GET', ApiRoutes.session, ApiErrorCode.unauthorized);
     await tester.pump(const Duration(seconds: 5));
     await _settle(tester);
     expect(find.text('Disconnected from Phone A'), findsOneWidget);

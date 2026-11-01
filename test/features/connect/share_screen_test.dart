@@ -113,7 +113,7 @@ void main() {
   late FakeDiscovery discovery;
   var now = DateTime(2026, 11);
 
-  Future<TestApp> pump(WidgetTester tester) {
+  Future<TestApp> pump(WidgetTester tester, {bool stopsInBackground = false}) {
     awake = _FakeAwake();
     final identity = _FakeIdentity();
     server = _FakeServer(identity);
@@ -127,6 +127,7 @@ void main() {
         shareServerProvider.overrideWithValue(server),
         shareDiscoveryProvider.overrideWithValue(discovery),
         sharedFolderFsProvider.overrideWithValue(_FakeFolderFs()),
+        lifecycleStopsSharingProvider.overrideWithValue(stopsInBackground),
         pathGuardProvider.overrideWithValue(
           PathGuard(resolver: (p) async => p),
         ),
@@ -461,6 +462,47 @@ void main() {
       container.read(shareServerControllerProvider),
       same(ShareServerState.stopped),
     );
+  });
+
+  testWidgets('N5: on a phone, going to the background stops sharing; '
+      'inactive keeps it; resume does not restart', (tester) async {
+    await pump(tester, stopsInBackground: true);
+    await openShare(tester);
+    expect(server.isRunning, isTrue);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pumpAndSettle();
+    expect(server.isRunning, isTrue);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pumpAndSettle();
+    expect(server.isRunning, isFalse);
+    // No frames while hidden: check the screen after coming back.
+    tester.binding
+      ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(server.isRunning, isFalse);
+    expect(find.text('Sharing stopped'), findsOneWidget);
+  });
+
+  testWidgets('N5: on desktop the background keeps sharing (hint says so)', (
+    tester,
+  ) async {
+    await pump(tester);
+    await openShare(tester);
+    final hint = find.text('Sharing stops when you leave this screen.');
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(hint, findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pumpAndSettle();
+    expect(server.isRunning, isTrue);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
   });
 
   test('a stop while starting shuts the late server down', () async {

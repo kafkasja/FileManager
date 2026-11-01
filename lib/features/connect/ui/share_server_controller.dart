@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:flutter/widgets.dart';
+
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
@@ -10,15 +12,40 @@ part 'share_server_controller.g.dart';
 
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
 /// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle hook here. Errors land in [ShareServerState.error] (rule 8).
+/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
 @Riverpod(keepAlive: true)
 class ShareServerController extends _$ShareServerController {
   /// Bumped by every start/stop, so a start that finishes after a stop
   /// (screen closed while "Preparing…") shuts its server down again.
   int _generation = 0;
 
+  /// N5: hidden/paused/detached stops sharing on phones (no server keeps
+  /// running in the background). Only set while running.
+  AppLifecycleListener? _lifecycle;
+
   @override
-  ShareServerState build() => ShareServerState.stopped;
+  ShareServerState build() {
+    ref.onDispose(_stopWatchingLifecycle);
+    return ShareServerState.stopped;
+  }
+
+  void _watchLifecycle() {
+    if (_lifecycle != null || !ref.read(lifecycleStopsSharingProvider)) return;
+    _lifecycle = AppLifecycleListener(
+      onStateChange: (s) {
+        if (s == AppLifecycleState.hidden ||
+            s == AppLifecycleState.paused ||
+            s == AppLifecycleState.detached) {
+          unawaited(stopSharing());
+        }
+      },
+    );
+  }
+
+  void _stopWatchingLifecycle() {
+    _lifecycle?.dispose();
+    _lifecycle = null;
+  }
 
   Future<void> startSharing() async {
     if (state.status == ShareServerStatus.running ||
@@ -44,6 +71,7 @@ class ShareServerController extends _$ShareServerController {
       }
       state = next;
       if (next.status == ShareServerStatus.running) {
+        _watchLifecycle();
         unawaited(_advertise(next, gen));
       }
     } on Object catch (e) {
@@ -100,6 +128,7 @@ class ShareServerController extends _$ShareServerController {
   /// Safe to call from a widget's `dispose`: the state changes only after
   /// the first await (Riverpod forbids changes while the tree finalizes).
   Future<void> stopSharing() async {
+    _stopWatchingLifecycle();
     _generation++;
     ref.read(pairNonceStoreProvider).clear();
     ref.read(pairingSecretStoreProvider).clear();

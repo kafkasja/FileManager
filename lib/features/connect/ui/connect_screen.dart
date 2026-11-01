@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
+import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -62,25 +65,33 @@ class ConnectScreen extends ConsumerWidget {
                 name: name,
                 words: words,
               ),
-              ConnectConnected(:final result, :final roots) => RefreshIndicator(
-                onRefresh: controller.refreshRoots,
-                child: _Message(
-                  icon: Icons.check_circle_outline,
-                  title: l10n.connectConnected(result.peerName),
-                  body: roots.isEmpty
-                      ? l10n.connectNoFoldersYet(result.peerName)
-                      : l10n.connectFoldersShared(roots.length),
-                  actions: [
-                    OutlinedButton(
-                      onPressed: controller.disconnect,
-                      child: Text(l10n.connectDisconnect),
-                    ),
-                  ],
+              ConnectConnected(:final peerName, :final roots) =>
+                RefreshIndicator(
+                  onRefresh: controller.refreshRoots,
+                  child: _Message(
+                    icon: Icons.check_circle_outline,
+                    title: l10n.connectConnected(peerName),
+                    body: roots.isEmpty
+                        ? l10n.connectNoFoldersYet(peerName)
+                        : l10n.connectFoldersShared(roots.length),
+                    actions: [
+                      OutlinedButton(
+                        onPressed: () => unawaited(controller.disconnect()),
+                        child: Text(l10n.connectDisconnect),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              ConnectDisconnected(:final name) => _Message(
+              ConnectDisconnected(:final name, :final reason) => _Message(
                 icon: Icons.link_off,
-                title: l10n.connectDisconnected(name),
+                title: switch (reason) {
+                  DisconnectReason.remoteStopped =>
+                    l10n.connectDisconnectedStopped(name),
+                  DisconnectReason.networkLost =>
+                    l10n.connectDisconnectedNetwork(name),
+                  DisconnectReason.unauthorized ||
+                  DisconnectReason.userClosed => l10n.connectDisconnected(name),
+                },
                 actions: [
                   FilledButton(
                     onPressed: controller.choose,

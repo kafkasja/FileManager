@@ -334,9 +334,22 @@ final class PinnedClient implements FirstContactHttp {
         e,
       );
     } on SocketException catch (e) {
-      throw RemoteUnavailableException(RemoteUnavailableReason.network, e);
+      throw RemoteUnavailableException(
+        isConnectionRefused(e)
+            ? RemoteUnavailableReason.refused
+            : RemoteUnavailableReason.network,
+        e,
+      );
     } on HttpException catch (e) {
       throw RemoteUnavailableException(RemoteUnavailableReason.network, e);
     }
   }
+}
+
+/// Connection refused (N5): ECONNREFUSED 111 Linux/Android, 61 macOS/iOS;
+/// Windows reports WSAECONNREFUSED 10061 or ERROR_CONNECTION_REFUSED 1225
+/// (what dart:io gives there).
+bool isConnectionRefused(SocketException e) {
+  final code = e.osError?.errorCode;
+  return code == 111 || code == 61 || code == 10061 || code == 1225;
 }

@@ -4,9 +4,10 @@ import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
-import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connect_controller.g.dart';
@@ -64,22 +65,23 @@ final class ConnectWaiting extends ConnectState {
   final List<String> words;
 }
 
-/// Paired. Until N5's `RemoteConnectionController` exists the screen keeps
-/// the pinned client here and shows "Connected". [roots] starts with the
-/// accept answer and is refreshed (`GET /v1/roots`) while empty.
+/// Paired: mirrors [RemoteConnected] of the keepAlive
+/// `RemoteConnectionController` (N5), which owns the connection, so it
+/// survives closing this screen.
 final class ConnectConnected extends ConnectState {
-  const new(this.result, {required this.roots});
+  const new({required this.peerName, required this.roots});
 
-  final PairingSuccess result;
+  final String peerName;
   final List<RootDto> roots;
 }
 
-/// The other device ended the session (a request got 401): the token is
-/// dropped.
+/// The connection ended for [reason] (not this device's Disconnect); the
+/// token is dropped.
 final class ConnectDisconnected extends ConnectState {
-  const new(this.name);
+  const new(this.name, {this.reason = DisconnectReason.unauthorized});
 
   final String name;
+  final DisconnectReason reason;
 }
 
 final class ConnectFailed extends ConnectState {
@@ -95,25 +97,38 @@ final class ConnectFailed extends ConnectState {
 /// Result of a scanned QR value.
 enum ScanOutcome { started, notKfm, unsupportedVersion, ignored }
 
-/// How often the client asks for roots while none are shared (N3).
-const Duration kRootsPollInterval = Duration(seconds: 5);
-
 @riverpod
 class ConnectController extends _$ConnectController {
   PairingCancel? _cancel;
-  PairingSuccess? _connected;
-  Timer? _rootsPoll;
-  bool _refreshing = false;
 
   @override
   ConnectState build() {
-    ref.onDispose(() {
-      _cancel?.cancel();
-      _cancel = null;
-      // N5 takes the connection over; until then closing the screen ends it.
-      _dropConnection();
-    });
-    return const ConnectChoose();
+    ref
+      ..onDispose(() {
+        // Only a pairing in progress ends with the screen; the connection
+        // itself belongs to RemoteConnectionController (N5).
+        _cancel?.cancel();
+        _cancel = null;
+      })
+      ..listen(remoteConnectionControllerProvider, (_, next) {
+        switch (next) {
+          case RemoteConnected(:final peerName, :final roots):
+            _set(ConnectConnected(peerName: peerName, roots: roots));
+          case RemoteDisconnected(reason: DisconnectReason.userClosed):
+            _set(const ConnectChoose());
+          case RemoteDisconnected(:final peerName, :final reason):
+            _set(ConnectDisconnected(peerName, reason: reason));
+          case RemoteIdle():
+            break;
+        }
+      });
+    return switch (ref.read(remoteConnectionControllerProvider)) {
+      RemoteConnected(:final peerName, :final roots) => ConnectConnected(
+        peerName: peerName,
+        roots: roots,
+      ),
+      _ => const ConnectChoose(),
+    };
   }
 
   void choose() => _set(const ConnectChoose());
@@ -201,56 +216,16 @@ class ConnectController extends _$ConnectController {
     _set(const ConnectChoose());
   }
 
-  /// Closes the connection (until N5 owns it) and starts over.
-  void disconnect() {
-    _dropConnection();
+  /// Ends the connection (tells the other device) and starts over.
+  Future<void> disconnect() async {
+    await ref.read(remoteConnectionControllerProvider.notifier).disconnect();
     _set(const ConnectChoose());
   }
 
-  /// Pull-to-refresh / 5 s poll of the shared roots while the list is
-  /// empty. A 401 means the other device ended the session.
-  Future<void> refreshRoots() async {
-    final c = _connected;
-    if (c == null || _refreshing) return;
-    _refreshing = true;
-    try {
-      final r = await c.http.getJson(
-        ApiRoutes.roots,
-        decode: RootsResponseDto.fromJson,
-      );
-      if (!ref.mounted || !identical(c, _connected)) return;
-      _set(ConnectConnected(c, roots: r.roots));
-      if (r.roots.isNotEmpty) _stopPoll();
-    } on RemoteApiException catch (e) {
-      if (!ref.mounted || !identical(c, _connected)) return;
-      if (e.code == ApiErrorCode.unauthorized) {
-        _dropConnection();
-        _set(ConnectDisconnected(c.peerName));
-      }
-      // 404 until N4 serves /v1/roots; anything else: N5's heartbeat decides.
-    } on Object {
-      // Network blips: N5's heartbeat decides when the link is gone.
-    } finally {
-      _refreshing = false;
-    }
-  }
-
-  void _dropConnection() {
-    _stopPoll();
-    final c = _connected;
-    _connected = null;
-    if (c != null) {
-      // Memory only: the token dies with the connection (N3).
-      c.http
-        ..bearerToken = null
-        ..close();
-    }
-  }
-
-  void _stopPoll() {
-    _rootsPoll?.cancel();
-    _rootsPoll = null;
-  }
+  /// Pull-to-refresh of the shared roots (the heartbeat refreshes them
+  /// too). A 401 ends the connection.
+  Future<void> refreshRoots() =>
+      ref.read(remoteConnectionControllerProvider.notifier).refreshRoots();
 
   void retry() {
     final s = state;
@@ -277,16 +252,8 @@ class ConnectController extends _$ConnectController {
         return;
       }
       _cancel = null;
-      _dropConnection();
-      _connected = result;
-      final roots = result.accepted.roots;
-      _set(ConnectConnected(result, roots: roots));
-      if (roots.isEmpty) {
-        _rootsPoll = Timer.periodic(
-          kRootsPollInterval,
-          (_) => unawaited(refreshRoots()),
-        );
-      }
+      // The listener in build() turns this into ConnectConnected.
+      ref.read(remoteConnectionControllerProvider.notifier).connect(result);
     } on PairingException catch (e) {
       if (!ref.mounted || cancel.isCancelled) return;
       _cancel = null;

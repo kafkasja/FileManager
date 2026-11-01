@@ -199,7 +199,9 @@ class _Running extends ConsumerWidget {
         ],
         SizedBox(height: spacing * 2),
         Text(
-          l10n.shareKeepOpen,
+          ref.watch(lifecycleStopsSharingProvider)
+              ? l10n.shareKeepOpen
+              : l10n.shareKeepOpenDesktop,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

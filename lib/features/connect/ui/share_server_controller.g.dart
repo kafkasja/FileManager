@@ -10,19 +10,19 @@ part of 'share_server_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
 /// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle hook here. Errors land in [ShareServerState.error] (rule 8).
+/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
 
 @ProviderFor(ShareServerController)
 final shareServerControllerProvider = ShareServerControllerProvider._();
 
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
 /// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle hook here. Errors land in [ShareServerState.error] (rule 8).
+/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
 final class ShareServerControllerProvider
     extends $NotifierProvider<ShareServerController, ShareServerState> {
   /// Starts and stops "Share this device" (TASK-N1). The share screen calls
   /// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-  /// app-lifecycle hook here. Errors land in [ShareServerState.error] (rule 8).
+  /// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
   ShareServerControllerProvider._()
     : super(
         from: null,
@@ -51,11 +51,11 @@ final class ShareServerControllerProvider
 }
 
 String _$shareServerControllerHash() =>
-    r'af45fd99bd2e3b0a566090cf7be8d5e03a9a19c4';
+    r'0373e8f5416e2e5313e2fce2c2410cb982b3951a';
 
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
 /// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle hook here. Errors land in [ShareServerState.error] (rule 8).
+/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
 
 abstract class _$ShareServerController extends $Notifier<ShareServerState> {
   ShareServerState build();
