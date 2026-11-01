@@ -149,6 +149,24 @@ void main() {
     expect(find.text('1 selected · 3 B'), findsOneWidget);
   });
 
+  testWidgets('narrow phone (S22, 384 dp): the viewer buttons fit', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1080, 2316)
+      ..devicePixelRatio = 2.8125;
+    addTearDown(tester.view.reset);
+    await pumpApp(tester, files: _photos(3));
+    await _openBrowse(tester);
+    await tester.tap(_tile(_name(2)));
+    await tester.pumpAndSettle();
+    // A RenderFlex overflow would fail the test through FlutterError.
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.widgetWithText(FilledButton, 'Select'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Edit mode: Remove from selection, Undo brings it back', (
     tester,
   ) async {

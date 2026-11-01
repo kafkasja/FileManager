@@ -243,10 +243,15 @@ class _FileViewerState extends ConsumerState<FileViewer> {
                 alignment: AlignmentDirectional.bottomEnd,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 8,
-                    children: widget.actions,
+                  // Shrinks instead of overflowing on narrow screens.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 8,
+                      children: widget.actions,
+                    ),
                   ),
                 ),
               ),
@@ -475,13 +480,19 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
                 alignment: AlignmentDirectional.bottomEnd,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 8,
-                    children: [
-                      _DetailsButton(file: file),
-                      ...actions,
-                    ],
+                  // Shrinks instead of overflowing on narrow screens (S22:
+                  // ⓘ + 4 actions + Select overflowed by 34 px).
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 8,
+                      children: [
+                        _DetailsButton(file: file),
+                        ...actions,
+                      ],
+                    ),
                   ),
                 ),
               ),
