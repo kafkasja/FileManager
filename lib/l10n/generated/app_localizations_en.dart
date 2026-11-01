@@ -4254,4 +4254,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareDisconnectClient => 'Disconnect';
+
+  @override
+  String get sharedFoldersTitle => 'Shared folders';
+
+  @override
+  String sharedFoldersFor(String name) {
+    return 'Folders $name can see';
+  }
+
+  @override
+  String get sharedFoldersHint =>
+      'Nothing is shared until you pick a folder. Shared folders are read-only unless you allow changes.';
+
+  @override
+  String get sharedFoldersMediaOnly =>
+      'Without All files access, only photo folders can be shared.';
+
+  @override
+  String get sharedFolderCamera => 'Camera';
+
+  @override
+  String get sharedFolderPictures => 'Pictures';
+
+  @override
+  String get sharedFolderScreenshots => 'Screenshots';
+
+  @override
+  String get sharedFolderDownloads => 'Downloads';
+
+  @override
+  String get sharedFolderDocuments => 'Documents';
+
+  @override
+  String get sharedFolderAllStorage => 'All storage';
+
+  @override
+  String get sharedFolderAllowChanges =>
+      'Allow changes (move, rename, delete, upload)';
+
+  @override
+  String get sharedFoldersChoose => 'Choose folder…';
+
+  @override
+  String get sharedFoldersDone => 'Done';
+
+  @override
+  String get sharedFoldersWholeStorageTitle => 'Share all your files?';
+
+  @override
+  String get sharedFoldersWholeStorageBody =>
+      'The other device will see all your files.';
+
+  @override
+  String get sharedFoldersWholeStorageConfirm => 'Share everything';
+
+  @override
+  String get folderChooserTitle => 'Choose a folder';
+
+  @override
+  String get folderChooserShareThis => 'Share this folder';
+
+  @override
+  String get folderChooserEmpty => 'No subfolders';
+
+  @override
+  String get folderChooserError => 'Can’t open this folder';
+
+  @override
+  String shareClientFolders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shared folders',
+      one: '1 shared folder',
+      zero: 'No folders shared',
+    );
+    return '$_temp0';
+  }
 }

@@ -114,8 +114,9 @@ class ClientSessionStore {
     String sessionId,
     StreamSubscription<Object?> subscription, {
     String? canonicalPath,
+    bool write = false,
   }) {
-    final tracked = TrackedStream(subscription, canonicalPath);
+    final tracked = TrackedStream(subscription, canonicalPath, write: write);
     if (!_byHash.values.any((s) => s.sessionId == sessionId)) {
       unawaited(subscription.cancel());
       return () {};
@@ -127,6 +128,32 @@ class ClientSessionStore {
   /// Streams currently tracked for [sessionId] (N4 cancels by path).
   List<TrackedStream> streamsOf(String sessionId) =>
       List.unmodifiable(_streams[sessionId] ?? const <TrackedStream>[]);
+
+  /// Cancels the tracked streams of [clientFingerprint]'s sessions whose
+  /// path fails [keep] (N4: a scope edit ends streams outside the new
+  /// scope). Streams without a path are kept. Returns how many ended.
+  int cancelStreamsWhere(
+    String clientFingerprint,
+    bool Function(String canonicalPath, {required bool write}) keep,
+  ) {
+    var n = 0;
+    for (final s in _byHash.values) {
+      if (s.clientFingerprint != clientFingerprint) continue;
+      final list = _streams[s.sessionId];
+      if (list == null) continue;
+      final drop = [
+        for (final t in list)
+          if (t.canonicalPath case final path? when !keep(path, write: t.write))
+            t,
+      ];
+      for (final t in drop) {
+        list.remove(t);
+        unawaited(t.subscription.cancel());
+      }
+      n += drop.length;
+    }
+    return n;
+  }
 
   @visibleForTesting
   static String hashToken(String token) =>
@@ -176,8 +203,11 @@ class ClientSessionStore {
 /// One registered in-flight stream.
 @immutable
 class TrackedStream {
-  const new(this.subscription, this.canonicalPath);
+  const new(this.subscription, this.canonicalPath, {this.write = false});
 
   final StreamSubscription<Object?> subscription;
   final String? canonicalPath;
+
+  /// An upload or other write: ends when its root turns read-only.
+  final bool write;
 }

@@ -1,24 +1,31 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
+import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/device_identity_repository_impl.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
+import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
+import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
+import 'package:kfm/features/connect/data/routes/roots_routes.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
+import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/share_scope.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connect_providers.g.dart';
@@ -98,6 +105,49 @@ ClientSessionStore clientSessionStore(Ref ref) {
   return store;
 }
 
+/// Folder allow-lists of the current sharing run (N4).
+@Riverpod(keepAlive: true)
+ShareScopeStore shareScopeStore(Ref ref) {
+  final store = ShareScopeStore(
+    sessions: ref.watch(clientSessionStoreProvider),
+  );
+  ref.onDispose(store.clear);
+  return store;
+}
+
+/// One client's shared folders, for the share screen and the picker.
+@riverpod
+Stream<ShareScope> shareScope(Ref ref, String clientFingerprint) {
+  final store = ref.watch(shareScopeStoreProvider);
+  // Subscribed before the first value, so no change is lost in between.
+  final out = StreamController<ShareScope>();
+  final sub = store.changes
+      .where((fp) => fp == clientFingerprint)
+      .listen((_) => out.add(store.scopeOf(clientFingerprint)));
+  out.add(store.scopeOf(clientFingerprint));
+  ref.onDispose(() {
+    unawaited(sub.cancel());
+    unawaited(out.close());
+  });
+  return out.stream;
+}
+
+/// Path canonicalisation + exclusions (N4).
+@Riverpod(keepAlive: true)
+PathGuard pathGuard(Ref ref) => PathGuard();
+
+/// The per-route allow-list wrapper every file route uses (N4; N7/N10/N11
+/// wrap their handlers with `guarded`).
+@Riverpod(keepAlive: true)
+AllowListGuard allowListGuard(Ref ref) {
+  final scopes = ref.watch(shareScopeStoreProvider);
+  return AllowListGuard(
+    scopeOf: scopes.scopeOf,
+    source: () => ref.read(fileSourceProvider),
+    paths: ref.watch(pathGuardProvider),
+  );
+}
+
 /// The request the accept dialog shows (N3); null when none.
 @Riverpod(keepAlive: true)
 class PendingRequest extends _$PendingRequest {
@@ -130,6 +180,7 @@ PairHandOff pairHandOff(Ref ref) => promptHandOff(
   serverDeviceId: () async =>
       (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
           .deviceId,
+  roots: (fp) => ref.read(shareScopeStoreProvider).scopeOf(fp).toDtos(),
 );
 
 /// mDNS advertise + browse (N2).
@@ -174,6 +225,7 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
       handOff: (candidate) => ref.read(pairHandOffProvider)(candidate),
     ),
     pairCancelRoute(ref.watch(acceptGateProvider)),
+    rootsRoute(ref.watch(shareScopeStoreProvider)),
   ];
 }
 

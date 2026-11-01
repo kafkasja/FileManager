@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -7,13 +8,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
+import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
+import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:shelf/shelf.dart';
 
 import '../../helpers/pump_app.dart';
@@ -61,6 +65,25 @@ class _FakeServer extends ShareServer {
   }
 }
 
+class _FakeFolderFs implements SharedFolderFs {
+  static const r = '/storage/emulated/0';
+  static const Map<String, List<String>> folders = {
+    r: ['$r/Android', '$r/DCIM', '$r/Download', '$r/Music'],
+    '$r/DCIM': ['$r/DCIM/Camera'],
+  };
+
+  @override
+  String get primaryRoot => r;
+
+  @override
+  Future<bool> exists(String path) async =>
+      folders.containsKey(path) || folders.values.any((l) => l.contains(path));
+
+  @override
+  Future<List<String>> listSubfolders(String path) async =>
+      folders[path] ?? const [];
+}
+
 class _FakeIdentity implements DeviceIdentityRepository {
   @override
   Future<DeviceIdentity> loadOrCreate() async => const DeviceIdentity(
@@ -103,6 +126,10 @@ void main() {
         deviceIdentityRepositoryProvider.overrideWithValue(identity),
         shareServerProvider.overrideWithValue(server),
         shareDiscoveryProvider.overrideWithValue(discovery),
+        sharedFolderFsProvider.overrideWithValue(_FakeFolderFs()),
+        pathGuardProvider.overrideWithValue(
+          PathGuard(resolver: (p) async => p),
+        ),
         pairingSecretStoreProvider.overrideWithValue(
           PairingSecretStore(autoRefresh: false, clock: () => now),
         ),
@@ -296,6 +323,29 @@ void main() {
     expect(find.byType(AcceptDialog), findsNothing);
     expect(app.container.read(pendingRequestProvider), isNull);
 
+    // N4: the folder picker opens after Accept; nothing is pre-checked.
+    expect(find.byType(SharedFoldersPicker), findsOneWidget);
+    expect(find.text('Folders Phone B can see'), findsOneWidget);
+    const camera = '/storage/emulated/0/DCIM';
+    final cameraBox = find.byKey(const ValueKey('shared-folder-$camera'));
+    expect(tester.widget<CheckboxListTile>(cameraBox).value, isFalse);
+    expect(find.text('Downloads'), findsOneWidget);
+    expect(find.text('Pictures'), findsNothing); // doesn't exist
+    await tester.tap(cameraBox);
+    await tester.pumpAndSettle();
+    final write = find.byKey(const ValueKey('shared-folder-write-$camera'));
+    expect(tester.widget<SwitchListTile>(write).value, isFalse);
+    await tester.tap(find.byKey(const ValueKey('shared-folders-done')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SharedFoldersPicker), findsNothing);
+    final scope = app.container
+        .read(shareScopeStoreProvider)
+        .scopeOf('cd' * 32);
+    expect(scope.roots.single.path, camera);
+    expect(scope.roots.single.label, 'Camera');
+    expect(scope.roots.single.readOnly, isTrue);
+    expect(scope.roots.single.id, PathGuard.rootId(Uint8List(32), camera));
+
     final d2 = gate.open(request('r2', remembered: true))!;
     await tester.pumpAndSettle();
     expect(find.text('Phone B (remembered) wants to connect'), findsOneWidget);
@@ -428,6 +478,67 @@ void main() {
       container.read(shareServerControllerProvider).status,
       ShareServerStatus.stopped,
     );
+  });
+
+  testWidgets('N4: Choose folder… → chooser; whole storage needs a '
+      'confirmation; Allow changes makes the root writable', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).last);
+    unawaited(
+      showSharedFoldersPicker(
+        nav.context,
+        clientFingerprint: 'fp',
+        clientName: 'Phone B',
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Chooser: dot/Android-data folders never listed (fs filters), Music
+    // picked after browsing down and up.
+    await tester.tap(find.byKey(const ValueKey('shared-folders-choose')));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a folder'), findsOneWidget);
+    await tester.tap(find.text('DCIM'));
+    await tester.pumpAndSettle();
+    expect(find.text('Camera'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('chooser-up')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Music'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('chooser-share-this')));
+    await tester.pumpAndSettle();
+    const music = '/storage/emulated/0/Music';
+    expect(find.byKey(const ValueKey('shared-folder-$music')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('shared-folder-write-$music')));
+    await tester.pumpAndSettle();
+
+    // Whole storage: cancel keeps it out, confirm adds it.
+    await tester.tap(find.byKey(const ValueKey('shared-folders-choose')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('chooser-share-this')));
+    await tester.pumpAndSettle();
+    expect(find.text('Share all your files?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('All storage'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('shared-folders-choose')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('chooser-share-this')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('whole-storage-confirm')));
+    await tester.pumpAndSettle();
+    expect(find.text('All storage'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('shared-folders-done')));
+    await tester.pumpAndSettle();
+    final roots = app.container
+        .read(shareScopeStoreProvider)
+        .scopeOf('fp')
+        .roots;
+    expect(roots.map((r) => (r.path, r.readOnly)), [
+      (music, false),
+      ('/storage/emulated/0', true),
+    ]);
   });
 }
 

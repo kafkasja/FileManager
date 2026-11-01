@@ -634,46 +634,49 @@ class _Message extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final spacing = context.tokens.spacing;
-    return Center(
-      child: SingleChildScrollView(
-        // Pull-to-refresh on the connected view.
+    // Full height, so pull-to-refresh works anywhere on the screen.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon case final i?)
-              Icon(i, size: 48, color: theme.colorScheme.onSurfaceVariant)
-            else
-              const CircularProgressIndicator(),
-            SizedBox(height: spacing * 2),
-            Text(
-              title,
-              style: theme.textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            if (words.isNotEmpty) ...[
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon case final i?)
+                Icon(i, size: 48, color: theme.colorScheme.onSurfaceVariant)
+              else
+                const CircularProgressIndicator(),
               SizedBox(height: spacing * 2),
               Text(
-                words.join(' '),
-                key: const ValueKey('connect-words'),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                title,
+                style: theme.textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
+              if (words.isNotEmpty) ...[
+                SizedBox(height: spacing * 2),
+                Text(
+                  words.join(' '),
+                  key: const ValueKey('connect-words'),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              if (body case final b?) ...[
+                SizedBox(height: spacing),
+                Text(b, textAlign: TextAlign.center),
+              ],
+              SizedBox(height: spacing * 3),
+              Wrap(
+                spacing: spacing * 2,
+                runSpacing: spacing,
+                alignment: WrapAlignment.center,
+                children: actions,
+              ),
             ],
-            if (body case final b?) ...[
-              SizedBox(height: spacing),
-              Text(b, textAlign: TextAlign.center),
-            ],
-            SizedBox(height: spacing * 3),
-            Wrap(
-              spacing: spacing * 2,
-              runSpacing: spacing,
-              alignment: WrapAlignment.center,
-              children: actions,
-            ),
-          ],
+          ),
         ),
       ),
     );

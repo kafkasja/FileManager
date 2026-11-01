@@ -330,7 +330,7 @@ final class AcceptGateProvider
   }
 }
 
-String _$acceptGateHash() => r'89bbd757bb7e976fe3d6d13f7bf626b62de1c636';
+String _$acceptGateHash() => r'9967cc808aa52a590c8ffc2fbd122438a5fc19d6';
 
 /// Bearer-token sessions of the current sharing run (N3).
 
@@ -384,6 +384,231 @@ final class ClientSessionStoreProvider
 
 String _$clientSessionStoreHash() =>
     r'ff70db12118026c3106a24e949eb37091f1281bd';
+
+/// Folder allow-lists of the current sharing run (N4).
+
+@ProviderFor(shareScopeStore)
+final shareScopeStoreProvider = ShareScopeStoreProvider._();
+
+/// Folder allow-lists of the current sharing run (N4).
+
+final class ShareScopeStoreProvider
+    extends
+        $FunctionalProvider<ShareScopeStore, ShareScopeStore, ShareScopeStore>
+    with $Provider<ShareScopeStore> {
+  /// Folder allow-lists of the current sharing run (N4).
+  ShareScopeStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shareScopeStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$shareScopeStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<ShareScopeStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ShareScopeStore create(Ref ref) {
+    return shareScopeStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ShareScopeStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ShareScopeStore>(value),
+    );
+  }
+}
+
+String _$shareScopeStoreHash() => r'5e7401195f05fb081da011eeec28687b4872536b';
+
+/// One client's shared folders, for the share screen and the picker.
+
+@ProviderFor(shareScope)
+final shareScopeProvider = ShareScopeFamily._();
+
+/// One client's shared folders, for the share screen and the picker.
+
+final class ShareScopeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ShareScope>,
+          ShareScope,
+          Stream<ShareScope>
+        >
+    with $FutureModifier<ShareScope>, $StreamProvider<ShareScope> {
+  /// One client's shared folders, for the share screen and the picker.
+  ShareScopeProvider._({
+    required ShareScopeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'shareScopeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$shareScopeHash();
+
+  @override
+  String toString() {
+    return r'shareScopeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<ShareScope> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<ShareScope> create(Ref ref) {
+    final argument = this.argument as String;
+    return shareScope(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShareScopeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$shareScopeHash() => r'931e5a83ce65bceec3739c0da5e05e82fd996804';
+
+/// One client's shared folders, for the share screen and the picker.
+
+final class ShareScopeFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<ShareScope>, String> {
+  ShareScopeFamily._()
+    : super(
+        retry: null,
+        name: r'shareScopeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One client's shared folders, for the share screen and the picker.
+
+  ShareScopeProvider call(String clientFingerprint) =>
+      ShareScopeProvider._(argument: clientFingerprint, from: this);
+
+  @override
+  String toString() => r'shareScopeProvider';
+}
+
+/// Path canonicalisation + exclusions (N4).
+
+@ProviderFor(pathGuard)
+final pathGuardProvider = PathGuardProvider._();
+
+/// Path canonicalisation + exclusions (N4).
+
+final class PathGuardProvider
+    extends $FunctionalProvider<PathGuard, PathGuard, PathGuard>
+    with $Provider<PathGuard> {
+  /// Path canonicalisation + exclusions (N4).
+  PathGuardProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pathGuardProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pathGuardHash();
+
+  @$internal
+  @override
+  $ProviderElement<PathGuard> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PathGuard create(Ref ref) {
+    return pathGuard(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PathGuard value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PathGuard>(value),
+    );
+  }
+}
+
+String _$pathGuardHash() => r'7500812feb4c69d7ec2e86eeefb4ab8ae72a6bde';
+
+/// The per-route allow-list wrapper every file route uses (N4; N7/N10/N11
+/// wrap their handlers with `guarded`).
+
+@ProviderFor(allowListGuard)
+final allowListGuardProvider = AllowListGuardProvider._();
+
+/// The per-route allow-list wrapper every file route uses (N4; N7/N10/N11
+/// wrap their handlers with `guarded`).
+
+final class AllowListGuardProvider
+    extends $FunctionalProvider<AllowListGuard, AllowListGuard, AllowListGuard>
+    with $Provider<AllowListGuard> {
+  /// The per-route allow-list wrapper every file route uses (N4; N7/N10/N11
+  /// wrap their handlers with `guarded`).
+  AllowListGuardProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allowListGuardProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allowListGuardHash();
+
+  @$internal
+  @override
+  $ProviderElement<AllowListGuard> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AllowListGuard create(Ref ref) {
+    return allowListGuard(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AllowListGuard value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AllowListGuard>(value),
+    );
+  }
+}
+
+String _$allowListGuardHash() => r'a03e84a6353093c08e693c386ebbe8271ba88008';
 
 /// The request the accept dialog shows (N3); null when none.
 
@@ -533,7 +758,7 @@ final class PairHandOffProvider
   }
 }
 
-String _$pairHandOffHash() => r'58d3f0203d8dd0cbeb590a2988046aa99537d472';
+String _$pairHandOffHash() => r'e464bfc181321ff47e4eb6ebf79f8e765acd8cfb';
 
 /// mDNS advertise + browse (N2).
 
@@ -769,7 +994,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'da727331478390fb8aa5bd5d981e5de732a0a83a';
+String _$shareServerRoutesHash() => r'795ec49e93d23823b1ca93d4ee0e70fc386e8f64';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

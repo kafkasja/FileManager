@@ -114,6 +114,7 @@ class ShareServerController extends _$ShareServerController {
     // ends as `cancelled`; every token dies with the run.
     ref.read(acceptGateProvider).cancelAll();
     ref.read(clientSessionStoreProvider).clear();
+    ref.read(shareScopeStoreProvider).clear();
     await ref.read(shareServerProvider).stop();
     state = ShareServerState.stopped;
   }

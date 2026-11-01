@@ -15,6 +15,7 @@ import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
+import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// "Share this device" (TASK-N1). Sharing runs only while this screen is
@@ -99,7 +100,17 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       ),
     );
     if (_dialogFor == request.requestId) _dialogFor = null;
-    if (decision != null) _gate.decide(request.requestId, decision);
+    if (decision == null) return;
+    // The token is issued here; the client's root list follows the picker.
+    if (_gate.decide(request.requestId, decision) &&
+        decision == ConnectionDecision.accepted &&
+        mounted) {
+      await showSharedFoldersPicker(
+        context,
+        clientFingerprint: request.clientFingerprint,
+        clientName: request.clientName,
+      );
+    }
   }
 
   void _keepAwake({required bool on}) {
@@ -243,6 +254,23 @@ class ConnectedClientsList extends ConsumerWidget {
                 key: ValueKey('share-client-${c.sessionId}'),
                 leading: const Icon(Icons.devices_outlined),
                 title: Text(l10n.shareConnectedTo(c.clientName)),
+                subtitle: Text(
+                  l10n.shareClientFolders(
+                    ref
+                            .watch(shareScopeProvider(c.clientFingerprint))
+                            .value
+                            ?.roots
+                            .length ??
+                        0,
+                  ),
+                ),
+                onTap: () => unawaited(
+                  showSharedFoldersPicker(
+                    context,
+                    clientFingerprint: c.clientFingerprint,
+                    clientName: c.clientName,
+                  ),
+                ),
                 trailing: TextButton(
                   onPressed: () =>
                       ref.read(clientSessionStoreProvider).revoke(c.sessionId),

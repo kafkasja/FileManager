@@ -39,6 +39,14 @@ const Set<RouteKey> kUnauthenticatedRoutes = {
   'POST /v1/pair/cancel',
 };
 
+/// Authenticated routes that touch no file or folder (N4's route-coverage
+/// test): every other authenticated route must be wrapped in `guarded`.
+const Set<RouteKey> kNoFileAccessRoutes = {
+  'GET /v1/session',
+  'POST /v1/session/close',
+  'GET /v1/roots',
+};
+
 /// Max JSON request body (`requestSizeLimit`); N10's chunk route has its own.
 const int kMaxJsonBodyBytes = 64 * 1024;
 

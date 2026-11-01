@@ -2811,5 +2811,40 @@
       }
     }
   },
-  "shareDisconnectClient": "Disconnect"
+  "shareDisconnectClient": "Disconnect",
+  "sharedFoldersTitle": "Shared folders",
+  "sharedFoldersFor": "Folders {name} can see",
+  "@sharedFoldersFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedFoldersHint": "Nothing is shared until you pick a folder. Shared folders are read-only unless you allow changes.",
+  "sharedFoldersMediaOnly": "Without All files access, only photo folders can be shared.",
+  "sharedFolderCamera": "Camera",
+  "sharedFolderPictures": "Pictures",
+  "sharedFolderScreenshots": "Screenshots",
+  "sharedFolderDownloads": "Downloads",
+  "sharedFolderDocuments": "Documents",
+  "sharedFolderAllStorage": "All storage",
+  "sharedFolderAllowChanges": "Allow changes (move, rename, delete, upload)",
+  "sharedFoldersChoose": "Choose folder…",
+  "sharedFoldersDone": "Done",
+  "sharedFoldersWholeStorageTitle": "Share all your files?",
+  "sharedFoldersWholeStorageBody": "The other device will see all your files.",
+  "sharedFoldersWholeStorageConfirm": "Share everything",
+  "folderChooserTitle": "Choose a folder",
+  "folderChooserShareThis": "Share this folder",
+  "folderChooserEmpty": "No subfolders",
+  "folderChooserError": "Can’t open this folder",
+  "shareClientFolders": "{count, plural, =0{No folders shared} =1{1 shared folder} other{{count} shared folders}}",
+  "@shareClientFolders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

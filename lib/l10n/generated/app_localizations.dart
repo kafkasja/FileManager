@@ -6056,6 +6056,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Disconnect'**
   String get shareDisconnectClient;
+
+  /// No description provided for @sharedFoldersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared folders'**
+  String get sharedFoldersTitle;
+
+  /// No description provided for @sharedFoldersFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders {name} can see'**
+  String sharedFoldersFor(String name);
+
+  /// No description provided for @sharedFoldersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is shared until you pick a folder. Shared folders are read-only unless you allow changes.'**
+  String get sharedFoldersHint;
+
+  /// No description provided for @sharedFoldersMediaOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Without All files access, only photo folders can be shared.'**
+  String get sharedFoldersMediaOnly;
+
+  /// No description provided for @sharedFolderCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get sharedFolderCamera;
+
+  /// No description provided for @sharedFolderPictures.
+  ///
+  /// In en, this message translates to:
+  /// **'Pictures'**
+  String get sharedFolderPictures;
+
+  /// No description provided for @sharedFolderScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get sharedFolderScreenshots;
+
+  /// No description provided for @sharedFolderDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get sharedFolderDownloads;
+
+  /// No description provided for @sharedFolderDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get sharedFolderDocuments;
+
+  /// No description provided for @sharedFolderAllStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'All storage'**
+  String get sharedFolderAllStorage;
+
+  /// No description provided for @sharedFolderAllowChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow changes (move, rename, delete, upload)'**
+  String get sharedFolderAllowChanges;
+
+  /// No description provided for @sharedFoldersChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose folder…'**
+  String get sharedFoldersChoose;
+
+  /// No description provided for @sharedFoldersDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get sharedFoldersDone;
+
+  /// No description provided for @sharedFoldersWholeStorageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share all your files?'**
+  String get sharedFoldersWholeStorageTitle;
+
+  /// No description provided for @sharedFoldersWholeStorageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The other device will see all your files.'**
+  String get sharedFoldersWholeStorageBody;
+
+  /// No description provided for @sharedFoldersWholeStorageConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Share everything'**
+  String get sharedFoldersWholeStorageConfirm;
+
+  /// No description provided for @folderChooserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder'**
+  String get folderChooserTitle;
+
+  /// No description provided for @folderChooserShareThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this folder'**
+  String get folderChooserShareThis;
+
+  /// No description provided for @folderChooserEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No subfolders'**
+  String get folderChooserEmpty;
+
+  /// No description provided for @folderChooserError.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t open this folder'**
+  String get folderChooserError;
+
+  /// No description provided for @shareClientFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No folders shared} =1{1 shared folder} other{{count} shared folders}}'**
+  String shareClientFolders(int count);
 }
 
 class _AppLocalizationsDelegate
