@@ -411,7 +411,7 @@ class FilesChannel(
                 mime.startsWith("audio/") -> audioBitmap(file, size)
                 else -> null
             } ?: return null
-            val square = centerCrop(bitmap, size)
+            val square = scaleShortSide(bitmap, size)
             ByteArrayOutputStream().use { out ->
                 square.compress(Bitmap.CompressFormat.JPEG, 80, out)
                 if (square !== bitmap) square.recycle()
@@ -493,13 +493,17 @@ class FilesChannel(
         return sample
     }
 
-    /** The centre square, scaled to [size] (never up). */
-    private fun centerCrop(src: Bitmap, size: Int): Bitmap {
+    /**
+     * Scaled so the short side is [size] (never up), aspect ratio kept. Not
+     * cropped: the viewer shows the thumbnail under the full image with
+     * BoxFit.contain, so a square crop would peek out above/below it.
+     */
+    private fun scaleShortSide(src: Bitmap, size: Int): Bitmap {
         val side = minOf(src.width, src.height)
-        val out = minOf(side, size)
-        val matrix = Matrix().apply { val s = out.toFloat() / side; setScale(s, s) }
-        return Bitmap.createBitmap(
-            src, (src.width - side) / 2, (src.height - side) / 2, side, side, matrix, true,
+        if (side <= size) return src
+        val s = size.toFloat() / side
+        return Bitmap.createScaledBitmap(
+            src, maxOf(1, (src.width * s).toInt()), maxOf(1, (src.height * s).toInt()), true,
         )
     }
 

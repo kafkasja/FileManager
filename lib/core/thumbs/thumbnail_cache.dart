@@ -286,6 +286,9 @@ class DiskThumbnailCache implements ThumbnailCache {
 
   String _pathFor(String key) => '${_dir.path}/${key.substring(0, 2)}/$key.jpg';
 
+  // `_a`: file-made thumbnails were square-cropped before 2026-11-01; the
+  // new key drops those cached crops (they showed around the viewer image).
   static String _key(FileRef f) =>
-      '${sha1.convert(utf8.encode(f.id))}_${f.modifiedAt.millisecondsSinceEpoch}';
+      '${sha1.convert(utf8.encode(f.id))}_${f.modifiedAt.millisecondsSinceEpoch}'
+      '${f.id.startsWith('ms:') ? '' : '_a'}';
 }
