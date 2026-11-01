@@ -102,6 +102,66 @@ final class MediaChangesProvider
 
 String _$mediaChangesHash() => r'6f8f54411417c497e04da28059c176be279239f4';
 
+/// N7: Files-table changes (non-media files) from the native observer.
+/// Empty off Android and in tests. The observer runs only while listened
+/// (the share server's `ShareChangeTracker`).
+
+@ProviderFor(filesTableChanges)
+final filesTableChangesProvider = FilesTableChangesProvider._();
+
+/// N7: Files-table changes (non-media files) from the native observer.
+/// Empty off Android and in tests. The observer runs only while listened
+/// (the share server's `ShareChangeTracker`).
+
+final class FilesTableChangesProvider
+    extends
+        $FunctionalProvider<
+          Raw<Stream<FilesTableChange>>,
+          Raw<Stream<FilesTableChange>>,
+          Raw<Stream<FilesTableChange>>
+        >
+    with $Provider<Raw<Stream<FilesTableChange>>> {
+  /// N7: Files-table changes (non-media files) from the native observer.
+  /// Empty off Android and in tests. The observer runs only while listened
+  /// (the share server's `ShareChangeTracker`).
+  FilesTableChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'filesTableChangesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$filesTableChangesHash();
+
+  @$internal
+  @override
+  $ProviderElement<Raw<Stream<FilesTableChange>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Raw<Stream<FilesTableChange>> create(Ref ref) {
+    return filesTableChanges(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Raw<Stream<FilesTableChange>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Raw<Stream<FilesTableChange>>>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$filesTableChangesHash() => r'ee1553228e1967196c2969c96b215512f02a09c7';
+
 /// Starts once storage access allows it (and rescans when it widens). The shell reads it so it exists for the app's lifetime.
 
 @ProviderFor(mediaIndexer)

@@ -9,6 +9,9 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/connect/data/remote_source_provider.dart';
+import 'package:kfm/features/connect/domain/remote_file_id.dart';
+import 'package:kfm/features/connect/ui/remote_image_provider.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/reviewed/data/reviewed_repository.dart';
@@ -429,13 +432,14 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
         (MediaQuery.sizeOf(context).width *
                 MediaQuery.devicePixelRatioOf(context))
             .round();
+    final remote = ref.read(remoteMediaAccessProvider);
     for (final i in [_index - 1, _index + 1]) {
       if (i < 0 || i >= items.length) continue;
       final f = items[i];
       if (f.kind != FileKind.image) continue;
       unawaited(
         precacheImage(
-          displayImageProvider(f, widthPx),
+          displayImageProvider(f, widthPx, remote: remote),
           context,
           onError: (_, _) {},
         ),
@@ -548,7 +552,14 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
 
   Future<void> _checkExists() async {
     try {
-      final f = await ref.read(fileSourceProvider).stat(widget.file.id);
+      final file = widget.file;
+      // N7: a connected device's file is checked on that device.
+      final source = file.origin == FileOrigin.remote
+          ? ref.read(
+              remoteSourceProvider(parseRemoteFileId(file.id).peerFingerprint),
+            )
+          : ref.read(fileSourceProvider);
+      final f = await source.stat(file.id);
       if (mounted && f == null) setState(() => _gone = true);
     } on Object {
       // Can't tell: show the file as usual (its own error placeholders).
@@ -708,7 +719,7 @@ class FileDetailsList extends StatelessWidget {
 
 /// The display-size image (already cached by the deck → instant), then the
 /// full-resolution one fading in over it. Undecodable → thumbnail / icon.
-class _ViewerImage extends StatelessWidget {
+class _ViewerImage extends ConsumerWidget {
   const new({
     required this.file,
     this.videoActive = true,
@@ -725,7 +736,7 @@ class _ViewerImage extends StatelessWidget {
   final bool paged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (file.kind == FileKind.video) {
       // Same pooled player as the card: playback continues (S5).
       return VideoSurface(file: file, active: videoActive, fullscreen: true);
@@ -741,12 +752,26 @@ class _ViewerImage extends StatelessWidget {
         (MediaQuery.sizeOf(context).width *
                 MediaQuery.devicePixelRatioOf(context))
             .round();
+    final isRemote = file.origin == FileOrigin.remote;
+    final remote = isRemote ? ref.watch(remoteMediaAccessProvider) : null;
+    // N7: the original comes over the connection (never `File(...)`).
+    ImageProvider<Object>? original;
+    if (!isRemote) {
+      original = ResizeImage(
+        FileImage(File(file.path)),
+        width: kViewerMaxDecodePx,
+        height: kViewerMaxDecodePx,
+        policy: ResizeImagePolicy.fit,
+      );
+    } else if (file.sizeBytes <= kMaxRemoteOriginalBytes) {
+      original = remoteOriginalImage(remote!, file, maxPx: kViewerMaxDecodePx);
+    }
     return Stack(
       fit: StackFit.expand,
       children: [
         Thumbnail(file: file, fit: BoxFit.contain, background: Colors.black),
         Image(
-          image: displayImageProvider(file, widthPx),
+          image: displayImageProvider(file, widthPx, remote: remote),
           fit: BoxFit.contain,
           gaplessPlayback: true,
           errorBuilder: (context, _, _) => paged && _isHeic(file)
@@ -766,22 +791,18 @@ class _ViewerImage extends StatelessWidget {
                 )
               : const SizedBox.shrink(),
         ),
-        Image(
-          image: ResizeImage(
-            FileImage(File(file.path)),
-            width: kViewerMaxDecodePx,
-            height: kViewerMaxDecodePx,
-            policy: ResizeImagePolicy.fit,
+        if (original != null)
+          Image(
+            image: original,
+            fit: BoxFit.contain,
+            gaplessPlayback: true,
+            frameBuilder: (context, child, frame, wasSync) => AnimatedOpacity(
+              opacity: wasSync || frame != null ? 1 : 0,
+              duration: const Duration(milliseconds: 150),
+              child: child,
+            ),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
-          fit: BoxFit.contain,
-          gaplessPlayback: true,
-          frameBuilder: (context, child, frame, wasSync) => AnimatedOpacity(
-            opacity: wasSync || frame != null ? 1 : 0,
-            duration: const Duration(milliseconds: 150),
-            child: child,
-          ),
-          errorBuilder: (_, _, _) => const SizedBox.shrink(),
-        ),
       ],
     );
   }

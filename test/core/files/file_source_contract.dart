@@ -85,6 +85,18 @@ void fileSourceContract(
       expect(await _read(s, f), [7, 8, 9]);
     });
 
+    test('openRead with start/end serves bytes [start, end)', () async {
+      final f = await h.addFile('${h.root}/r.bin', [0, 1, 2, 3, 4, 5]);
+      Future<List<int>> range(int start, [int? end]) async => [
+        for (final c in await s.openRead(f, start: start, end: end).toList())
+          ...c,
+      ];
+      expect(await range(2, 4), [2, 3]);
+      expect(await range(4), [4, 5]);
+      expect(await range(0, 1), [0]);
+      expect(await range(6), isEmpty);
+    });
+
     test(
       'copy into a folder with the same name creates "name (1).ext"',
       () async {

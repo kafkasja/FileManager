@@ -1044,7 +1044,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'629dc93c02a3f18cab225a4f62eba32b436700b5';
+String _$shareServerRoutesHash() => r'6c11141cd314ff1a2ad6ea17cf60657e39322fa3';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

@@ -2863,5 +2863,165 @@
       }
     }
   },
-  "shareKeepOpenDesktop": "Sharing stops when you leave this screen."
+  "shareKeepOpenDesktop": "Sharing stops when you leave this screen.",
+  "remoteNotConnected": "The other device isn’t connected",
+  "remoteBrowseAction": "Browse {device}",
+  "@remoteBrowseAction": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteBrowseRoots": "Shared folders",
+  "remoteReadOnly": "Read only",
+  "remoteDeviceNotConnected": "{device} isn’t connected",
+  "@remoteDeviceNotConnected": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteReconnect": "Connect again",
+  "remoteFileGone": "This file is no longer available",
+  "remoteNotAllowed": "Not allowed on {device}",
+  "@remoteNotAllowed": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteDeclined": "{device} declined",
+  "@remoteDeclined": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteDeleteDeclined": "{device} declined the delete",
+  "@remoteDeleteDeclined": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteEmptyFolder": "No files here",
+  "remoteShowingFirst": "{count, plural, =1{Showing the first file} other{Showing the first {count} files}}",
+  "@remoteShowingFirst": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteTrashConfirm": "{count, plural, =1{Move 1 file to the trash on {device}?} other{Move {count} files to the trash on {device}?}}",
+  "@remoteTrashConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteTrashConfirmHint": "{device} may ask to confirm.",
+  "@remoteTrashConfirmHint": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteTrashed": "{count, plural, =1{Moved 1 file to the trash on {device}} other{Moved {count} files to the trash on {device}}}",
+  "@remoteTrashed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteMoved": "{count, plural, =1{Moved 1 file} other{Moved {count} files}}",
+  "@remoteMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteCopied": "{count, plural, =1{Copied 1 file} other{Copied {count} files}}",
+  "@remoteCopied": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteSomeFailed": "{count, plural, =1{1 file couldn’t be changed} other{{count} files couldn’t be changed}}",
+  "@remoteSomeFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remotePickFolderTitle": "Choose a folder on {device}",
+  "@remotePickFolderTitle": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remotePickHere": "Choose this folder",
+  "remoteConnectedDevice": "Connected device",
+  "remoteTrashRequest": "{device} wants to move {count, plural, =1{1 file} other{{count} files}} to trash",
+  "@remoteTrashRequest": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteTrashDone": "{device} moved {count, plural, =1{1 file} other{{count} files}} to trash",
+  "@remoteTrashDone": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteTrashDeclinedByYou": "You declined {device}’s request",
+  "@remoteTrashDeclinedByYou": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteWriteRequest": "{device} wants to change {count, plural, =1{1 file} other{{count} files}}",
+  "@remoteWriteRequest": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareMediaOnlyHint": "Without All files access, other devices see only photos, videos and audio."
 }

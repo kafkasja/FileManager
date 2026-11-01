@@ -14,11 +14,13 @@ import 'package:kfm/features/browse/data/recent_searches.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
+import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 
 /// "Where files come from" (browse.txt point 2), only on the All files
 /// page: a horizontal row of big cards with the newest photo as cover.
-/// Recent searches come first (last 5, B8/C4 add them); sources without
-/// files are hidden.
+/// A connected device (N7) comes first, then recent searches (last 5,
+/// B8/C4 add them); sources without files are hidden.
 class SourcesCarousel extends ConsumerWidget {
   const new({super.key});
 
@@ -32,7 +34,10 @@ class SourcesCarousel extends ConsumerWidget {
         false;
     final recents = ref.watch(recentSearchesProvider).value ?? const [];
     final spacing = context.tokens.spacing;
+    final remote = ref.watch(remoteConnectionControllerProvider);
     final cards = <Widget>[
+      if (remote case RemoteConnected(:final peerName, :final peerFingerprint))
+        _RemoteDeviceCard(name: peerName, peerFingerprint: peerFingerprint),
       for (final r in recents)
         _CollectionCard(collection: RecentCollection(r), recent: true),
       for (final source in BrowseSourceChip.values)
@@ -160,6 +165,75 @@ class _CollectionCard extends ConsumerWidget {
                             color: Colors.white70,
                           ),
                         ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// N7: the connected device; opens its remote browse screen.
+class _RemoteDeviceCard extends StatelessWidget {
+  const new({required this.name, required this.peerFingerprint});
+
+  final String name;
+  final String peerFingerprint;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final spacing = context.tokens.spacing;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: SourcesCarousel.cardWidth,
+      child: Semantics(
+        button: true,
+        label: l10n.remoteBrowseAction(name),
+        excludeSemantics: true,
+        child: Material(
+          borderRadius: BorderRadius.circular(context.tokens.radius),
+          clipBehavior: Clip.antiAlias,
+          color: scheme.primaryContainer,
+          child: InkWell(
+            onTap: () => unawaited(
+              context.push(AppRoutes.connectBrowseFor(peerFingerprint)),
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Icon(
+                  Icons.devices_outlined,
+                  size: 48,
+                  color: scheme.onPrimaryContainer,
+                ),
+                PositionedDirectional(
+                  start: spacing,
+                  end: spacing,
+                  bottom: spacing,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.titleMedium?.copyWith(
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                      Text(
+                        l10n.remoteConnectedDevice,
+                        style: text.labelMedium?.copyWith(
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
                     ],
                   ),
                 ),

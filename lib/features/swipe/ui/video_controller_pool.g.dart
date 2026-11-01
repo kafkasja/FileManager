@@ -55,7 +55,7 @@ final class VideoHandleFactoryProvider
 }
 
 String _$videoHandleFactoryHash() =>
-    r'6f54346ae51b499b56dd23f59cfab4331db15dd5';
+    r'cc13c9ccc0d42e58082ddc268d1590fcd2db5df3';
 
 @ProviderFor(videoControllerPool)
 final videoControllerPoolProvider = VideoControllerPoolProvider._();

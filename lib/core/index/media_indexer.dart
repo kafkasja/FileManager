@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
+import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
@@ -60,6 +62,9 @@ class MediaIndexer {
     Stream<MediaChange> changes = const Stream.empty(),
     this._mediaStoreCounts,
     this._clock = DateTime.now,
+    this.fileChangeDebounce = const Duration(seconds: 2),
+    this.reconcileMinInterval = const Duration(seconds: 10),
+    this._hasNoMediaMarker = _noMediaOnDisk,
   }) : _source = source {
     _idSub = source.idChanges.listen(
       (c) => unawaited(_serial(() => _dao.applyIdChange(c))),
@@ -68,6 +73,18 @@ class MediaIndexer {
   }
 
   static const fullScanInterval = Duration(hours: 24);
+
+  /// N7: Files-table events are batched this long.
+  final Duration fileChangeDebounce;
+
+  /// N7: folder reconciles (deletes, unknown paths) run at most this often.
+  final Duration reconcileMinInterval;
+
+  /// Whether a folder holds a `.nomedia` file (its files are hidden).
+  final Future<bool> Function(String folderPath) _hasNoMediaMarker;
+
+  static Future<bool> _noMediaOnDisk(String folder) =>
+      File('$folder/.nomedia').exists();
   static const changeDebounce = Duration(seconds: 2);
 
   /// Incremental scans look this far before the last scan (clock skew,
@@ -94,6 +111,13 @@ class MediaIndexer {
   final Set<String> _pendingDeletes = {};
   bool _pendingIncremental = false;
   bool _pendingMediaFullScan = false;
+
+  // N7 Files-table events.
+  Timer? _fileTimer;
+  final List<FilesTableChange> _pendingFileEvents = [];
+  final Set<String> _pendingReconcile = {};
+  List<String> _reconcileRoots = const [];
+  DateTime? _lastReconcile;
 
   Stream<IndexStatus> get status => _status.stream;
   IndexStatus get current => _current;
@@ -156,7 +180,44 @@ class MediaIndexer {
     _changeTimer = Timer(changeDebounce, () => unawaited(_applyChanges()));
   }
 
+  /// N7 live sync: a change from the Files-table observer (non-media files
+  /// MediaStore knows about, e.g. a downloaded PDF). Media are ignored
+  /// (photo_manager's observer covers them), and so is a change whose id is
+  /// an indexed `ms:` file (this device's own trash/delete commits).
+  /// - Insert/update with a path: stat'ed and upserted (no walk), `hidden`
+  ///   computed like the walker (dot segments, `.nomedia` above it). A path
+  ///   that is gone again refreshes only its own folder (not recursive).
+  /// - A delete, or a change without a path (pending rows are hidden on
+  ///   Android 11+, so "not found" is no delete): reconciles
+  ///   [reconcileRoots] (shared folders, never a whole volume; empty = the
+  ///   next full scan catches it) with [refreshFolder].
+  ///
+  /// Batched for [fileChangeDebounce]; reconciles at most every
+  /// [reconcileMinInterval].
+  void onFileChange(
+    FilesTableChange change, {
+    List<String> reconcileRoots = const [],
+  }) {
+    if (change.isMedia) return;
+    _reconcileRoots = reconcileRoots;
+    _pendingFileEvents.add(change);
+    _scheduleFileChanges(fileChangeDebounce);
+  }
+
+  void _scheduleFileChanges(Duration after) {
+    _fileTimer?.cancel();
+    _fileTimer = Timer(after, () => unawaited(_applyFileChanges()));
+  }
+
+  /// N7: re-scans [rootPath] (media and, with All files access, the walk
+  /// below it) under a new generation, then removes the rows below it that
+  /// the scan didn't see. Never the whole volume: callers pass shared
+  /// folders. Doesn't count as a full scan.
+  Future<void> refreshFolder(String rootPath, {bool recursive = true}) =>
+      _serial(() => _refreshFolder(rootPath, recursive: recursive));
+
   Future<void> dispose() async {
+    _fileTimer?.cancel();
     _changeTimer?.cancel();
     await _idSub.cancel();
     await _changeSub.cancel();
@@ -180,6 +241,104 @@ class MediaIndexer {
       await _incremental();
     }
   });
+
+  Future<void> _applyFileChanges() => _serial(() async {
+    final events = List.of(_pendingFileEvents);
+    _pendingFileEvents.clear();
+    final canSeeAll = _canSeeAllFiles();
+    final paths = <String>{};
+    final folders = <String>{};
+    for (final e in events) {
+      if (e.id case final id? when await _dao.byId('ms:$id') != null) {
+        continue; // An indexed media row: photo_manager's events cover it.
+      }
+      final path = e.path;
+      if (e.type != 'delete' && path != null) {
+        if (canSeeAll) paths.add(path);
+      } else {
+        _pendingReconcile.addAll(_reconcileRoots);
+      }
+    }
+    final found = <FileRef>[];
+    for (final path in paths) {
+      final ref = await _source.statPath(path);
+      if (ref == null) {
+        // Gone again, or not readable: refresh just its folder.
+        final slash = path.lastIndexOf('/');
+        if (slash > 0) folders.add(path.substring(0, slash));
+        continue;
+      }
+      if (mediaKinds.contains(ref.kind)) continue;
+      found.add(ref.copyWith(hidden: ref.hidden || await _isHidden(ref)));
+    }
+    if (found.isNotEmpty) {
+      final generation = await _settings.read(AppSettings.indexGeneration);
+      await _dao.upsertBatch(found, generation, now: _clock());
+    }
+    for (final folder in folders) {
+      await _refreshFolder(folder, recursive: false);
+    }
+    if (_pendingReconcile.isEmpty) return;
+    final last = _lastReconcile;
+    final now = _clock();
+    if (last != null && now.difference(last) < reconcileMinInterval) {
+      _scheduleFileChanges(reconcileMinInterval - now.difference(last));
+      return;
+    }
+    final roots = _outermost(_pendingReconcile);
+    _pendingReconcile.clear();
+    _lastReconcile = now;
+    for (final root in roots) {
+      await _refreshFolder(root);
+    }
+  });
+
+  Future<void> _refreshFolder(String rootPath, {bool recursive = true}) async {
+    final kinds = _allowedKinds();
+    final generation = await _settings.read(AppSettings.indexGeneration) + 1;
+    await _settings.write(AppSettings.indexGeneration, generation);
+    final query = FileQuery(
+      kinds: kinds,
+      rootPath: rootPath,
+      recursive: recursive,
+      includeHidden: _canSeeAllFiles(),
+    );
+    await for (final page in _source.scan(query: query)) {
+      await _dao.upsertBatch(page, generation, now: _clock());
+    }
+    await _dao.deleteOlderThanGeneration(
+      generation,
+      kinds: kinds,
+      rootPath: rootPath,
+      recursive: recursive,
+    );
+  }
+
+  /// Like the walker: a dot-file, a dot folder on the way, or a `.nomedia`
+  /// in its folder or any folder above it (up to the volume root).
+  Future<bool> _isHidden(FileRef f) async {
+    if (f.name.startsWith('.') || isInHiddenFolder(f.path)) return true;
+    final stop = _volumeRoot.firstMatch(f.folderPath)?.group(0) ?? '/';
+    var folder = f.folderPath;
+    while (folder.length >= stop.length && folder.isNotEmpty) {
+      if (await _hasNoMediaMarker(folder)) return true;
+      final slash = folder.lastIndexOf('/');
+      if (slash <= 0) break;
+      folder = folder.substring(0, slash);
+    }
+    return false;
+  }
+
+  static final _volumeRoot = RegExp(r'^/storage/(emulated/\d+|[^/]+)');
+
+  /// [roots] without the ones inside another of them.
+  static List<String> _outermost(Set<String> roots) => [
+    for (final r in roots)
+      if (!roots.any(
+        (o) => o != r && r.toLowerCase().startsWith('${o.toLowerCase()}/'),
+      ))
+        r,
+  ];
 
   Future<void> _fullScan(
     Set<FileKind> kinds, {

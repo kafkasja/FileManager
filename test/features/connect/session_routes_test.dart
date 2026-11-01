@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/routes/session_routes.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/domain/files_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:shelf/shelf.dart';
 
@@ -53,6 +55,39 @@ void main() {
       (await call('GET', ApiRoutes.session, token: 'nope')).statusCode,
       401,
     );
+  });
+
+  test('N7: with a change token source, GET /v1/session answers 200 '
+      'SessionDto per client', () async {
+    final asked = <String>[];
+    final withTokens = buildSharePipeline(
+      served: [LocalAddress(InternetAddress('192.168.1.23'), 24, 'wlan0')],
+      authenticate: authenticate(store),
+      routes: sessionRoutes(
+        store,
+        changeToken: (fp) async {
+          asked.add(fp);
+          return 'tok-$fp';
+        },
+      ),
+    );
+    final s = issue('a');
+    final r = await withTokens(
+      Request(
+        'GET',
+        Uri.parse('https://192.168.1.23:4433${ApiRoutes.session}'),
+        headers: {'authorization': 'Bearer ${s.token}'},
+        context: {
+          'shelf.io.connection_info': FakeConnectionInfo('192.168.1.40'),
+        },
+      ),
+    );
+    expect(r.statusCode, 200);
+    final dto = SessionDto.fromJson(
+      jsonDecode(await r.readAsString()) as Map<String, Object?>,
+    );
+    expect(dto.changeToken, 'tok-a');
+    expect(asked, ['a']);
   });
 
   test('POST /v1/session/close ends only the caller session', () async {

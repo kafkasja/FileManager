@@ -11,6 +11,9 @@ enum FileOpFailure {
   /// H2: the volume's pending-delete folder can't be used (root not
   /// writable, or the rename crosses mounts). The file is untouched.
   pendingFolderUnavailable,
+
+  /// N7: the device holding the file isn't connected (remote files).
+  unavailable,
 }
 
 /// Every FileSource failure. The UI maps [failure] to a localized message;

@@ -6,16 +6,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
+import 'package:kfm/features/connect/data/remote_trash_service.dart';
+import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
+import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// "Share this device" (TASK-N1). Sharing runs only while this screen is
@@ -33,7 +37,10 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   late final ShareServerController _controller;
   late final ScreenAwake _awake;
   late final AcceptGate _gate;
+  late final ShareChangeTracker _tracker;
   StreamSubscription<AcceptGateEvent>? _gateSub;
+  ProviderSubscription<ShareServerState>? _statusSub;
+  ProviderSubscription<RemoteRequestOutcome?>? _outcomeSub;
 
   /// The request whose accept dialog is open.
   String? _dialogFor;
@@ -45,6 +52,24 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     _awake = ref.read(screenAwakeProvider);
     _gate = ref.read(acceptGateProvider);
     _gateSub = _gate.events.listen(_onGateEvent);
+    _tracker = ref.read(shareChangeTrackerProvider);
+    // N7 live sync: observe changes only while the server runs.
+    _statusSub = ref.listenManual(
+      shareServerControllerProvider,
+      (_, next) {
+        if (next.status == ShareServerStatus.running) {
+          _tracker.start();
+        } else {
+          unawaited(_tracker.stop());
+        }
+      },
+      // Sharing may already run (the screen was rebuilt).
+      fireImmediately: true,
+    );
+    _outcomeSub = ref.listenManual(
+      remoteRequestOutcomeStateProvider,
+      (_, next) => _showOutcome(next),
+    );
     _keepAwake(on: true);
     // After the first frame: providers may not be modified during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,6 +80,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   @override
   void dispose() {
     _gateSub?.cancel().ignore();
+    _statusSub?.close();
+    _outcomeSub?.close();
+    unawaited(_tracker.stop());
     _controller.stopSharing().ignore();
     _keepAwake(on: false);
     super.dispose();
@@ -82,6 +110,17 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
             ..showSnackBar(SnackBar(content: Text(text)));
         }
     }
+  }
+
+  /// N7: "<B> moved N files to trash" / "You declined <B>'s request".
+  void _showOutcome(RemoteRequestOutcome? o) {
+    if (o == null || !mounted) return;
+    if (!o.declined && o.kind != RemoteRequestKind.trash) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(remoteOutcomeText(context.l10n, o))),
+      );
   }
 
   Future<void> _showAcceptDialog(ConnectionRequest request) async {
@@ -126,38 +165,87 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.shareTitle)),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsetsDirectional.all(spacing * 3),
-          child: switch (state.status) {
-            ShareServerStatus.starting => _Centered(
-              icon: null,
-              title: l10n.sharePreparing,
-            ),
-            ShareServerStatus.running => _Running(state: state),
-            ShareServerStatus.error => _Centered(
-              icon: Icons.wifi_off_outlined,
-              title: state.error is NoLocalNetworkException
-                  ? l10n.shareNoNetwork
-                  : l10n.shareFailed,
-              body: state.error is NoLocalNetworkException
-                  ? l10n.shareNoNetworkHint
-                  : null,
-              action: FilledButton(
-                onPressed: () => _controller.startSharing().ignore(),
-                child: Text(l10n.shareRetry),
-              ),
-            ),
-            ShareServerStatus.stopped => _Centered(
-              icon: Icons.portable_wifi_off_outlined,
-              title: l10n.shareStopped,
-              action: FilledButton(
-                onPressed: () => _controller.startSharing().ignore(),
-                child: Text(l10n.shareStartAgain),
-              ),
-            ),
-          },
+        child: Column(
+          children: [
+            const RemoteRequestBanner(),
+            Expanded(child: _body(context, state, spacing)),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _body(BuildContext context, ShareServerState state, double spacing) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: EdgeInsetsDirectional.all(spacing * 3),
+      child: switch (state.status) {
+        ShareServerStatus.starting => _Centered(
+          icon: null,
+          title: l10n.sharePreparing,
+        ),
+        ShareServerStatus.running => _Running(state: state),
+        ShareServerStatus.error => _Centered(
+          icon: Icons.wifi_off_outlined,
+          title: state.error is NoLocalNetworkException
+              ? l10n.shareNoNetwork
+              : l10n.shareFailed,
+          body: state.error is NoLocalNetworkException
+              ? l10n.shareNoNetworkHint
+              : null,
+          action: FilledButton(
+            onPressed: () => _controller.startSharing().ignore(),
+            child: Text(l10n.shareRetry),
+          ),
+        ),
+        ShareServerStatus.stopped => _Centered(
+          icon: Icons.portable_wifi_off_outlined,
+          title: l10n.shareStopped,
+          action: FilledButton(
+            onPressed: () => _controller.startSharing().ignore(),
+            child: Text(l10n.shareStartAgain),
+          ),
+        ),
+      },
+    );
+  }
+}
+
+/// Banner text: "<B> wants to move N files to trash" / "… to change N files".
+String remoteNoticeText(AppLocalizations l, RemoteRequestNotice n) =>
+    switch (n.kind) {
+      RemoteRequestKind.trash => l.remoteTrashRequest(n.deviceName, n.count),
+      RemoteRequestKind.writeAccess => l.remoteWriteRequest(
+        n.deviceName,
+        n.count,
+      ),
+    };
+
+/// Snackbar text after a client's request (declined or trashed).
+String remoteOutcomeText(AppLocalizations l, RemoteRequestOutcome o) =>
+    o.declined
+    ? l.remoteTrashDeclinedByYou(o.deviceName)
+    : l.remoteTrashDone(o.deviceName, o.count);
+
+/// TASK-N7: shown above the share screen while a client's trash or
+/// write-access request runs (the system dialog is translucent, so it stays
+/// visible behind it).
+class RemoteRequestBanner extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notice = ref.watch(remoteRequestNoticeStateProvider);
+    if (notice == null) return const SizedBox.shrink();
+    return MaterialBanner(
+      key: const ValueKey('share-remote-request'),
+      leading: Icon(
+        notice.kind == RemoteRequestKind.trash
+            ? Icons.delete_outline
+            : Icons.edit_outlined,
+      ),
+      content: Text(remoteNoticeText(context.l10n, notice)),
+      actions: const [SizedBox.shrink()],
     );
   }
 }
@@ -188,6 +276,20 @@ class _Running extends ConsumerWidget {
         ),
         SizedBox(height: spacing * 2),
         const ConnectedClientsList(),
+        if (!(ref
+                .watch(storageAccessControllerProvider)
+                .value
+                ?.canSeeAllFiles ??
+            true)) ...[
+          // N7: non-media files aren't indexed, so clients can't see them.
+          Text(
+            l10n.shareMediaOnlyHint,
+            key: const ValueKey('share-media-only'),
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: spacing * 2),
+        ],
         const PairingPanel(),
         if (state.discoveryError != null) ...[
           SizedBox(height: spacing),

@@ -61,8 +61,9 @@ class RemoteThumbnailCache {
 
 /// Thumbnail of a file on a connected device, fetched over the pinned
 /// [RemoteHttp] (never `NetworkImage`). The image-cache key is
-/// ([peerFingerprint], [serverId], [epoch]): bumping [epoch] on disconnect
-/// makes old images unreachable.
+/// ([peerFingerprint], [serverId], [modifiedAtMs], [epoch]): bumping [epoch]
+/// on disconnect makes old images unreachable, and a file changed in place
+/// (N7 live sync) gets a new thumbnail.
 @immutable
 class RemoteThumbnailProvider extends ImageProvider<RemoteThumbnailProvider> {
   const new({
@@ -71,6 +72,7 @@ class RemoteThumbnailProvider extends ImageProvider<RemoteThumbnailProvider> {
     required this.peerFingerprint,
     required this.serverId,
     required this.epoch,
+    this.modifiedAtMs = 0,
   });
 
   final RemoteHttp http;
@@ -83,8 +85,11 @@ class RemoteThumbnailProvider extends ImageProvider<RemoteThumbnailProvider> {
   /// The connection generation (N5 controller).
   final int epoch;
 
+  /// The file's modified time (epoch ms UTC, N7).
+  final int modifiedAtMs;
+
   /// Key in [cache].
-  String get cacheKey => '$epoch:$peerFingerprint:$serverId';
+  String get cacheKey => '$epoch:$peerFingerprint:$serverId:$modifiedAtMs';
 
   @override
   Future<RemoteThumbnailProvider> obtainKey(ImageConfiguration configuration) =>
@@ -116,10 +121,12 @@ class RemoteThumbnailProvider extends ImageProvider<RemoteThumbnailProvider> {
       other is RemoteThumbnailProvider &&
       other.peerFingerprint == peerFingerprint &&
       other.serverId == serverId &&
+      other.modifiedAtMs == modifiedAtMs &&
       other.epoch == epoch;
 
   @override
-  int get hashCode => Object.hash(peerFingerprint, serverId, epoch);
+  int get hashCode =>
+      Object.hash(peerFingerprint, serverId, modifiedAtMs, epoch);
 
   @override
   String toString() => 'RemoteThumbnailProvider($serverId, epoch $epoch)';

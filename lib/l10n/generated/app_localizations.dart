@@ -6200,6 +6200,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sharing stops when you leave this screen.'**
   String get shareKeepOpenDesktop;
+
+  /// No description provided for @remoteNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'The other device isn’t connected'**
+  String get remoteNotConnected;
+
+  /// No description provided for @remoteBrowseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse {device}'**
+  String remoteBrowseAction(String device);
+
+  /// No description provided for @remoteBrowseRoots.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared folders'**
+  String get remoteBrowseRoots;
+
+  /// No description provided for @remoteReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get remoteReadOnly;
+
+  /// No description provided for @remoteDeviceNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} isn’t connected'**
+  String remoteDeviceNotConnected(String device);
+
+  /// No description provided for @remoteReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect again'**
+  String get remoteReconnect;
+
+  /// No description provided for @remoteFileGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is no longer available'**
+  String get remoteFileGone;
+
+  /// No description provided for @remoteNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed on {device}'**
+  String remoteNotAllowed(String device);
+
+  /// No description provided for @remoteDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} declined'**
+  String remoteDeclined(String device);
+
+  /// No description provided for @remoteDeleteDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} declined the delete'**
+  String remoteDeleteDeclined(String device);
+
+  /// No description provided for @remoteEmptyFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No files here'**
+  String get remoteEmptyFolder;
+
+  /// No description provided for @remoteShowingFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Showing the first file} other{Showing the first {count} files}}'**
+  String remoteShowingFirst(int count);
+
+  /// No description provided for @remoteTrashConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Move 1 file to the trash on {device}?} other{Move {count} files to the trash on {device}?}}'**
+  String remoteTrashConfirm(int count, String device);
+
+  /// No description provided for @remoteTrashConfirmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} may ask to confirm.'**
+  String remoteTrashConfirmHint(String device);
+
+  /// No description provided for @remoteTrashed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved 1 file to the trash on {device}} other{Moved {count} files to the trash on {device}}}'**
+  String remoteTrashed(int count, String device);
+
+  /// No description provided for @remoteMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved 1 file} other{Moved {count} files}}'**
+  String remoteMoved(int count);
+
+  /// No description provided for @remoteCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Copied 1 file} other{Copied {count} files}}'**
+  String remoteCopied(int count);
+
+  /// No description provided for @remoteSomeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn’t be changed} other{{count} files couldn’t be changed}}'**
+  String remoteSomeFailed(int count);
+
+  /// No description provided for @remotePickFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder on {device}'**
+  String remotePickFolderTitle(String device);
+
+  /// No description provided for @remotePickHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose this folder'**
+  String get remotePickHere;
+
+  /// No description provided for @remoteConnectedDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected device'**
+  String get remoteConnectedDevice;
+
+  /// No description provided for @remoteTrashRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} wants to move {count, plural, =1{1 file} other{{count} files}} to trash'**
+  String remoteTrashRequest(String device, int count);
+
+  /// No description provided for @remoteTrashDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} moved {count, plural, =1{1 file} other{{count} files}} to trash'**
+  String remoteTrashDone(String device, int count);
+
+  /// No description provided for @remoteTrashDeclinedByYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You declined {device}’s request'**
+  String remoteTrashDeclinedByYou(String device);
+
+  /// No description provided for @remoteWriteRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} wants to change {count, plural, =1{1 file} other{{count} files}}'**
+  String remoteWriteRequest(String device, int count);
+
+  /// No description provided for @shareMediaOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Without All files access, other devices see only photos, videos and audio.'**
+  String get shareMediaOnlyHint;
 }
 
 class _AppLocalizationsDelegate

@@ -8,6 +8,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.ContentObserver
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -30,6 +31,7 @@ import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
@@ -62,8 +64,25 @@ class FilesChannel(
     /** The Dart call waiting for the one system dialog that can be open (TASK-H1). */
     private var pendingResult: MethodChannel.Result? = null
 
+    /** N7: Files-table changes (non-media files) while the share server runs. */
+    private val changesChannel = EventChannel(messenger, "kfm/files_changes")
+    private val observerIo = Executors.newSingleThreadExecutor()
+    private var filesObserver: ContentObserver? = null
+    private var changesSink: EventChannel.EventSink? = null
+
     init {
         channel.setMethodCallHandler(this)
+        changesChannel.setStreamHandler(object : EventChannel.StreamHandler {
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                changesSink = events
+                startObservingFiles()
+            }
+
+            override fun onCancel(arguments: Any?) {
+                stopObservingFiles()
+                changesSink = null
+            }
+        })
     }
 
     fun dispose() {
@@ -78,6 +97,10 @@ class FilesChannel(
             }
         }
         channel.setMethodCallHandler(null)
+        stopObservingFiles()
+        changesSink = null
+        changesChannel.setStreamHandler(null)
+        observerIo.shutdown()
         io.shutdown()
         exifIo.shutdown()
         thumbIo.shutdown()
@@ -206,6 +229,101 @@ class FilesChannel(
                 main.post { result.error("IO", e.toString(), null) }
             }
         }
+    }
+
+    // ---- Files-table observer (TASK-N7 live sync) ----
+
+    /**
+     * Observes `MediaStore.Files` (descendants). Each change is sent as
+     * `{type: insert|update|delete, path?, mediaType?}`; pending rows are skipped (they
+     * report again when published). A row that can't be found (deleted, or hidden from
+     * this app) comes without a path: Dart reconciles the shared folders instead.
+     */
+    private fun startObservingFiles() {
+        if (filesObserver != null) return
+        val observer = object : ContentObserver(main) {
+            // API < 30 entry point (API 30+ calls the one with flags).
+            override fun onChange(selfChange: Boolean, uri: Uri?) {
+                reportFilesChange(uri, 0)
+            }
+
+            override fun onChange(selfChange: Boolean, uri: Uri?, flags: Int) {
+                reportFilesChange(uri, flags)
+            }
+        }
+        try {
+            context.contentResolver.registerContentObserver(
+                MediaStore.Files.getContentUri("external"), true, observer,
+            )
+            filesObserver = observer
+        } catch (e: Exception) {
+            changesSink?.error("IO", e.toString(), null)
+        }
+    }
+
+    private fun stopObservingFiles() {
+        filesObserver?.let { context.contentResolver.unregisterContentObserver(it) }
+        filesObserver = null
+    }
+
+    private fun reportFilesChange(uri: Uri?, flags: Int) {
+        val type = when {
+            flags and android.content.ContentResolver.NOTIFY_DELETE != 0 -> "delete"
+            flags and android.content.ContentResolver.NOTIFY_INSERT != 0 -> "insert"
+            else -> "update"
+        }
+        val id = uri?.lastPathSegment?.toLongOrNull()
+        try {
+            observerIo.execute {
+                val event: Map<String, Any?> = (
+                    try {
+                        describeFilesChange(type, id)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "files change lookup failed: $e")
+                        mapOf("type" to type)
+                    }
+                    ) ?: return@execute
+                main.post { changesSink?.success(event) }
+            }
+        } catch (e: java.util.concurrent.RejectedExecutionException) {
+            // Disposed meanwhile.
+        }
+    }
+
+    /** Null = skip (pending row). */
+    private fun describeFilesChange(type: String, id: Long?): Map<String, Any?>? {
+        if (id == null) return mapOf("type" to type)
+        if (type == "delete") return mapOf("type" to type, "id" to id)
+        val resolver = context.contentResolver
+        @Suppress("DEPRECATION")
+        val dataCol = MediaStore.Files.FileColumns.DATA
+        val typeCol = MediaStore.Files.FileColumns.MEDIA_TYPE
+        val pendingCol = "is_pending"
+        val withPending = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val cols = if (withPending) arrayOf(dataCol, typeCol, pendingCol) else arrayOf(dataCol, typeCol)
+        val where = "${MediaStore.Files.FileColumns._ID} = ?"
+        val args = arrayOf(id.toString())
+        val cursor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bundle = Bundle().apply {
+                putString(android.content.ContentResolver.QUERY_ARG_SQL_SELECTION, where)
+                putStringArray(android.content.ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, args)
+                putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE)
+            }
+            resolver.query(MediaStore.Files.getContentUri("external"), cols, bundle, null)
+        } else {
+            resolver.query(MediaStore.Files.getContentUri("external"), cols, where, args, null)
+        }
+        cursor?.use { c ->
+            if (!c.moveToFirst()) return mapOf("type" to type, "id" to id)
+            if (withPending && c.getInt(c.getColumnIndexOrThrow(pendingCol)) != 0) return null
+            return mapOf(
+                "type" to type,
+                "id" to id,
+                "path" to c.getString(c.getColumnIndexOrThrow(dataCol)),
+                "mediaType" to c.getInt(c.getColumnIndexOrThrow(typeCol)),
+            )
+        }
+        return mapOf("type" to type, "id" to id)
     }
 
     // ---- EXIF (TASK-C5) ----

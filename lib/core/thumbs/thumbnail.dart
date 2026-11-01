@@ -6,9 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/thumbs/thumbnail_cache.dart';
+import 'package:kfm/features/connect/ui/remote_image_provider.dart';
 
 /// A file's thumbnail: neutral placeholder (no spinner, no layout shift),
-/// fades in over 120 ms, cancels its request when disposed.
+/// fades in over 120 ms, cancels its request when disposed. Files of a
+/// connected device (N7) load over its pinned client into N5's memory LRU,
+/// never the disk cache.
 class Thumbnail extends ConsumerStatefulWidget {
   const new({
     required this.file,
@@ -63,6 +66,7 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
 
   Future<void> _load() async {
     final file = widget.file;
+    if (file.origin == FileOrigin.remote) return;
     if (!DiskThumbnailCache.hasThumbnail(file)) return;
     final cache = await _cacheOnce();
     final bytes = await cache.get(file);
@@ -75,6 +79,9 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final bytes = _bytes;
+    final remote = widget.file.origin == FileOrigin.remote
+        ? remoteThumbnailOf(ref.watch(remoteMediaAccessProvider), widget.file)
+        : null;
     return ColoredBox(
       color: widget.background ?? scheme.surfaceContainerHighest,
       child: Stack(
@@ -83,18 +90,31 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
           Center(
             child: Icon(fileKindIcon(widget.file.kind), color: scheme.outline),
           ),
-          AnimatedOpacity(
-            opacity: bytes == null ? 0 : 1,
-            duration: const Duration(milliseconds: 120),
-            child: bytes == null
-                ? const SizedBox.shrink()
-                : Image.memory(
-                    bytes,
-                    fit: widget.fit,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                  ),
-          ),
+          if (remote != null)
+            Image(
+              image: remote,
+              fit: widget.fit,
+              gaplessPlayback: true,
+              frameBuilder: (context, child, frame, wasSync) => AnimatedOpacity(
+                opacity: wasSync || frame != null ? 1 : 0,
+                duration: const Duration(milliseconds: 120),
+                child: child,
+              ),
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            )
+          else
+            AnimatedOpacity(
+              opacity: bytes == null ? 0 : 1,
+              duration: const Duration(milliseconds: 120),
+              child: bytes == null
+                  ? const SizedBox.shrink()
+                  : Image.memory(
+                      bytes,
+                      fit: widget.fit,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
+            ),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:meta/meta.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -43,3 +44,41 @@ Stream<MediaChange> photoManagerChanges() {
   );
   return controller.stream;
 }
+
+/// N7 live sync: one change of Android's `MediaStore.Files` table (the
+/// native observer in FilesChannel.kt). Pending rows never arrive.
+@immutable
+class FilesTableChange {
+  const new({required this.type, this.path, this.mediaType, this.id});
+
+  /// 'insert', 'update' or 'delete'.
+  final String type;
+
+  /// Absolute path; null for deletes and rows the observer couldn't find.
+  final String? path;
+
+  /// `MediaStore.Files.FileColumns.MEDIA_TYPE` (0 none, 1 image, 2 audio,
+  /// 3 video, …); null when unknown.
+  final int? mediaType;
+
+  /// The MediaStore row id from the change uri, when it has one.
+  final int? id;
+
+  /// Image, audio or video: photo_manager's observer already covers it.
+  bool get isMedia => mediaType == 1 || mediaType == 2 || mediaType == 3;
+
+  @override
+  String toString() => 'FilesTableChange($type, $id, $path, $mediaType)';
+}
+
+/// N7: live non-media changes (PDFs, downloads…) from the Files-table
+/// observer. Android only; the observer runs only while this is listened.
+Stream<FilesTableChange> filesTableChangeStream([EventChannel? channel]) =>
+    FilesChannel.filesTableEvents(channel).map(
+      (e) => FilesTableChange(
+        type: e['type'] is String ? e['type']! as String : 'update',
+        path: e['path'] is String ? e['path']! as String : null,
+        mediaType: (e['mediaType'] as num?)?.toInt(),
+        id: (e['id'] as num?)?.toInt(),
+      ),
+    );

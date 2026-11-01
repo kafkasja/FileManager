@@ -20,6 +20,14 @@ import 'package:kfm/core/index/source_rule.dart';
 
 part 'media_index_dao.g.dart';
 
+/// One root of [MediaIndexDao.scopeDigest].
+typedef ScopeDigestRow = ({
+  String root,
+  int count,
+  int bytes,
+  int newestIndexedAtMs,
+});
+
 /// Indexed, keyset-paged access to `media_index` (TASK-F5). Never OFFSET:
 /// pages near the end of 50k rows stay as fast as the first.
 @DriftAccessor(
@@ -237,6 +245,65 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
+  /// N7 live sync: per root of [rootPaths] (in order), the visible rows of
+  /// [kinds] (empty = all) at or below it: how many, their total size and
+  /// the newest `indexed_at_ms`. Any add, delete, move or re-index under a
+  /// root changes its triple; changes elsewhere don't. Hidden rows are left
+  /// out, as in every listing.
+  Future<List<ScopeDigestRow>> scopeDigest(
+    List<String> rootPaths, {
+    Set<FileKind> kinds = const {},
+  }) async {
+    final count = mediaIndex.id.count();
+    final bytes = mediaIndex.sizeBytes.sum();
+    final newest = mediaIndex.indexedAtMs.max();
+    final out = <ScopeDigestRow>[];
+    for (final root in rootPaths) {
+      final q = IndexQuery(
+        kinds: kinds,
+        folderPath: root,
+        includeSubfolders: true,
+      );
+      final row =
+          await (selectOnly(mediaIndex)
+                ..addColumns([count, bytes, newest])
+                ..where(_applyQuery(mediaIndex, q)))
+              .getSingle();
+      out.add((
+        root: root,
+        count: row.read(count) ?? 0,
+        bytes: row.read(bytes) ?? 0,
+        newestIndexedAtMs: row.read(newest) ?? 0,
+      ));
+    }
+    return out;
+  }
+
+  /// N7: how the index spells [folderPath] (case-insensitive match; the
+  /// folder itself or, failing that, a folder below it), or null when
+  /// nothing is indexed there. Remote listings map a canonical path to the
+  /// stored spelling, so `folderPath` equality still uses the index.
+  Future<String?> storedFolderSpelling(String folderPath) async {
+    final col = mediaIndex.folderPath;
+    final exact =
+        await (selectOnly(mediaIndex)
+              ..addColumns([col])
+              ..where(col.collate(Collate.noCase).equals(folderPath))
+              ..limit(1))
+            .getSingleOrNull();
+    if (exact != null) return exact.read(col);
+    final below =
+        await (selectOnly(mediaIndex)
+              ..addColumns([col])
+              ..where(
+                col.like('${_escapeLike(folderPath)}/%', escapeChar: r'\'),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    final path = below?.read(col);
+    return path?.substring(0, folderPath.length);
+  }
+
   /// Some indexed file in [folderPath] is called [name] (case-insensitive;
   /// shared storage is). P3 preview collisions for MediaStore files.
   Future<bool> nameExists(String folderPath, String name) async =>
@@ -293,19 +360,23 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     int generation, {
     required Set<FileKind> kinds,
     String? rootPath,
+    bool recursive = true,
   }) =>
       (delete(mediaIndex)..where((t) {
             var where =
                 t.scanGeneration.isSmallerThanValue(generation) &
                 t.kind.isIn([for (final k in kinds) k.index]);
             if (rootPath != null) {
+              final here = t.folderPath.equals(rootPath);
               where =
                   where &
-                  (t.folderPath.equals(rootPath) |
-                      t.folderPath.like(
-                        '${_escapeLike(rootPath)}/%',
-                        escapeChar: r'\',
-                      ));
+                  (recursive
+                      ? here |
+                            t.folderPath.like(
+                              '${_escapeLike(rootPath)}/%',
+                              escapeChar: r'\',
+                            )
+                      : here);
             }
             return where;
           }))

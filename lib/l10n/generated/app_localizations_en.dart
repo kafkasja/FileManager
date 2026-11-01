@@ -4346,4 +4346,171 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareKeepOpenDesktop =>
       'Sharing stops when you leave this screen.';
+
+  @override
+  String get remoteNotConnected => 'The other device isn’t connected';
+
+  @override
+  String remoteBrowseAction(String device) {
+    return 'Browse $device';
+  }
+
+  @override
+  String get remoteBrowseRoots => 'Shared folders';
+
+  @override
+  String get remoteReadOnly => 'Read only';
+
+  @override
+  String remoteDeviceNotConnected(String device) {
+    return '$device isn’t connected';
+  }
+
+  @override
+  String get remoteReconnect => 'Connect again';
+
+  @override
+  String get remoteFileGone => 'This file is no longer available';
+
+  @override
+  String remoteNotAllowed(String device) {
+    return 'Not allowed on $device';
+  }
+
+  @override
+  String remoteDeclined(String device) {
+    return '$device declined';
+  }
+
+  @override
+  String remoteDeleteDeclined(String device) {
+    return '$device declined the delete';
+  }
+
+  @override
+  String get remoteEmptyFolder => 'No files here';
+
+  @override
+  String remoteShowingFirst(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Showing the first $count files',
+      one: 'Showing the first file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteTrashConfirm(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Move $count files to the trash on $device?',
+      one: 'Move 1 file to the trash on $device?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteTrashConfirmHint(String device) {
+    return '$device may ask to confirm.';
+  }
+
+  @override
+  String remoteTrashed(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moved $count files to the trash on $device',
+      one: 'Moved 1 file to the trash on $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moved $count files',
+      one: 'Moved 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Copied $count files',
+      one: 'Copied 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteSomeFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files couldn’t be changed',
+      one: '1 file couldn’t be changed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remotePickFolderTitle(String device) {
+    return 'Choose a folder on $device';
+  }
+
+  @override
+  String get remotePickHere => 'Choose this folder';
+
+  @override
+  String get remoteConnectedDevice => 'Connected device';
+
+  @override
+  String remoteTrashRequest(String device, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$device wants to move $_temp0 to trash';
+  }
+
+  @override
+  String remoteTrashDone(String device, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$device moved $_temp0 to trash';
+  }
+
+  @override
+  String remoteTrashDeclinedByYou(String device) {
+    return 'You declined $device’s request';
+  }
+
+  @override
+  String remoteWriteRequest(String device, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$device wants to change $_temp0';
+  }
+
+  @override
+  String get shareMediaOnlyHint =>
+      'Without All files access, other devices see only photos, videos and audio.';
 }

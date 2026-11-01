@@ -5,6 +5,8 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
@@ -16,11 +18,14 @@ import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
+import 'package:kfm/features/connect/data/remote_trash_service.dart';
+import 'package:kfm/features/connect/data/routes/file_routes.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/routes/roots_routes.dart';
 import 'package:kfm/features/connect/data/routes/session_routes.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
+import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
@@ -232,7 +237,25 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
     ),
     pairCancelRoute(ref.watch(acceptGateProvider)),
     rootsRoute(ref.watch(shareScopeStoreProvider)),
-    ...sessionRoutes(ref.watch(clientSessionStoreProvider)),
+    ...sessionRoutes(
+      ref.watch(clientSessionStoreProvider),
+      changeToken: (fp) => ref.read(shareChangeTrackerProvider).tokenFor(fp),
+    ),
+    ...fileRoutes(
+      FileRoutesEnv(
+        guard: ref.watch(allowListGuardProvider),
+        scopeOf: ref.watch(shareScopeStoreProvider).scopeOf,
+        sessions: ref.watch(clientSessionStoreProvider),
+        source: () => ref.read(fileSourceProvider),
+        dao: () => ref.read(mediaIndexDaoProvider),
+        addToIndex: (files) => ref.read(mediaIndexerProvider).addFiles(files),
+        canSeeAllFiles: () =>
+            ref.read(storageAccessControllerProvider).value?.canSeeAllFiles ??
+            false,
+        thumbnails: () => ref.read(thumbnailCacheProvider.future),
+        trash: () => ref.read(remoteTrashServiceProvider),
+      ),
+    ),
   ];
 }
 

@@ -3,7 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/widgets.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/features/connect/data/loopback_media_proxy.dart';
+import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:video_player/video_player.dart';
 
@@ -28,40 +31,80 @@ abstract interface class VideoHandle {
 typedef VideoHandleFactory = VideoHandle Function(FileRef file);
 
 /// video_player (ExoPlayer on Android). Muted playback doesn't take audio
-/// focus from the user's music (`mixWithOthers`).
+/// focus from the user's music (`mixWithOthers`). A connected device's
+/// video (N7) streams through N5's loopback proxy (`mediaProxy`), so its
+/// player is only created in [initialize].
 class PlayerHandle implements VideoHandle {
-  new(FileRef file)
-    : _c = file.uri.startsWith('content://')
-          ? VideoPlayerController.contentUri(
-              Uri.parse(file.uri),
-              videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-            )
-          : VideoPlayerController.file(
-              File(file.path),
-              videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-            );
+  new(this._file, {this._mediaProxy})
+    : _c = _file.origin == FileOrigin.remote ? null : _local(_file);
 
-  final VideoPlayerController _c;
+  static VideoPlayerController _local(FileRef file) =>
+      file.uri.startsWith('content://')
+      ? VideoPlayerController.contentUri(
+          Uri.parse(file.uri),
+          videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+        )
+      : VideoPlayerController.file(
+          File(file.path),
+          videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+        );
+
+  final FileRef _file;
+  final Future<LoopbackMediaProxy> Function()? _mediaProxy;
+  VideoPlayerController? _c;
+  bool _disposed = false;
+
+  /// What [state] is before a remote player exists.
+  final ValueNotifier<VideoPlayerValue> _idle = ValueNotifier(
+    const VideoPlayerValue.uninitialized(),
+  );
 
   @override
-  ValueListenable<VideoPlayerValue> get state => _c;
+  ValueListenable<VideoPlayerValue> get state => _c ?? _idle;
+
   @override
-  Future<void> initialize() => _c.initialize();
+  Future<void> initialize() async {
+    var c = _c;
+    if (c == null) {
+      final mediaProxy =
+          _mediaProxy ??
+          (throw const FileOpException(
+            FileOpFailure.unavailable,
+            'no media proxy',
+          ));
+      final proxy = await mediaProxy();
+      if (_disposed) throw StateError('disposed');
+      c = _c = VideoPlayerController.networkUrl(
+        proxy.urlFor(_file),
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
+    }
+    await c.initialize();
+  }
+
   @override
-  Future<void> play() => _c.play();
+  Future<void> play() async => await _c?.play();
   @override
-  Future<void> pause() => _c.pause();
+  Future<void> pause() async => await _c?.pause();
   @override
-  Future<void> setVolume(double volume) => _c.setVolume(volume);
+  Future<void> setVolume(double volume) async => await _c?.setVolume(volume);
   @override
-  Future<void> setLooping({required bool looping}) => _c.setLooping(looping);
+  Future<void> setLooping({required bool looping}) async =>
+      await _c?.setLooping(looping);
   @override
-  Future<void> seekTo(Duration position) => _c.seekTo(position);
+  Future<void> seekTo(Duration position) async => await _c?.seekTo(position);
   @override
-  Future<void> dispose() => _c.dispose();
+  Future<void> dispose() async {
+    _disposed = true;
+    _idle.dispose();
+    await _c?.dispose();
+  }
+
   @override
   Widget view({Size? fallbackSize}) {
-    final reported = _c.value.size;
+    final c = _c;
+    if (c == null) return const SizedBox.shrink();
+    final reported = c.value.size;
     final size = reported.width > 0 && reported.height > 0
         ? reported
         : (fallbackSize ?? const Size(16, 9));
@@ -69,7 +112,7 @@ class PlayerHandle implements VideoHandle {
       child: SizedBox(
         width: size.width,
         height: size.height,
-        child: VideoPlayer(_c),
+        child: VideoPlayer(c),
       ),
     );
   }
@@ -156,7 +199,13 @@ class VideoControllerPool {
 }
 
 @Riverpod(keepAlive: true)
-VideoHandleFactory videoHandleFactory(Ref ref) => PlayerHandle.new;
+VideoHandleFactory videoHandleFactory(Ref ref) =>
+    (file) => PlayerHandle(
+      file,
+      mediaProxy: ref
+          .read(remoteConnectionControllerProvider.notifier)
+          .mediaProxy,
+    );
 
 @Riverpod(keepAlive: true)
 VideoControllerPool videoControllerPool(Ref ref) {

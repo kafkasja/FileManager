@@ -9,6 +9,7 @@ import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
 import 'package:kfm/features/browse/ui/collection_screen.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart';
+import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
 import 'package:kfm/features/connect/ui/share_screen.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
@@ -79,6 +80,11 @@ abstract final class AppRoutes {
   /// N1/N2: top-level (cover the tab bar), opened with `context.push`.
   static const connect = '/connect';
   static const connectShare = '/connect/share';
+
+  /// N7: browse the connected device `:fp` (its pinned fingerprint).
+  static const connectBrowse = '/connect/browse/:fp';
+  static String connectBrowseFor(String peerFingerprint) =>
+      '/connect/browse/$peerFingerprint';
   static String presetEditorFor(int id) => '/settings/presets/$id';
 }
 
@@ -153,6 +159,12 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: 'share',
             builder: (context, state) => const ShareScreen(),
+          ),
+          GoRoute(
+            path: 'browse/:fp',
+            builder: (context, state) => RemoteBrowseScreen(
+              peerFingerprint: state.pathParameters['fp']!,
+            ),
           ),
         ],
       ),

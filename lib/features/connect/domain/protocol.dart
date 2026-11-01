@@ -36,6 +36,40 @@ abstract final class ApiRoutes {
   /// `GET /v1/files/<id>/thumb` (N7; N5's remote thumbnails).
   static String fileThumb(String serverId) =>
       '$files/${Uri.encodeComponent(serverId)}/thumb';
+
+  // ---- N7 (contract; DTOs in files_protocol.dart) ----
+
+  /// `GET /v1/folders?rootId=&path=` → `FoldersResponseDto`.
+  static const folders = '/v1/folders';
+
+  /// `POST /v1/files/trash` (`TrashRequestDto` → `TrashResponseDto`).
+  static const filesTrash = '/v1/files/trash';
+
+  /// `POST /v1/files/write-access` (`{ids}` → `{granted}`).
+  static const filesWriteAccess = '/v1/files/write-access';
+
+  /// `GET /v1/files/<id>` → `RemoteFileDto` (404 when gone).
+  static String fileStat(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}';
+
+  /// `GET /v1/files/<id>/preview?max=` → JPEG (404: use content).
+  static String filePreview(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/preview';
+
+  /// `POST /v1/files/<id>/move` (`MoveRequestDto` → `RemoteFileDto`).
+  static String fileMove(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/move';
+
+  /// `POST /v1/files/<id>/copy` (`MoveRequestDto` → `RemoteFileDto`).
+  static String fileCopy(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/copy';
+
+  /// `POST /v1/files/<id>/rename` (`RenameRequestDto` → `RemoteFileDto`).
+  static String fileRename(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/rename';
+
+  /// shelf_router paths of the routes above (server side).
+  static const fileIdPattern = '/v1/files/<id>';
 }
 
 /// Routes that skip `authenticate` (exact method + path).

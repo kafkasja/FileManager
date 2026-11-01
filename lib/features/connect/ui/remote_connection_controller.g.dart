@@ -114,6 +114,76 @@ final class RemoteThumbnailCacheProvider
 String _$remoteThumbnailCacheHash() =>
     r'05ab75fdc3207259a55f9413158c92c55afd5b32';
 
+/// TASK-N7 live sync: the latest change token of the connected device's
+/// shared roots, from the heartbeat (`GET /v1/session` → `SessionDto`).
+/// Null while not connected or when the other device sends none (older
+/// version, 204). Remote browse screens refresh when it changes.
+
+@ProviderFor(RemoteChangeToken)
+final remoteChangeTokenProvider = RemoteChangeTokenProvider._();
+
+/// TASK-N7 live sync: the latest change token of the connected device's
+/// shared roots, from the heartbeat (`GET /v1/session` → `SessionDto`).
+/// Null while not connected or when the other device sends none (older
+/// version, 204). Remote browse screens refresh when it changes.
+final class RemoteChangeTokenProvider
+    extends $NotifierProvider<RemoteChangeToken, String?> {
+  /// TASK-N7 live sync: the latest change token of the connected device's
+  /// shared roots, from the heartbeat (`GET /v1/session` → `SessionDto`).
+  /// Null while not connected or when the other device sends none (older
+  /// version, 204). Remote browse screens refresh when it changes.
+  RemoteChangeTokenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'remoteChangeTokenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$remoteChangeTokenHash();
+
+  @$internal
+  @override
+  RemoteChangeToken create() => RemoteChangeToken();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$remoteChangeTokenHash() => r'101b491d5aec87516d276be778b91d4d69cb7c49';
+
+/// TASK-N7 live sync: the latest change token of the connected device's
+/// shared roots, from the heartbeat (`GET /v1/session` → `SessionDto`).
+/// Null while not connected or when the other device sends none (older
+/// version, 204). Remote browse screens refresh when it changes.
+
+abstract class _$RemoteChangeToken extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// The connection of this device to a sharing device (TASK-N5). Owns the
 /// pinned client after pairing, so it outlives the Connect screen; N7's
 /// remote browsing uses [http]. A 5 s `GET /v1/session` heartbeat runs in
@@ -168,7 +238,7 @@ final class RemoteConnectionControllerProvider
 }
 
 String _$remoteConnectionControllerHash() =>
-    r'28821779e396b78cf88ce87faf9d3b08236f664e';
+    r'baafd2d8442100fc827b35ef670a771ec22c85f6';
 
 /// The connection of this device to a sharing device (TASK-N5). Owns the
 /// pinned client after pairing, so it outlives the Connect screen; N7's

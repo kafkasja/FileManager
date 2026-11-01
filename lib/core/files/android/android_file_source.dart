@@ -307,14 +307,17 @@ class AndroidFileSource implements FileSource {
   }
 
   @override
-  Stream<List<int>> openRead(FileRef f) => File(f.path).openRead().handleError(
-    (Object e) => throw fileOpExceptionFromIo(
-      e as FileSystemException,
-      f.path,
-      fileId: f.id,
-    ),
-    test: (e) => e is FileSystemException,
-  );
+  Stream<List<int>> openRead(FileRef f, {int start = 0, int? end}) =>
+      File(f.path)
+          .openRead(start, end)
+          .handleError(
+            (Object e) => throw fileOpExceptionFromIo(
+              e as FileSystemException,
+              f.path,
+              fileId: f.id,
+            ),
+            test: (e) => e is FileSystemException,
+          );
 
   // ---- write ----
 

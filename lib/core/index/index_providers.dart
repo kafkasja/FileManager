@@ -28,6 +28,13 @@ bool _canSeeAllFiles(Ref ref) =>
 Raw<Stream<MediaChange>> mediaChanges(Ref ref) =>
     Platform.isAndroid ? photoManagerChanges() : const Stream.empty();
 
+/// N7: Files-table changes (non-media files) from the native observer.
+/// Empty off Android and in tests. The observer runs only while listened
+/// (the share server's `ShareChangeTracker`).
+@Riverpod(keepAlive: true)
+Raw<Stream<FilesTableChange>> filesTableChanges(Ref ref) =>
+    Platform.isAndroid ? filesTableChangeStream() : const Stream.empty();
+
 /// What a storage-access change means for the index.
 enum IndexTrigger { none, start, fullScan }
 

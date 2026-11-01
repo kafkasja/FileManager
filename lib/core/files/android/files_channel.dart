@@ -24,6 +24,18 @@ class FilesChannel {
 
   static const name = 'com.kaf.kfm/files';
 
+  /// N7: the Files-table observer (FilesChannel.kt), active while listened.
+  static const changesName = 'kfm/files_changes';
+
+  /// N7: raw `{type, path?, mediaType?}` events of `MediaStore.Files`
+  /// (descendants). The native observer is registered on listen and
+  /// unregistered on cancel.
+  static Stream<MediaRow> filesTableEvents([EventChannel? channel]) =>
+      (channel ?? const EventChannel(changesName))
+          .receiveBroadcastStream()
+          .where((e) => e is Map)
+          .map((e) => _row(e as Map<Object?, Object?>));
+
   final MethodChannel _channel;
 
   Future<int> sdkInt() async => (await _invoke<int>('sdkInt'))!;

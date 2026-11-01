@@ -30,8 +30,10 @@ abstract interface class FileSource {
   /// Fresh metadata for one file, or null if it no longer exists.
   Future<FileRef?> stat(String id);
 
-  /// Byte stream for preview / hashing / transfer (N9, N11, C2).
-  Stream<List<int>> openRead(FileRef f);
+  /// Byte stream for preview / hashing / transfer (N9, N11, C2). With
+  /// [start]/[end] only bytes `[start, end)` (N7 Range requests); [end]
+  /// null = to the end.
+  Stream<List<int>> openRead(FileRef f, {int start = 0, int? end});
 
   /// Creates [name] inside [parentPath] and returns its absolute path.
   /// Throws `targetExists` if it is already there.

@@ -48,6 +48,7 @@ String fileOpFailureMessage(
     FileOpFailure.invalidName => l.nameInvalid,
     FileOpFailure.targetExists => l.nameExists,
     FileOpFailure.pendingFolderUnavailable => l.pendingFallbackTitle,
+    FileOpFailure.unavailable => l.remoteNotConnected,
     FileOpFailure.ioError || null => fallback,
   };
 }

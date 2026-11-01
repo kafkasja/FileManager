@@ -142,14 +142,15 @@ class FakeFileSource implements FileSource {
   Future<FileRef?> stat(String id) async => _files[id];
 
   @override
-  Stream<List<int>> openRead(FileRef f) {
+  Stream<List<int>> openRead(FileRef f, {int start = 0, int? end}) {
     final bytes = _bytes[f.id];
     if (bytes == null) {
       return Stream.error(
         FileOpException(FileOpFailure.notFound, f.path, fileId: f.id),
       );
     }
-    return Stream.value(bytes);
+    final to = (end ?? bytes.length).clamp(0, bytes.length);
+    return Stream.value(bytes.sublist(start.clamp(0, to), to));
   }
 
   @override

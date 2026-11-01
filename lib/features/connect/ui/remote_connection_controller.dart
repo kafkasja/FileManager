@@ -5,6 +5,7 @@ import 'package:kfm/features/connect/data/loopback_media_proxy.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/domain/files_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/remote_thumbnail_provider.dart';
@@ -34,6 +35,29 @@ bool remoteFollowsAppLifecycle(Ref ref) => true;
 /// on every disconnect.
 @Riverpod(keepAlive: true)
 RemoteThumbnailCache remoteThumbnailCache(Ref ref) => RemoteThumbnailCache();
+
+/// TASK-N7 live sync: the latest change token of the connected device's
+/// shared roots, from the heartbeat (`GET /v1/session` → `SessionDto`).
+/// Null while not connected or when the other device sends none (older
+/// version, 204). Remote browse screens refresh when it changes.
+@Riverpod(keepAlive: true)
+class RemoteChangeToken extends _$RemoteChangeToken {
+  @override
+  String? build() => null;
+
+  // A method, not a setter: callers publish a heartbeat result.
+  // ignore: use_setters_to_change_properties
+  void publish(String? token) => state = token;
+}
+
+/// Lenient: a malformed token is ignored rather than failing the beat.
+SessionDto _decodeSession(Map<String, Object?> json) {
+  try {
+    return SessionDto.fromJson(json);
+  } on FormatException {
+    return const SessionDto();
+  }
+}
 
 /// The connection of this device to a sharing device (TASK-N5). Owns the
 /// pinned client after pairing, so it outlives the Connect screen; N7's
@@ -92,6 +116,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
   /// Takes over a fresh pairing result (replaces any older connection).
   void connect(PairingSuccess result) {
     _teardown(sendClose: true);
+    ref.read(remoteChangeTokenProvider.notifier).publish(null);
     _http = result.http;
     _failures = 0;
     _beatsSinceRoots = 0;
@@ -180,11 +205,14 @@ class RemoteConnectionController extends _$RemoteConnectionController {
     // restarts, the first request may fail on a stale pooled socket.
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        await http
-            .getJson<void>(ApiRoutes.session, decode: (_) {})
+        final session = await http
+            .getJson(ApiRoutes.session, decode: _decodeSession)
             .timeout(kHeartbeatTimeout);
         if (!identical(http, _http)) return;
         _failures = 0;
+        if (session.changeToken case final token?) {
+          ref.read(remoteChangeTokenProvider.notifier).publish(token);
+        }
         _beatsSinceRoots++;
         final roots = switch (state) {
           RemoteConnected(:final roots) => roots,
@@ -266,6 +294,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
   void _end(DisconnectReason reason, {String? peerName}) {
     final name = peerName ?? _nameOf(state);
     _teardown(sendClose: false);
+    ref.read(remoteChangeTokenProvider.notifier).publish(null);
     state = RemoteDisconnected(peerName: name, reason: reason);
   }
 

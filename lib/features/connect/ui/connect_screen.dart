@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
@@ -12,6 +14,7 @@ import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
+import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -79,6 +82,17 @@ class ConnectScreen extends ConsumerWidget {
                         onPressed: () => unawaited(controller.disconnect()),
                         child: Text(l10n.connectDisconnect),
                       ),
+                      if (ref.watch(remoteConnectionControllerProvider)
+                          case RemoteConnected(:final peerFingerprint)
+                          when roots.isNotEmpty)
+                        FilledButton(
+                          onPressed: () => unawaited(
+                            context.push(
+                              AppRoutes.connectBrowseFor(peerFingerprint),
+                            ),
+                          ),
+                          child: Text(l10n.remoteBrowseAction(peerName)),
+                        ),
                     ],
                   ),
                 ),
