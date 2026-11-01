@@ -2741,5 +2741,75 @@
   "sharePrivacyNote": "While sharing, devices on this Wi-Fi can see this device’s name.",
   "shareDiscoveryFailed": "Nearby devices can’t list this one. They can enter the address instead.",
   "devResetIdentity": "Reset device identity",
-  "devResetIdentityDone": "New device identity created"
+  "devResetIdentityDone": "New device identity created",
+  "pairCompareWords": "Check that both devices show these words",
+  "connectNoFoldersYet": "{name} hasn’t shared any folders yet",
+  "@connectNoFoldersYet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectFoldersShared": "{count, plural, =1{1 shared folder} other{{count} shared folders}}",
+  "@connectFoldersShared": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectDisconnected": "Disconnected from {name}",
+  "@connectDisconnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "acceptTitle": "{name} wants to connect",
+  "@acceptTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "acceptTitleRemembered": "{name} (remembered) wants to connect",
+  "@acceptTitleRemembered": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "acceptPlatform": "Device type: {platform}",
+  "@acceptPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "acceptAutoDecline": "{seconds, plural, =1{Declines on its own in 1 second} other{Declines on its own in {seconds} seconds}}",
+  "@acceptAutoDecline": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "acceptDecline": "Decline",
+  "acceptAccept": "Accept",
+  "acceptRequestCancelled": "Request cancelled",
+  "acceptTimedOut": "No answer in time. The request was declined.",
+  "shareConnectedTo": "Connected: {name}",
+  "@shareConnectedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareDisconnectClient": "Disconnect"
 }

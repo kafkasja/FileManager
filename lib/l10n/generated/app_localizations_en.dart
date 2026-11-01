@@ -4184,4 +4184,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get devResetIdentityDone => 'New device identity created';
+
+  @override
+  String get pairCompareWords => 'Check that both devices show these words';
+
+  @override
+  String connectNoFoldersYet(String name) {
+    return '$name hasn’t shared any folders yet';
+  }
+
+  @override
+  String connectFoldersShared(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shared folders',
+      one: '1 shared folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String connectDisconnected(String name) {
+    return 'Disconnected from $name';
+  }
+
+  @override
+  String acceptTitle(String name) {
+    return '$name wants to connect';
+  }
+
+  @override
+  String acceptTitleRemembered(String name) {
+    return '$name (remembered) wants to connect';
+  }
+
+  @override
+  String acceptPlatform(String platform) {
+    return 'Device type: $platform';
+  }
+
+  @override
+  String acceptAutoDecline(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: 'Declines on its own in $seconds seconds',
+      one: 'Declines on its own in 1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get acceptDecline => 'Decline';
+
+  @override
+  String get acceptAccept => 'Accept';
+
+  @override
+  String get acceptRequestCancelled => 'Request cancelled';
+
+  @override
+  String get acceptTimedOut => 'No answer in time. The request was declined.';
+
+  @override
+  String shareConnectedTo(String name) {
+    return 'Connected: $name';
+  }
+
+  @override
+  String get shareDisconnectClient => 'Disconnect';
 }

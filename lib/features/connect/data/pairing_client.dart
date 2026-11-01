@@ -10,6 +10,7 @@ import 'package:kfm/features/connect/data/crypto/spake2.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
+import 'package:kfm/features/connect/domain/fingerprint_words.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:meta/meta.dart';
@@ -73,17 +74,23 @@ class PairingSuccess {
 }
 
 /// Cancels a running pairing: closes the current client (the in-flight
-/// request fails) and makes the pairing throw `cancelled`. N3 adds the
-/// `/v1/pair/cancel` call.
+/// request fails), withdraws a request that waits for the accept prompt
+/// (`POST /v1/pair/cancel`, N3) and makes the pairing throw `cancelled`.
 class PairingCancel {
   bool _cancelled = false;
   RemoteHttp? _current;
+  Future<void> Function()? _withdraw;
 
   bool get isCancelled => _cancelled;
 
   void cancel() {
+    if (_cancelled) return;
     _cancelled = true;
     _current?.close();
+    final w = _withdraw;
+    _withdraw = null;
+    // Best effort: a vanished client is covered by the 60 s timeout.
+    if (w != null) unawaited(w().catchError((Object _) {}));
   }
 
   void _attach(RemoteHttp http) {
@@ -100,6 +107,13 @@ class PairingCancel {
 
 typedef PinnedFactory = RemoteHttp Function(Uri base, String fingerprint);
 typedef FirstContactFactory = FirstContactHttp Function(Uri base);
+
+/// Reports the waiting state: the peer's name and the 4-word phrase both
+/// devices show (N3).
+typedef PairingWaiting = void Function(String peerName, List<String> words);
+
+/// Timeout of the best-effort `POST /v1/pair/cancel`.
+const Duration kPairCancelTimeout = Duration(seconds: 3);
 
 /// Per-address probe timeout on the QR path.
 const Duration kPairProbeTimeout = Duration(seconds: 2);
@@ -127,7 +141,7 @@ class PairingClient {
   /// request reaches the other device's accept step.
   Future<PairingSuccess> pairWithQr(
     PairingOffer offer, {
-    void Function(String peerName)? onWaiting,
+    PairingWaiting? onWaiting,
     PairingCancel? cancel,
   }) async {
     final me = await _identity.loadOrCreate();
@@ -185,11 +199,18 @@ class PairingClient {
         ]),
       );
       cancel?._check();
-      onWaiting?.call(peerName);
+      final hello = _hello(me);
+      final base = http.base;
+      cancel?._withdraw = () =>
+          _sendCancel(base, offer.serverFingerprint, hello.pairAttemptId);
+      onWaiting?.call(
+        peerName,
+        fingerprintWords(offer.serverFingerprint, me.fingerprint),
+      );
       final accepted = await http.postJson(
         ApiRoutes.pair,
         PairRequestDto(
-          hello: _hello(me),
+          hello: hello,
           credential: QrCredential(
             secret: b64url(offer.secret),
             nonce: b64url(nonce),
@@ -199,6 +220,7 @@ class PairingClient {
         decode: PairAcceptedDto.fromJson,
         timeout: kPairRequestTimeout,
       );
+      cancel?._withdraw = null;
       http.bearerToken = accepted.token;
       return PairingSuccess(
         http: http,
@@ -207,6 +229,7 @@ class PairingClient {
         peerFingerprint: offer.serverFingerprint,
       );
     } on Object catch (e) {
+      cancel?._withdraw = null;
       http.close();
       throw _map(e, cancel);
     }
@@ -219,7 +242,7 @@ class PairingClient {
     required Uri base,
     required ShortCode code,
     String? expectedFingerprint,
-    void Function(String peerName)? onWaiting,
+    PairingWaiting? onWaiting,
     PairingCancel? cancel,
   }) async {
     final me = await _identity.loadOrCreate();
@@ -274,7 +297,8 @@ class PairingClient {
         signedMessage(ProofLabels.pairCode, [_utf8(seen), _sha256(keys.tt)]),
       );
       cancel?._check();
-      onWaiting?.call(peerName);
+      cancel?._withdraw = () => _sendCancel(base, seen, hello.pairAttemptId);
+      onWaiting?.call(peerName, fingerprintWords(seen, me.fingerprint));
       final accepted = await pinned.postJson(
         ApiRoutes.pair,
         PairRequestDto(
@@ -288,6 +312,7 @@ class PairingClient {
         decode: PairAcceptedDto.fromJson,
         timeout: kPairRequestTimeout,
       );
+      cancel?._withdraw = null;
       pinned.bearerToken = accepted.token;
       return PairingSuccess(
         http: pinned,
@@ -296,8 +321,29 @@ class PairingClient {
         peerFingerprint: seen,
       );
     } on Object catch (e) {
+      cancel?._withdraw = null;
       current.close();
       throw _map(e, cancel);
+    }
+  }
+
+  /// `POST /v1/pair/cancel` on a fresh pinned client (the waiting one is
+  /// already closed).
+  Future<void> _sendCancel(
+    Uri base,
+    String fingerprint,
+    String attemptId,
+  ) async {
+    final c = _pinned(base, fingerprint);
+    try {
+      await c.postJson(
+        ApiRoutes.pairCancel,
+        {'pairAttemptId': attemptId},
+        decode: (_) => null,
+        timeout: kPairCancelTimeout,
+      );
+    } finally {
+      c.close();
     }
   }
 

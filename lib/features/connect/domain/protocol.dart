@@ -84,8 +84,7 @@ enum ApiErrorCode {
   pendingFolderUnavailable(409, 'pending_folder_unavailable'),
   invalidName(400, 'invalid_name'),
   verificationFailed(409, 'verification_failed'),
-  internal(500)
-  ;
+  internal(500);
 
   new(this.status, [this._wire]);
 
@@ -227,20 +226,19 @@ sealed class PairCredential {
   const new();
 
   /// `{type: 'qr'|'code', ...}`.
-  factory fromJson(Map<String, Object?> json) =>
-      switch (json['type']) {
-        'qr' => QrCredential(
-          secret: _str(json, 'secret'),
-          nonce: _str(json, 'nonce'),
-          sig: _str(json, 'sig'),
-        ),
-        'code' => CodeCredential(
-          attemptId: _str(json, 'attemptId'),
-          confirmA: _str(json, 'confirmA'),
-          sig: _str(json, 'sig'),
-        ),
-        _ => throw const FormatException('unknown credential type'),
-      };
+  factory fromJson(Map<String, Object?> json) => switch (json['type']) {
+    'qr' => QrCredential(
+      secret: _str(json, 'secret'),
+      nonce: _str(json, 'nonce'),
+      sig: _str(json, 'sig'),
+    ),
+    'code' => CodeCredential(
+      attemptId: _str(json, 'attemptId'),
+      confirmA: _str(json, 'confirmA'),
+      sig: _str(json, 'sig'),
+    ),
+    _ => throw const FormatException('unknown credential type'),
+  };
 
   Map<String, Object?> toJson();
 }
@@ -264,7 +262,11 @@ final class QrCredential extends PairCredential {
 
 /// Short-code path: sig over [ProofLabels.pairCode].
 final class CodeCredential extends PairCredential {
-  const new({required this.attemptId, required this.confirmA, required this.sig});
+  const new({
+    required this.attemptId,
+    required this.confirmA,
+    required this.sig,
+  });
 
   final String attemptId;
   final String confirmA;
@@ -303,12 +305,11 @@ class PairRequestDto {
 class KnownPairRequestDto {
   const new({required this.hello, required this.nonce, required this.sig});
 
-  factory fromJson(Map<String, Object?> json) =>
-      KnownPairRequestDto(
-        hello: ClientHelloDto.fromJson(_map(json, 'hello')),
-        nonce: _str(json, 'nonce'),
-        sig: _str(json, 'sig'),
-      );
+  factory fromJson(Map<String, Object?> json) => KnownPairRequestDto(
+    hello: ClientHelloDto.fromJson(_map(json, 'hello')),
+    nonce: _str(json, 'nonce'),
+    sig: _str(json, 'sig'),
+  );
 
   final ClientHelloDto hello;
   final String nonce;
@@ -382,6 +383,34 @@ class RootDto {
     'id': id,
     'label': label,
     'readOnly': readOnly,
+  };
+}
+
+/// `GET /v1/roots` response (N4 serves it; N3's client polls it while the
+/// list is empty). An object, not a bare list: `RemoteHttp` decodes JSON
+/// objects only.
+@immutable
+class RootsResponseDto {
+  const new(this.roots);
+
+  factory fromJson(Map<String, Object?> json) {
+    final roots = json['roots'];
+    if (roots is! List<Object?>) {
+      throw const FormatException('missing or non-list "roots"');
+    }
+    return RootsResponseDto([
+      for (final r in roots)
+        if (r is Map<String, Object?>)
+          RootDto.fromJson(r)
+        else
+          throw const FormatException('non-object root'),
+    ]);
+  }
+
+  final List<RootDto> roots;
+
+  Map<String, Object?> toJson() => {
+    'roots': [for (final r in roots) r.toJson()],
   };
 }
 

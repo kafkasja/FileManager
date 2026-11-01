@@ -132,7 +132,7 @@ void main() {
     test('QR: pairs, sets the token, reports the waiting state', () async {
       final waiting = <String>[];
       final result = await client(a)
-          .pairWithQr(a.active.offer, onWaiting: waiting.add);
+          .pairWithQr(a.active.offer, onWaiting: (n, w) => waiting.add(n));
       expect(waiting, ['Phone A']);
       expect(result.accepted.token, 'tok');
       expect(result.http.bearerToken, 'tok');
@@ -162,7 +162,7 @@ void main() {
         base: Uri.parse('https://192.168.1.23:4433'),
         code: a.active.code,
         expectedFingerprint: serverId.fingerprint,
-        onWaiting: waiting.add,
+        onWaiting: (n, w) => waiting.add(n),
       );
       expect(waiting, ['Phone A']);
       expect(result.peerFingerprint, serverId.fingerprint);

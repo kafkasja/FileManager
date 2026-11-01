@@ -2,14 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
+import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
+import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -27,12 +31,19 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   // Read once: `ref` can't be used in dispose.
   late final ShareServerController _controller;
   late final ScreenAwake _awake;
+  late final AcceptGate _gate;
+  StreamSubscription<AcceptGateEvent>? _gateSub;
+
+  /// The request whose accept dialog is open.
+  String? _dialogFor;
 
   @override
   void initState() {
     super.initState();
     _controller = ref.read(shareServerControllerProvider.notifier);
     _awake = ref.read(screenAwakeProvider);
+    _gate = ref.read(acceptGateProvider);
+    _gateSub = _gate.events.listen(_onGateEvent);
     _keepAwake(on: true);
     // After the first frame: providers may not be modified during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,9 +53,53 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   @override
   void dispose() {
+    _gateSub?.cancel().ignore();
     _controller.stopSharing().ignore();
     _keepAwake(on: false);
     super.dispose();
+  }
+
+  void _onGateEvent(AcceptGateEvent e) {
+    if (!mounted) return;
+    switch (e) {
+      case AcceptRequested(:final request):
+        unawaited(_showAcceptDialog(request));
+      case AcceptClosed(:final request, :final decision):
+        if (_dialogFor != request.requestId) return;
+        // Ended elsewhere (timeout, the client's cancel): close the dialog.
+        _dialogFor = null;
+        Navigator.of(context, rootNavigator: true).pop();
+        final l10n = context.l10n;
+        final text = switch (decision) {
+          ConnectionDecision.cancelled => l10n.acceptRequestCancelled,
+          ConnectionDecision.timedOut => l10n.acceptTimedOut,
+          _ => null,
+        };
+        if (text != null) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(text)));
+        }
+    }
+  }
+
+  Future<void> _showAcceptDialog(ConnectionRequest request) async {
+    // Respects the system's silent mode; best effort.
+    unawaited(HapticFeedback.mediumImpact().catchError((Object _) {}));
+    unawaited(
+      SystemSound.play(SystemSoundType.alert).catchError((Object _) {}),
+    );
+    _dialogFor = request.requestId;
+    final decision = await showDialog<ConnectionDecision>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AcceptDialog(
+        request: request,
+        deadline: request.receivedAt.add(_gate.timeout),
+      ),
+    );
+    if (_dialogFor == request.requestId) _dialogFor = null;
+    if (decision != null) _gate.decide(request.requestId, decision);
   }
 
   void _keepAwake({required bool on}) {
@@ -121,6 +176,7 @@ class _Running extends ConsumerWidget {
           textAlign: TextAlign.center,
         ),
         SizedBox(height: spacing * 2),
+        const ConnectedClientsList(),
         const PairingPanel(),
         if (state.discoveryError != null) ...[
           SizedBox(height: spacing),
@@ -163,6 +219,39 @@ class _Running extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Connected: `name`" + Disconnect per live session (TASK-N3).
+class ConnectedClientsList extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final spacing = context.tokens.spacing;
+    final clients = ref.watch(connectedClientsProvider).value ?? const [];
+    if (clients.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsetsDirectional.only(bottom: spacing * 2),
+      child: Column(
+        children: [
+          for (final c in clients)
+            Card(
+              child: ListTile(
+                key: ValueKey('share-client-${c.sessionId}'),
+                leading: const Icon(Icons.devices_outlined),
+                title: Text(l10n.shareConnectedTo(c.clientName)),
+                trailing: TextButton(
+                  onPressed: () =>
+                      ref.read(clientSessionStoreProvider).revoke(c.sessionId),
+                  child: Text(l10n.shareDisconnectClient),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

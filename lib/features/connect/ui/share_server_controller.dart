@@ -110,6 +110,10 @@ class ShareServerController extends _$ShareServerController {
       // Sharing stops anyway; nothing left to show it on.
       developer.log('mDNS unregister failed: $e', name: 'kfm.connect');
     }
+    // After the first await (PendingRequest changes): the pending prompt
+    // ends as `cancelled`; every token dies with the run.
+    ref.read(acceptGateProvider).cancelAll();
+    ref.read(clientSessionStoreProvider).clear();
     await ref.read(shareServerProvider).stop();
     state = ShareServerState.stopped;
   }

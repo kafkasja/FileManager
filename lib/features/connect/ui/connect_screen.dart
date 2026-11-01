@@ -57,17 +57,34 @@ class ConnectScreen extends ConsumerWidget {
                 title: l10n.connectConnecting,
                 name: name,
               ),
-              ConnectWaiting(:final name) => _Progress(
+              ConnectWaiting(:final name, :final words) => _Progress(
                 title: l10n.connectWaiting(name),
                 name: name,
+                words: words,
               ),
-              ConnectConnected(:final result) => _Message(
-                icon: Icons.check_circle_outline,
-                title: l10n.connectConnected(result.peerName),
+              ConnectConnected(:final result, :final roots) => RefreshIndicator(
+                onRefresh: controller.refreshRoots,
+                child: _Message(
+                  icon: Icons.check_circle_outline,
+                  title: l10n.connectConnected(result.peerName),
+                  body: roots.isEmpty
+                      ? l10n.connectNoFoldersYet(result.peerName)
+                      : l10n.connectFoldersShared(roots.length),
+                  actions: [
+                    OutlinedButton(
+                      onPressed: controller.disconnect,
+                      child: Text(l10n.connectDisconnect),
+                    ),
+                  ],
+                ),
+              ),
+              ConnectDisconnected(:final name) => _Message(
+                icon: Icons.link_off,
+                title: l10n.connectDisconnected(name),
                 actions: [
-                  OutlinedButton(
-                    onPressed: controller.disconnect,
-                    child: Text(l10n.connectDisconnect),
+                  FilledButton(
+                    onPressed: controller.choose,
+                    child: Text(l10n.connectBack),
                   ),
                 ],
               ),
@@ -568,10 +585,13 @@ class _EnterCodeState extends ConsumerState<_EnterCode> {
 }
 
 class _Progress extends ConsumerWidget {
-  const new({required this.title, required this.name});
+  const new({required this.title, required this.name, this.words = const []});
 
   final String title;
   final String? name;
+
+  /// The 4-word phrase while waiting (N3); empty before.
+  final List<String> words;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -579,6 +599,8 @@ class _Progress extends ConsumerWidget {
     return _Message(
       icon: null,
       title: title,
+      body: words.isEmpty ? null : l10n.pairCompareWords,
+      words: words,
       actions: [
         OutlinedButton(
           key: const ValueKey('connect-cancel'),
@@ -591,11 +613,21 @@ class _Progress extends ConsumerWidget {
 }
 
 class _Message extends StatelessWidget {
-  const new({required this.icon, required this.title, required this.actions});
+  const new({
+    required this.icon,
+    required this.title,
+    required this.actions,
+    this.body,
+    this.words = const [],
+  });
 
   /// Null shows a progress indicator.
   final IconData? icon;
   final String title;
+  final String? body;
+
+  /// Fixed English words (ARB-exempt, `fingerprint_words.dart`).
+  final List<String> words;
   final List<Widget> actions;
 
   @override
@@ -604,6 +636,8 @@ class _Message extends StatelessWidget {
     final spacing = context.tokens.spacing;
     return Center(
       child: SingleChildScrollView(
+        // Pull-to-refresh on the connected view.
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -617,6 +651,21 @@ class _Message extends StatelessWidget {
               style: theme.textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
+            if (words.isNotEmpty) ...[
+              SizedBox(height: spacing * 2),
+              Text(
+                words.join(' '),
+                key: const ValueKey('connect-words'),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (body case final b?) ...[
+              SizedBox(height: spacing),
+              Text(b, textAlign: TextAlign.center),
+            ],
             SizedBox(height: spacing * 3),
             Wrap(
               spacing: spacing * 2,

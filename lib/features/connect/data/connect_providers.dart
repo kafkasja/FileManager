@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
+import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
+import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/device_identity_repository_impl.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
+import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
@@ -13,6 +16,7 @@ import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -78,10 +82,55 @@ PairingSecretStore pairingSecretStore(Ref ref) {
   return store;
 }
 
-/// What happens to a verified pairing request. N2 holds it and answers
-/// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+/// The pending accept decision of the current sharing run (N3).
 @Riverpod(keepAlive: true)
-PairHandOff pairHandOff(Ref ref) => holdUntilTimeout;
+AcceptGate acceptGate(Ref ref) {
+  final gate = AcceptGate();
+  ref.onDispose(gate.cancelAll);
+  return gate;
+}
+
+/// Bearer-token sessions of the current sharing run (N3).
+@Riverpod(keepAlive: true)
+ClientSessionStore clientSessionStore(Ref ref) {
+  final store = ClientSessionStore();
+  ref.onDispose(store.clear);
+  return store;
+}
+
+/// The request the accept dialog shows (N3); null when none.
+@Riverpod(keepAlive: true)
+class PendingRequest extends _$PendingRequest {
+  @override
+  ConnectionRequest? build() {
+    final gate = ref.watch(acceptGateProvider);
+    final sub = gate.events.listen((_) => state = gate.pending);
+    ref.onDispose(sub.cancel);
+    return gate.pending;
+  }
+
+  /// The dialog's answer.
+  void decide(String requestId, ConnectionDecision decision) =>
+      ref.read(acceptGateProvider).decide(requestId, decision);
+}
+
+/// Clients with a live session, oldest first (share screen list).
+@riverpod
+Stream<List<ClientSession>> connectedClients(Ref ref) async* {
+  final store = ref.watch(clientSessionStoreProvider);
+  yield store.sessions;
+  yield* store.changes;
+}
+
+/// What happens to a verified pairing request: the accept prompt (N3).
+@Riverpod(keepAlive: true)
+PairHandOff pairHandOff(Ref ref) => promptHandOff(
+  gate: ref.watch(acceptGateProvider),
+  sessions: ref.watch(clientSessionStoreProvider),
+  serverDeviceId: () async =>
+      (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
+          .deviceId,
+);
 
 /// mDNS advertise + browse (N2).
 @Riverpod(keepAlive: true)
@@ -124,6 +173,7 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
       nonces: ref.watch(pairNonceStoreProvider),
       handOff: (candidate) => ref.read(pairHandOffProvider)(candidate),
     ),
+    pairCancelRoute(ref.watch(acceptGateProvider)),
   ];
 }
 
@@ -134,6 +184,7 @@ ShareServer shareServer(Ref ref) {
     (served) => buildSharePipeline(
       served: served,
       routes: ref.read(shareServerRoutesProvider),
+      authenticate: authenticate(ref.read(clientSessionStoreProvider)),
     ),
   );
   ref.onDispose(server.stop);

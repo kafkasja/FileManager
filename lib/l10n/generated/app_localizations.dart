@@ -5972,6 +5972,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New device identity created'**
   String get devResetIdentityDone;
+
+  /// No description provided for @pairCompareWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that both devices show these words'**
+  String get pairCompareWords;
+
+  /// No description provided for @connectNoFoldersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} hasn’t shared any folders yet'**
+  String connectNoFoldersYet(String name);
+
+  /// No description provided for @connectFoldersShared.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 shared folder} other{{count} shared folders}}'**
+  String connectFoldersShared(int count);
+
+  /// No description provided for @connectDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from {name}'**
+  String connectDisconnected(String name);
+
+  /// No description provided for @acceptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} wants to connect'**
+  String acceptTitle(String name);
+
+  /// No description provided for @acceptTitleRemembered.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (remembered) wants to connect'**
+  String acceptTitleRemembered(String name);
+
+  /// No description provided for @acceptPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Device type: {platform}'**
+  String acceptPlatform(String platform);
+
+  /// No description provided for @acceptAutoDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{Declines on its own in 1 second} other{Declines on its own in {seconds} seconds}}'**
+  String acceptAutoDecline(int seconds);
+
+  /// No description provided for @acceptDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get acceptDecline;
+
+  /// No description provided for @acceptAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get acceptAccept;
+
+  /// No description provided for @acceptRequestCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Request cancelled'**
+  String get acceptRequestCancelled;
+
+  /// No description provided for @acceptTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer in time. The request was declined.'**
+  String get acceptTimedOut;
+
+  /// No description provided for @shareConnectedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected: {name}'**
+  String shareConnectedTo(String name);
+
+  /// No description provided for @shareDisconnectClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get shareDisconnectClient;
 }
 
 class _AppLocalizationsDelegate

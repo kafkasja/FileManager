@@ -75,22 +75,27 @@ class _FakePairingClient extends PairingClient {
     required Uri base,
     required ShortCode code,
     String? expectedFingerprint,
-    void Function(String peerName)? onWaiting,
+    PairingWaiting? onWaiting,
     PairingCancel? cancel,
   }) {
     codeCalls.add((base: base, code: code, fp: expectedFingerprint));
-    onWaiting?.call('Phone A');
+    onWaiting?.call('Phone A', const ['acorn', 'zebra', 'tulip', 'river']);
     return next.future;
   }
 
   @override
   Future<PairingSuccess> pairWithQr(
     PairingOffer offer, {
-    void Function(String peerName)? onWaiting,
+    PairingWaiting? onWaiting,
     PairingCancel? cancel,
   }) {
     qrCalls.add(offer);
-    onWaiting?.call(offer.deviceName);
+    onWaiting?.call(offer.deviceName, const [
+      'acorn',
+      'zebra',
+      'tulip',
+      'river',
+    ]);
     return next.future;
   }
 }
@@ -212,10 +217,17 @@ void main() {
       Uri.parse('https://192.168.1.23:4433'),
     );
     expect(find.text('Waiting for Phone A to accept…'), findsOneWidget);
+    // N3: the same 4 words as the accept dialog on the other device.
+    expect(find.text('acorn zebra tulip river'), findsOneWidget);
+    expect(
+      find.text('Check that both devices show these words'),
+      findsOneWidget,
+    );
 
+    final http = FakeRemoteHttp()..bearerToken = 't';
     pairing.next.complete(
       PairingSuccess(
-        http: FakeRemoteHttp(),
+        http: http,
         accepted: const PairAcceptedDto(
           token: 't',
           serverDeviceId: 's',
@@ -227,6 +239,26 @@ void main() {
     );
     await _settle(tester);
     expect(find.text('Connected to Phone A'), findsOneWidget);
+    expect(
+      find.text('Phone A hasn’t shared any folders yet'),
+      findsOneWidget,
+    );
+
+    // Polls GET /v1/roots every 5 s while empty; 404 (N4 not built) is
+    // ignored.
+    await tester.pump(const Duration(seconds: 5));
+    await _settle(tester);
+    expect(http.calls.last.path, ApiRoutes.roots);
+    expect(http.calls.last.token, 't');
+    expect(find.text('Connected to Phone A'), findsOneWidget);
+
+    // Revoked on the other device: the next request gets 401.
+    http.fail('GET', ApiRoutes.roots, ApiErrorCode.unauthorized);
+    await tester.pump(const Duration(seconds: 5));
+    await _settle(tester);
+    expect(find.text('Disconnected from Phone A'), findsOneWidget);
+    expect(http.bearerToken, isNull);
+    expect(http.closed, isTrue);
   });
 
   testWidgets('enter address: invalid input is refused, a valid one opens '

@@ -3,18 +3,24 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:kfm/core/utils/random_id.dart';
+import 'package:kfm/features/connect/data/accept_gate.dart';
+import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/crypto/constant_time.dart';
 import 'package:kfm/features/connect/data/crypto/identity_proof.dart';
 import 'package:kfm/features/connect/data/crypto/spake2.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
+import 'package:kfm/features/connect/domain/fingerprint_words.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
 
-/// How a client proved it may ask to pair.
-enum PairMethod { qr, code }
+/// How a client proved it may ask to pair. `known` = a remembered device's
+/// `/v1/pair/known` (N6); it still gets the accept prompt.
+enum PairMethod { qr, code, known }
 
 /// A pairing request that passed every N2 check: the secret/code is already
 /// consumed and the identity proof verified. N3 decides (accept prompt).
@@ -25,6 +31,7 @@ class PairCandidate {
     required this.clientFingerprint,
     required this.remoteIp,
     required this.method,
+    required this.serverFingerprint,
   });
 
   final ClientHelloDto hello;
@@ -33,21 +40,88 @@ class PairCandidate {
   final String clientFingerprint;
   final String remoteIp;
   final PairMethod method;
+
+  /// This device's fingerprint (for the 4-word phrase).
+  final String serverFingerprint;
 }
 
-/// Hands a verified request to N3; the returned response answers the held
-/// `POST /v1/pair` (200 `PairAcceptedDto`, 403 `declined`/`timed_out`, …).
+/// Hands a verified request to the accept prompt ([promptHandOff]); the
+/// returned response answers the held `POST /v1/pair` (200
+/// `PairAcceptedDto`, 403 `declined`/`timed_out`, 409 `busy`, 410).
 typedef PairHandOff = Future<Response> Function(PairCandidate candidate);
 
-/// How long N3 holds `/v1/pair` for the decision.
+/// How long the accept prompt waits for a decision (N3).
 const Duration kPairDecisionTimeout = Duration(seconds: 60);
 
-/// N2 stand-in until N3's accept prompt exists: holds the request for the
-/// decision window, then answers `403 timed_out` (nobody can accept yet).
-Future<Response> holdUntilTimeout(PairCandidate candidate) async {
-  await Future<void>.delayed(kPairDecisionTimeout);
-  return apiError(ApiErrorCode.timedOut);
-}
+/// The accept prompt (TASK-N3): every verified request (QR, code and N6's
+/// remembered path) waits here for the person holding this device.
+/// One prompt at a time (`409 busy`); accept issues a bearer token
+/// (`200 PairAcceptedDto`), decline/timeout answer `403`, a client cancel
+/// `410`. [roots] gives the client's current roots (N4; empty until then).
+PairHandOff promptHandOff({
+  required AcceptGate gate,
+  required ClientSessionStore sessions,
+  required Future<String> Function() serverDeviceId,
+  List<RootDto> Function(String clientFingerprint)? roots,
+  DateTime Function()? clock,
+}) => (candidate) async {
+  final hello = candidate.hello;
+  final request = ConnectionRequest(
+    requestId: randomHexId(),
+    pairAttemptId: hello.pairAttemptId,
+    remoteIp: candidate.remoteIp,
+    clientDeviceId: hello.clientDeviceId,
+    clientName: hello.clientName,
+    clientPlatform: hello.clientPlatform,
+    clientFingerprint: candidate.clientFingerprint,
+    remembered: candidate.method == PairMethod.known,
+    receivedAt: (clock ?? DateTime.now)(),
+    words: fingerprintWords(
+      candidate.serverFingerprint,
+      candidate.clientFingerprint,
+    ),
+  );
+  final decision = gate.open(request);
+  if (decision == null) return apiError(ApiErrorCode.busy);
+  switch (await decision) {
+    case ConnectionDecision.accepted:
+      final issued = sessions.issue(
+        clientFingerprint: candidate.clientFingerprint,
+        clientDeviceId: hello.clientDeviceId,
+        clientName: hello.clientName,
+      );
+      return jsonOk(
+        PairAcceptedDto(
+          token: issued.token,
+          serverDeviceId: await serverDeviceId(),
+          roots: roots?.call(candidate.clientFingerprint) ?? const [],
+        ).toJson(),
+      );
+    case ConnectionDecision.declined:
+      return apiError(ApiErrorCode.declined);
+    case ConnectionDecision.timedOut:
+      return apiError(ApiErrorCode.timedOut);
+    case ConnectionDecision.cancelled:
+      return apiError(ApiErrorCode.cancelled);
+  }
+};
+
+/// `POST /v1/pair/cancel {pairAttemptId}` (TASK-N3): best effort and
+/// unauthenticated; the random attempt id is the capability and must come
+/// from the same IP. Always `204` for a well-formed body (an unknown id or
+/// another IP is ignored without telling).
+ServerRoute pairCancelRoute(AcceptGate gate) =>
+    ServerRoute('POST', ApiRoutes.pairCancel, (request) async {
+      final peer = remoteAddressOf(request)?.address;
+      if (peer == null) return apiError(ApiErrorCode.forbidden);
+      final json = await _body(request);
+      final id = json?['pairAttemptId'];
+      if (id is! String || id.isEmpty || id.length > 64) {
+        return apiError(ApiErrorCode.pairingFailed);
+      }
+      gate.cancel(id, peer);
+      return Response(204);
+    });
 
 /// `POST /v1/pair/code/start` and `POST /v1/pair` (TASK-N2).
 List<ServerRoute> pairRoutes({
@@ -196,6 +270,7 @@ Future<Response> _pair(
           clientFingerprint: clientFp,
           remoteIp: peer,
           method: PairMethod.qr,
+          serverFingerprint: serverFp,
         ),
       );
     case CodeCredential(:final attemptId, :final confirmA, :final sig):
@@ -229,6 +304,7 @@ Future<Response> _pair(
           clientFingerprint: clientFp,
           remoteIp: peer,
           method: PairMethod.code,
+          serverFingerprint: serverFp,
         ),
       );
   }

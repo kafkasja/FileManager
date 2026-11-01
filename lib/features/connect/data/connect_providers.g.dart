@@ -286,20 +286,220 @@ final class PairingSecretStoreProvider
 String _$pairingSecretStoreHash() =>
     r'925cecd2be29d730143e563923bfb9ecebe41bd5';
 
-/// What happens to a verified pairing request. N2 holds it and answers
-/// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+/// The pending accept decision of the current sharing run (N3).
+
+@ProviderFor(acceptGate)
+final acceptGateProvider = AcceptGateProvider._();
+
+/// The pending accept decision of the current sharing run (N3).
+
+final class AcceptGateProvider
+    extends $FunctionalProvider<AcceptGate, AcceptGate, AcceptGate>
+    with $Provider<AcceptGate> {
+  /// The pending accept decision of the current sharing run (N3).
+  AcceptGateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'acceptGateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$acceptGateHash();
+
+  @$internal
+  @override
+  $ProviderElement<AcceptGate> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AcceptGate create(Ref ref) {
+    return acceptGate(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AcceptGate value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AcceptGate>(value),
+    );
+  }
+}
+
+String _$acceptGateHash() => r'89bbd757bb7e976fe3d6d13f7bf626b62de1c636';
+
+/// Bearer-token sessions of the current sharing run (N3).
+
+@ProviderFor(clientSessionStore)
+final clientSessionStoreProvider = ClientSessionStoreProvider._();
+
+/// Bearer-token sessions of the current sharing run (N3).
+
+final class ClientSessionStoreProvider
+    extends
+        $FunctionalProvider<
+          ClientSessionStore,
+          ClientSessionStore,
+          ClientSessionStore
+        >
+    with $Provider<ClientSessionStore> {
+  /// Bearer-token sessions of the current sharing run (N3).
+  ClientSessionStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'clientSessionStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$clientSessionStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<ClientSessionStore> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ClientSessionStore create(Ref ref) {
+    return clientSessionStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ClientSessionStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ClientSessionStore>(value),
+    );
+  }
+}
+
+String _$clientSessionStoreHash() =>
+    r'ff70db12118026c3106a24e949eb37091f1281bd';
+
+/// The request the accept dialog shows (N3); null when none.
+
+@ProviderFor(PendingRequest)
+final pendingRequestProvider = PendingRequestProvider._();
+
+/// The request the accept dialog shows (N3); null when none.
+final class PendingRequestProvider
+    extends $NotifierProvider<PendingRequest, ConnectionRequest?> {
+  /// The request the accept dialog shows (N3); null when none.
+  PendingRequestProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingRequestProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingRequestHash();
+
+  @$internal
+  @override
+  PendingRequest create() => PendingRequest();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ConnectionRequest? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ConnectionRequest?>(value),
+    );
+  }
+}
+
+String _$pendingRequestHash() => r'd58535ed3a253ee219103777d5922a56cc7172eb';
+
+/// The request the accept dialog shows (N3); null when none.
+
+abstract class _$PendingRequest extends $Notifier<ConnectionRequest?> {
+  ConnectionRequest? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<ConnectionRequest?, ConnectionRequest?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ConnectionRequest?, ConnectionRequest?>,
+              ConnectionRequest?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Clients with a live session, oldest first (share screen list).
+
+@ProviderFor(connectedClients)
+final connectedClientsProvider = ConnectedClientsProvider._();
+
+/// Clients with a live session, oldest first (share screen list).
+
+final class ConnectedClientsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ClientSession>>,
+          List<ClientSession>,
+          Stream<List<ClientSession>>
+        >
+    with
+        $FutureModifier<List<ClientSession>>,
+        $StreamProvider<List<ClientSession>> {
+  /// Clients with a live session, oldest first (share screen list).
+  ConnectedClientsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectedClientsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectedClientsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ClientSession>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ClientSession>> create(Ref ref) {
+    return connectedClients(ref);
+  }
+}
+
+String _$connectedClientsHash() => r'34b9c31fb9f04966675e7a1aa000d2e40189d82e';
+
+/// What happens to a verified pairing request: the accept prompt (N3).
 
 @ProviderFor(pairHandOff)
 final pairHandOffProvider = PairHandOffProvider._();
 
-/// What happens to a verified pairing request. N2 holds it and answers
-/// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+/// What happens to a verified pairing request: the accept prompt (N3).
 
 final class PairHandOffProvider
     extends $FunctionalProvider<PairHandOff, PairHandOff, PairHandOff>
     with $Provider<PairHandOff> {
-  /// What happens to a verified pairing request. N2 holds it and answers
-  /// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+  /// What happens to a verified pairing request: the accept prompt (N3).
   PairHandOffProvider._()
     : super(
         from: null,
@@ -333,7 +533,7 @@ final class PairHandOffProvider
   }
 }
 
-String _$pairHandOffHash() => r'7c76a8b4d377b2f071b7714fe4d81f428c9b7f25';
+String _$pairHandOffHash() => r'58d3f0203d8dd0cbeb590a2988046aa99537d472';
 
 /// mDNS advertise + browse (N2).
 
@@ -569,7 +769,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'05e51149b90215ac7c5104e7543f682063998c81';
+String _$shareServerRoutesHash() => r'da727331478390fb8aa5bd5d981e5de732a0a83a';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();
@@ -610,4 +810,4 @@ final class ShareServerProvider
   }
 }
 
-String _$shareServerHash() => r'f1417c8b7aa7f4157e242f23e1055111c4927810';
+String _$shareServerHash() => r'b244a75fe9fe6dc82a4637dae5b3e691368801ff';

@@ -9,8 +9,10 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
+import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:shelf/shelf.dart';
 
@@ -253,6 +255,112 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  ConnectionRequest request(String id, {bool remembered = false}) =>
+      ConnectionRequest(
+        requestId: id,
+        pairAttemptId: 'att-$id',
+        remoteIp: '192.168.1.40',
+        clientDeviceId: 'dev-b',
+        clientName: 'Phone B',
+        clientPlatform: 'android',
+        clientFingerprint: 'cd' * 32,
+        remembered: remembered,
+        receivedAt: DateTime.now(),
+        words: const ['acorn', 'zebra', 'tulip', 'river'],
+      );
+
+  testWidgets('N3: accept dialog with name, platform and 4 words; Decline '
+      'has focus; Accept decides', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final gate = app.container.read(acceptGateProvider);
+    final decision = gate.open(request('r1'))!;
+    await tester.pumpAndSettle();
+    expect(find.text('Phone B wants to connect'), findsOneWidget);
+    expect(find.text('Device type: android'), findsOneWidget);
+    expect(find.text('acorn zebra tulip river'), findsOneWidget);
+    expect(
+      find.text('Check that both devices show these words'),
+      findsOneWidget,
+    );
+    final decline = tester.widget<TextButton>(
+      find.byKey(const ValueKey('accept-decline')),
+    );
+    expect(decline.autofocus, isTrue);
+    expect(app.container.read(pendingRequestProvider)?.requestId, 'r1');
+    await tester.tap(find.text('Accept'));
+    await tester.pumpAndSettle();
+    expect(await decision, ConnectionDecision.accepted);
+    expect(find.byType(AcceptDialog), findsNothing);
+    expect(app.container.read(pendingRequestProvider), isNull);
+
+    final d2 = gate.open(request('r2', remembered: true))!;
+    await tester.pumpAndSettle();
+    expect(find.text('Phone B (remembered) wants to connect'), findsOneWidget);
+    await tester.tap(find.text('Decline'));
+    await tester.pumpAndSettle();
+    expect(await d2, ConnectionDecision.declined);
+  });
+
+  testWidgets('N3: the client cancels → dialog closes with "Request '
+      'cancelled"; no answer for 60 s → closes too', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final gate = app.container.read(acceptGateProvider);
+    final cancelled = gate.open(request('r1'))!;
+    await tester.pumpAndSettle();
+    expect(gate.cancel('att-r1', '192.168.1.99'), isFalse);
+    expect(gate.cancel('att-r1', '192.168.1.40'), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byType(AcceptDialog), findsNothing);
+    expect(find.text('Request cancelled'), findsOneWidget);
+    expect(await cancelled, ConnectionDecision.cancelled);
+
+    final timedOut = gate.open(request('r2'))!;
+    await tester.pumpAndSettle();
+    expect(find.byType(AcceptDialog), findsOneWidget);
+    await tester.pump(const Duration(seconds: 61));
+    await tester.pumpAndSettle();
+    expect(await timedOut, ConnectionDecision.timedOut);
+    expect(find.byType(AcceptDialog), findsNothing);
+    expect(
+      find.text('No answer in time. The request was declined.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('N3: connected clients are listed with Disconnect; stopping '
+      'sharing ends sessions and a pending prompt', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final sessions = app.container.read(clientSessionStoreProvider);
+    final issued = sessions.issue(
+      clientFingerprint: 'cd' * 32,
+      clientDeviceId: 'dev-b',
+      clientName: 'Phone B',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Connected: Phone B'), findsOneWidget);
+    await tester.tap(find.text('Disconnect'));
+    await tester.pumpAndSettle();
+    expect(find.text('Connected: Phone B'), findsNothing);
+    expect(sessions.verify(issued.token), isNull);
+
+    final again = sessions.issue(
+      clientFingerprint: 'cd' * 32,
+      clientDeviceId: 'dev-b',
+      clientName: 'Phone B',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Connected: Phone B'), findsOneWidget);
+    await app.container
+        .read(shareServerControllerProvider.notifier)
+        .stopSharing();
+    await tester.pumpAndSettle();
+    expect(sessions.verify(again.token), isNull);
+    expect(find.text('Connected: Phone B'), findsNothing);
   });
 
   testWidgets('Back also stops sharing', (tester) async {

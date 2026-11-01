@@ -4,7 +4,9 @@ import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
+import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
+import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connect_controller.g.dart';
@@ -53,19 +55,31 @@ final class ConnectWorking extends ConnectState {
   final String? name;
 }
 
-/// `POST /v1/pair` sent: the other device decides (N3).
+/// `POST /v1/pair` sent: the other device decides (N3). Both devices show
+/// [words].
 final class ConnectWaiting extends ConnectState {
-  const new(this.name);
+  const new(this.name, {this.words = const []});
 
   final String name;
+  final List<String> words;
 }
 
 /// Paired. Until N5's `RemoteConnectionController` exists the screen keeps
-/// the pinned client here and shows "Connected".
+/// the pinned client here and shows "Connected". [roots] starts with the
+/// accept answer and is refreshed (`GET /v1/roots`) while empty.
 final class ConnectConnected extends ConnectState {
-  const new(this.result);
+  const new(this.result, {required this.roots});
 
   final PairingSuccess result;
+  final List<RootDto> roots;
+}
+
+/// The other device ended the session (a request got 401): the token is
+/// dropped.
+final class ConnectDisconnected extends ConnectState {
+  const new(this.name);
+
+  final String name;
 }
 
 final class ConnectFailed extends ConnectState {
@@ -81,10 +95,15 @@ final class ConnectFailed extends ConnectState {
 /// Result of a scanned QR value.
 enum ScanOutcome { started, notKfm, unsupportedVersion, ignored }
 
+/// How often the client asks for roots while none are shared (N3).
+const Duration kRootsPollInterval = Duration(seconds: 5);
+
 @riverpod
 class ConnectController extends _$ConnectController {
   PairingCancel? _cancel;
   PairingSuccess? _connected;
+  Timer? _rootsPoll;
+  bool _refreshing = false;
 
   @override
   ConnectState build() {
@@ -92,8 +111,7 @@ class ConnectController extends _$ConnectController {
       _cancel?.cancel();
       _cancel = null;
       // N5 takes the connection over; until then closing the screen ends it.
-      _connected?.http.close();
-      _connected = null;
+      _dropConnection();
     });
     return const ConnectChoose();
   }
@@ -175,7 +193,8 @@ class ConnectController extends _$ConnectController {
     );
   }
 
-  /// Withdraws a running pairing (N3 adds `/v1/pair/cancel`).
+  /// Withdraws a running pairing (and a request waiting for the other
+  /// device's accept prompt, `/v1/pair/cancel`).
   void cancel() {
     _cancel?.cancel();
     _cancel = null;
@@ -184,9 +203,53 @@ class ConnectController extends _$ConnectController {
 
   /// Closes the connection (until N5 owns it) and starts over.
   void disconnect() {
-    _connected?.http.close();
-    _connected = null;
+    _dropConnection();
     _set(const ConnectChoose());
+  }
+
+  /// Pull-to-refresh / 5 s poll of the shared roots while the list is
+  /// empty. A 401 means the other device ended the session.
+  Future<void> refreshRoots() async {
+    final c = _connected;
+    if (c == null || _refreshing) return;
+    _refreshing = true;
+    try {
+      final r = await c.http.getJson(
+        ApiRoutes.roots,
+        decode: RootsResponseDto.fromJson,
+      );
+      if (!ref.mounted || !identical(c, _connected)) return;
+      _set(ConnectConnected(c, roots: r.roots));
+      if (r.roots.isNotEmpty) _stopPoll();
+    } on RemoteApiException catch (e) {
+      if (!ref.mounted || !identical(c, _connected)) return;
+      if (e.code == ApiErrorCode.unauthorized) {
+        _dropConnection();
+        _set(ConnectDisconnected(c.peerName));
+      }
+      // 404 until N4 serves /v1/roots; anything else: N5's heartbeat decides.
+    } on Object {
+      // Network blips: N5's heartbeat decides when the link is gone.
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  void _dropConnection() {
+    _stopPoll();
+    final c = _connected;
+    _connected = null;
+    if (c != null) {
+      // Memory only: the token dies with the connection (N3).
+      c.http
+        ..bearerToken = null
+        ..close();
+    }
+  }
+
+  void _stopPoll() {
+    _rootsPoll?.cancel();
+    _rootsPoll = null;
   }
 
   void retry() {
@@ -194,9 +257,9 @@ class ConnectController extends _$ConnectController {
     _set(s is ConnectFailed ? (s.retry ?? const ConnectChoose()) : s);
   }
 
-  void _waiting(String name) {
+  void _waiting(String name, List<String> words) {
     if (!ref.mounted || _cancel == null) return;
-    _set(ConnectWaiting(name));
+    _set(ConnectWaiting(name, words: words));
   }
 
   Future<void> _run(
@@ -214,8 +277,16 @@ class ConnectController extends _$ConnectController {
         return;
       }
       _cancel = null;
+      _dropConnection();
       _connected = result;
-      _set(ConnectConnected(result));
+      final roots = result.accepted.roots;
+      _set(ConnectConnected(result, roots: roots));
+      if (roots.isEmpty) {
+        _rootsPoll = Timer.periodic(
+          kRootsPollInterval,
+          (_) => unawaited(refreshRoots()),
+        );
+      }
     } on PairingException catch (e) {
       if (!ref.mounted || cancel.isCancelled) return;
       _cancel = null;
