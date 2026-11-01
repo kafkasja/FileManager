@@ -26,6 +26,10 @@ Map<String, Object?> indexQueryToJson(IndexQuery q) => {
   if (q.hidden != HiddenFilter.exclude) 'hidden': q.hidden.name,
   if (q.extensions.isNotEmpty) 'ext': q.extensions.toList()..sort(),
   if (q.panoramaOnly) 'pano': true,
+  if (q.labelTerms.isNotEmpty)
+    'labels': [for (final term in q.labelTerms) term.toList()..sort()],
+  if (q.blurryOnly) 'blurry': true,
+  'blurMax': ?q.blurThreshold,
 };
 
 /// Throws [FormatException] on bad data or a newer version.
@@ -70,5 +74,17 @@ IndexQuery indexQueryFromJson(Map<String, Object?> j) {
     },
     extensions: {for (final e in list('ext')) e! as String},
     panoramaOnly: opt<bool>('pano') ?? false,
+    labelTerms: [
+      for (final term in list('labels'))
+        switch (term) {
+          final List<Object?> labels => {
+            for (final l in labels)
+              if (l is String) l else throw FormatException('Bad label: $l'),
+          },
+          _ => throw FormatException('Bad label term: $term'),
+        },
+    ],
+    blurryOnly: opt<bool>('blurry') ?? false,
+    blurThreshold: opt<int>('blurMax'),
   );
 }

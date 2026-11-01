@@ -250,6 +250,32 @@ abstract final class AppSettings {
     'smartGroups.inputSignature',
     '',
   );
+
+  /// C3. On-device labeling on. Off by default (Round 3); only turned on
+  /// while the models are installed (the job also checks the model store,
+  /// so a stale `true` without models does nothing).
+  static final SettingKey<bool> aiLabelsEnabled = SettingKey.boolean(
+    'aiLabels.enabled',
+    defaultValue: false,
+  );
+
+  /// C3. Labeling paused by the user (Settings → Pause).
+  static final SettingKey<bool> aiLabelsPaused = SettingKey.boolean(
+    'aiLabels.paused',
+    defaultValue: false,
+  );
+
+  /// C3. Download the models on Wi-Fi only.
+  static final SettingKey<bool> aiModelsWifiOnly = SettingKey.boolean(
+    'aiLabels.wifiOnly',
+    defaultValue: true,
+  );
+
+  /// C3. "Not now" on the turn-on card.
+  static final SettingKey<bool> aiLabelsCardDismissed = SettingKey.boolean(
+    'aiLabels.cardDismissed',
+    defaultValue: false,
+  );
 }
 
 /// B4: the action of a drag & drop onto a folder.

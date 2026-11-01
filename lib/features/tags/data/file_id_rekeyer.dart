@@ -8,7 +8,8 @@ import 'package:kfm/core/files/file_source.dart';
 /// changes it (`FileSource.idChanges`): tags, favorites, reviewed labels and
 /// (H4) undo log, queued deletes and rename batch items, (B6) the
 /// selection and its Clear all snapshot, (SS1) swipe source items, (C2) image signals, similar group items and
-/// dismissals, (C5) EXIF rows, smart group members and covers. Idempotent: copy
+/// dismissals, (C5) EXIF rows, smart group members and covers, (C3) AI labels and their
+/// status. Idempotent: copy
 /// rows to the new id (ignoring ones already there), then drop the old id's
 /// rows.
 class FileIdRekeyer {
@@ -135,6 +136,28 @@ class FileIdRekeyer {
         await _db.customStatement(
           'UPDATE smart_groups SET cover_file_id = ? WHERE cover_file_id = ?',
           [newId, oldId],
+        );
+        // C3: a move isn't an edit: labels and the status row follow the
+        // file, so it isn't labeled again.
+        await _db.customStatement(
+          'INSERT OR IGNORE INTO ai_labels (file_id, label, confidence) '
+          'SELECT ?, label, confidence FROM ai_labels WHERE file_id = ?',
+          [newId, oldId],
+        );
+        await _db.customStatement('DELETE FROM ai_labels WHERE file_id = ?', [
+          oldId,
+        ]);
+        await _db.customStatement(
+          'INSERT OR IGNORE INTO ai_label_status (file_id, outcome, '
+          'model_version, file_modified_at_ms, attempts, error, '
+          'processed_at_ms) SELECT ?, outcome, model_version, '
+          'COALESCE(?, file_modified_at_ms), attempts, error, processed_at_ms '
+          'FROM ai_label_status WHERE file_id = ?',
+          [newId, newModifiedMs, oldId],
+        );
+        await _db.customStatement(
+          'DELETE FROM ai_label_status WHERE file_id = ?',
+          [oldId],
         );
         // B6: the selection keeps the file's place in the order.
         for (final table in ['selection_items', 'selection_snapshots']) {

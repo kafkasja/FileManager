@@ -37,8 +37,9 @@ class GroupDetailScreen extends ConsumerWidget {
           ref,
           title: title,
           query: group.query,
-          // Documents has no photos/videos until C3 adds labeled ones.
-          canSwipe: group != LiveGroup.documents,
+          // Documents swipes its photos C3 labeled 'document' (non-media
+          // documents are left out; none → "nothing to swipe").
+          canSwipe: true,
         );
       case StoredGroupKey(:final id):
         final async = ref.watch(smartGroupProvider(id));

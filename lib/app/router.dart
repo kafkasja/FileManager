@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/app_scaffold.dart';
+import 'package:kfm/app/router_extra_codec.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
 import 'package:kfm/features/browse/ui/collection_screen.dart';
@@ -68,6 +70,9 @@ abstract final class AppRoutes {
   static const renameBatch = '/swipe/rename';
   static const presets = '/settings/presets';
   static const stats = '/settings/stats';
+
+  /// C3: the AI model details screen (shown before any download).
+  static const aiModels = '/settings/ai-models';
   static String presetEditorFor(int id) => '/settings/presets/$id';
 }
 
@@ -91,22 +96,41 @@ String? redirectFor(AsyncValue<StorageAccess> access, String location) {
   return null;
 }
 
+/// What [redirectFor] depends on in [access]: loading, error, or whether
+/// Swipe may be used. The router refreshes only when this changes (TASK-H6),
+/// so a plain resume (which re-checks access) doesn't rebuild the routes.
+@visibleForTesting
+Object redirectInput(AsyncValue<StorageAccess> access) => switch (access) {
+  AsyncValue(hasValue: true, :final value?) => value.canUseSwipe,
+  AsyncValue(hasError: true) => #error,
+  _ => #loading,
+};
+
+/// How often the top-level redirect ran (tests check that a plain resume
+/// doesn't refresh the router).
+@visibleForTesting
+int debugRouterRedirectCount = 0;
+
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
   final access = ValueNotifier<AsyncValue<StorageAccess>>(const AsyncLoading());
   ref
-    ..listen(
-      storageAccessControllerProvider,
-      (_, next) => access.value = next,
-      fireImmediately: true,
-    )
+    ..listen(storageAccessControllerProvider, (_, next) {
+      if (redirectInput(next) != redirectInput(access.value)) {
+        access.value = next;
+      }
+    }, fireImmediately: true)
     ..onDispose(access.dispose);
 
   final router = GoRouter(
     initialLocation: AppRoutes.start,
     refreshListenable: access,
-    redirect: (context, state) =>
-        redirectFor(access.value, state.matchedLocation),
+    // Keeps a collection page's `extra` through refreshes and process death.
+    extraCodec: const KfmExtraCodec(),
+    redirect: (context, state) {
+      debugRouterRedirectCount++;
+      return redirectFor(access.value, state.matchedLocation);
+    },
     routes: [
       GoRoute(
         path: AppRoutes.start,
@@ -143,14 +167,15 @@ GoRouter router(Ref ref) {
                 routes: [
                   GoRoute(
                     path: 'collection',
-                    // `extra` is lost after process death: back to Browse.
-                    redirect: (context, state) =>
-                        state.extra is BrowseCollection
-                        ? null
-                        : AppRoutes.browse,
-                    builder: (context, state) => CollectionScreen(
-                      collection: state.extra! as BrowseCollection,
-                    ),
+                    // KfmExtraCodec restores `extra`; an unknown (old) shape
+                    // comes back null. No route redirect: go_router ignores
+                    // one equal to the base URI, so the builder is the guard.
+                    builder: (context, state) => switch (state.extra) {
+                      final BrowseCollection c => CollectionScreen(
+                        collection: c,
+                      ),
+                      _ => const _BackToBrowse(),
+                    },
                   ),
                   GoRoute(
                     path: 'selected',
@@ -182,11 +207,14 @@ GoRouter router(Ref ref) {
                                 null
                             ? AppRoutes.groups
                             : null,
-                        builder: (context, state) => GroupDetailScreen(
-                          groupKey: GroupKey.parse(
-                            state.pathParameters['key']!,
-                          )!,
-                        ),
+                        builder: (context, state) => switch (GroupKey.parse(
+                          state.pathParameters['key'] ?? '',
+                        )) {
+                          final GroupKey key => GroupDetailScreen(
+                            groupKey: key,
+                          ),
+                          null => const _BackToBrowse(),
+                        },
                       ),
                     ],
                   ),
@@ -207,9 +235,12 @@ GoRouter router(Ref ref) {
                                 null
                             ? AppRoutes.collections
                             : null,
-                        builder: (context, state) => TagFilesScreen(
-                          tagId: int.parse(state.pathParameters['id']!),
-                        ),
+                        builder: (context, state) => switch (int.tryParse(
+                          state.pathParameters['id'] ?? '',
+                        )) {
+                          final int id => TagFilesScreen(tagId: id),
+                          null => const _BackToBrowse(),
+                        },
                       ),
                     ],
                   ),
@@ -249,6 +280,10 @@ GoRouter router(Ref ref) {
                     builder: (context, state) => const StatsScreen(),
                   ),
                   GoRoute(
+                    path: 'ai-models',
+                    builder: (context, state) => const AiModelsDetailsScreen(),
+                  ),
+                  GoRoute(
                     path: 'presets',
                     builder: (context, state) => const ManagePresetsScreen(),
                     routes: [
@@ -272,4 +307,26 @@ GoRouter router(Ref ref) {
   );
   ref.onDispose(router.dispose);
   return router;
+}
+
+/// A route whose arguments couldn't be restored: an empty page that goes
+/// back to Browse right after its first frame (never an error screen).
+class _BackToBrowse extends StatefulWidget {
+  const new();
+
+  @override
+  State<_BackToBrowse> createState() => _BackToBrowseState();
+}
+
+class _BackToBrowseState extends State<_BackToBrowse> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.go(AppRoutes.browse);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold();
 }

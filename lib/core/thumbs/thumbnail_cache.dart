@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -15,7 +16,7 @@ enum ThumbPriority { visible, prefetch }
 /// none.
 typedef ThumbGenerator = Future<Uint8List?> Function(FileRef file, int size);
 
-/// Thumbnails for images and videos: memory → disk → generate (TASK-F5).
+/// Thumbnails for images, videos and audio: memory → disk → generate (TASK-F5).
 abstract interface class ThumbnailCache {
   /// Null for kinds without thumbnails, cancelled requests and files that
   /// failed to decode (remembered for the session: no retry loop).
@@ -45,6 +46,34 @@ Future<Uint8List?> photoManagerThumbnail(FileRef file, int size) async {
     ThumbnailSize.square(size),
     quality: 80,
   );
+}
+
+/// Makes a thumbnail from the file at an absolute path (FilesChannel.kt).
+typedef FileThumbGenerator = Future<Uint8List?> Function(String path, int size);
+
+/// The Android generator Browse uses (TASK-H7): MediaStore first (fast,
+/// cached by the system), then the file itself, so `path:` files (dot- and
+/// `.nomedia` folders, `Android/media`...) and `ms:` files whose MediaStore
+/// thumbnail fails get one too. Documents and other kinds: null, no channel
+/// call. C2/C3 scans keep passing [photoManagerThumbnail] explicitly.
+ThumbGenerator androidThumbnailGenerator({
+  ThumbGenerator mediaStore = photoManagerThumbnail,
+  FileThumbGenerator? fromFile,
+}) {
+  final file = fromFile ?? FilesChannel().fileThumbnail;
+  return (f, size) async {
+    if (f.id.startsWith('ms:')) {
+      try {
+        final bytes = await mediaStore(f, size);
+        if (bytes != null) return bytes;
+      } on Object catch (e) {
+        developer.log('ms thumb failed ${f.id}: $e', name: 'kfm.thumbs');
+      }
+    }
+    if (!DiskThumbnailCache.hasThumbnail(f)) return null;
+    // A `path:` uri is the absolute path; an `ms:` uri is content://.
+    return await file(f.uri.startsWith('/') ? f.uri : f.path, size);
+  };
 }
 
 class _Request {
@@ -91,8 +120,11 @@ class DiskThumbnailCache implements ThumbnailCache {
   int _writesSinceTrim = 0;
   final Map<String, DateTime> _lastAccess = {};
 
+  /// Audio: its cover art (H7), if it has one.
   static bool hasThumbnail(FileRef f) =>
-      f.kind == FileKind.image || f.kind == FileKind.video;
+      f.kind == FileKind.image ||
+      f.kind == FileKind.video ||
+      f.kind == FileKind.audio;
 
   @override
   Future<Uint8List?> get(

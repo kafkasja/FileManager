@@ -11,7 +11,8 @@ import 'package:kfm/features/search/domain/normalize.dart';
 /// Prefixes of every family, built or planned (X4 cloud, C4 label).
 const _knownPrefixes = {'type', 'source', 'attr', 'cloud', 'label'};
 
-/// Prefixes whose family isn't registered yet: their ids can't resolve.
+/// Prefixes whose family isn't registered yet, or (C4 label) needs C3's
+/// vocabulary: `label_keywords_test` checks those ids.
 const _laterPrefixes = {'cloud', 'label'};
 
 void main() {
@@ -20,7 +21,7 @@ void main() {
   final files = Directory('assets/search')
       .listSync()
       .whereType<File>()
-      .where((f) => f.path.endsWith('.json'))
+      .where((f) => f.uri.pathSegments.last.startsWith('terms_'))
       .toList();
 
   test('B8 ships only terms_en.json', () {

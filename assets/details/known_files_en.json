@@ -1,0 +1,390 @@
+{
+  "_comment": "TASK-B10 'What is this?' table. Match priority: names > folders > extensions. Globs are lower case and volume-relative: * = inside one folder, **/ = any number of folders. Folder rules also cover everything inside the folder; the deepest matching folder wins. Wording: never call a file safe to delete; hints are 'usually' or 'careful'.",
+  "names": [
+    { "glob": "msgstore*.db.crypt*", "kind": "whatsappChats" },
+    { "glob": "wa.db.crypt*", "kind": "whatsappContacts" },
+    { "glob": "*.tmp", "in": "**/whatsapp*/.shared", "kind": "whatsappScratch" },
+    { "glob": "*.crypt*", "in": "**/whatsapp*/backups/stickers", "kind": "whatsappStickerBackup" },
+    { "glob": ".nomedia", "kind": "nomedia" },
+    { "glob": ".trashed-*", "kind": "systemTrashed" },
+    { "glob": ".pending-*", "kind": "systemPending" },
+    { "glob": ".thumbdata*", "kind": "thumbCache" },
+    { "glob": "thumbs.db", "kind": "windowsThumbCache" },
+    { "glob": ".ds_store", "kind": "macFolderInfo" },
+    { "glob": "desktop.ini", "kind": "windowsFolderInfo" },
+    { "glob": "._*", "kind": "macResourceFork" }
+  ],
+  "folders": [
+    { "glob": "**/whatsapp*/backups/stickers", "kind": "whatsappStickerBackup" },
+    { "glob": "**/whatsapp*/backups", "kind": "whatsappSettingsBackup" },
+    { "glob": "**/whatsapp*/databases", "kind": "whatsappChats" },
+    { "glob": "**/whatsapp*/.shared", "kind": "whatsappScratch" },
+    { "glob": "**/whatsapp*/.trash", "kind": "whatsappTrash" },
+    { "glob": "**/whatsapp*/media/.statuses", "kind": "whatsappStatus" },
+    { "glob": "**/whatsapp*/media/whatsapp voice notes", "kind": "whatsappVoiceNotes" },
+    { "glob": "**/whatsapp*/media/whatsapp business voice notes", "kind": "whatsappVoiceNotes" },
+    { "glob": "**/whatsapp*/media/whatsapp stickers", "kind": "whatsappStickers" },
+    { "glob": "**/whatsapp*/media/whatsapp business stickers", "kind": "whatsappStickers" },
+    { "glob": "**/whatsapp*/media/wallpaper", "kind": "whatsappWallpaper" },
+    { "glob": "**/whatsapp*/media", "kind": "whatsappMedia" },
+    { "glob": "**/telegram/telegram *", "kind": "telegramMedia" },
+    { "glob": "android/data/org.telegram.messenger/cache", "kind": "telegramCache" },
+    { "glob": "android/data/org.telegram.messenger/files/telegram/telegram *", "kind": "telegramMedia" },
+    { "glob": "**/.mbridge_vc", "kind": "adVideoCache" },
+    { "glob": "**/unityadscache", "kind": "adVideoCache" },
+    { "glob": "**/.vungle", "kind": "adVideoCache" },
+    { "glob": "**/applovin", "kind": "adVideoCache" },
+    { "glob": "**/.thumbnails", "kind": "thumbCache" },
+    { "glob": "**/.thumbcache", "kind": "thumbCache" },
+    { "glob": "**/.face", "kind": "faceCache" },
+    { "glob": "**/.kfmtrash", "kind": "kfmTrash" },
+    { "glob": "**/.trash", "kind": "trashFolder" },
+    { "glob": "**/.trashes", "kind": "trashFolder" },
+    { "glob": "**/.recycle", "kind": "trashFolder" },
+    { "glob": "**/.recyclebin", "kind": "trashFolder" },
+    { "glob": "lost.dir", "kind": "lostDir" },
+    { "glob": ".android_secure", "kind": "androidSecure" },
+    { "glob": "android/media/*/cache", "kind": "appCache" },
+    { "glob": "android/data/*/cache", "kind": "appCache" },
+    { "glob": "android/data/*/files/cache", "kind": "appCache" },
+    { "glob": "android/data/*/files/exoplayer", "kind": "videoCache" },
+    { "glob": "android/data/*/files/.exo", "kind": "videoCache" },
+    { "glob": "android/obb/*", "kind": "obbData" },
+    { "glob": "android/data/*", "kind": "appData" },
+    { "glob": "android/media/*", "kind": "appMedia" },
+    { "glob": "**/.estrongs", "kind": "appData" },
+    { "glob": "**/.gs_fs*", "kind": "appData" }
+  ],
+  "extensions": {
+    "crypt": "whatsappBackup",
+    "crypt5": "whatsappBackup",
+    "crypt7": "whatsappBackup",
+    "crypt8": "whatsappBackup",
+    "crypt12": "whatsappBackup",
+    "crypt14": "whatsappBackup",
+    "crypt15": "whatsappBackup",
+    "tmp": "tempFile",
+    "temp": "tempFile",
+    "nomedia": "nomedia",
+    "thumbdata3": "thumbCache",
+    "thumbdata4": "thumbCache",
+    "thumbdata5": "thumbCache",
+    "apk": "apk",
+    "apks": "apk",
+    "xapk": "apk",
+    "apkm": "apk",
+    "obb": "obbData",
+    "crdownload": "partialDownload",
+    "part": "partialDownload",
+    "partial": "partialDownload",
+    "download": "partialDownload",
+    "torrent": "torrent",
+    "log": "logFile",
+    "bak": "backupCopy",
+    "db": "appDatabase",
+    "db-wal": "appDatabase",
+    "db-shm": "appDatabase",
+    "db-journal": "appDatabase",
+    "sqlite": "appDatabase",
+    "sqlite3": "appDatabase",
+    "dat": "appDataFile",
+    "bin": "appDataFile",
+    "exo": "videoCache",
+    "vcf": "contactCard",
+    "ics": "calendarEvent",
+    "gpx": "gpsTrack",
+    "kml": "gpsTrack",
+    "srt": "subtitles",
+    "vtt": "subtitles",
+    "ass": "subtitles",
+    "m3u": "playlist",
+    "m3u8": "playlist",
+    "ttf": "font",
+    "otf": "font",
+    "dng": "rawPhoto",
+    "nef": "rawPhoto",
+    "cr2": "rawPhoto",
+    "arw": "rawPhoto",
+    "heic": "heicPhoto",
+    "heif": "heicPhoto",
+    "webp": "webpImage",
+    "opus": "voiceMessage",
+    "amr": "voiceMessage",
+    "m4a": "audioRecording",
+    "3gp": "phoneVideo",
+    "epub": "ebook",
+    "mobi": "ebook"
+  },
+  "kinds": {
+    "whatsappBackup": {
+      "title": "WhatsApp encrypted backup",
+      "body": "Part of WhatsApp's local backup. Only WhatsApp can read it. Deleting it can lose chats or media that aren't backed up anywhere else.",
+      "deletable": "careful"
+    },
+    "whatsappChats": {
+      "title": "WhatsApp chat backup",
+      "body": "An encrypted copy of your WhatsApp chats, made by WhatsApp's daily local backup. Only WhatsApp can read it. WhatsApp uses it when you restore chats on this phone.",
+      "deletable": "careful"
+    },
+    "whatsappContacts": {
+      "title": "WhatsApp contacts backup",
+      "body": "An encrypted copy of WhatsApp's contact list. Only WhatsApp can read it.",
+      "deletable": "careful"
+    },
+    "whatsappStickerBackup": {
+      "title": "WhatsApp sticker backup (encrypted)",
+      "body": "WhatsApp keeps an encrypted copy of each saved sticker here, so stickers come back when you restore WhatsApp. The random-looking name is normal. Only WhatsApp can read it.",
+      "deletable": "careful"
+    },
+    "whatsappSettingsBackup": {
+      "title": "WhatsApp settings backup (encrypted)",
+      "body": "Part of WhatsApp's local backup: settings, wallpaper or the sticker list. Only WhatsApp can read it. WhatsApp uses it when you restore on this phone.",
+      "deletable": "careful"
+    },
+    "whatsappScratch": {
+      "title": "WhatsApp scratch file",
+      "body": "A temporary file WhatsApp made while sending, receiving or sharing something. These are usually left over once WhatsApp is done with them.",
+      "deletable": "usually"
+    },
+    "whatsappTrash": {
+      "title": "WhatsApp's deleted files",
+      "body": "Files WhatsApp moved aside after you deleted them in a chat. WhatsApp clears this folder itself from time to time.",
+      "deletable": "usually"
+    },
+    "whatsappStatus": {
+      "title": "WhatsApp status",
+      "body": "A copy of a status you viewed. WhatsApp removes these by itself after about a day.",
+      "deletable": "usually"
+    },
+    "whatsappVoiceNotes": {
+      "title": "WhatsApp voice message",
+      "body": "A voice message sent or received in a WhatsApp chat. WhatsApp groups them in folders by week. Deleting it removes the recording from the chat on this phone.",
+      "deletable": "careful"
+    },
+    "whatsappStickers": {
+      "title": "WhatsApp sticker",
+      "body": "A sticker sent or received in a WhatsApp chat.",
+      "deletable": "unknown"
+    },
+    "whatsappWallpaper": {
+      "title": "WhatsApp wallpaper",
+      "body": "A chat wallpaper picked in WhatsApp.",
+      "deletable": "unknown"
+    },
+    "whatsappMedia": {
+      "title": "WhatsApp media",
+      "body": "A photo, video, voice message or document sent or received in WhatsApp. Files in 'Sent' folders are copies of what you sent. Deleting it removes it from the chat on this phone.",
+      "deletable": "careful"
+    },
+    "telegramMedia": {
+      "title": "Telegram media",
+      "body": "A file sent or received in a Telegram chat. Telegram usually keeps a copy on its servers, so the chat may still be able to download it again.",
+      "deletable": "unknown"
+    },
+    "telegramCache": {
+      "title": "Telegram cache",
+      "body": "Media Telegram downloaded while you scrolled through chats. Telegram downloads it again when it's needed and can clear it in its own Storage usage settings.",
+      "deletable": "usually"
+    },
+    "adVideoCache": {
+      "title": "Ad video cache",
+      "body": "Videos an advertising kit inside an app or game saved so ads start quickly. They aren't your files; the app may download them again.",
+      "deletable": "usually"
+    },
+    "thumbCache": {
+      "title": "Thumbnail cache",
+      "body": "Small preview pictures a gallery or music app made so lists load faster. The app makes them again when needed.",
+      "deletable": "usually"
+    },
+    "faceCache": {
+      "title": "Face recognition data",
+      "body": "Data a gallery app keeps about faces it found in your photos. Removing it can make the app scan your photos again.",
+      "deletable": "unknown"
+    },
+    "windowsThumbCache": {
+      "title": "Windows thumbnail cache",
+      "body": "Windows made this when the folder was opened on a PC. Android doesn't use it.",
+      "deletable": "usually"
+    },
+    "windowsFolderInfo": {
+      "title": "Windows folder settings",
+      "body": "Windows stores how a folder looks in this file. Android doesn't use it.",
+      "deletable": "usually"
+    },
+    "macFolderInfo": {
+      "title": "Mac folder settings",
+      "body": "A Mac stores how a folder looks in this file. Android doesn't use it.",
+      "deletable": "usually"
+    },
+    "macResourceFork": {
+      "title": "Mac extra data",
+      "body": "A Mac writes these next to files copied from it. Android doesn't use them.",
+      "deletable": "usually"
+    },
+    "nomedia": {
+      "title": "Gallery blocker",
+      "body": "An empty marker file. It tells gallery and music apps not to show the files in this folder. Deleting it makes them show up in galleries.",
+      "deletable": "careful"
+    },
+    "systemTrashed": {
+      "title": "In the system trash",
+      "body": "Android keeps deleted photos and videos like this for about 30 days, then removes them. A gallery app or KFM's Trash can restore it.",
+      "deletable": "careful"
+    },
+    "systemPending": {
+      "title": "Unfinished file",
+      "body": "An app started saving this file and hasn't finished. If nothing is saving right now, it's usually left over from an interrupted save; Android cleans these up after a while.",
+      "deletable": "usually"
+    },
+    "kfmTrash": {
+      "title": "KFM's deleted files",
+      "body": "Files you deleted in KFM wait here before they're removed for good. Restore them from KFM's Trash.",
+      "deletable": "careful"
+    },
+    "trashFolder": {
+      "title": "An app's trash",
+      "body": "A folder where an app or computer keeps deleted files until they're removed for good.",
+      "deletable": "careful"
+    },
+    "lostDir": {
+      "title": "Recovered pieces",
+      "body": "Android puts pieces of files here that it recovered after a storage error, often from a memory card removed while in use. They usually can't be opened.",
+      "deletable": "usually"
+    },
+    "androidSecure": {
+      "title": "Android app storage",
+      "body": "A folder older Android versions used for apps moved to the memory card.",
+      "deletable": "careful"
+    },
+    "appCache": {
+      "title": "App cache",
+      "body": "Files an app keeps so things load faster. The app usually makes them again when needed; its own settings or Android's App info can clear them.",
+      "deletable": "usually"
+    },
+    "videoCache": {
+      "title": "Video cache",
+      "body": "Parts of videos an app saved while playing them, so they play smoothly again. The app downloads them again when needed.",
+      "deletable": "usually"
+    },
+    "appData": {
+      "title": "An app's own files",
+      "body": "Files an app keeps for itself, such as downloads, settings or offline content. Removing them can reset the app or lose what it saved.",
+      "deletable": "careful"
+    },
+    "appMedia": {
+      "title": "Media saved by an app",
+      "body": "Media an app saved in its own folder on shared storage. The app may still use it.",
+      "deletable": "careful"
+    },
+    "obbData": {
+      "title": "Game or app data",
+      "body": "Extra data a game or app downloaded, such as graphics or levels. Without it the app downloads it again or may stop working.",
+      "deletable": "careful"
+    },
+    "tempFile": {
+      "title": "Temporary file",
+      "body": "An app's scratch file, often left over after a download, an edit or sharing. Usually not needed once the app that made it is done with it.",
+      "deletable": "usually"
+    },
+    "apk": {
+      "title": "Android app installer",
+      "body": "An installer for an Android app. Once the app is installed, the installer is usually no longer needed. Only install apps from sources you trust.",
+      "deletable": "usually"
+    },
+    "partialDownload": {
+      "title": "Unfinished download",
+      "body": "A download that is still running or didn't finish. It usually can't be opened.",
+      "deletable": "usually"
+    },
+    "torrent": {
+      "title": "Torrent file",
+      "body": "A small file that tells a torrent app what to download.",
+      "deletable": "unknown"
+    },
+    "logFile": {
+      "title": "Log file",
+      "body": "A record an app writes about what it did, mostly for fixing problems.",
+      "deletable": "usually"
+    },
+    "backupCopy": {
+      "title": "Backup copy",
+      "body": "A backup an app or you made of another file. Check that you don't need it before deleting.",
+      "deletable": "careful"
+    },
+    "appDatabase": {
+      "title": "App database",
+      "body": "Data an app stores in a database, such as messages, settings or a list of files. Usually only that app reads it.",
+      "deletable": "careful"
+    },
+    "appDataFile": {
+      "title": "App data file",
+      "body": "Data an app saved in its own format. Only that app knows what's inside.",
+      "deletable": "unknown"
+    },
+    "contactCard": {
+      "title": "Contact card",
+      "body": "One or more contacts, for example exported from Contacts. Opening it can import them.",
+      "deletable": "unknown"
+    },
+    "calendarEvent": {
+      "title": "Calendar event",
+      "body": "An event or invitation. Opening it can add it to a calendar.",
+      "deletable": "unknown"
+    },
+    "gpsTrack": {
+      "title": "GPS track",
+      "body": "A route or places recorded by a sports, hiking or map app.",
+      "deletable": "unknown"
+    },
+    "subtitles": {
+      "title": "Subtitles",
+      "body": "Subtitles for a video with the same name.",
+      "deletable": "unknown"
+    },
+    "playlist": {
+      "title": "Playlist",
+      "body": "A list of songs or videos for a player app.",
+      "deletable": "unknown"
+    },
+    "font": {
+      "title": "Font",
+      "body": "A typeface an app or document uses.",
+      "deletable": "unknown"
+    },
+    "rawPhoto": {
+      "title": "RAW photo",
+      "body": "An unprocessed photo straight from the camera sensor, for editing. A normal JPEG of the same shot often sits next to it.",
+      "deletable": "unknown"
+    },
+    "heicPhoto": {
+      "title": "HEIC photo",
+      "body": "A photo in the space-saving HEIF format, used by newer phones and iPhones.",
+      "deletable": "unknown"
+    },
+    "webpImage": {
+      "title": "WebP image",
+      "body": "An image format used by websites and stickers.",
+      "deletable": "unknown"
+    },
+    "voiceMessage": {
+      "title": "Voice message or recording",
+      "body": "Audio in a format messaging and recorder apps use for speech.",
+      "deletable": "unknown"
+    },
+    "audioRecording": {
+      "title": "Audio",
+      "body": "Music or a recording in the M4A format.",
+      "deletable": "unknown"
+    },
+    "phoneVideo": {
+      "title": "Phone video",
+      "body": "A video in the 3GP format, used by older phones and some messaging apps.",
+      "deletable": "unknown"
+    },
+    "ebook": {
+      "title": "E-book",
+      "body": "A book for an e-reader app.",
+      "deletable": "unknown"
+    }
+  }
+}

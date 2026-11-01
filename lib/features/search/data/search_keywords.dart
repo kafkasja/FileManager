@@ -1,4 +1,5 @@
 import 'package:kfm/features/search/data/builtin_keywords.dart';
+import 'package:kfm/features/search/data/label_keywords.dart';
 import 'package:kfm/features/search/domain/search_keyword.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,7 +14,7 @@ List<SearchKeywordFamily> searchKeywordFamilies(Ref ref) => List.unmodifiable([
   sourceKeywords,
   attributeKeywords,
   // X4: cloudKeywords,
-  // C4: ref.watch(labelKeywordFamilyProvider),
+  ref.watch(labelKeywordFamilyProvider),
 ]);
 
 /// Resolves a concept id (`type:video`) through [families], or null when no

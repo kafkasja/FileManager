@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
 import 'package:kfm/features/search/ui/search_settings_section.dart';
@@ -72,6 +73,11 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 550,
       titleBuilder: (c) => c.l10n.storageOverviewTitle,
       builder: (_) => const StorageOverviewSection(),
+    ),
+    SettingsSection(
+      order: 600,
+      titleBuilder: (c) => c.l10n.aiLabelsTitle,
+      builder: (_) => const AiLabelsSettingsSection(),
     ),
     SettingsSection(
       order: 650,

@@ -188,6 +188,9 @@ void main() {
 
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
+    // B10 added Details: the menu scrolls in the 600 px test window.
+    await tester.ensureVisible(find.text('Preview selected'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Preview selected'));
     await tester.pumpAndSettle();
     expect(_shown(_name(1)), findsOneWidget);

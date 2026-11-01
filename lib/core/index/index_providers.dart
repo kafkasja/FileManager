@@ -104,7 +104,9 @@ Stream<int> mediaIndexChanges(Ref ref) =>
 Stream<int> indexAndTagChanges(Ref ref) =>
     ref.watch(mediaIndexDaoProvider).watchChanges(withTags: true);
 
-/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5)
+/// and AI labels (C3, the Documents group; C4 content search) and C2's
+/// image signals (C4 `blurry`).
 @Riverpod(keepAlive: true)
 Stream<int> indexAndGroupChanges(Ref ref) =>
     ref.watch(mediaIndexDaoProvider).watchChanges(withGroups: true);
@@ -114,7 +116,10 @@ Stream<int> indexAndGroupChanges(Ref ref) =>
 ProviderListenable<AsyncValue<int>> changesFor(IndexQuery query) =>
     query.anyTagIds.isNotEmpty || query.favoritesOnly || query.tagged != null
     ? indexAndTagChangesProvider
-    : query.smartGroupId != null || query.selfiesOnly
+    : query.smartGroupId != null ||
+          query.selfiesOnly ||
+          query.documentsGroup ||
+          query.hasContentTerms
     ? indexAndGroupChangesProvider
     : mediaIndexChangesProvider;
 
@@ -124,7 +129,9 @@ Future<ThumbnailCache> thumbnailCache(Ref ref) async {
   final settings = ref.watch(settingsRepositoryProvider);
   return DiskThumbnailCache(
     dir: Directory('${base.path}/thumbs'),
-    generator: photoManagerThumbnail,
+    generator: Platform.isAndroid
+        ? androidThumbnailGenerator()
+        : photoManagerThumbnail,
     maxDiskBytes: () async =>
         await settings.read(AppSettings.thumbCacheMaxMb) * 1024 * 1024,
   );

@@ -20,6 +20,16 @@ class AboutSection extends StatelessWidget {
           leading: const Icon(Icons.verified_user_outlined),
           title: Text(l10n.aboutPromise),
         ),
+        // Packages + C3's model and COCO notices (LicenseRegistry).
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: Text(l10n.aboutLicences),
+          onTap: () => showLicensePage(
+            context: context,
+            applicationName: l10n.appTitle,
+            applicationVersion: appVersion,
+          ),
+        ),
       ],
     );
   }

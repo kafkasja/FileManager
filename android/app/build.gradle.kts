@@ -48,6 +48,12 @@ flutter {
     source = "../.."
 }
 
+// C3: the GPU delegate is never used (CPU/XNNPACK only); its native lib is
+// only opened when a GpuDelegate is created. Saves ~2.5 MB per ABI.
+configurations.all {
+    exclude(group = "com.google.ai.edge.litert", module = "litert-gpu")
+}
+
 dependencies {
     // C5 (and X2): EXIF GPS + lens model.
     implementation("androidx.exifinterface:exifinterface:1.4.2")

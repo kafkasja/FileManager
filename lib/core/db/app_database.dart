@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:kfm/core/db/tables/ai_labels_table.dart';
 import 'package:kfm/core/db/tables/image_signals_table.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
 import 'package:kfm/core/db/tables/media_locations_table.dart';
@@ -54,6 +55,8 @@ part 'app_database.g.dart';
     MediaLocations,
     SmartGroups,
     SmartGroupItems,
+    AiLabels,
+    AiLabelStatus,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -74,7 +77,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -213,6 +216,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(smartGroupItems);
         await m.createIndex(sgKindRank);
         await m.createIndex(smgiFile);
+      }
+      if (from < 18) {
+        // TASK-C3
+        await m.createTable(aiLabels);
+        await m.createTable(aiLabelStatus);
+        await m.createIndex(aiLabelsLabel);
       }
     },
     beforeOpen: (details) async {

@@ -67,6 +67,9 @@ class IndexQuery {
     this.smartGroupId,
     this.selfiesOnly = false,
     this.documentsGroup = false,
+    this.labelTerms = const [],
+    this.blurryOnly = false,
+    this.blurThreshold,
   });
 
   /// Empty = all kinds.
@@ -121,8 +124,24 @@ class IndexQuery {
   /// C5: Selfies rule (folder `…/Selfies` or EXIF front camera).
   final bool selfiesOnly;
 
-  /// C5: documents (+ images labeled 'document' once C3 exists).
+  /// C5: documents, plus images C3 labeled 'document'.
   final bool documentsGroup;
+
+  /// C4: AI label terms. Each inner set is one typed term (its labels
+  /// OR'ed); the terms are AND'ed: "blue beach" → [{'color:blue'},
+  /// {'beach'}]. Non-empty implies kind = image.
+  final List<Set<String>> labelTerms;
+
+  /// C4: only images C2 measured as blurry (C2's shared blur predicate with
+  /// [blurThreshold]). Implies kind = image.
+  final bool blurryOnly;
+
+  /// C2's `similar.blurThreshold`, set together with [blurryOnly] (the DAO
+  /// never reads settings). Null with [blurryOnly] = matches nothing.
+  final int? blurThreshold;
+
+  /// C4: a content (AI label or blur) predicate is present.
+  bool get hasContentTerms => labelTerms.isNotEmpty || blurryOnly;
 
   static const all = IndexQuery();
 
@@ -163,6 +182,9 @@ class IndexQuery {
     int? Function()? smartGroupId,
     bool? selfiesOnly,
     bool? documentsGroup,
+    List<Set<String>>? labelTerms,
+    bool? blurryOnly,
+    int? Function()? blurThreshold,
   }) => IndexQuery(
     kinds: kinds ?? this.kinds,
     folderPath: folderPath == null ? this.folderPath : folderPath(),
@@ -187,6 +209,9 @@ class IndexQuery {
     smartGroupId: smartGroupId == null ? this.smartGroupId : smartGroupId(),
     selfiesOnly: selfiesOnly ?? this.selfiesOnly,
     documentsGroup: documentsGroup ?? this.documentsGroup,
+    labelTerms: labelTerms ?? this.labelTerms,
+    blurryOnly: blurryOnly ?? this.blurryOnly,
+    blurThreshold: blurThreshold == null ? this.blurThreshold : blurThreshold(),
   );
 
   @override
@@ -215,7 +240,18 @@ class IndexQuery {
       other.panoramaOnly == panoramaOnly &&
       other.smartGroupId == smartGroupId &&
       other.selfiesOnly == selfiesOnly &&
-      other.documentsGroup == documentsGroup;
+      other.documentsGroup == documentsGroup &&
+      _termsEqual(other.labelTerms, labelTerms) &&
+      other.blurryOnly == blurryOnly &&
+      other.blurThreshold == blurThreshold;
+
+  static bool _termsEqual(List<Set<String>> a, List<Set<String>> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!setEquals(a[i], b[i])) return false;
+    }
+    return true;
+  }
 
   @override
   int get hashCode => Object.hashAll([
@@ -243,6 +279,9 @@ class IndexQuery {
     smartGroupId,
     selfiesOnly,
     documentsGroup,
+    Object.hashAll(labelTerms.map(Object.hashAllUnordered)),
+    blurryOnly,
+    blurThreshold,
   ]);
 }
 

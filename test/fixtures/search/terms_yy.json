@@ -4,6 +4,7 @@
   "keywords": {
     "docyy": "type:document",
     "both": "type:audio",
-    "Köpekyy": "attr:tiny"
+    "Köpekyy": "attr:tiny",
+    "kediyy": "label:cat"
   }
 }

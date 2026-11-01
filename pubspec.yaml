@@ -8,6 +8,8 @@ environment:
 
 dependencies:
   archive: ^4.5.2
+  battery_plus: ^7.1.2
+  connectivity_plus: 7.3.1 # 7.3.2 needs dbus 0.8, battery_plus 7 needs 0.7 (C3)
   crypto: ^3.0.7
   drift: ^2.35.3
   drift_flutter: ^0.3.1
@@ -26,6 +28,7 @@ dependencies:
   photo_manager: ^3.12.0
   riverpod_annotation: ^4.0.7
   sqlite3: ^3.8.0
+  tflite_flutter: ^0.12.1
   video_player: ^2.14.1
   workmanager: ^0.10.10
 dev_dependencies:
@@ -44,3 +47,5 @@ flutter:
   generate: true # l10n codegen (F6 adds l10n.yaml + ARB files)
   assets:
     - assets/search/ # B8: search term files terms_<lang>.json (L2 adds more)
+    - assets/ai/ # C3: label map, raw label lists, model manifest (no .tflite)
+    - assets/details/ # B10: 'What is this?' table + known app names

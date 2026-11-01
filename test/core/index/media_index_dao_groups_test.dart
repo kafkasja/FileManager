@@ -71,9 +71,22 @@ void main() {
   test('documents: kind document; hidden without All files access', () async {
     const q = IndexQuery(documentsGroup: true);
     expect(await ids(q), {'doc'});
-    // visible() limits to media kinds: no documents without access (until
-    // C3 adds photos labeled "document").
+    // visible() limits to media kinds: no documents without access.
     expect(await ids(q.visible(canSeeAllFiles: false)!), isEmpty);
+  });
+
+  test('documents (C3): plus images labeled "document"', () async {
+    await db.customStatement(
+      'INSERT INTO ai_labels (file_id, label, confidence) VALUES '
+      "('cam', 'document', 0.6), ('front', 'cat', 0.9), "
+      "('videoInSelfies', 'document', 0.9)",
+    );
+    const q = IndexQuery(documentsGroup: true);
+    // Videos never match (images only); a label alone isn't enough.
+    expect(await ids(q), {'doc', 'cam'});
+    expect(await dao.count(q), 2);
+    // Without All files access the labeled photos still show.
+    expect(await ids(q.visible(canSeeAllFiles: false)!), {'cam'});
   });
 
   test("smartGroupId: only that group's members", () async {

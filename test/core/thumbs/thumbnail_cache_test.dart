@@ -120,4 +120,102 @@ void main() {
     await c.get(photo('a'));
     expect(generated, ['a', 'a']);
   });
+
+  group('androidThumbnailGenerator (H7)', () {
+    late List<String> msCalls;
+    late List<String> fileCalls;
+    Uint8List? msResult;
+    Exception? msError;
+    Exception? fileError;
+
+    FileRef ref(String id, String uri, FileKind kind, {String name = 'x'}) =>
+        FileRef(
+          id: id,
+          uri: uri,
+          name: name,
+          kind: kind,
+          sizeBytes: 1,
+          modifiedAt: DateTime.utc(2025),
+          folderPath: '/storage/emulated/0/.hidden',
+          origin: FileOrigin.local,
+        );
+
+    ThumbGenerator gen() => androidThumbnailGenerator(
+      mediaStore: (f, size) async {
+        msCalls.add(f.id);
+        if (msError case final e?) throw e;
+        return msResult;
+      },
+      fromFile: (path, size) async {
+        fileCalls.add(path);
+        if (fileError case final e?) throw e;
+        return Uint8List.fromList([size % 256]);
+      },
+    );
+
+    setUp(() {
+      msCalls = [];
+      fileCalls = [];
+      msResult = Uint8List.fromList([9]);
+      msError = null;
+      fileError = null;
+    });
+
+    test('ms: success uses MediaStore only', () async {
+      final b = await gen()(
+        ref('ms:5', 'content://media/5', FileKind.image, name: 'a.jpg'),
+        256,
+      );
+      expect(b, [9]);
+      expect(msCalls, ['ms:5']);
+      expect(fileCalls, isEmpty);
+    });
+
+    test('ms: null or a throw falls back to the file path', () async {
+      final f = ref('ms:5', 'content://media/5', FileKind.image, name: 'a.jpg');
+      msResult = null;
+      expect(await gen()(f, 256), isNotNull);
+      msError = Exception('boom');
+      expect(await gen()(f, 256), isNotNull);
+      expect(fileCalls, [
+        '/storage/emulated/0/.hidden/a.jpg',
+        '/storage/emulated/0/.hidden/a.jpg',
+      ]);
+    });
+
+    test(
+      'path: image, video and audio go to the file; no MediaStore',
+      () async {
+        for (final kind in [FileKind.image, FileKind.video, FileKind.audio]) {
+          const path = '/storage/emulated/0/.hidden/p';
+          expect(await gen()(ref('path:$path', path, kind), 256), isNotNull);
+        }
+        expect(msCalls, isEmpty);
+        expect(fileCalls, hasLength(3));
+      },
+    );
+
+    test('path: document → null, no channel call', () async {
+      const path = '/storage/emulated/0/.hidden/a.pdf';
+      expect(
+        await gen()(ref('path:$path', path, FileKind.document), 256),
+        isNull,
+      );
+      expect(fileCalls, isEmpty);
+    });
+
+    test('a thrown file error → null, remembered as failed', () async {
+      fileError = const FormatException('undecodable');
+      final c = DiskThumbnailCache(
+        dir: dir,
+        generator: gen(),
+        maxDiskBytes: () async => 1 << 30,
+      );
+      const path = '/storage/emulated/0/.hidden/bad.jpg';
+      final f = ref('path:$path', path, FileKind.image);
+      expect(await c.get(f), isNull);
+      expect(await c.get(f), isNull);
+      expect(fileCalls, [path], reason: 'not retried in the session');
+    });
+  });
 }

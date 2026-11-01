@@ -356,17 +356,23 @@ final class IndexAndTagChangesProvider
 String _$indexAndTagChangesHash() =>
     r'a227a0fd573cd4b1cf16ea09f35041feef01e76e';
 
-/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5)
+/// and AI labels (C3, the Documents group; C4 content search) and C2's
+/// image signals (C4 `blurry`).
 
 @ProviderFor(indexAndGroupChanges)
 final indexAndGroupChangesProvider = IndexAndGroupChangesProvider._();
 
-/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5)
+/// and AI labels (C3, the Documents group; C4 content search) and C2's
+/// image signals (C4 `blurry`).
 
 final class IndexAndGroupChangesProvider
     extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
     with $FutureModifier<int>, $StreamProvider<int> {
-  /// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+  /// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5)
+  /// and AI labels (C3, the Documents group; C4 content search) and C2's
+  /// image signals (C4 `blurry`).
   IndexAndGroupChangesProvider._()
     : super(
         from: null,
@@ -432,4 +438,4 @@ final class ThumbnailCacheProvider
   }
 }
 
-String _$thumbnailCacheHash() => r'999677d7aec443c684f94c30099c6eadb6092245';
+String _$thumbnailCacheHash() => r'559594ffb0223873eab0448e470fb71a36eb4203';

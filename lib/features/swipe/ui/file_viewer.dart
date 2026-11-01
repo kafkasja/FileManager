@@ -9,6 +9,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/reviewed/data/reviewed_repository.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
@@ -228,7 +229,14 @@ class _FileViewerState extends ConsumerState<FileViewer> {
         fit: StackFit.expand,
         children: [
           content,
-          if (_chrome) _InfoBar(file: file, title: widget.title),
+          if (_chrome) _InfoBar(file: file, title: widget.title, endInset: 72),
+          // B10: ⓘ top-end, clear of the scrub bar and the Restore buttons.
+          if (_chrome)
+            PositionedDirectional(
+              end: 12,
+              top: MediaQuery.paddingOf(context).top + 8,
+              child: _DetailsButton(file: file),
+            ),
           if (!widget.swipeable && widget.actions.isNotEmpty)
             SafeArea(
               child: Align(
@@ -614,7 +622,7 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
   }
 }
 
-/// ⓘ: name, size, dimensions / duration, date, folder (B7).
+/// ⓘ: the B10 details sheet (B7 showed a short fact list).
 class _DetailsButton extends StatelessWidget {
   const new({required this.file});
 
@@ -630,12 +638,7 @@ class _DetailsButton extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       icon: const Icon(Icons.info_outline),
-      onPressed: () => unawaited(
-        showModalBottomSheet<void>(
-          context: context,
-          builder: (_) => FileDetailsList(file: file),
-        ),
-      ),
+      onPressed: () => unawaited(showFileDetails(context, file)),
     );
   }
 }
@@ -780,10 +783,13 @@ class _ViewerImage extends StatelessWidget {
 }
 
 class _InfoBar extends ConsumerWidget {
-  const new({required this.file, this.title});
+  const new({required this.file, this.title, this.endInset = 16});
 
   final FileRef file;
   final String? title;
+
+  /// Room at the end for a button over the bar (B10 ⓘ).
+  final double endInset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -804,7 +810,7 @@ class _InfoBar extends ConsumerWidget {
         padding: EdgeInsetsDirectional.fromSTEB(
           72,
           MediaQuery.paddingOf(context).top + 12,
-          16,
+          endInset,
           12,
         ),
         child: Column(

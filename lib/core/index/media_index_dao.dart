@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/db/tables/ai_labels_table.dart';
+import 'package:kfm/core/db/tables/image_signals_table.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
 import 'package:kfm/core/db/tables/media_locations_table.dart';
 import 'package:kfm/core/db/tables/reviewed_labels_table.dart';
@@ -11,6 +13,7 @@ import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/index/blur_rule.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/screenshot_rule.dart';
 import 'package:kfm/core/index/source_rule.dart';
@@ -27,6 +30,8 @@ part 'media_index_dao.g.dart';
     ReviewedLabels,
     MediaLocations,
     SmartGroupItems,
+    AiLabels,
+    ImageSignals,
   ],
 )
 class MediaIndexDao extends DatabaseAccessor<AppDatabase>
@@ -146,7 +151,8 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
   /// filter on them (Favorites, a tag's files).
   ///
   /// [withGroups] (C5): smart group members and EXIF rows count too, for
-  /// the Groups views (a stored group, Selfies).
+  /// the Groups views (a stored group, Selfies), and (C3) AI labels for
+  /// Documents and C4 content search, and (C2) image signals for `blurry`.
   Stream<int> watchChanges({bool withTags = false, bool withGroups = false}) {
     final updates = attachedDatabase.tableUpdates(
       withTags || withGroups
@@ -159,6 +165,8 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
               if (withGroups) ...[
                 TableUpdateQuery.onTable(smartGroupItems),
                 TableUpdateQuery.onTable(mediaLocations),
+                TableUpdateQuery.onTable(aiLabels),
+                TableUpdateQuery.onTable(imageSignals),
               ],
             ])
           : TableUpdateQuery.onTable(mediaIndex),
@@ -475,9 +483,47 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
               ));
     }
     if (q.documentsGroup) {
-      // C3 hook: OR images with the AI label 'document' (`ai_labels`), once
-      // C3 adds that table. Until then Documents = kind document only.
-      where = where & t.kind.equals(FileKind.document.index);
+      // C5 + C3: documents, or images the AI labeled 'document'
+      // (photographed paper, menus, screens).
+      where =
+          where &
+          (t.kind.equals(FileKind.document.index) |
+              (t.kind.equals(FileKind.image.index) &
+                  existsQuery(
+                    select(aiLabels)..where(
+                      (l) =>
+                          l.fileId.equalsExp(t.id) &
+                          l.label.equals(kDocumentLabel),
+                    ),
+                  )));
+    }
+    // C4: content search. One correlated EXISTS per typed term (AND), its
+    // labels OR'ed; served by ai_labels' (file_id, label) primary key.
+    if (q.hasContentTerms) {
+      where = where & t.kind.equals(FileKind.image.index);
+    }
+    for (final term in q.labelTerms) {
+      if (term.isEmpty) continue;
+      where =
+          where &
+          existsQuery(
+            select(aiLabels)
+              ..where((l) => l.fileId.equalsExp(t.id) & l.label.isIn(term)),
+          );
+    }
+    if (q.blurryOnly) {
+      final threshold = q.blurThreshold;
+      where =
+          where &
+          (threshold == null
+              ? const Constant(false)
+              : existsQuery(
+                  select(imageSignals)..where(
+                    (s) =>
+                        s.fileId.equalsExp(t.id) &
+                        blurryPredicate(s, threshold),
+                  ),
+                ));
     }
     return where;
   }

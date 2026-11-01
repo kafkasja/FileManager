@@ -12,6 +12,7 @@ import 'generated/schema_v13.dart' as v13;
 import 'generated/schema_v14.dart' as v14;
 import 'generated/schema_v15.dart' as v15;
 import 'generated/schema_v16.dart' as v16;
+import 'generated/schema_v17.dart' as v17;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -50,7 +51,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 17; from++) {
+  for (var from = 1; from < 18; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -516,6 +517,93 @@ void main() {
       );
       await db.customStatement('DELETE FROM smart_groups');
       expect(await db.select(db.smartGroupItems).get(), isEmpty);
+    });
+  });
+
+  test('v17 -> v18 adds empty AI label tables; data intact', () async {
+    final schema = await verifier.schemaAt(17);
+    final raw = v17.DatabaseAtV17(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO media_locations (file_id, file_modified_at_ms, '
+      "front_camera, location_readable, read_at_ms) VALUES ('a', 1, 0, 1, 1)",
+    );
+    await raw.customStatement(
+      'INSERT INTO image_signals (file_id, status, d_hash, blur_score, '
+      "file_modified_at_ms, algo_version) VALUES ('a', 'ok', 1, 2.5, 1, 1)",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    expect(await db.select(db.mediaLocations).get(), hasLength(1));
+    expect(await db.select(db.imageSignals).get(), hasLength(1));
+    expect(await db.select(db.aiLabels).get(), isEmpty);
+    expect(await db.select(db.aiLabelStatus).get(), isEmpty);
+    final indexes = await db.customSelect('PRAGMA index_list(ai_labels)').get();
+    expect(
+      indexes.map((r) => r.read<String>('name')),
+      contains('ai_labels_label'),
+    );
+  });
+
+  group('AI label constraints (v18)', () {
+    late AppDatabase db;
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(17)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+    });
+    tearDown(() => db.close());
+
+    Future<void> label(String id, String label, double confidence) =>
+        db.customStatement(
+          'INSERT INTO ai_labels (file_id, label, confidence) VALUES (?, ?, ?)',
+          [id, label, confidence],
+        );
+
+    test(
+      'confidence is 0..1, label is 1..64 chars, one row per label',
+      () async {
+        await expectLater(label('a', 'cat', 1.5), throwsA(anything));
+        await expectLater(label('a', 'cat', -0.1), throwsA(anything));
+        // Length is drift's (Dart-side) validation.
+        for (final bad in ['', 'x' * 65]) {
+          await expectLater(
+            db
+                .into(db.aiLabels)
+                .insert(
+                  AiLabelsCompanion.insert(
+                    fileId: 'a',
+                    label: bad,
+                    confidence: 0.5,
+                  ),
+                ),
+            throwsA(anything),
+          );
+        }
+        await label('a', 'cat', 0.9);
+        await expectLater(label('a', 'cat', 0.8), throwsA(anything));
+        await label('a', 'color:blue', 0);
+        expect(await db.select(db.aiLabels).get(), hasLength(2));
+      },
+    );
+
+    test('one status row per file; attempts defaults to 1', () async {
+      await db.customStatement(
+        'INSERT INTO ai_label_status (file_id, outcome, model_version, '
+        "file_modified_at_ms, processed_at_ms) VALUES ('a', 'failed', 1, 5, 9)",
+      );
+      final row = await db.select(db.aiLabelStatus).getSingle();
+      expect(row.attempts, 1);
+      expect(row.outcome.name, 'failed');
+      await expectLater(
+        db.customStatement(
+          'INSERT INTO ai_label_status (file_id, outcome, model_version, '
+          "file_modified_at_ms, processed_at_ms) VALUES ('a', 'labeled', 1, 5, 9)",
+        ),
+        throwsA(anything),
+      );
     });
   });
 }

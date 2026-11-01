@@ -20,6 +20,10 @@
     <!-- Optional: skip trash/write confirmation dialogs (API 31+) -->
     <uses-permission android:name="android.permission.MANAGE_MEDIA"
         tools:ignore="ProtectedPermissions" />
+    <!-- Only for the user-confirmed AI model download + its Wi-Fi-only check
+         (TASK-C3). Labeling itself never uses the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="KFM"
@@ -79,6 +83,12 @@
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:mimeType="*/*" />
+        </intent>
+        <!-- B10: apps with a home-screen icon, for the "Saved by <app>" label and icon in
+             file details. Documented launcher-intent visibility (no query-all-packages permission). -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
         </intent>
     </queries>
 </manifest>

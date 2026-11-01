@@ -173,6 +173,33 @@ class FilesChannel {
     return rows.map(_row).toList(growable: false);
   }
 
+  /// H7: a square JPEG thumbnail ([size] px) made from the file at [path]
+  /// (images, videos, audio cover art); null if it has none or doesn't
+  /// decode. Runs on its own Kotlin threads.
+  Future<Uint8List?> fileThumbnail(String path, int size) =>
+      _invoke<Uint8List>('fileThumbnail', {'path': path, 'size': size});
+
+  /// B10: what MediaStore knows about the file at [path] (`id`: its
+  /// MediaStore id for `ms:` files): `{exists, mediaId?, dateAdded? (epoch
+  /// s), mime?, owner?, relativePath?, downloadUri?, refererUri?, error?}`.
+  /// Every key except `exists` may be missing.
+  Future<MediaRow> fileDetails(String path, {int? id}) =>
+      _invokeRow('fileDetails', {'path': path, 'id': id});
+
+  /// B10: `{label, icon? (PNG bytes)}` of an installed app this app can see
+  /// (launcher `<queries>`), or null.
+  Future<MediaRow?> appInfo(String packageName) async {
+    final row = await _invoke<Map<Object?, Object?>>('appInfo', {
+      'package': packageName,
+    });
+    return row == null ? null : _row(row);
+  }
+
+  /// B10: opens the system App info page of [packageName].
+  Future<bool> openAppDetails(String packageName) async =>
+      (await _invoke<bool>('openAppDetails', {'package': packageName})) ??
+      false;
+
   Future<T?> _invoke<T>(String method, [Map<String, Object?>? args]) async {
     try {
       return await _channel.invokeMethod<T>(method, args);

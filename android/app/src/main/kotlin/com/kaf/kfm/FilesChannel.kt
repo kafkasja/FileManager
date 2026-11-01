@@ -9,22 +9,30 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.MediaMetadataRetriever
+import android.media.ThumbnailUtils
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.CancellationSignal
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.StatFs
 import android.provider.MediaStore
 import android.util.Log
+import android.util.Size
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -45,6 +53,10 @@ class FilesChannel(
     private val io = Executors.newSingleThreadExecutor()
     /** C5: EXIF batches run here, so they never delay moves/trash calls on [io]. */
     private val exifIo = Executors.newSingleThreadExecutor()
+    /** H7: file thumbnails while scrolling; two threads, apart from [io] (moves, trash). */
+    private val thumbIo = Executors.newFixedThreadPool(2)
+    /** B10: file details sheet lookups; never queued behind moves or EXIF batches. */
+    private val detailsIo = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private val context: Context get() = activity.applicationContext
     /** The Dart call waiting for the one system dialog that can be open (TASK-H1). */
@@ -68,6 +80,8 @@ class FilesChannel(
         channel.setMethodCallHandler(null)
         io.shutdown()
         exifIo.shutdown()
+        thumbIo.shutdown()
+        detailsIo.shutdown()
     }
 
     /** Forwarded from MainActivity.onActivityResult. Returns true if handled. */
@@ -101,6 +115,39 @@ class FilesChannel(
             }
             "deleteMedia" -> {
                 deleteMedia(call, result)
+                return
+            }
+            "fileThumbnail" -> {
+                val path = call.argument<String>("path")
+                val size = call.argument<Number>("size")?.toInt() ?: 256
+                if (path == null) {
+                    result.error("BAD_ARGS", "path missing", null)
+                    return
+                }
+                thumbIo.execute {
+                    val bytes = fileThumbnail(path, size)
+                    main.post { result.success(bytes) }
+                }
+                return
+            }
+            "fileDetails", "appInfo", "openAppDetails" -> {
+                detailsIo.execute {
+                    try {
+                        val value: Any? = when (call.method) {
+                            "fileDetails" -> fileDetails(
+                                call.stringArg("path"),
+                                call.argument<Number>("id")?.toLong(),
+                            )
+                            "appInfo" -> appInfo(call.stringArg("package"))
+                            else -> openAppDetails(call.stringArg("package"))
+                        }
+                        main.post { result.success(value) }
+                    } catch (e: FilesError) {
+                        main.post { result.error(e.code, e.message, null) }
+                    } catch (e: Exception) {
+                        main.post { result.error("IO", e.toString(), null) }
+                    }
+                }
                 return
             }
             "readExif", "readExifPaths" -> {
@@ -202,12 +249,254 @@ class FilesChannel(
                 !(lat == 0.0 && lng == 0.0)
         }
         val lens = exif.getAttribute(ExifInterface.TAG_LENS_MODEL)
+        fun text(tag: String): String? = exif.getAttribute(tag)?.trim()?.trimEnd('\u0000')?.takeIf { it.isNotBlank() }
+        fun positive(tag: String): Double? =
+            exif.getAttributeDouble(tag, -1.0).takeIf { it > 0 && !it.isNaN() && !it.isInfinite() }
         return mapOf(
             "id" to id,
             "lat" to latLng?.get(0),
             "lng" to latLng?.get(1),
             "frontCamera" to (lens?.contains("front", ignoreCase = true) == true),
             "locationReadable" to locationReadable,
+            // B10 (file details): optional extras, ignored by C5.
+            "make" to text(ExifInterface.TAG_MAKE),
+            "model" to text(ExifInterface.TAG_MODEL),
+            "software" to text(ExifInterface.TAG_SOFTWARE),
+            "lens" to lens?.trim()?.takeIf { it.isNotBlank() },
+            "iso" to exif.getAttributeInt(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY, 0).takeIf { it > 0 },
+            "exposure" to positive(ExifInterface.TAG_EXPOSURE_TIME),
+            "fNumber" to positive(ExifInterface.TAG_F_NUMBER),
+            "focalLength" to positive(ExifInterface.TAG_FOCAL_LENGTH),
+            "description" to text(ExifInterface.TAG_IMAGE_DESCRIPTION),
+            "userComment" to text(ExifInterface.TAG_USER_COMMENT),
+        )
+    }
+
+    // ---- file details (TASK-B10) ----
+
+    /**
+     * What MediaStore knows about the file at [path] (row [id] when it's a `ms:` file):
+     * `{exists, mediaId?, dateAdded? (epoch s), mime?, owner?, relativePath?, downloadUri?,
+     * refererUri?}`. Every column is optional; API 29+ columns are skipped below it.
+     */
+    private fun fileDetails(path: String, id: Long?): Map<String, Any?> {
+        val out = mutableMapOf<String, Any?>("exists" to File(path).exists())
+        val q = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val projection = mutableListOf(
+            MediaStore.Files.FileColumns._ID,
+            MediaStore.Files.FileColumns.DATE_ADDED,
+            MediaStore.Files.FileColumns.MIME_TYPE,
+        )
+        if (q) {
+            projection += MediaStore.Files.FileColumns.OWNER_PACKAGE_NAME
+            projection += MediaStore.Files.FileColumns.RELATIVE_PATH
+        }
+        @Suppress("DEPRECATION")
+        val dataCol = MediaStore.Files.FileColumns.DATA
+        val (where, args) = if (id != null) {
+            "${MediaStore.Files.FileColumns._ID} = ?" to arrayOf(id.toString())
+        } else {
+            "$dataCol = ?" to arrayOf(path)
+        }
+        val files = MediaStore.Files.getContentUri("external")
+        var rowId: Long? = null
+        try {
+            context.contentResolver.query(files, projection.toTypedArray(), where, args, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    rowId = c.longOrNull(c.getColumnIndex(MediaStore.Files.FileColumns._ID))
+                    out["mediaId"] = rowId
+                    c.longOrNull(c.getColumnIndex(MediaStore.Files.FileColumns.DATE_ADDED))
+                        ?.takeIf { it > 0 }?.let { out["dateAdded"] = it }
+                    out["mime"] = c.stringOrNull(MediaStore.Files.FileColumns.MIME_TYPE)
+                    if (q) {
+                        out["owner"] = c.stringOrNull(MediaStore.Files.FileColumns.OWNER_PACKAGE_NAME)
+                        out["relativePath"] = c.stringOrNull(MediaStore.Files.FileColumns.RELATIVE_PATH)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "fileDetails: files query failed: $e")
+            out["error"] = e.toString()
+        }
+        val found = rowId
+        if (q && found != null) {
+            try {
+                val dl = arrayOf(MediaStore.DownloadColumns.DOWNLOAD_URI, MediaStore.DownloadColumns.REFERER_URI)
+                context.contentResolver.query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI, dl,
+                    "${MediaStore.Downloads._ID} = ?", arrayOf(found.toString()), null,
+                )?.use { c ->
+                    if (c.moveToFirst()) {
+                        out["downloadUri"] = c.stringOrNull(MediaStore.DownloadColumns.DOWNLOAD_URI)
+                        out["refererUri"] = c.stringOrNull(MediaStore.DownloadColumns.REFERER_URI)
+                    }
+                }
+            } catch (e: Exception) {
+                // Not a download, or the collection isn't readable: no "Downloaded from".
+                Log.d(TAG, "fileDetails: downloads query failed: $e")
+            }
+        }
+        return out
+    }
+
+    private fun Cursor.stringOrNull(column: String): String? {
+        val i = getColumnIndex(column)
+        return if (i < 0 || isNull(i)) null else getString(i)?.takeIf { it.isNotBlank() }
+    }
+
+    /**
+     * `{label, icon? (PNG, 48 dp)}` for an installed package this app can see (launcher
+     * `<queries>` on API 30+), or null when it isn't visible or installed.
+     */
+    private fun appInfo(pkg: String): Map<String, Any?>? {
+        val pm = context.packageManager
+        val info = try {
+            @Suppress("DEPRECATION")
+            pm.getApplicationInfo(pkg, 0)
+        } catch (e: PackageManager.NameNotFoundException) {
+            return null
+        }
+        val label = pm.getApplicationLabel(info).toString()
+        val icon = try {
+            val px = (48 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
+            val drawable = pm.getApplicationIcon(info)
+            val bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            drawable.setBounds(0, 0, px, px)
+            drawable.draw(canvas)
+            ByteArrayOutputStream().use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                bitmap.recycle()
+                out.toByteArray()
+            }
+        } catch (e: Exception) {
+            null
+        }
+        return mapOf("label" to label, "icon" to icon)
+    }
+
+    /** The system "App info" page of [pkg]. False when it can't be opened. */
+    private fun openAppDetails(pkg: String): Boolean {
+        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .setData(Uri.fromParts("package", pkg, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            context.startActivity(intent)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    // ---- file thumbnails (TASK-H7) ----
+
+    /**
+     * A square JPEG thumbnail ([size] px) made from the file itself, for files MediaStore
+     * doesn't know (`path:` rows: dot-folders, `.nomedia`, ...) or can't thumbnail. Images,
+     * videos and audio cover art; null for anything else or a file that doesn't decode.
+     * Never throws.
+     */
+    private fun fileThumbnail(path: String, size: Int): ByteArray? {
+        val file = File(path)
+        if (!file.isFile) return null
+        val ext = path.substringAfterLast('.', "").lowercase()
+        val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: return null
+        return try {
+            val bitmap = when {
+                mime.startsWith("image/") -> imageBitmap(file, size)
+                mime.startsWith("video/") -> videoBitmap(file, size)
+                mime.startsWith("audio/") -> audioBitmap(file, size)
+                else -> null
+            } ?: return null
+            val square = centerCrop(bitmap, size)
+            ByteArrayOutputStream().use { out ->
+                square.compress(Bitmap.CompressFormat.JPEG, 80, out)
+                if (square !== bitmap) square.recycle()
+                bitmap.recycle()
+                out.toByteArray()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "no thumbnail for $path: $e")
+            null
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "no thumbnail for $path (out of memory)")
+            null
+        }
+    }
+
+    private fun imageBitmap(file: File, size: Int): Bitmap? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Applies the EXIF rotation; uses the embedded EXIF thumbnail when it's big enough.
+            return ThumbnailUtils.createImageThumbnail(file, Size(size, size), CancellationSignal())
+        }
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        val decoded = BitmapFactory.decodeFile(
+            file.path,
+            BitmapFactory.Options().apply {
+                inSampleSize = sampleSize(minOf(bounds.outWidth, bounds.outHeight), size)
+            },
+        ) ?: return null
+        val degrees = try {
+            ExifInterface(file.path).rotationDegrees
+        } catch (e: Exception) {
+            0
+        }
+        if (degrees == 0) return decoded
+        val rotated = Bitmap.createBitmap(
+            decoded, 0, 0, decoded.width, decoded.height,
+            Matrix().apply { postRotate(degrees.toFloat()) }, true,
+        )
+        if (rotated !== decoded) decoded.recycle()
+        return rotated
+    }
+
+    private fun videoBitmap(file: File, size: Int): Bitmap? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ThumbnailUtils.createVideoThumbnail(file, Size(size, size), CancellationSignal())
+        } else {
+            @Suppress("DEPRECATION")
+            ThumbnailUtils.createVideoThumbnail(file.path, MediaStore.Video.Thumbnails.MINI_KIND)
+        }
+
+    private fun audioBitmap(file: File, size: Int): Bitmap? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return ThumbnailUtils.createAudioThumbnail(file, Size(size, size), CancellationSignal())
+        }
+        val art = MediaMetadataRetriever().run {
+            try {
+                setDataSource(file.path)
+                embeddedPicture
+            } finally {
+                release()
+            }
+        } ?: return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(art, 0, art.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        return BitmapFactory.decodeByteArray(
+            art, 0, art.size,
+            BitmapFactory.Options().apply {
+                inSampleSize = sampleSize(minOf(bounds.outWidth, bounds.outHeight), size)
+            },
+        )
+    }
+
+    /** Largest power of 2 that keeps the short side at least [target] px. */
+    private fun sampleSize(shortSide: Int, target: Int): Int {
+        var sample = 1
+        while (shortSide / (sample * 2) >= target) sample *= 2
+        return sample
+    }
+
+    /** The centre square, scaled to [size] (never up). */
+    private fun centerCrop(src: Bitmap, size: Int): Bitmap {
+        val side = minOf(src.width, src.height)
+        val out = minOf(side, size)
+        val matrix = Matrix().apply { val s = out.toFloat() / side; setScale(s, s) }
+        return Bitmap.createBitmap(
+            src, (src.width - side) / 2, (src.height - side) / 2, side, side, matrix, true,
         )
     }
 

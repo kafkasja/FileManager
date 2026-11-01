@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
+import 'package:kfm/features/details/ui/selection_summary_sheet.dart';
 import 'package:kfm/features/folders/ui/folder_selection_actions.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/swipe/ui/swipe_these.dart';
@@ -47,7 +48,8 @@ class SelectionAction {
 }
 
 /// Sorted by [SelectionAction.order] (the bar sorts too). B4: move,
-/// delete, copy, duplicate; B5: compress; B9: favorites and tags.
+/// delete, copy, duplicate; B5: compress; B9: favorites and tags; B10:
+/// details.
 @Riverpod(keepAlive: true)
 List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
   <SelectionAction>[
@@ -55,5 +57,6 @@ List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
     compressSelectionAction,
     ...tagSelectionActions,
     swipeSelectionAction,
+    detailsSelectionAction,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );

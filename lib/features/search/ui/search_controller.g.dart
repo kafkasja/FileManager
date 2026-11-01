@@ -90,7 +90,7 @@ final class SearchScreenControllerProvider
 }
 
 String _$searchScreenControllerHash() =>
-    r'b258c09e0da3d36bb90deadb08c826079f4aae8d';
+    r'16ef9cf1c7095095f30b3eb80f15f9bf78900792';
 
 /// The search screen's text, tokens and filter chips (TASK-B8 §5–§6). The
 /// text is parsed 150 ms after the last keystroke; chips apply at once.

@@ -3282,4 +3282,620 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return '$dayString';
   }
+
+  @override
+  String get aiLabelsTitle => 'Photo labels (AI)';
+
+  @override
+  String get aiLabelsEnable => 'Label photos on this phone';
+
+  @override
+  String get aiLabelsEnableHint =>
+      'Find photos by what\'s in them, like cat, beach or food';
+
+  @override
+  String get aiLabelsEnableNeedsModels => 'Download the AI models first';
+
+  @override
+  String get aiLabelsPause => 'Pause labeling';
+
+  @override
+  String get aiLabelsResume => 'Resume labeling';
+
+  @override
+  String get aiLabelsPausedLine => 'Labeling is paused';
+
+  @override
+  String aiLabelsProgress(int processed, int total) {
+    final intl.NumberFormat processedNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String processedString = processedNumberFormat.format(processed);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$processedString of $totalString photos labeled',
+      one: '$processedString of 1 photo labeled',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsFailed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString photos couldn\'t be labeled',
+      one: '1 photo couldn\'t be labeled',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiLabelsReset => 'Reset labels';
+
+  @override
+  String get aiLabelsResetConfirm => 'Reset all photo labels?';
+
+  @override
+  String get aiLabelsResetConfirmBody =>
+      'Every photo will be labeled again from the start.';
+
+  @override
+  String get aiLabelsResetAction => 'Reset';
+
+  @override
+  String get aiLabelsHelp =>
+      'Runs on this phone only. No photo or result ever leaves it.';
+
+  @override
+  String get aiLabelsJobError =>
+      'The AI models are missing or changed, so labeling stopped. Download them again.';
+
+  @override
+  String get aiLabelsWorkerError => 'Labeling couldn\'t start on this phone.';
+
+  @override
+  String get aiLabelsCrashError =>
+      'Labeling stopped after an error. It will be tried again later.';
+
+  @override
+  String get aiLabelsNeedsAndroid8 => 'Needs Android 8 or newer';
+
+  @override
+  String get aiLabelsUnsupported => 'Not available on this device yet';
+
+  @override
+  String get aiLabelsCardTitle =>
+      'Find photos by what\'s in them (cat, beach, food…)';
+
+  @override
+  String get aiLabelsCardBody =>
+      'KFM can label your photos on this phone. Nothing is uploaded.';
+
+  @override
+  String get aiLabelsCardTurnOn => 'Turn on';
+
+  @override
+  String get aiLabelsCardNotNow => 'Not now';
+
+  @override
+  String get aiLabelsTurnedOn => 'Photo labeling is on';
+
+  @override
+  String get aiCancel => 'Cancel';
+
+  @override
+  String get aiModelsTitle => 'AI models';
+
+  @override
+  String get aiModelsNotDownloaded => 'AI models not downloaded';
+
+  @override
+  String get aiModelsAbout => 'About AI models / Download…';
+
+  @override
+  String get aiModelsChecking => 'Checking AI models…';
+
+  @override
+  String aiModelsDownloading(double done, double total) {
+    final intl.NumberFormat doneNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String doneString = doneNumberFormat.format(done);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'Downloading $doneString of $totalString MB';
+  }
+
+  @override
+  String get aiModelsWaitingWifi => 'Waiting for Wi-Fi';
+
+  @override
+  String get aiModelsVerifying => 'Checking the download…';
+
+  @override
+  String aiModelsInstalled(double size) {
+    final intl.NumberFormat sizeNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String sizeString = sizeNumberFormat.format(size);
+
+    return 'Installed, $sizeString MB';
+  }
+
+  @override
+  String get aiModelsNeedUpdate => 'AI models need an update — download again';
+
+  @override
+  String aiModelsPartial(double done, double total) {
+    final intl.NumberFormat doneNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String doneString = doneNumberFormat.format(done);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'Download paused at $doneString of $totalString MB';
+  }
+
+  @override
+  String get aiModelsErrorNetwork => 'Download failed: no connection.';
+
+  @override
+  String aiModelsErrorHttp(String code) {
+    return 'Download failed (server error $code).';
+  }
+
+  @override
+  String get aiModelsErrorChecksum =>
+      'The downloaded file didn\'t match the expected one. It was deleted and nothing was installed.';
+
+  @override
+  String get aiModelsErrorDiskFull => 'Download failed: not enough free space.';
+
+  @override
+  String get aiModelsErrorOther => 'Download failed.';
+
+  @override
+  String get aiModelsRetry => 'Retry';
+
+  @override
+  String get aiModelsCancel => 'Cancel download';
+
+  @override
+  String get aiModelsWifiOnly => 'Download on Wi-Fi only';
+
+  @override
+  String get aiModelsUseMobileData => 'Use mobile data this time';
+
+  @override
+  String get aiModelsWillUseWifi => 'Will download on Wi-Fi';
+
+  @override
+  String get aiModelsRemove => 'Remove AI models';
+
+  @override
+  String aiModelsRemoveTitle(double size) {
+    final intl.NumberFormat sizeNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String sizeString = sizeNumberFormat.format(size);
+
+    return 'Remove AI models ($sizeString MB)?';
+  }
+
+  @override
+  String get aiModelsRemoveBody =>
+      'New photos won\'t be labeled anymore. You can download the models again later.';
+
+  @override
+  String get aiModelsRemoveAlsoLabels => 'Also delete the photo labels';
+
+  @override
+  String get aiModelsRemoveConfirm => 'Remove';
+
+  @override
+  String get aiModelsDetailsIntro =>
+      'KFM can label your photos (cat, beach, food, person…) so you can find them by what\'s in them. This needs two small AI models that are not part of the app. They are downloaded only if you tap Download.';
+
+  @override
+  String get aiModelsHowTitle => 'How it works';
+
+  @override
+  String get aiModelsHowBody =>
+      'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.';
+
+  @override
+  String get aiModelsPrivacyTitle => 'Privacy';
+
+  @override
+  String get aiModelsPrivacyBody =>
+      'Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.';
+
+  @override
+  String get aiModelsBatteryBody =>
+      'Labeling runs while KFM is open and pauses when the battery is below 20% and not charging.';
+
+  @override
+  String get aiModelsRemovableBody =>
+      'You can remove the models at any time in Settings.';
+
+  @override
+  String aiModelsDownloadButton(double size) {
+    final intl.NumberFormat sizeNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String sizeString = sizeNumberFormat.format(size);
+
+    return 'Download ($sizeString MB)';
+  }
+
+  @override
+  String get aiModelsInstalledDone => 'AI models installed. Labeling is on.';
+
+  @override
+  String get aiModelClassifierWhat =>
+      'Image classifier: recognises about 1,000 kinds of objects, animals, food and scenes.';
+
+  @override
+  String get aiModelClassifierUse =>
+      'KFM uses it for labels like cat, dog, bird, food, beach, mountain, car and document.';
+
+  @override
+  String get aiModelDetectorWhat =>
+      'Object detector: finds people (and counts them), pets, vehicles and food items.';
+
+  @override
+  String get aiModelDetectorUse =>
+      'KFM uses it for labels like person, crowd, cat, dog, car and food.';
+
+  @override
+  String aiModelSize(double size) {
+    final intl.NumberFormat sizeNumberFormat =
+        intl.NumberFormat.decimalPatternDigits(
+          locale: localeName,
+          decimalDigits: 1,
+        );
+    final String sizeString = sizeNumberFormat.format(size);
+
+    return 'Download size: $sizeString MB';
+  }
+
+  @override
+  String aiModelPublisher(String publisher) {
+    return 'Publisher: $publisher';
+  }
+
+  @override
+  String aiModelLicence(String licence) {
+    return 'Licence: $licence';
+  }
+
+  @override
+  String aiModelSource(String url) {
+    return 'Downloaded from: $url';
+  }
+
+  @override
+  String aiModelOriginal(String url) {
+    return 'Original release: $url';
+  }
+
+  @override
+  String get aiModelsLicences => 'View licences';
+
+  @override
+  String get aboutLicences => 'Open-source licences';
+
+  @override
+  String searchChipLabel(String label) {
+    return 'Content: $label';
+  }
+
+  @override
+  String get searchChipBlurry => 'Blurry photos';
+
+  @override
+  String searchStillLabeling(double percent) {
+    final intl.NumberFormat percentNumberFormat =
+        intl.NumberFormat.percentPattern(localeName);
+    final String percentString = percentNumberFormat.format(percent);
+
+    return 'Still labeling photos ($percentString) — results may be incomplete';
+  }
+
+  @override
+  String get searchLabelingOff => 'Turn on photo labeling to search by content';
+
+  @override
+  String get searchLabelingOffTurnOn => 'Turn on';
+
+  @override
+  String get searchContentWordsLoadError =>
+      'Content search words couldn\'t be loaded';
+
+  @override
+  String get fileMenuDetails => 'Details';
+
+  @override
+  String get selectionActionDetails => 'Details';
+
+  @override
+  String get detailsSheetLabel => 'File details';
+
+  @override
+  String get detailsLoading => 'Loading details';
+
+  @override
+  String get detailsPartial => 'Couldn\'t read some details';
+
+  @override
+  String get detailsGone => 'This file no longer exists';
+
+  @override
+  String get detailsWhatIsThis => 'What is this?';
+
+  @override
+  String get detailsHintUsually =>
+      'Usually not needed, but check before deleting it';
+
+  @override
+  String get detailsHintCareful => 'Careful: deleting it can lose data';
+
+  @override
+  String get detailsCameFrom => 'Came from';
+
+  @override
+  String detailsSavedBy(String app) {
+    return 'Saved by $app';
+  }
+
+  @override
+  String detailsInSourceFolder(String source) {
+    return 'In the $source folder';
+  }
+
+  @override
+  String detailsNotInstalled(String package) {
+    return '$package (not installed)';
+  }
+
+  @override
+  String detailsDownloadedFrom(String host) {
+    return 'Downloaded from $host';
+  }
+
+  @override
+  String detailsLinkedFrom(String host) {
+    return 'Link was on $host';
+  }
+
+  @override
+  String get detailsShowFullAddress => 'Tap to show the full address';
+
+  @override
+  String detailsTakenWith(String camera) {
+    return 'Taken with $camera';
+  }
+
+  @override
+  String detailsEditedWith(String app) {
+    return 'Made or edited with $app';
+  }
+
+  @override
+  String get detailsWhere => 'Where';
+
+  @override
+  String get detailsPath => 'Path';
+
+  @override
+  String get detailsCopyPath => 'Copy path';
+
+  @override
+  String get detailsPathCopied => 'Path copied';
+
+  @override
+  String get detailsStorage => 'Storage';
+
+  @override
+  String get detailsStorageInternal => 'Internal storage';
+
+  @override
+  String get detailsStorageRemovable => 'SD card or USB drive';
+
+  @override
+  String get detailsHidden => 'Hidden';
+
+  @override
+  String get detailsOpenFolder => 'Open folder';
+
+  @override
+  String get detailsFileSection => 'File';
+
+  @override
+  String get detailsType => 'Type';
+
+  @override
+  String detailsTypeValue(String mime, String ext) {
+    return '$mime (.$ext)';
+  }
+
+  @override
+  String detailsTypeUnknown(String ext) {
+    return 'Unknown file type (.$ext)';
+  }
+
+  @override
+  String get detailsTypeUnknownNoExt => 'Unknown file type';
+
+  @override
+  String get detailsSize => 'Size';
+
+  @override
+  String detailsBytes(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString bytes',
+      one: '1 byte',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get detailsModified => 'Modified';
+
+  @override
+  String get detailsAdded => 'Added to phone';
+
+  @override
+  String get detailsTaken => 'Taken';
+
+  @override
+  String get detailsDimensions => 'Dimensions';
+
+  @override
+  String get detailsDuration => 'Duration';
+
+  @override
+  String get detailsCameraSettings => 'Camera settings';
+
+  @override
+  String get detailsLens => 'Lens';
+
+  @override
+  String get detailsDescription => 'Description';
+
+  @override
+  String detailsIso(int value) {
+    return 'ISO $value';
+  }
+
+  @override
+  String detailsExposure(String value) {
+    return '$value s';
+  }
+
+  @override
+  String detailsFNumber(String value) {
+    return 'f/$value';
+  }
+
+  @override
+  String detailsFocalLength(String value) {
+    return '$value mm';
+  }
+
+  @override
+  String get detailsLocation => 'Location';
+
+  @override
+  String detailsLatLng(String lat, String lng) {
+    return '$lat, $lng';
+  }
+
+  @override
+  String get detailsInKfm => 'In KFM';
+
+  @override
+  String get detailsTags => 'Tags';
+
+  @override
+  String get detailsFavorite => 'Favorite';
+
+  @override
+  String detailsReviewed(String date) {
+    return 'Reviewed $date';
+  }
+
+  @override
+  String get detailsAppInfo => 'App info';
+
+  @override
+  String get detailsAppInfoFailed => 'Couldn\'t open App info';
+
+  @override
+  String detailsSummaryTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get detailsSummaryTotal => 'Total size';
+
+  @override
+  String get detailsSummaryKinds => 'Kinds';
+
+  @override
+  String detailsSummaryKindCount(String kind, int count) {
+    return '$kind: $count';
+  }
+
+  @override
+  String get detailsSummaryOldest => 'Oldest';
+
+  @override
+  String get detailsSummaryNewest => 'Newest';
+
+  @override
+  String get detailsSummaryFolders => 'Folders';
+
+  @override
+  String detailsSummaryFolderCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In $count folders',
+      one: 'In 1 folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsSummaryMissing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected files are no longer indexed',
+      one: '1 selected file is no longer indexed',
+    );
+    return '$_temp0';
+  }
 }

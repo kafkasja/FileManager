@@ -64,7 +64,7 @@ void main() {
       for (final s in app.container.read(settingsSectionsProvider)) s.order,
     ];
     expect(orders, [...orders]..sort());
-    expect(orders.take(12), [
+    expect(orders.take(13), [
       100,
       200,
       250,
@@ -75,6 +75,7 @@ void main() {
       500,
       550,
       560,
+      600,
       650,
       900,
     ]);

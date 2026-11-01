@@ -3,17 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
+import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/filters/data/filter_query.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/search/data/label_keywords.dart';
 import 'package:kfm/features/search/data/search_keywords.dart';
 import 'package:kfm/features/search/domain/search_keyword.dart';
+import 'package:kfm/features/similar/ui/similar_providers.dart';
 import 'package:kfm/l10n/generated/app_localizations_en.dart';
 
 void main() {
   late List<SearchKeywordFamily> families;
 
   setUp(() {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        // C4's label family: no DB or assets in this test.
+        labelVocabularyProvider.overrideWithValue(const {'cat'}),
+        labelExpansionsProvider.overrideWith((ref) async => const {}),
+        similarBlurThresholdProvider.overrideWith((ref) => Stream.value(100)),
+      ],
+    );
     addTearDown(container.dispose);
     families = container.read(searchKeywordFamiliesProvider);
   });
@@ -22,14 +32,14 @@ void main() {
   IndexQuery apply(String id, [IndexQuery q = IndexQuery.all]) =>
       kw(id).apply(q);
 
-  test('B8 registers type, source and attr', () {
-    expect(families.map((f) => f.prefix), ['type', 'source', 'attr']);
+  test('B8 registers type, source and attr; C4 adds label', () {
+    expect(families.map((f) => f.prefix), ['type', 'source', 'attr', 'label']);
   });
 
   test('unknown prefixes, args and malformed ids resolve to null', () {
     for (final id in [
       'cloud:on',
-      'label:cat',
+      'label:unicorn',
       'type:banana',
       'source:created',
       'attr:',

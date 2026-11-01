@@ -2085,5 +2085,457 @@
         "format": "yMMMd"
       }
     }
+  },
+  "aiLabelsTitle": "Photo labels (AI)",
+  "aiLabelsEnable": "Label photos on this phone",
+  "aiLabelsEnableHint": "Find photos by what's in them, like cat, beach or food",
+  "aiLabelsEnableNeedsModels": "Download the AI models first",
+  "aiLabelsPause": "Pause labeling",
+  "aiLabelsResume": "Resume labeling",
+  "aiLabelsPausedLine": "Labeling is paused",
+  "aiLabelsProgress": "{total, plural, =1{{processed} of 1 photo labeled} other{{processed} of {total} photos labeled}}",
+  "@aiLabelsProgress": {
+    "placeholders": {
+      "processed": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiLabelsFailed": "{count, plural, =1{1 photo couldn't be labeled} other{{count} photos couldn't be labeled}}",
+  "@aiLabelsFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiLabelsReset": "Reset labels",
+  "aiLabelsResetConfirm": "Reset all photo labels?",
+  "aiLabelsResetConfirmBody": "Every photo will be labeled again from the start.",
+  "aiLabelsResetAction": "Reset",
+  "aiLabelsHelp": "Runs on this phone only. No photo or result ever leaves it.",
+  "aiLabelsJobError": "The AI models are missing or changed, so labeling stopped. Download them again.",
+  "aiLabelsWorkerError": "Labeling couldn't start on this phone.",
+  "aiLabelsCrashError": "Labeling stopped after an error. It will be tried again later.",
+  "aiLabelsNeedsAndroid8": "Needs Android 8 or newer",
+  "aiLabelsUnsupported": "Not available on this device yet",
+  "aiLabelsCardTitle": "Find photos by what's in them (cat, beach, food…)",
+  "aiLabelsCardBody": "KFM can label your photos on this phone. Nothing is uploaded.",
+  "aiLabelsCardTurnOn": "Turn on",
+  "aiLabelsCardNotNow": "Not now",
+  "aiLabelsTurnedOn": "Photo labeling is on",
+  "aiCancel": "Cancel",
+  "aiModelsTitle": "AI models",
+  "aiModelsNotDownloaded": "AI models not downloaded",
+  "aiModelsAbout": "About AI models / Download…",
+  "aiModelsChecking": "Checking AI models…",
+  "aiModelsDownloading": "Downloading {done} of {total} MB",
+  "@aiModelsDownloading": {
+    "placeholders": {
+      "done": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      },
+      "total": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      }
+    }
+  },
+  "aiModelsWaitingWifi": "Waiting for Wi-Fi",
+  "aiModelsVerifying": "Checking the download…",
+  "aiModelsInstalled": "Installed, {size} MB",
+  "@aiModelsInstalled": {
+    "placeholders": {
+      "size": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      }
+    }
+  },
+  "aiModelsNeedUpdate": "AI models need an update — download again",
+  "aiModelsPartial": "Download paused at {done} of {total} MB",
+  "@aiModelsPartial": {
+    "placeholders": {
+      "done": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      },
+      "total": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      }
+    }
+  },
+  "aiModelsErrorNetwork": "Download failed: no connection.",
+  "aiModelsErrorHttp": "Download failed (server error {code}).",
+  "@aiModelsErrorHttp": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelsErrorChecksum": "The downloaded file didn't match the expected one. It was deleted and nothing was installed.",
+  "aiModelsErrorDiskFull": "Download failed: not enough free space.",
+  "aiModelsErrorOther": "Download failed.",
+  "aiModelsRetry": "Retry",
+  "aiModelsCancel": "Cancel download",
+  "aiModelsWifiOnly": "Download on Wi-Fi only",
+  "aiModelsUseMobileData": "Use mobile data this time",
+  "aiModelsWillUseWifi": "Will download on Wi-Fi",
+  "aiModelsRemove": "Remove AI models",
+  "aiModelsRemoveTitle": "Remove AI models ({size} MB)?",
+  "@aiModelsRemoveTitle": {
+    "placeholders": {
+      "size": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      }
+    }
+  },
+  "aiModelsRemoveBody": "New photos won't be labeled anymore. You can download the models again later.",
+  "aiModelsRemoveAlsoLabels": "Also delete the photo labels",
+  "aiModelsRemoveConfirm": "Remove",
+  "aiModelsDetailsIntro": "KFM can label your photos (cat, beach, food, person…) so you can find them by what's in them. This needs two small AI models that are not part of the app. They are downloaded only if you tap Download.",
+  "aiModelsHowTitle": "How it works",
+  "aiModelsHowBody": "Each photo's small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM's database.",
+  "aiModelsPrivacyTitle": "Privacy",
+  "aiModelsPrivacyBody": "Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.",
+  "aiModelsBatteryBody": "Labeling runs while KFM is open and pauses when the battery is below 20% and not charging.",
+  "aiModelsRemovableBody": "You can remove the models at any time in Settings.",
+  "aiModelsDownloadButton": "Download ({size} MB)",
+  "@aiModelsDownloadButton": {
+    "placeholders": {
+      "size": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      }
+    }
+  },
+  "aiModelsInstalledDone": "AI models installed. Labeling is on.",
+  "aiModelClassifierWhat": "Image classifier: recognises about 1,000 kinds of objects, animals, food and scenes.",
+  "aiModelClassifierUse": "KFM uses it for labels like cat, dog, bird, food, beach, mountain, car and document.",
+  "aiModelDetectorWhat": "Object detector: finds people (and counts them), pets, vehicles and food items.",
+  "aiModelDetectorUse": "KFM uses it for labels like person, crowd, cat, dog, car and food.",
+  "aiModelSize": "Download size: {size} MB",
+  "@aiModelSize": {
+    "placeholders": {
+      "size": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": {
+          "decimalDigits": 1
+        }
+      }
+    }
+  },
+  "aiModelPublisher": "Publisher: {publisher}",
+  "@aiModelPublisher": {
+    "placeholders": {
+      "publisher": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelLicence": "Licence: {licence}",
+  "@aiModelLicence": {
+    "placeholders": {
+      "licence": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelSource": "Downloaded from: {url}",
+  "@aiModelSource": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelOriginal": "Original release: {url}",
+  "@aiModelOriginal": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelsLicences": "View licences",
+  "aboutLicences": "Open-source licences",
+  "searchChipLabel": "Content: {label}",
+  "@searchChipLabel": {
+    "description": "Search chip for a photo-content word (C4), e.g. 'Content: cat'.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "searchChipBlurry": "Blurry photos",
+  "searchStillLabeling": "Still labeling photos ({percent}) — results may be incomplete",
+  "@searchStillLabeling": {
+    "placeholders": {
+      "percent": {
+        "type": "double",
+        "format": "percentPattern"
+      }
+    }
+  },
+  "searchLabelingOff": "Turn on photo labeling to search by content",
+  "searchLabelingOffTurnOn": "Turn on",
+  "searchContentWordsLoadError": "Content search words couldn't be loaded",
+  "fileMenuDetails": "Details",
+  "selectionActionDetails": "Details",
+  "detailsSheetLabel": "File details",
+  "detailsLoading": "Loading details",
+  "detailsPartial": "Couldn't read some details",
+  "detailsGone": "This file no longer exists",
+  "detailsWhatIsThis": "What is this?",
+  "detailsHintUsually": "Usually not needed, but check before deleting it",
+  "detailsHintCareful": "Careful: deleting it can lose data",
+  "detailsCameFrom": "Came from",
+  "detailsSavedBy": "Saved by {app}",
+  "@detailsSavedBy": {
+    "description": "The app that saved the file, e.g. 'Saved by WhatsApp'.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsInSourceFolder": "In the {source} folder",
+  "@detailsInSourceFolder": {
+    "description": "A source folder name such as Camera or WhatsApp.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsNotInstalled": "{package} (not installed)",
+  "@detailsNotInstalled": {
+    "description": "An Android package name of an app that isn't installed or visible.",
+    "placeholders": {
+      "package": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsDownloadedFrom": "Downloaded from {host}",
+  "@detailsDownloadedFrom": {
+    "description": "Website host only, e.g. 'Downloaded from example.com'.",
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsLinkedFrom": "Link was on {host}",
+  "@detailsLinkedFrom": {
+    "description": "The page that had the download link (referer host).",
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsShowFullAddress": "Tap to show the full address",
+  "detailsTakenWith": "Taken with {camera}",
+  "@detailsTakenWith": {
+    "description": "Camera make and model from EXIF.",
+    "placeholders": {
+      "camera": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsEditedWith": "Made or edited with {app}",
+  "@detailsEditedWith": {
+    "description": "EXIF Software, e.g. Snapseed.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsWhere": "Where",
+  "detailsPath": "Path",
+  "detailsCopyPath": "Copy path",
+  "detailsPathCopied": "Path copied",
+  "detailsStorage": "Storage",
+  "detailsStorageInternal": "Internal storage",
+  "detailsStorageRemovable": "SD card or USB drive",
+  "detailsHidden": "Hidden",
+  "detailsOpenFolder": "Open folder",
+  "detailsFileSection": "File",
+  "detailsType": "Type",
+  "detailsTypeValue": "{mime} (.{ext})",
+  "@detailsTypeValue": {
+    "description": "MIME type and extension, e.g. 'image/jpeg (.jpg)'.",
+    "placeholders": {
+      "mime": {
+        "type": "String"
+      },
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsTypeUnknown": "Unknown file type (.{ext})",
+  "@detailsTypeUnknown": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsTypeUnknownNoExt": "Unknown file type",
+  "detailsSize": "Size",
+  "detailsBytes": "{count, plural, =1{1 byte} other{{count} bytes}}",
+  "@detailsBytes": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "detailsModified": "Modified",
+  "detailsAdded": "Added to phone",
+  "detailsTaken": "Taken",
+  "detailsDimensions": "Dimensions",
+  "detailsDuration": "Duration",
+  "detailsCameraSettings": "Camera settings",
+  "detailsLens": "Lens",
+  "detailsDescription": "Description",
+  "detailsIso": "ISO {value}",
+  "@detailsIso": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "detailsExposure": "{value} s",
+  "@detailsExposure": {
+    "description": "Exposure time, e.g. '1/120 s'.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsFNumber": "f/{value}",
+  "@detailsFNumber": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsFocalLength": "{value} mm",
+  "@detailsFocalLength": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsLocation": "Location",
+  "detailsLatLng": "{lat}, {lng}",
+  "@detailsLatLng": {
+    "description": "Latitude and longitude as decimal text.",
+    "placeholders": {
+      "lat": {
+        "type": "String"
+      },
+      "lng": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsInKfm": "In KFM",
+  "detailsTags": "Tags",
+  "detailsFavorite": "Favorite",
+  "detailsReviewed": "Reviewed {date}",
+  "@detailsReviewed": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsAppInfo": "App info",
+  "detailsAppInfoFailed": "Couldn't open App info",
+  "detailsSummaryTitle": "{count, plural, =1{1 file} other{{count} files}}",
+  "@detailsSummaryTitle": {
+    "description": "Selection summary heading.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailsSummaryTotal": "Total size",
+  "detailsSummaryKinds": "Kinds",
+  "detailsSummaryKindCount": "{kind}: {count}",
+  "@detailsSummaryKindCount": {
+    "description": "e.g. 'Images: 3'.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailsSummaryOldest": "Oldest",
+  "detailsSummaryNewest": "Newest",
+  "detailsSummaryFolders": "Folders",
+  "detailsSummaryFolderCount": "{count, plural, =1{In 1 folder} other{In {count} folders}}",
+  "@detailsSummaryFolderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailsSummaryMissing": "{count, plural, =1{1 selected file is no longer indexed} other{{count} selected files are no longer indexed}}",
+  "@detailsSummaryMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

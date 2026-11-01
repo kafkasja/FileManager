@@ -89,6 +89,10 @@ SearchKeyword? _source(String arg) {
   );
 }
 
+/// The display name of [b] (search chips, B10 details).
+String sourceBucketName(AppLocalizations l10n, SourceBucket b) =>
+    _sourceName(l10n, b);
+
 String _sourceName(AppLocalizations l10n, SourceBucket b) => switch (b) {
   SourceBucket.none => l10n.browseSourceOther,
   SourceBucket.camera => l10n.browseSourceCamera,

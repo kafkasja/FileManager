@@ -7,6 +7,7 @@ import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/background/in_app_jobs.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/similar/data/similar_scan_job.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
@@ -58,6 +59,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(similarScanJobProvider)
       // C5: smart groups (idle until Groups is opened once).
       ..watch(smartGroupsJobProvider)
+      // C3: on-device labels (idle until turned on with models installed).
+      ..watch(labelingJobProvider)
       // P2: tags/favorites follow files whose id changes.
       ..watch(fileIdRekeyerProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).

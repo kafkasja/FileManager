@@ -1,0 +1,10 @@
+{
+  "v": 1,
+  "expansions": {
+    "animal": ["animal", "cat", "dog", "bird", "insect", "pet"],
+    "pet": ["pet", "cat", "dog"],
+    "food": ["food", "fruit", "vegetable", "dessert"],
+    "person": ["person", "crowd"],
+    "vehicle": ["vehicle", "car", "bus", "truck", "bicycle", "motorcycle"]
+  }
+}

@@ -40,6 +40,10 @@ class FileGridTile extends StatelessWidget {
   /// Same value as `kBigFileBytes` (Settings → Browse).
   static const int bigFileBytes = 100 * 1024 * 1024;
 
+  /// What the ⋮ takes at the bottom-end: its 2 px inset, the 8 px tap-target
+  /// margin, the 32 px button and a 4 px gap. The name stays clear of it.
+  static const double menuExtent = 46;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -126,7 +130,8 @@ class FileGridTile extends StatelessWidget {
                     ),
                   PositionedDirectional(
                     start: spacing / 2,
-                    end: spacing / 2,
+                    // Never under the ⋮ (H7).
+                    end: menu == null ? spacing / 2 : menuExtent,
                     bottom: spacing / 2,
                     child: HighlightedName(
                       name: file.name,
@@ -134,6 +139,7 @@ class FileGridTile extends StatelessWidget {
                       maxLines: 2,
                       textAlign: TextAlign.center,
                       style: text.labelSmall,
+                      breakLongWords: true,
                     ),
                   ),
                 ],
@@ -211,6 +217,7 @@ class HighlightedName extends StatelessWidget {
     this.maxLines = 1,
     this.textAlign = TextAlign.start,
     this.style,
+    this.breakLongWords = false,
     super.key,
   });
 
@@ -220,12 +227,17 @@ class HighlightedName extends StatelessWidget {
   final TextAlign textAlign;
   final TextStyle? style;
 
+  /// Lets the name wrap inside long unbroken runs (hashes, base64 names):
+  /// display only, the semantics label stays the plain name.
+  final bool breakLongWords;
+
   @override
   Widget build(BuildContext context) {
     final ranges = highlightRanges(name, words);
+    final shown = breakLongWords ? withBreakOpportunities : _asIs;
     if (ranges.isEmpty) {
       return Text(
-        name,
+        shown(name),
         maxLines: maxLines,
         overflow: TextOverflow.ellipsis,
         textAlign: textAlign,
@@ -239,11 +251,17 @@ class HighlightedName extends StatelessWidget {
     final spans = <TextSpan>[];
     var at = 0;
     for (final (start, end) in ranges) {
-      if (start > at) spans.add(TextSpan(text: name.substring(at, start)));
-      spans.add(TextSpan(text: name.substring(start, end), style: strong));
+      if (start > at) {
+        spans.add(TextSpan(text: shown(name.substring(at, start))));
+      }
+      spans.add(
+        TextSpan(text: shown(name.substring(start, end)), style: strong),
+      );
       at = end;
     }
-    if (at < name.length) spans.add(TextSpan(text: name.substring(at)));
+    if (at < name.length) {
+      spans.add(TextSpan(text: shown(name.substring(at))));
+    }
     return Text.rich(
       TextSpan(children: spans),
       maxLines: maxLines,
@@ -253,3 +271,27 @@ class HighlightedName extends StatelessWidget {
     );
   }
 }
+
+String _asIs(String s) => s;
+
+/// [s] with a zero-width space after every [every] characters of each
+/// unbroken run longer than [longerThan] (runs end at a space or `-`, where
+/// lines break anyway), so a hash or base64 name can wrap mid-word instead
+/// of ending after a few characters (H7). Ordinary names stay as they are.
+@visibleForTesting
+String withBreakOpportunities(String s, {int every = 8, int longerThan = 12}) =>
+    s.splitMapJoin(
+      RegExp('[^ -]+'),
+      onMatch: (m) {
+        final run = m[0]!;
+        if (run.length <= longerThan) return run;
+        final out = StringBuffer();
+        for (var i = 0; i < run.length; i += every) {
+          if (i > 0) out.write('​');
+          out.write(
+            run.substring(i, i + every > run.length ? run.length : i + every),
+          );
+        }
+        return out.toString();
+      },
+    );

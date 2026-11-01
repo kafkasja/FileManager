@@ -4676,6 +4676,840 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{day}'**
   String smartGroupTripOneDay(DateTime day);
+
+  /// No description provided for @aiLabelsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo labels (AI)'**
+  String get aiLabelsTitle;
+
+  /// No description provided for @aiLabelsEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Label photos on this phone'**
+  String get aiLabelsEnable;
+
+  /// No description provided for @aiLabelsEnableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find photos by what\'s in them, like cat, beach or food'**
+  String get aiLabelsEnableHint;
+
+  /// No description provided for @aiLabelsEnableNeedsModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the AI models first'**
+  String get aiLabelsEnableNeedsModels;
+
+  /// No description provided for @aiLabelsPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause labeling'**
+  String get aiLabelsPause;
+
+  /// No description provided for @aiLabelsResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume labeling'**
+  String get aiLabelsResume;
+
+  /// No description provided for @aiLabelsPausedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling is paused'**
+  String get aiLabelsPausedLine;
+
+  /// No description provided for @aiLabelsProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =1{{processed} of 1 photo labeled} other{{processed} of {total} photos labeled}}'**
+  String aiLabelsProgress(int processed, int total);
+
+  /// No description provided for @aiLabelsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo couldn\'t be labeled} other{{count} photos couldn\'t be labeled}}'**
+  String aiLabelsFailed(int count);
+
+  /// No description provided for @aiLabelsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset labels'**
+  String get aiLabelsReset;
+
+  /// No description provided for @aiLabelsResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all photo labels?'**
+  String get aiLabelsResetConfirm;
+
+  /// No description provided for @aiLabelsResetConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every photo will be labeled again from the start.'**
+  String get aiLabelsResetConfirmBody;
+
+  /// No description provided for @aiLabelsResetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get aiLabelsResetAction;
+
+  /// No description provided for @aiLabelsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs on this phone only. No photo or result ever leaves it.'**
+  String get aiLabelsHelp;
+
+  /// No description provided for @aiLabelsJobError.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI models are missing or changed, so labeling stopped. Download them again.'**
+  String get aiLabelsJobError;
+
+  /// No description provided for @aiLabelsWorkerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling couldn\'t start on this phone.'**
+  String get aiLabelsWorkerError;
+
+  /// No description provided for @aiLabelsCrashError.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling stopped after an error. It will be tried again later.'**
+  String get aiLabelsCrashError;
+
+  /// No description provided for @aiLabelsNeedsAndroid8.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs Android 8 or newer'**
+  String get aiLabelsNeedsAndroid8;
+
+  /// No description provided for @aiLabelsUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available on this device yet'**
+  String get aiLabelsUnsupported;
+
+  /// No description provided for @aiLabelsCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find photos by what\'s in them (cat, beach, food…)'**
+  String get aiLabelsCardTitle;
+
+  /// No description provided for @aiLabelsCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM can label your photos on this phone. Nothing is uploaded.'**
+  String get aiLabelsCardBody;
+
+  /// No description provided for @aiLabelsCardTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get aiLabelsCardTurnOn;
+
+  /// No description provided for @aiLabelsCardNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get aiLabelsCardNotNow;
+
+  /// No description provided for @aiLabelsTurnedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo labeling is on'**
+  String get aiLabelsTurnedOn;
+
+  /// No description provided for @aiCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get aiCancel;
+
+  /// No description provided for @aiModelsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI models'**
+  String get aiModelsTitle;
+
+  /// No description provided for @aiModelsNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'AI models not downloaded'**
+  String get aiModelsNotDownloaded;
+
+  /// No description provided for @aiModelsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About AI models / Download…'**
+  String get aiModelsAbout;
+
+  /// No description provided for @aiModelsChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking AI models…'**
+  String get aiModelsChecking;
+
+  /// No description provided for @aiModelsDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {done} of {total} MB'**
+  String aiModelsDownloading(double done, double total);
+
+  /// No description provided for @aiModelsWaitingWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for Wi-Fi'**
+  String get aiModelsWaitingWifi;
+
+  /// No description provided for @aiModelsVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the download…'**
+  String get aiModelsVerifying;
+
+  /// No description provided for @aiModelsInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed, {size} MB'**
+  String aiModelsInstalled(double size);
+
+  /// No description provided for @aiModelsNeedUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'AI models need an update — download again'**
+  String get aiModelsNeedUpdate;
+
+  /// No description provided for @aiModelsPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Download paused at {done} of {total} MB'**
+  String aiModelsPartial(double done, double total);
+
+  /// No description provided for @aiModelsErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: no connection.'**
+  String get aiModelsErrorNetwork;
+
+  /// No description provided for @aiModelsErrorHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed (server error {code}).'**
+  String aiModelsErrorHttp(String code);
+
+  /// No description provided for @aiModelsErrorChecksum.
+  ///
+  /// In en, this message translates to:
+  /// **'The downloaded file didn\'t match the expected one. It was deleted and nothing was installed.'**
+  String get aiModelsErrorChecksum;
+
+  /// No description provided for @aiModelsErrorDiskFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: not enough free space.'**
+  String get aiModelsErrorDiskFull;
+
+  /// No description provided for @aiModelsErrorOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed.'**
+  String get aiModelsErrorOther;
+
+  /// No description provided for @aiModelsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get aiModelsRetry;
+
+  /// No description provided for @aiModelsCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get aiModelsCancel;
+
+  /// No description provided for @aiModelsWifiOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Download on Wi-Fi only'**
+  String get aiModelsWifiOnly;
+
+  /// No description provided for @aiModelsUseMobileData.
+  ///
+  /// In en, this message translates to:
+  /// **'Use mobile data this time'**
+  String get aiModelsUseMobileData;
+
+  /// No description provided for @aiModelsWillUseWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Will download on Wi-Fi'**
+  String get aiModelsWillUseWifi;
+
+  /// No description provided for @aiModelsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove AI models'**
+  String get aiModelsRemove;
+
+  /// No description provided for @aiModelsRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove AI models ({size} MB)?'**
+  String aiModelsRemoveTitle(double size);
+
+  /// No description provided for @aiModelsRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'New photos won\'t be labeled anymore. You can download the models again later.'**
+  String get aiModelsRemoveBody;
+
+  /// No description provided for @aiModelsRemoveAlsoLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Also delete the photo labels'**
+  String get aiModelsRemoveAlsoLabels;
+
+  /// No description provided for @aiModelsRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get aiModelsRemoveConfirm;
+
+  /// No description provided for @aiModelsDetailsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM can label your photos (cat, beach, food, person…) so you can find them by what\'s in them. This needs two small AI models that are not part of the app. They are downloaded only if you tap Download.'**
+  String get aiModelsDetailsIntro;
+
+  /// No description provided for @aiModelsHowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get aiModelsHowTitle;
+
+  /// No description provided for @aiModelsHowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.'**
+  String get aiModelsHowBody;
+
+  /// No description provided for @aiModelsPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get aiModelsPrivacyTitle;
+
+  /// No description provided for @aiModelsPrivacyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.'**
+  String get aiModelsPrivacyBody;
+
+  /// No description provided for @aiModelsBatteryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling runs while KFM is open and pauses when the battery is below 20% and not charging.'**
+  String get aiModelsBatteryBody;
+
+  /// No description provided for @aiModelsRemovableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can remove the models at any time in Settings.'**
+  String get aiModelsRemovableBody;
+
+  /// No description provided for @aiModelsDownloadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Download ({size} MB)'**
+  String aiModelsDownloadButton(double size);
+
+  /// No description provided for @aiModelsInstalledDone.
+  ///
+  /// In en, this message translates to:
+  /// **'AI models installed. Labeling is on.'**
+  String get aiModelsInstalledDone;
+
+  /// No description provided for @aiModelClassifierWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'Image classifier: recognises about 1,000 kinds of objects, animals, food and scenes.'**
+  String get aiModelClassifierWhat;
+
+  /// No description provided for @aiModelClassifierUse.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM uses it for labels like cat, dog, bird, food, beach, mountain, car and document.'**
+  String get aiModelClassifierUse;
+
+  /// No description provided for @aiModelDetectorWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'Object detector: finds people (and counts them), pets, vehicles and food items.'**
+  String get aiModelDetectorWhat;
+
+  /// No description provided for @aiModelDetectorUse.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM uses it for labels like person, crowd, cat, dog, car and food.'**
+  String get aiModelDetectorUse;
+
+  /// No description provided for @aiModelSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Download size: {size} MB'**
+  String aiModelSize(double size);
+
+  /// No description provided for @aiModelPublisher.
+  ///
+  /// In en, this message translates to:
+  /// **'Publisher: {publisher}'**
+  String aiModelPublisher(String publisher);
+
+  /// No description provided for @aiModelLicence.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence: {licence}'**
+  String aiModelLicence(String licence);
+
+  /// No description provided for @aiModelSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded from: {url}'**
+  String aiModelSource(String url);
+
+  /// No description provided for @aiModelOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original release: {url}'**
+  String aiModelOriginal(String url);
+
+  /// No description provided for @aiModelsLicences.
+  ///
+  /// In en, this message translates to:
+  /// **'View licences'**
+  String get aiModelsLicences;
+
+  /// No description provided for @aboutLicences.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licences'**
+  String get aboutLicences;
+
+  /// Search chip for a photo-content word (C4), e.g. 'Content: cat'.
+  ///
+  /// In en, this message translates to:
+  /// **'Content: {label}'**
+  String searchChipLabel(String label);
+
+  /// No description provided for @searchChipBlurry.
+  ///
+  /// In en, this message translates to:
+  /// **'Blurry photos'**
+  String get searchChipBlurry;
+
+  /// No description provided for @searchStillLabeling.
+  ///
+  /// In en, this message translates to:
+  /// **'Still labeling photos ({percent}) — results may be incomplete'**
+  String searchStillLabeling(double percent);
+
+  /// No description provided for @searchLabelingOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on photo labeling to search by content'**
+  String get searchLabelingOff;
+
+  /// No description provided for @searchLabelingOffTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get searchLabelingOffTurnOn;
+
+  /// No description provided for @searchContentWordsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Content search words couldn\'t be loaded'**
+  String get searchContentWordsLoadError;
+
+  /// No description provided for @fileMenuDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get fileMenuDetails;
+
+  /// No description provided for @selectionActionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get selectionActionDetails;
+
+  /// No description provided for @detailsSheetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File details'**
+  String get detailsSheetLabel;
+
+  /// No description provided for @detailsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading details'**
+  String get detailsLoading;
+
+  /// No description provided for @detailsPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read some details'**
+  String get detailsPartial;
+
+  /// No description provided for @detailsGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This file no longer exists'**
+  String get detailsGone;
+
+  /// No description provided for @detailsWhatIsThis.
+  ///
+  /// In en, this message translates to:
+  /// **'What is this?'**
+  String get detailsWhatIsThis;
+
+  /// No description provided for @detailsHintUsually.
+  ///
+  /// In en, this message translates to:
+  /// **'Usually not needed, but check before deleting it'**
+  String get detailsHintUsually;
+
+  /// No description provided for @detailsHintCareful.
+  ///
+  /// In en, this message translates to:
+  /// **'Careful: deleting it can lose data'**
+  String get detailsHintCareful;
+
+  /// No description provided for @detailsCameFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Came from'**
+  String get detailsCameFrom;
+
+  /// The app that saved the file, e.g. 'Saved by WhatsApp'.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved by {app}'**
+  String detailsSavedBy(String app);
+
+  /// A source folder name such as Camera or WhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'In the {source} folder'**
+  String detailsInSourceFolder(String source);
+
+  /// An Android package name of an app that isn't installed or visible.
+  ///
+  /// In en, this message translates to:
+  /// **'{package} (not installed)'**
+  String detailsNotInstalled(String package);
+
+  /// Website host only, e.g. 'Downloaded from example.com'.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded from {host}'**
+  String detailsDownloadedFrom(String host);
+
+  /// The page that had the download link (referer host).
+  ///
+  /// In en, this message translates to:
+  /// **'Link was on {host}'**
+  String detailsLinkedFrom(String host);
+
+  /// No description provided for @detailsShowFullAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to show the full address'**
+  String get detailsShowFullAddress;
+
+  /// Camera make and model from EXIF.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken with {camera}'**
+  String detailsTakenWith(String camera);
+
+  /// EXIF Software, e.g. Snapseed.
+  ///
+  /// In en, this message translates to:
+  /// **'Made or edited with {app}'**
+  String detailsEditedWith(String app);
+
+  /// No description provided for @detailsWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Where'**
+  String get detailsWhere;
+
+  /// No description provided for @detailsPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get detailsPath;
+
+  /// No description provided for @detailsCopyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get detailsCopyPath;
+
+  /// No description provided for @detailsPathCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Path copied'**
+  String get detailsPathCopied;
+
+  /// No description provided for @detailsStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get detailsStorage;
+
+  /// No description provided for @detailsStorageInternal.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal storage'**
+  String get detailsStorageInternal;
+
+  /// No description provided for @detailsStorageRemovable.
+  ///
+  /// In en, this message translates to:
+  /// **'SD card or USB drive'**
+  String get detailsStorageRemovable;
+
+  /// No description provided for @detailsHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get detailsHidden;
+
+  /// No description provided for @detailsOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get detailsOpenFolder;
+
+  /// No description provided for @detailsFileSection.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get detailsFileSection;
+
+  /// No description provided for @detailsType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get detailsType;
+
+  /// MIME type and extension, e.g. 'image/jpeg (.jpg)'.
+  ///
+  /// In en, this message translates to:
+  /// **'{mime} (.{ext})'**
+  String detailsTypeValue(String mime, String ext);
+
+  /// No description provided for @detailsTypeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown file type (.{ext})'**
+  String detailsTypeUnknown(String ext);
+
+  /// No description provided for @detailsTypeUnknownNoExt.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown file type'**
+  String get detailsTypeUnknownNoExt;
+
+  /// No description provided for @detailsSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get detailsSize;
+
+  /// No description provided for @detailsBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 byte} other{{count} bytes}}'**
+  String detailsBytes(int count);
+
+  /// No description provided for @detailsModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get detailsModified;
+
+  /// No description provided for @detailsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to phone'**
+  String get detailsAdded;
+
+  /// No description provided for @detailsTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get detailsTaken;
+
+  /// No description provided for @detailsDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimensions'**
+  String get detailsDimensions;
+
+  /// No description provided for @detailsDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get detailsDuration;
+
+  /// No description provided for @detailsCameraSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera settings'**
+  String get detailsCameraSettings;
+
+  /// No description provided for @detailsLens.
+  ///
+  /// In en, this message translates to:
+  /// **'Lens'**
+  String get detailsLens;
+
+  /// No description provided for @detailsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get detailsDescription;
+
+  /// No description provided for @detailsIso.
+  ///
+  /// In en, this message translates to:
+  /// **'ISO {value}'**
+  String detailsIso(int value);
+
+  /// Exposure time, e.g. '1/120 s'.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} s'**
+  String detailsExposure(String value);
+
+  /// No description provided for @detailsFNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'f/{value}'**
+  String detailsFNumber(String value);
+
+  /// No description provided for @detailsFocalLength.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} mm'**
+  String detailsFocalLength(String value);
+
+  /// No description provided for @detailsLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get detailsLocation;
+
+  /// Latitude and longitude as decimal text.
+  ///
+  /// In en, this message translates to:
+  /// **'{lat}, {lng}'**
+  String detailsLatLng(String lat, String lng);
+
+  /// No description provided for @detailsInKfm.
+  ///
+  /// In en, this message translates to:
+  /// **'In KFM'**
+  String get detailsInKfm;
+
+  /// No description provided for @detailsTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get detailsTags;
+
+  /// No description provided for @detailsFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get detailsFavorite;
+
+  /// No description provided for @detailsReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed {date}'**
+  String detailsReviewed(String date);
+
+  /// No description provided for @detailsAppInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'App info'**
+  String get detailsAppInfo;
+
+  /// No description provided for @detailsAppInfoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open App info'**
+  String get detailsAppInfoFailed;
+
+  /// Selection summary heading.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String detailsSummaryTitle(int count);
+
+  /// No description provided for @detailsSummaryTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total size'**
+  String get detailsSummaryTotal;
+
+  /// No description provided for @detailsSummaryKinds.
+  ///
+  /// In en, this message translates to:
+  /// **'Kinds'**
+  String get detailsSummaryKinds;
+
+  /// e.g. 'Images: 3'.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind}: {count}'**
+  String detailsSummaryKindCount(String kind, int count);
+
+  /// No description provided for @detailsSummaryOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest'**
+  String get detailsSummaryOldest;
+
+  /// No description provided for @detailsSummaryNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get detailsSummaryNewest;
+
+  /// No description provided for @detailsSummaryFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get detailsSummaryFolders;
+
+  /// No description provided for @detailsSummaryFolderCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{In 1 folder} other{In {count} folders}}'**
+  String detailsSummaryFolderCount(int count);
+
+  /// No description provided for @detailsSummaryMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected file is no longer indexed} other{{count} selected files are no longer indexed}}'**
+  String detailsSummaryMissing(int count);
 }
 
 class _AppLocalizationsDelegate

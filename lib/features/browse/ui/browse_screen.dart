@@ -7,10 +7,12 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/ai_labels/ui/ai_labels_card.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/folder_menu.dart';
@@ -325,6 +327,9 @@ class _Body extends ConsumerWidget {
             view.kinds.any((k) => !mediaKinds.contains(k)));
     final banner = [
       if (needsAccess) const SliverToBoxAdapter(child: AccessBanner()),
+      // C3: offer content labels at the top of the image view.
+      if (view.kinds.contains(FileKind.image))
+        const SliverToBoxAdapter(child: AiLabelsCard()),
     ];
     if (view.layout == BrowseLayout.sameTime) {
       return SameTimeView(

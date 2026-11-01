@@ -12,6 +12,8 @@ mixin _$MediaIndexDaoMixin on DatabaseAccessor<AppDatabase> {
   $MediaLocationsTable get mediaLocations => attachedDatabase.mediaLocations;
   $SmartGroupsTable get smartGroups => attachedDatabase.smartGroups;
   $SmartGroupItemsTable get smartGroupItems => attachedDatabase.smartGroupItems;
+  $AiLabelsTable get aiLabels => attachedDatabase.aiLabels;
+  $ImageSignalsTable get imageSignals => attachedDatabase.imageSignals;
   MediaIndexDaoManager get managers => MediaIndexDaoManager(this);
 }
 
@@ -43,4 +45,8 @@ class MediaIndexDaoManager {
         _db.attachedDatabase,
         _db.smartGroupItems,
       );
+  $$AiLabelsTableTableManager get aiLabels =>
+      $$AiLabelsTableTableManager(_db.attachedDatabase, _db.aiLabels);
+  $$ImageSignalsTableTableManager get imageSignals =>
+      $$ImageSignalsTableTableManager(_db.attachedDatabase, _db.imageSignals);
 }

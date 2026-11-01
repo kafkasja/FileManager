@@ -256,4 +256,35 @@ void main() {
       expect(groups.map((g) => g.coverFileId), ['b', 'b']);
     },
   );
+
+  test(
+    'AI labels and their status follow the file, not relabeled (C3)',
+    () async {
+      await db.customStatement(
+        'INSERT INTO ai_labels (file_id, label, confidence) VALUES '
+        "('a', 'cat', 0.9), ('a', 'pet', 0.9), ('z', 'beach', 0.5)",
+      );
+      await db.customStatement(
+        'INSERT INTO ai_label_status (file_id, outcome, model_version, '
+        'file_modified_at_ms, attempts, processed_at_ms) VALUES '
+        "('a', 'labeled', 1, 5, 1, 77)",
+      );
+
+      await rekeyer.rekey('a', 'b', newModifiedMs: 9);
+      // Idempotent: a second run (old id gone) changes nothing.
+      await rekeyer.rekey('a', 'b', newModifiedMs: 9);
+
+      final labels = await db.select(db.aiLabels).get();
+      expect(
+        {for (final l in labels) '${l.fileId}:${l.label}'},
+        {'b:cat', 'b:pet', 'z:beach'},
+      );
+      final status = (await db.select(db.aiLabelStatus).get()).single;
+      expect(status.fileId, 'b');
+      expect(status.modelVersion, 1);
+      // Moved, not edited: the new modified time, same processed time.
+      expect(status.fileModifiedAtMs, 9);
+      expect(status.processedAtMs, 77);
+    },
+  );
 }

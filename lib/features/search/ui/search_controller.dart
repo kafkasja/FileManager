@@ -14,6 +14,8 @@ import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
 import 'package:kfm/features/filters/data/filter_query.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/search/data/content_search_status.dart';
+import 'package:kfm/features/search/data/label_keywords.dart';
 import 'package:kfm/features/search/data/search_vocabulary.dart';
 import 'package:kfm/features/search/domain/search_keyword.dart';
 import 'package:kfm/features/search/domain/search_parser.dart';
@@ -187,6 +189,9 @@ class SearchScreenController extends _$SearchScreenController {
   final _parse = Debouncer(debounce);
   final _record = Debouncer(recordDelay);
   SearchVocabulary _vocab = SearchVocabulary.empty;
+
+  /// C4: whether label words are queried or searched as names.
+  bool _queriesLabels = true;
   FileSort _sort = FileSort.newestFirst;
   AppLocalizations? _l10n;
   late RecentSearchesRepository _recents;
@@ -207,6 +212,7 @@ class SearchScreenController extends _$SearchScreenController {
     _recents = ref.read(recentSearchesRepositoryProvider);
     _vocab = ref.read(searchVocabularyProvider).value ?? SearchVocabulary.empty;
     _sort = ref.read(browseViewControllerProvider).sort;
+    _queriesLabels = ref.read(contentSearchStatusProvider).queriesLabels;
     // Listen, don't watch: a new vocabulary or sort must not reset the text.
     ref
       ..listen(searchVocabularyProvider, (_, next) {
@@ -214,6 +220,11 @@ class SearchScreenController extends _$SearchScreenController {
           _vocab = vocab;
           _rebuild();
         }
+      })
+      ..listen(contentSearchStatusProvider, (_, status) {
+        if (status.queriesLabels == _queriesLabels) return;
+        _queriesLabels = status.queriesLabels;
+        _rebuild();
       })
       ..listen(browseViewControllerProvider, (_, view) {
         if (view.sort.field == _sort.field &&
@@ -421,7 +432,18 @@ class SearchScreenController extends _$SearchScreenController {
   SearchState _parsed(SearchState s) {
     final tokens = _tokensOf(s.text, s.demoted);
     final raws = {for (final t in tokens) t.raw.toLowerCase()};
-    final query = buildQuery(s, tokens, _sort);
+    // C4: while labeling is off and nothing is labeled, label words stay
+    // chips (for the "turn on" hint) but are searched as names.
+    final queried = _queriesLabels
+        ? tokens
+        : [
+            for (final t in tokens)
+              if (t is KeywordToken && isAiLabelKeyword(t.keyword))
+                NameToken(t.raw)
+              else
+                t,
+          ];
+    final query = buildQuery(s, queried, _sort);
     return s.copyWith(
       tokens: List.unmodifiable(tokens),
       demoted: {
@@ -434,7 +456,7 @@ class SearchScreenController extends _$SearchScreenController {
           query ??
           buildQuery(
             s.copyWith(kinds: const {}, source: () => null),
-            tokens,
+            queried,
             _sort,
           ),
       matchesNothing: query == null,

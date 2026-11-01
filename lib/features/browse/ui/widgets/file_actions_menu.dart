@@ -6,6 +6,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
+import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -15,7 +16,7 @@ part 'file_actions_menu.g.dart';
 /// One entry of a file's ⋮ menu (TASK-B4): Browse tiles and rows, search
 /// results and the B7 preview. B4 registers Open with, Rename, Duplicate,
 /// Copy to, Move to and Delete; B5 adds zip items, B9 tag/favorite, X2
-/// Share.
+/// Share, B10 Details (last).
 @immutable
 class FileMenuItem {
   const new({
@@ -86,6 +87,12 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
     ),
     ...archiveFileMenuItems,
     ...tagFileMenuItems,
+    FileMenuItem(
+      order: 90,
+      label: (c) => c.l10n.fileMenuDetails,
+      icon: Icons.info_outline,
+      onSelected: (context, ref, f) => showFileDetails(context, f),
+    ),
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );
 

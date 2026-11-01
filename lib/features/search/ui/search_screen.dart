@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/ai_labels/ui/ai_labels_card.dart';
 import 'package:kfm/features/browse/data/recent_searches.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
@@ -22,6 +23,8 @@ import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/folders/ui/last_operation_undo.dart';
+import 'package:kfm/features/search/data/content_search_status.dart';
+import 'package:kfm/features/search/data/label_keywords.dart';
 import 'package:kfm/features/search/data/search_vocabulary.dart';
 import 'package:kfm/features/search/domain/search_keyword.dart';
 import 'package:kfm/features/search/ui/search_controller.dart';
@@ -81,6 +84,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final canUndo = ref.watch(lastOperationUndoProvider) != null;
     final loadErrors =
         ref.watch(searchVocabularyProvider).value?.loadErrors ?? const [];
+    final expansionsFailed = ref.watch(labelExpansionsProvider).hasError;
     final query = state.query;
     final showsFiles = !state.isEmpty && !state.matchesNothing;
 
@@ -137,7 +141,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ref,
                       query: query,
                       title: state.text,
-                      origin: SwipeSourceOrigin.search,
+                      origin: query.hasContentTerms
+                          ? SwipeSourceOrigin.contentSearch
+                          : SwipeSourceOrigin.search,
                       returnRoute: AppRoutes.search,
                     ),
                   ),
@@ -161,6 +167,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _ChipsRow(state: state, provider: _provider, canSeeAll: canSeeAll),
+            // C3: "find photos by what's in them" while labeling is off.
+            if (state.isEmpty) const AiLabelsCard(),
+            // C4: label chips while labeling runs or is off.
+            if (state.chipTokens.any(
+              (t) => t is KeywordToken && isAiLabelKeyword(t.keyword),
+            ))
+              const _ContentSearchBanner(),
+            if (expansionsFailed)
+              Padding(
+                padding: EdgeInsetsDirectional.symmetric(
+                  horizontal: context.tokens.spacing * 2,
+                ),
+                child: Text(
+                  l10n.searchContentWordsLoadError,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             if (loadErrors.isNotEmpty)
               Padding(
                 padding: EdgeInsetsDirectional.symmetric(
@@ -228,6 +251,71 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 }
 
 enum _MenuAction { undoLast, swipeThese }
+
+/// C4: "Still labeling photos (63%)" while C3 works through the library;
+/// "Turn on photo labeling…" while it's off (C3's turn-on flow: labeling on
+/// when the models are installed, else C3's details screen).
+class _ContentSearchBanner extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(contentSearchStatusProvider);
+    final l10n = context.l10n;
+    final spacing = context.tokens.spacing;
+    final theme = Theme.of(context);
+    if (status.showStillLabeling) {
+      return Padding(
+        padding: EdgeInsetsDirectional.symmetric(
+          horizontal: spacing * 2,
+          vertical: spacing / 2,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome_outlined,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            SizedBox(width: spacing),
+            Expanded(
+              child: Text(
+                l10n.searchStillLabeling(status.progress!.fraction),
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (status.showTurnOn) {
+      return Padding(
+        padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
+        child: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome_outlined,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            SizedBox(width: spacing),
+            Expanded(
+              child: Text(
+                l10n.searchLabelingOff,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            TextButton(
+              onPressed: () => unawaited(turnOnAiLabels(context, ref)),
+              child: Text(l10n.searchLabelingOffTurnOn),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
 
 class _CountLine extends ConsumerWidget {
   const new({required this.query});

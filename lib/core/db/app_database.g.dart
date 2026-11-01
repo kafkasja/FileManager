@@ -11491,6 +11491,769 @@ class SmartGroupItemsCompanion extends UpdateCompanion<SmartGroupItemRow> {
   }
 }
 
+class $AiLabelsTable extends AiLabels
+    with TableInfo<$AiLabelsTable, AiLabelRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiLabelsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confidenceMeta = const VerificationMeta(
+    'confidence',
+  );
+  @override
+  late final GeneratedColumn<double> confidence = GeneratedColumn<double>(
+    'confidence',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [fileId, label, confidence];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_labels';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiLabelRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+        _confidenceMeta,
+        confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_confidenceMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId, label};
+  @override
+  AiLabelRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiLabelRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      confidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}confidence'],
+      )!,
+    );
+  }
+
+  @override
+  $AiLabelsTable createAlias(String alias) {
+    return $AiLabelsTable(attachedDatabase, alias);
+  }
+}
+
+class AiLabelRow extends DataClass implements Insertable<AiLabelRow> {
+  final String fileId;
+
+  /// Lowercase vocabulary label, e.g. 'cat', 'color:blue'.
+  final String label;
+  final double confidence;
+  const AiLabelRow({
+    required this.fileId,
+    required this.label,
+    required this.confidence,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['label'] = Variable<String>(label);
+    map['confidence'] = Variable<double>(confidence);
+    return map;
+  }
+
+  AiLabelsCompanion toCompanion(bool nullToAbsent) {
+    return AiLabelsCompanion(
+      fileId: Value(fileId),
+      label: Value(label),
+      confidence: Value(confidence),
+    );
+  }
+
+  factory AiLabelRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiLabelRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      label: serializer.fromJson<String>(json['label']),
+      confidence: serializer.fromJson<double>(json['confidence']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'label': serializer.toJson<String>(label),
+      'confidence': serializer.toJson<double>(confidence),
+    };
+  }
+
+  AiLabelRow copyWith({String? fileId, String? label, double? confidence}) =>
+      AiLabelRow(
+        fileId: fileId ?? this.fileId,
+        label: label ?? this.label,
+        confidence: confidence ?? this.confidence,
+      );
+  AiLabelRow copyWithCompanion(AiLabelsCompanion data) {
+    return AiLabelRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      label: data.label.present ? data.label.value : this.label,
+      confidence: data.confidence.present
+          ? data.confidence.value
+          : this.confidence,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiLabelRow(')
+          ..write('fileId: $fileId, ')
+          ..write('label: $label, ')
+          ..write('confidence: $confidence')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fileId, label, confidence);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiLabelRow &&
+          other.fileId == this.fileId &&
+          other.label == this.label &&
+          other.confidence == this.confidence);
+}
+
+class AiLabelsCompanion extends UpdateCompanion<AiLabelRow> {
+  final Value<String> fileId;
+  final Value<String> label;
+  final Value<double> confidence;
+  final Value<int> rowid;
+  const AiLabelsCompanion({
+    this.fileId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AiLabelsCompanion.insert({
+    required String fileId,
+    required String label,
+    required double confidence,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       label = Value(label),
+       confidence = Value(confidence);
+  static Insertable<AiLabelRow> custom({
+    Expression<String>? fileId,
+    Expression<String>? label,
+    Expression<double>? confidence,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (label != null) 'label': label,
+      if (confidence != null) 'confidence': confidence,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AiLabelsCompanion copyWith({
+    Value<String>? fileId,
+    Value<String>? label,
+    Value<double>? confidence,
+    Value<int>? rowid,
+  }) {
+    return AiLabelsCompanion(
+      fileId: fileId ?? this.fileId,
+      label: label ?? this.label,
+      confidence: confidence ?? this.confidence,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<double>(confidence.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiLabelsCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('label: $label, ')
+          ..write('confidence: $confidence, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AiLabelStatusTable extends AiLabelStatus
+    with TableInfo<$AiLabelStatusTable, AiLabelStatusRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiLabelStatusTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<AiLabelOutcome, String> outcome =
+      GeneratedColumn<String>(
+        'outcome',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AiLabelOutcome>($AiLabelStatusTable.$converteroutcome);
+  static const VerificationMeta _modelVersionMeta = const VerificationMeta(
+    'modelVersion',
+  );
+  @override
+  late final GeneratedColumn<int> modelVersion = GeneratedColumn<int>(
+    'model_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileModifiedAtMsMeta = const VerificationMeta(
+    'fileModifiedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> fileModifiedAtMs = GeneratedColumn<int>(
+    'file_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _processedAtMsMeta = const VerificationMeta(
+    'processedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> processedAtMs = GeneratedColumn<int>(
+    'processed_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    fileId,
+    outcome,
+    modelVersion,
+    fileModifiedAtMs,
+    attempts,
+    error,
+    processedAtMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_label_status';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiLabelStatusRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('model_version')) {
+      context.handle(
+        _modelVersionMeta,
+        modelVersion.isAcceptableOrUnknown(
+          data['model_version']!,
+          _modelVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_modelVersionMeta);
+    }
+    if (data.containsKey('file_modified_at_ms')) {
+      context.handle(
+        _fileModifiedAtMsMeta,
+        fileModifiedAtMs.isAcceptableOrUnknown(
+          data['file_modified_at_ms']!,
+          _fileModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fileModifiedAtMsMeta);
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    if (data.containsKey('processed_at_ms')) {
+      context.handle(
+        _processedAtMsMeta,
+        processedAtMs.isAcceptableOrUnknown(
+          data['processed_at_ms']!,
+          _processedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_processedAtMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  AiLabelStatusRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiLabelStatusRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      outcome: $AiLabelStatusTable.$converteroutcome.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}outcome'],
+        )!,
+      ),
+      modelVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}model_version'],
+      )!,
+      fileModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_modified_at_ms'],
+      )!,
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+      processedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}processed_at_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $AiLabelStatusTable createAlias(String alias) {
+    return $AiLabelStatusTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<AiLabelOutcome, String, String> $converteroutcome =
+      const EnumNameConverter<AiLabelOutcome>(AiLabelOutcome.values);
+}
+
+class AiLabelStatusRow extends DataClass
+    implements Insertable<AiLabelStatusRow> {
+  final String fileId;
+  final AiLabelOutcome outcome;
+
+  /// LabelingJob.modelVersion (bumped when a model or label_map changes).
+  final int modelVersion;
+
+  /// media_index.modifiedAtMs when processed (epoch ms, same unit).
+  final int fileModifiedAtMs;
+  final int attempts;
+
+  /// Short reason for `failed` (exception type + message, ≤ 200 chars).
+  final String? error;
+
+  /// Epoch ms (drift's DateTime stores seconds).
+  final int processedAtMs;
+  const AiLabelStatusRow({
+    required this.fileId,
+    required this.outcome,
+    required this.modelVersion,
+    required this.fileModifiedAtMs,
+    required this.attempts,
+    this.error,
+    required this.processedAtMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    {
+      map['outcome'] = Variable<String>(
+        $AiLabelStatusTable.$converteroutcome.toSql(outcome),
+      );
+    }
+    map['model_version'] = Variable<int>(modelVersion);
+    map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs);
+    map['attempts'] = Variable<int>(attempts);
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    map['processed_at_ms'] = Variable<int>(processedAtMs);
+    return map;
+  }
+
+  AiLabelStatusCompanion toCompanion(bool nullToAbsent) {
+    return AiLabelStatusCompanion(
+      fileId: Value(fileId),
+      outcome: Value(outcome),
+      modelVersion: Value(modelVersion),
+      fileModifiedAtMs: Value(fileModifiedAtMs),
+      attempts: Value(attempts),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+      processedAtMs: Value(processedAtMs),
+    );
+  }
+
+  factory AiLabelStatusRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiLabelStatusRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      outcome: $AiLabelStatusTable.$converteroutcome.fromJson(
+        serializer.fromJson<String>(json['outcome']),
+      ),
+      modelVersion: serializer.fromJson<int>(json['modelVersion']),
+      fileModifiedAtMs: serializer.fromJson<int>(json['fileModifiedAtMs']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      error: serializer.fromJson<String?>(json['error']),
+      processedAtMs: serializer.fromJson<int>(json['processedAtMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'outcome': serializer.toJson<String>(
+        $AiLabelStatusTable.$converteroutcome.toJson(outcome),
+      ),
+      'modelVersion': serializer.toJson<int>(modelVersion),
+      'fileModifiedAtMs': serializer.toJson<int>(fileModifiedAtMs),
+      'attempts': serializer.toJson<int>(attempts),
+      'error': serializer.toJson<String?>(error),
+      'processedAtMs': serializer.toJson<int>(processedAtMs),
+    };
+  }
+
+  AiLabelStatusRow copyWith({
+    String? fileId,
+    AiLabelOutcome? outcome,
+    int? modelVersion,
+    int? fileModifiedAtMs,
+    int? attempts,
+    Value<String?> error = const Value.absent(),
+    int? processedAtMs,
+  }) => AiLabelStatusRow(
+    fileId: fileId ?? this.fileId,
+    outcome: outcome ?? this.outcome,
+    modelVersion: modelVersion ?? this.modelVersion,
+    fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+    attempts: attempts ?? this.attempts,
+    error: error.present ? error.value : this.error,
+    processedAtMs: processedAtMs ?? this.processedAtMs,
+  );
+  AiLabelStatusRow copyWithCompanion(AiLabelStatusCompanion data) {
+    return AiLabelStatusRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      outcome: data.outcome.present ? data.outcome.value : this.outcome,
+      modelVersion: data.modelVersion.present
+          ? data.modelVersion.value
+          : this.modelVersion,
+      fileModifiedAtMs: data.fileModifiedAtMs.present
+          ? data.fileModifiedAtMs.value
+          : this.fileModifiedAtMs,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      error: data.error.present ? data.error.value : this.error,
+      processedAtMs: data.processedAtMs.present
+          ? data.processedAtMs.value
+          : this.processedAtMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiLabelStatusRow(')
+          ..write('fileId: $fileId, ')
+          ..write('outcome: $outcome, ')
+          ..write('modelVersion: $modelVersion, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
+          ..write('attempts: $attempts, ')
+          ..write('error: $error, ')
+          ..write('processedAtMs: $processedAtMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    fileId,
+    outcome,
+    modelVersion,
+    fileModifiedAtMs,
+    attempts,
+    error,
+    processedAtMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiLabelStatusRow &&
+          other.fileId == this.fileId &&
+          other.outcome == this.outcome &&
+          other.modelVersion == this.modelVersion &&
+          other.fileModifiedAtMs == this.fileModifiedAtMs &&
+          other.attempts == this.attempts &&
+          other.error == this.error &&
+          other.processedAtMs == this.processedAtMs);
+}
+
+class AiLabelStatusCompanion extends UpdateCompanion<AiLabelStatusRow> {
+  final Value<String> fileId;
+  final Value<AiLabelOutcome> outcome;
+  final Value<int> modelVersion;
+  final Value<int> fileModifiedAtMs;
+  final Value<int> attempts;
+  final Value<String?> error;
+  final Value<int> processedAtMs;
+  final Value<int> rowid;
+  const AiLabelStatusCompanion({
+    this.fileId = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.modelVersion = const Value.absent(),
+    this.fileModifiedAtMs = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.error = const Value.absent(),
+    this.processedAtMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AiLabelStatusCompanion.insert({
+    required String fileId,
+    required AiLabelOutcome outcome,
+    required int modelVersion,
+    required int fileModifiedAtMs,
+    this.attempts = const Value.absent(),
+    this.error = const Value.absent(),
+    required int processedAtMs,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       outcome = Value(outcome),
+       modelVersion = Value(modelVersion),
+       fileModifiedAtMs = Value(fileModifiedAtMs),
+       processedAtMs = Value(processedAtMs);
+  static Insertable<AiLabelStatusRow> custom({
+    Expression<String>? fileId,
+    Expression<String>? outcome,
+    Expression<int>? modelVersion,
+    Expression<int>? fileModifiedAtMs,
+    Expression<int>? attempts,
+    Expression<String>? error,
+    Expression<int>? processedAtMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (outcome != null) 'outcome': outcome,
+      if (modelVersion != null) 'model_version': modelVersion,
+      if (fileModifiedAtMs != null) 'file_modified_at_ms': fileModifiedAtMs,
+      if (attempts != null) 'attempts': attempts,
+      if (error != null) 'error': error,
+      if (processedAtMs != null) 'processed_at_ms': processedAtMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AiLabelStatusCompanion copyWith({
+    Value<String>? fileId,
+    Value<AiLabelOutcome>? outcome,
+    Value<int>? modelVersion,
+    Value<int>? fileModifiedAtMs,
+    Value<int>? attempts,
+    Value<String?>? error,
+    Value<int>? processedAtMs,
+    Value<int>? rowid,
+  }) {
+    return AiLabelStatusCompanion(
+      fileId: fileId ?? this.fileId,
+      outcome: outcome ?? this.outcome,
+      modelVersion: modelVersion ?? this.modelVersion,
+      fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+      attempts: attempts ?? this.attempts,
+      error: error ?? this.error,
+      processedAtMs: processedAtMs ?? this.processedAtMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (outcome.present) {
+      map['outcome'] = Variable<String>(
+        $AiLabelStatusTable.$converteroutcome.toSql(outcome.value),
+      );
+    }
+    if (modelVersion.present) {
+      map['model_version'] = Variable<int>(modelVersion.value);
+    }
+    if (fileModifiedAtMs.present) {
+      map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (processedAtMs.present) {
+      map['processed_at_ms'] = Variable<int>(processedAtMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiLabelStatusCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('outcome: $outcome, ')
+          ..write('modelVersion: $modelVersion, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
+          ..write('attempts: $attempts, ')
+          ..write('error: $error, ')
+          ..write('processedAtMs: $processedAtMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11529,6 +12292,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SmartGroupItemsTable smartGroupItems = $SmartGroupItemsTable(
     this,
   );
+  late final $AiLabelsTable aiLabels = $AiLabelsTable(this);
+  late final $AiLabelStatusTable aiLabelStatus = $AiLabelStatusTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -11629,6 +12394,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'smgi_file',
     'CREATE INDEX smgi_file ON smart_group_items (file_id)',
   );
+  late final Index aiLabelsLabel = Index(
+    'ai_labels_label',
+    'CREATE INDEX ai_labels_label ON ai_labels (label, file_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11658,6 +12427,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     mediaLocations,
     smartGroups,
     smartGroupItems,
+    aiLabels,
+    aiLabelStatus,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -11683,6 +12454,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     sgiFile,
     sgKindRank,
     smgiFile,
+    aiLabelsLabel,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -19849,6 +20621,432 @@ typedef $$SmartGroupItemsTableProcessedTableManager =
       SmartGroupItemRow,
       PrefetchHooks Function({bool groupId})
     >;
+typedef $$AiLabelsTableCreateCompanionBuilder = AiLabelsCompanion Function({
+  required String fileId,
+  required String label,
+  required double confidence,
+  Value<int> rowid,
+});
+typedef $$AiLabelsTableUpdateCompanionBuilder = AiLabelsCompanion Function({
+  Value<String> fileId,
+  Value<String> label,
+  Value<double> confidence,
+  Value<int> rowid,
+});
+
+class $$AiLabelsTableFilterComposer
+    extends Composer<_$AppDatabase, $AiLabelsTable> {
+  $$AiLabelsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AiLabelsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiLabelsTable> {
+  $$AiLabelsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AiLabelsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiLabelsTable> {
+  $$AiLabelsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => column,
+  );
+}
+
+class $$AiLabelsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiLabelsTable,
+          AiLabelRow,
+          $$AiLabelsTableFilterComposer,
+          $$AiLabelsTableOrderingComposer,
+          $$AiLabelsTableAnnotationComposer,
+          $$AiLabelsTableCreateCompanionBuilder,
+          $$AiLabelsTableUpdateCompanionBuilder,
+          (
+            AiLabelRow,
+            BaseReferences<_$AppDatabase, $AiLabelsTable, AiLabelRow>,
+          ),
+          AiLabelRow,
+          PrefetchHooks Function()
+        > {
+  $$AiLabelsTableTableManager(_$AppDatabase db, $AiLabelsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiLabelsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiLabelsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiLabelsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<double> confidence = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AiLabelsCompanion(
+                fileId: fileId,
+                label: label,
+                confidence: confidence,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required String label,
+                required double confidence,
+                Value<int> rowid = const Value.absent(),
+              }) => AiLabelsCompanion.insert(
+                fileId: fileId,
+                label: label,
+                confidence: confidence,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AiLabelsTable, AiLabelRow>(table),
+                  BaseReferences<_$AppDatabase, $AiLabelsTable, AiLabelRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AiLabelsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiLabelsTable,
+      AiLabelRow,
+      $$AiLabelsTableFilterComposer,
+      $$AiLabelsTableOrderingComposer,
+      $$AiLabelsTableAnnotationComposer,
+      $$AiLabelsTableCreateCompanionBuilder,
+      $$AiLabelsTableUpdateCompanionBuilder,
+      (AiLabelRow, BaseReferences<_$AppDatabase, $AiLabelsTable, AiLabelRow>),
+      AiLabelRow,
+      PrefetchHooks Function()
+    >;
+typedef $$AiLabelStatusTableCreateCompanionBuilder =
+    AiLabelStatusCompanion Function({
+      required String fileId,
+      required AiLabelOutcome outcome,
+      required int modelVersion,
+      required int fileModifiedAtMs,
+      Value<int> attempts,
+      Value<String?> error,
+      required int processedAtMs,
+      Value<int> rowid,
+    });
+typedef $$AiLabelStatusTableUpdateCompanionBuilder =
+    AiLabelStatusCompanion Function({
+      Value<String> fileId,
+      Value<AiLabelOutcome> outcome,
+      Value<int> modelVersion,
+      Value<int> fileModifiedAtMs,
+      Value<int> attempts,
+      Value<String?> error,
+      Value<int> processedAtMs,
+      Value<int> rowid,
+    });
+
+class $$AiLabelStatusTableFilterComposer
+    extends Composer<_$AppDatabase, $AiLabelStatusTable> {
+  $$AiLabelStatusTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<AiLabelOutcome, AiLabelOutcome, String>
+  get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get modelVersion => $composableBuilder(
+    column: $table.modelVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get processedAtMs => $composableBuilder(
+    column: $table.processedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AiLabelStatusTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiLabelStatusTable> {
+  $$AiLabelStatusTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get modelVersion => $composableBuilder(
+    column: $table.modelVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get processedAtMs => $composableBuilder(
+    column: $table.processedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AiLabelStatusTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiLabelStatusTable> {
+  $$AiLabelStatusTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<AiLabelOutcome, String> get outcome =>
+      $composableBuilder(column: $table.outcome, builder: (column) => column);
+
+  GeneratedColumn<int> get modelVersion => $composableBuilder(
+    column: $table.modelVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<int> get processedAtMs => $composableBuilder(
+    column: $table.processedAtMs,
+    builder: (column) => column,
+  );
+}
+
+class $$AiLabelStatusTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiLabelStatusTable,
+          AiLabelStatusRow,
+          $$AiLabelStatusTableFilterComposer,
+          $$AiLabelStatusTableOrderingComposer,
+          $$AiLabelStatusTableAnnotationComposer,
+          $$AiLabelStatusTableCreateCompanionBuilder,
+          $$AiLabelStatusTableUpdateCompanionBuilder,
+          (
+            AiLabelStatusRow,
+            BaseReferences<
+              _$AppDatabase,
+              $AiLabelStatusTable,
+              AiLabelStatusRow
+            >,
+          ),
+          AiLabelStatusRow,
+          PrefetchHooks Function()
+        > {
+  $$AiLabelStatusTableTableManager(_$AppDatabase db, $AiLabelStatusTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiLabelStatusTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiLabelStatusTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiLabelStatusTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<AiLabelOutcome> outcome = const Value.absent(),
+                Value<int> modelVersion = const Value.absent(),
+                Value<int> fileModifiedAtMs = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<int> processedAtMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AiLabelStatusCompanion(
+                fileId: fileId,
+                outcome: outcome,
+                modelVersion: modelVersion,
+                fileModifiedAtMs: fileModifiedAtMs,
+                attempts: attempts,
+                error: error,
+                processedAtMs: processedAtMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required AiLabelOutcome outcome,
+                required int modelVersion,
+                required int fileModifiedAtMs,
+                Value<int> attempts = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                required int processedAtMs,
+                Value<int> rowid = const Value.absent(),
+              }) => AiLabelStatusCompanion.insert(
+                fileId: fileId,
+                outcome: outcome,
+                modelVersion: modelVersion,
+                fileModifiedAtMs: fileModifiedAtMs,
+                attempts: attempts,
+                error: error,
+                processedAtMs: processedAtMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AiLabelStatusTable, AiLabelStatusRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $AiLabelStatusTable,
+                    AiLabelStatusRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AiLabelStatusTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiLabelStatusTable,
+      AiLabelStatusRow,
+      $$AiLabelStatusTableFilterComposer,
+      $$AiLabelStatusTableOrderingComposer,
+      $$AiLabelStatusTableAnnotationComposer,
+      $$AiLabelStatusTableCreateCompanionBuilder,
+      $$AiLabelStatusTableUpdateCompanionBuilder,
+      (
+        AiLabelStatusRow,
+        BaseReferences<_$AppDatabase, $AiLabelStatusTable, AiLabelStatusRow>,
+      ),
+      AiLabelStatusRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19900,4 +21098,8 @@ class $AppDatabaseManager {
       $$SmartGroupsTableTableManager(_db, _db.smartGroups);
   $$SmartGroupItemsTableTableManager get smartGroupItems =>
       $$SmartGroupItemsTableTableManager(_db, _db.smartGroupItems);
+  $$AiLabelsTableTableManager get aiLabels =>
+      $$AiLabelsTableTableManager(_db, _db.aiLabels);
+  $$AiLabelStatusTableTableManager get aiLabelStatus =>
+      $$AiLabelStatusTableTableManager(_db, _db.aiLabelStatus);
 }
