@@ -37,6 +37,13 @@ abstract final class AppSettings {
     '',
   );
 
+  /// N1. Name other devices see when this device shares; '' = the device
+  /// model (resolved at runtime).
+  static final SettingKey<String> connectDisplayName = SettingKey.string(
+    'connect.displayName',
+    '',
+  );
+
   /// B6. The "use Edit selection to remove" tip was shown.
   static final SettingKey<bool> selectionTipShown = SettingKey.boolean(
     'selection.tipShown',

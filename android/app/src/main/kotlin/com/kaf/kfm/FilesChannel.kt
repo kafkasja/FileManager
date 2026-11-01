@@ -170,6 +170,9 @@ class FilesChannel(
             try {
                 val value: Any? = when (call.method) {
                     "sdkInt" -> Build.VERSION.SDK_INT
+                    // N1: default share name ("Galaxy S22 Ultra" style when the
+                    // model already starts with the maker, else "Maker Model").
+                    "deviceModel" -> deviceModel()
                     "queryMedia" -> queryMedia(call)
                     "statMedia" -> statMedia(call.longArg("id"))
                     "statMediaByPath" -> statMediaByPath(call.stringArg("path"))
@@ -963,6 +966,14 @@ class FilesChannel(
     }
 
     // ---- helpers ----
+
+    private fun deviceModel(): String {
+        val maker = Build.MANUFACTURER.orEmpty().trim()
+        val model = Build.MODEL.orEmpty().trim()
+        if (model.isEmpty()) return maker
+        return if (maker.isEmpty() || model.startsWith(maker, ignoreCase = true)) model
+        else "${maker.replaceFirstChar { it.uppercase() }} $model"
+    }
 
     private fun canUseFiles(): Boolean = when {
         Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> true

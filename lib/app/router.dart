@@ -8,6 +8,8 @@ import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
 import 'package:kfm/features/browse/ui/collection_screen.dart';
+import 'package:kfm/features/connect/ui/connect_screen.dart';
+import 'package:kfm/features/connect/ui/share_screen.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
 import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
@@ -73,6 +75,10 @@ abstract final class AppRoutes {
 
   /// C3: the AI model details screen (shown before any download).
   static const aiModels = '/settings/ai-models';
+
+  /// N1/N2: top-level (cover the tab bar), opened with `context.push`.
+  static const connect = '/connect';
+  static const connectShare = '/connect/share';
   static String presetEditorFor(int id) => '/settings/presets/$id';
 }
 
@@ -139,6 +145,16 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: AppRoutes.permission,
         builder: (context, state) => const PermissionGateScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.connect,
+        builder: (context, state) => const ConnectScreen(),
+        routes: [
+          GoRoute(
+            path: 'share',
+            builder: (context, state) => const ShareScreen(),
+          ),
+        ],
       ),
       // indexedStack keeps every tab alive: switching tabs never loses
       // swipe progress.

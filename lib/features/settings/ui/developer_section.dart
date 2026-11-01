@@ -5,6 +5,7 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/connect/data/connect_providers.dart';
 
 /// Debug builds only: index size, full rescan, and the first 200 indexed
 /// files, to check F3/F5 on a real device.
@@ -31,6 +32,19 @@ class DeveloperSection extends ConsumerWidget {
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => const _IndexListScreen()),
           ),
+        ),
+        // N1 negative check: a new identity (new fingerprint) without a crash.
+        ListTile(
+          leading: const Icon(Icons.key_off_outlined),
+          title: Text(l10n.devResetIdentity),
+          onTap: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            await ref.read(deviceIdentityRepositoryProvider).reset();
+            ref.invalidate(deviceIdentityProvider);
+            messenger.showSnackBar(
+              SnackBar(content: Text(l10n.devResetIdentityDone)),
+            );
+          },
         ),
       ],
     );

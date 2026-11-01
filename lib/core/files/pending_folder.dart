@@ -9,6 +9,7 @@ import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/io_errors.dart';
+import 'package:kfm/core/utils/random_id.dart';
 
 /// Retention in days is clamped to this range (corrupt values → default).
 const ({int fallback, int max, int min}) kPendingRetentionRange = (
@@ -299,8 +300,5 @@ class PendingFolder {
   static Future<bool> _exists(String path) async =>
       await FileSystemEntity.type(path) != FileSystemEntityType.notFound;
 
-  String _newId() => List.generate(
-    16,
-    (_) => _random.nextInt(256).toRadixString(16).padLeft(2, '0'),
-  ).join();
+  String _newId() => randomHexId(_random);
 }

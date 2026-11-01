@@ -5510,6 +5510,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 selected file is no longer indexed} other{{count} selected files are no longer indexed}}'**
   String detailsSummaryMissing(int count);
+
+  /// No description provided for @connectSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a device'**
+  String get connectSettingsTitle;
+
+  /// No description provided for @connectShareThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this device'**
+  String get connectShareThisDevice;
+
+  /// No description provided for @connectShareThisDeviceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Let a phone or PC on the same Wi-Fi connect to this one'**
+  String get connectShareThisDeviceHint;
+
+  /// No description provided for @connectToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a device'**
+  String get connectToDevice;
+
+  /// No description provided for @connectToDeviceSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming in a later update'**
+  String get connectToDeviceSoon;
+
+  /// No description provided for @connectComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to another device isn\'t available yet.'**
+  String get connectComingSoon;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this device'**
+  String get shareTitle;
+
+  /// No description provided for @sharePreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing…'**
+  String get sharePreparing;
+
+  /// No description provided for @shareSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get shareSharing;
+
+  /// No description provided for @shareSharingAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices on the same Wi-Fi can connect to “{name}”.'**
+  String shareSharingAs(String name);
+
+  /// No description provided for @shareKeepOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing stops when you leave this screen or the app.'**
+  String get shareKeepOpen;
+
+  /// No description provided for @shareStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing'**
+  String get shareStop;
+
+  /// No description provided for @shareStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing stopped'**
+  String get shareStopped;
+
+  /// No description provided for @shareStartAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Share again'**
+  String get shareStartAgain;
+
+  /// No description provided for @shareNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Wi-Fi or turn on hotspot'**
+  String get shareNoNetwork;
+
+  /// No description provided for @shareNoNetworkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Both devices must be on the same Wi-Fi, or one must use the other\'s hotspot.'**
+  String get shareNoNetworkHint;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start sharing'**
+  String get shareFailed;
+
+  /// No description provided for @shareRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get shareRetry;
+
+  /// Debug builds only: interface address and port.
+  ///
+  /// In en, this message translates to:
+  /// **'{address}:{port}'**
+  String shareDebugAddress(String address, int port);
+
+  /// Debug builds only.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint: {fingerprint}'**
+  String shareDebugFingerprint(String fingerprint);
+
+  /// No description provided for @devResetIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset device identity'**
+  String get devResetIdentity;
+
+  /// No description provided for @devResetIdentityDone.
+  ///
+  /// In en, this message translates to:
+  /// **'New device identity created'**
+  String get devResetIdentityDone;
 }
 
 class _AppLocalizationsDelegate

@@ -2537,5 +2537,53 @@
         "type": "int"
       }
     }
-  }
+  },
+  "connectSettingsTitle": "Connect a device",
+  "connectShareThisDevice": "Share this device",
+  "connectShareThisDeviceHint": "Let a phone or PC on the same Wi-Fi connect to this one",
+  "connectToDevice": "Connect to a device",
+  "connectToDeviceSoon": "Coming in a later update",
+  "connectComingSoon": "Connecting to another device isn't available yet.",
+  "shareTitle": "Share this device",
+  "sharePreparing": "Preparing…",
+  "shareSharing": "Sharing",
+  "shareSharingAs": "Devices on the same Wi-Fi can connect to “{name}”.",
+  "@shareSharingAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareKeepOpen": "Sharing stops when you leave this screen or the app.",
+  "shareStop": "Stop sharing",
+  "shareStopped": "Sharing stopped",
+  "shareStartAgain": "Share again",
+  "shareNoNetwork": "Connect to Wi-Fi or turn on hotspot",
+  "shareNoNetworkHint": "Both devices must be on the same Wi-Fi, or one must use the other's hotspot.",
+  "shareFailed": "Couldn't start sharing",
+  "shareRetry": "Try again",
+  "shareDebugAddress": "{address}:{port}",
+  "@shareDebugAddress": {
+    "description": "Debug builds only: interface address and port.",
+    "placeholders": {
+      "address": {
+        "type": "String"
+      },
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "shareDebugFingerprint": "Fingerprint: {fingerprint}",
+  "@shareDebugFingerprint": {
+    "description": "Debug builds only.",
+    "placeholders": {
+      "fingerprint": {
+        "type": "String"
+      }
+    }
+  },
+  "devResetIdentity": "Reset device identity",
+  "devResetIdentityDone": "New device identity created"
 }

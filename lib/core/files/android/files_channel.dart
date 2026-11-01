@@ -28,6 +28,10 @@ class FilesChannel {
 
   Future<int> sdkInt() async => (await _invoke<int>('sdkInt'))!;
 
+  /// N1: the phone's maker + model (default "Share this device" name).
+  Future<String> deviceModel() async =>
+      (await _invoke<String>('deviceModel')) ?? '';
+
   Future<bool> hasAllFilesAccess() async =>
       (await _invoke<bool>('hasAllFilesAccess'))!;
 

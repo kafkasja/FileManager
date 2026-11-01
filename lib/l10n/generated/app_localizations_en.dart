@@ -3898,4 +3898,80 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get connectSettingsTitle => 'Connect a device';
+
+  @override
+  String get connectShareThisDevice => 'Share this device';
+
+  @override
+  String get connectShareThisDeviceHint =>
+      'Let a phone or PC on the same Wi-Fi connect to this one';
+
+  @override
+  String get connectToDevice => 'Connect to a device';
+
+  @override
+  String get connectToDeviceSoon => 'Coming in a later update';
+
+  @override
+  String get connectComingSoon =>
+      'Connecting to another device isn\'t available yet.';
+
+  @override
+  String get shareTitle => 'Share this device';
+
+  @override
+  String get sharePreparing => 'Preparing…';
+
+  @override
+  String get shareSharing => 'Sharing';
+
+  @override
+  String shareSharingAs(String name) {
+    return 'Devices on the same Wi-Fi can connect to “$name”.';
+  }
+
+  @override
+  String get shareKeepOpen =>
+      'Sharing stops when you leave this screen or the app.';
+
+  @override
+  String get shareStop => 'Stop sharing';
+
+  @override
+  String get shareStopped => 'Sharing stopped';
+
+  @override
+  String get shareStartAgain => 'Share again';
+
+  @override
+  String get shareNoNetwork => 'Connect to Wi-Fi or turn on hotspot';
+
+  @override
+  String get shareNoNetworkHint =>
+      'Both devices must be on the same Wi-Fi, or one must use the other\'s hotspot.';
+
+  @override
+  String get shareFailed => 'Couldn\'t start sharing';
+
+  @override
+  String get shareRetry => 'Try again';
+
+  @override
+  String shareDebugAddress(String address, int port) {
+    return '$address:$port';
+  }
+
+  @override
+  String shareDebugFingerprint(String fingerprint) {
+    return 'Fingerprint: $fingerprint';
+  }
+
+  @override
+  String get devResetIdentity => 'Reset device identity';
+
+  @override
+  String get devResetIdentityDone => 'New device identity created';
 }
