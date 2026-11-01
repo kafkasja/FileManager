@@ -1804,5 +1804,286 @@
       }
     }
   },
-  "tagWriteError": "Couldn't save the change. Try again"
+  "tagWriteError": "Couldn't save the change. Try again",
+  "swipeSourceSelectionTitle": "Selected files",
+  "sameTimeSwipeGroup": "Swipe this group",
+  "swipeSourceClose": "Back to all files",
+  "swipeSourceGroupPosition": "Group {group} of {groupCount} · {index}/{groupSize}",
+  "@swipeSourceGroupPosition": {
+    "placeholders": {
+      "group": {
+        "type": "int"
+      },
+      "groupCount": {
+        "type": "int"
+      },
+      "index": {
+        "type": "int"
+      },
+      "groupSize": {
+        "type": "int"
+      }
+    }
+  },
+  "swipeSourceDone": "All done in {title}",
+  "@swipeSourceDone": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeSourceBackToMain": "Back to swiping",
+  "swipeSourceBackToOrigin": "Back to {origin}",
+  "@swipeSourceBackToOrigin": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeSourceRestored": "Continued in {title}",
+  "@swipeSourceRestored": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeSourcePendingLine": "Opens: {title}",
+  "@swipeSourcePendingLine": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeSourceSkipped": "{files, plural, =1{Swiping 1 file} other{Swiping {files} files}} · {skipped, plural, =1{1 can't be swiped here} other{{skipped} can't be swiped here}} (photos and videos only)",
+  "@swipeSourceSkipped": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "swipeSourceTruncated": "Showing the first 10,000 files",
+  "swipeSourceEmpty": "Nothing to swipe here",
+  "swipeSourceNoMedia": "Only photos and videos can be swiped",
+  "swipeSourceInvalidFilter": "This filter can't be used",
+  "swipeSourceNoMatches": "No photos or videos match",
+  "swipeSourceOriginStorage": "Storage overview",
+  "swipeSourceOriginSimilar": "Similar photos",
+  "swipeSourceOriginSearch": "Search",
+  "swipeSourceOriginGroups": "Groups",
+  "swipeSourceOriginSameTime": "Same time",
+  "swipeSourceOriginBrowse": "Browse",
+  "swipeSourceOriginSharedIn": "Shared files",
+  "swipeSourceOriginCloud": "Cloud",
+  "swipeSourceOriginExternal": "External storage",
+  "swipeSourceOriginOther": "Previous screen",
+  "storageOverviewTitle": "Storage overview",
+  "storageUsedFree": "{used} used · {free} free",
+  "@storageUsedFree": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+  "storageSpaceUnknown": "Free space unknown",
+  "storageScanning": "Still scanning… the numbers keep growing",
+  "storageCatVideos": "Videos",
+  "storageCatScreenshots": "Screenshots",
+  "storageCatBigFiles": "Big files (over {size})",
+  "@storageCatBigFiles": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageCatWhatsapp": "WhatsApp",
+  "storageCatDownloads": "Downloads",
+  "storageCategorySummary": "{count, plural, =0{No files} =1{1 file · {size}} other{{count} files · {size}}}",
+  "@storageCategorySummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageCleanUp": "Clean up",
+  "storageCleanUpMediaOnly": "Clean up shows photos and videos only",
+  "storageNeedsAccess": "Turn on All files access to see these files",
+  "storageOverlapNote": "A file can be in more than one category.",
+  "storageBiggestFiles": "Biggest files",
+  "storageWhatsappHint": "Includes WhatsApp's hidden Sent and Status folders",
+  "storageBigFileThreshold": "Big files start at",
+  "similarTitle": "Similar photos",
+  "similarSourceTitle": "Similar photos",
+  "similarStorageHint": "Look-alike and blurry photos",
+  "similarTabSimilar": "Similar",
+  "similarTabBlurry": "Blurry",
+  "similarStartTitle": "Find similar and blurry photos",
+  "similarStartBody": "KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.",
+  "similarStart": "Start",
+  "similarChecking": "Checking photos… {done} of {total}",
+  "@similarChecking": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "similarGrouping": "Grouping look-alike photos…",
+  "similarNoGroups": "No similar photos found yet",
+  "similarNoBlurry": "No blurry photos found",
+  "similarGroupCount": "{count, plural, =1{1 photo} other{{count} photos}}",
+  "@similarGroupCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "similarBest": "Best",
+  "similarKeepBest": "Keep best, remove others",
+  "similarSwipeGroup": "Swipe this group",
+  "similarSwipeAll": "Swipe all groups",
+  "similarCleanDuplicates": "Clean duplicates",
+  "similarRemoved": "{count, plural, =1{Removed 1 photo} other{Removed {count} photos}}",
+  "@similarRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "similarKeptAll": "Kept all photos",
+  "similarBlurryHint": "Tap to pick, long-press to view",
+  "similarRemoveCount": "{count, plural, =0{Remove} other{Remove {count}}}",
+  "@similarRemoveCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "similarCleanProgress": "Group {group} of {total} · keeping {keep}",
+  "@similarCleanProgress": {
+    "placeholders": {
+      "group": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "keep": {
+        "type": "int"
+      }
+    }
+  },
+  "similarCleanDone": "All groups done",
+  "similarSkip": "Skip",
+  "similarNextGroup": "Next group",
+  "similarKeep": "Keep",
+  "similarRemove": "Remove",
+  "similarSettingEnabled": "Find similar and blurry photos",
+  "similarSettingEnabledHint": "Checks photos in the background while KFM is open",
+  "similarSettingStrictness": "How alike",
+  "similarStrictnessLoose": "Loosely alike",
+  "similarStrictnessNormal": "Normal",
+  "similarStrictnessStrict": "Nearly identical",
+  "similarSettingScreenshots": "Include screenshots",
+  "groupsTitle": "Groups",
+  "groupsScreenshots": "Screenshots",
+  "groupsSelfies": "Selfies (automatic)",
+  "groupsDocuments": "Documents",
+  "groupsTrips": "Trips",
+  "groupsPlaces": "Places",
+  "smartGroupPlace": "Place {n}",
+  "@smartGroupPlace": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "smartGroupTrip": "{start} – {end}",
+  "@smartGroupTrip": {
+    "description": "Automatic trip title: its date range.",
+    "placeholders": {
+      "start": {
+        "type": "DateTime",
+        "format": "yMMMd"
+      },
+      "end": {
+        "type": "DateTime",
+        "format": "yMMMd"
+      }
+    }
+  },
+  "groupsCount": "{count, plural, =1{1 file} other{{count} files}}",
+  "@groupsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupsProgress": "{total, plural, =1{Finding trips and places… {done} of 1 photo} other{Finding trips and places… {done} of {total} photos}}",
+  "@groupsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "groupsGrouping": "Grouping trips and places…",
+  "groupsEmpty": "No groups yet. Trips and places appear here as KFM finds them.",
+  "groupsRename": "Rename",
+  "groupsRenameHint": "Leave empty for the automatic name",
+  "groupsRenameSave": "Save",
+  "groupsRenameCancel": "Cancel",
+  "groupsChanged": "This group changed",
+  "groupsChangedBody": "Trips and places are recalculated as photos are added or removed.",
+  "groupsBack": "Back to groups",
+  "groupsSwipe": "Swipe this group",
+  "groupsLocationRow": "Allow location access to group photos by place",
+  "groupsOnlineNames": "Look up place names online",
+  "groupsOnlineNamesHelp": "Sends the approximate centre of each place group to your phone's geocoding service to get names like 'Paris'",
+  "groupsJobError": "Couldn't update the groups. They'll be tried again later.",
+  "groupsFailedFiles": "{count, plural, =1{1 photo couldn't be read} other{{count} photos couldn't be read}}",
+  "@groupsFailedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "smartGroupTripOneDay": "{day}",
+  "@smartGroupTripOneDay": {
+    "description": "Automatic title of a one-day trip.",
+    "placeholders": {
+      "day": {
+        "type": "DateTime",
+        "format": "yMMMd"
+      }
+    }
+  }
 }

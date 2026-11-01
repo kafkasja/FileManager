@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +36,8 @@ import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
+import 'package:kfm/features/swipe/ui/swipe_source_bar.dart';
+import 'package:kfm/features/swipe/ui/swipe_source_launcher.dart';
 import 'package:kfm/features/swipe/ui/swipe_toast.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
@@ -98,7 +102,8 @@ class SwipeScreen extends ConsumerWidget {
               onPressed: () => _finish(context, ref, value),
               child: Text(l10n.swipeDone),
             ),
-          if (value != null)
+          // SS1: the main filter is hidden (and kept) while a source is open.
+          if (value != null && value.source == null)
             IconButton(
               tooltip: l10n.filterButton,
               onPressed: () => showFilterSheet(context),
@@ -119,7 +124,22 @@ class SwipeScreen extends ConsumerWidget {
         ],
       ),
       body: switch (deck) {
-        AsyncData(:final value) => _Deck(deck: value),
+        AsyncData(:final value) => PopScope(
+          // SS1: system back closes an open source.
+          canPop: value.source == null,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            unawaited(
+              ref.read(swipeDeckControllerProvider.notifier).closeSource(),
+            );
+          },
+          child: Column(
+            children: [
+              SwipeSourceBar(deck: value),
+              Expanded(child: _Deck(deck: value)),
+            ],
+          ),
+        ),
         AsyncError() => _Message(
           icon: Icons.error_outline,
           text: l10n.swipeErrorGeneric,
@@ -287,7 +307,10 @@ class _DeckState extends ConsumerState<_Deck> {
     final l10n = context.l10n;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(l10n.restoredSnack),
+        content: Text(switch (widget.deck.source) {
+          final source? => l10n.swipeSourceRestored(source.title),
+          null => l10n.restoredSnack,
+        }),
         // Actions make a SnackBar persistent by default; these time out.
         persist: false,
         action: SnackBarAction(
@@ -392,7 +415,9 @@ class _DeckState extends ConsumerState<_Deck> {
     final spacing = context.tokens.spacing;
     final current = deck.current;
     final Widget body;
-    if (current == null) {
+    if (current == null && deck.source != null) {
+      body = SwipeSourceFinished(deck: deck);
+    } else if (current == null) {
       final scanning = ref.watch(indexStatusProvider).value is IndexScanning;
       final filtered = !FileFilter.decode(deck.session.filterJson).isEmpty;
       body = scanning && deck.swiped == 0
@@ -742,6 +767,7 @@ class _PermanentModeConfirm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final pending = ref.watch(swipeSourceLauncherProvider);
     final spacing = context.tokens.spacing;
     return Center(
       child: SingleChildScrollView(
@@ -762,6 +788,14 @@ class _PermanentModeConfirm extends ConsumerWidget {
             ),
             SizedBox(height: spacing),
             Text(l10n.permanentConfirmBody, textAlign: TextAlign.center),
+            if (pending != null) ...[
+              SizedBox(height: spacing),
+              Text(
+                l10n.swipeSourcePendingLine(pending.title),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ],
             SizedBox(height: spacing * 3),
             FilledButton(
               onPressed: () => startSessionWith(ref, DeleteMode.trash),

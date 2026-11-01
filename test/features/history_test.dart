@@ -182,6 +182,25 @@ void main() {
   });
 
   group('undo log', () {
+    test('lastSeq: StateError before prepare, then the last handed-out '
+        'seq (reserved ones included)', () async {
+      final s = await sessions.getOrCreateActive();
+      expect(() => undo.lastSeq(s.id), throwsStateError);
+      await undo.prepare(s.id);
+      expect(undo.lastSeq(s.id), 0);
+      dispatcher.dispatch(s, photo(1), SwipeAction.keep);
+      expect(undo.lastSeq(s.id), 1);
+      // A move's seq is taken at swipe time, before its row is written.
+      expect(undo.reserveSeq(s.id), 2);
+      expect(undo.lastSeq(s.id), 2);
+      await queue.flush();
+
+      // A fresh repository (restart) loads the highest written seq.
+      final again = UndoRepository(db, queue);
+      await again.prepare(s.id);
+      expect(again.lastSeq(s.id), 1);
+    });
+
     test(
       'records keeps and trashes with in-memory seq; trash queues a delete',
       () async {

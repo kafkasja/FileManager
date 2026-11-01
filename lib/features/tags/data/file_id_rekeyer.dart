@@ -7,7 +7,8 @@ import 'package:kfm/core/files/file_source.dart';
 /// Moves every file-id keyed row to a file's new id when a move/rename
 /// changes it (`FileSource.idChanges`): tags, favorites, reviewed labels and
 /// (H4) undo log, queued deletes and rename batch items, (B6) the
-/// selection and its Clear all snapshot. Idempotent: copy
+/// selection and its Clear all snapshot, (SS1) swipe source items, (C2) image signals, similar group items and
+/// dismissals, (C5) EXIF rows, smart group members and covers. Idempotent: copy
 /// rows to the new id (ignoring ones already there), then drop the old id's
 /// rows.
 class FileIdRekeyer {
@@ -85,6 +86,55 @@ class FileIdRekeyer {
           'batch_id IN (SELECT id FROM rename_batches '
           "WHERE status = 'collecting')",
           [oldId],
+        );
+        // SS1: an open list source keeps the file at its position. PK is
+        // (source_id, position): a plain UPDATE can't conflict.
+        await _db.customStatement(
+          'UPDATE swipe_source_items SET file_id = ? WHERE file_id = ?',
+          [newId, oldId],
+        );
+        // C2: a move doesn't make a photo different: signals follow it
+        // (no recompute); group membership and dismissals too.
+        await _db.customStatement(
+          'UPDATE OR REPLACE image_signals SET file_id = ?, '
+          'file_modified_at_ms = COALESCE(?, file_modified_at_ms) '
+          'WHERE file_id = ?',
+          [newId, newModifiedMs, oldId],
+        );
+        for (final table in ['similar_group_items', 'similar_dismissed']) {
+          await _db.customStatement(
+            'UPDATE OR IGNORE $table SET file_id = ? WHERE file_id = ?',
+            [newId, oldId],
+          );
+          await _db.customStatement('DELETE FROM $table WHERE file_id = ?', [
+            oldId,
+          ]);
+        }
+        // C5: a move isn't an edit: EXIF follows the file (not read again);
+        // so do group membership and covers.
+        await _db.customStatement(
+          'INSERT OR IGNORE INTO media_locations (file_id, '
+          'file_modified_at_ms, lat, lng, front_camera, location_readable, '
+          'read_at_ms) SELECT ?, COALESCE(?, file_modified_at_ms), lat, lng, '
+          'front_camera, location_readable, read_at_ms FROM media_locations '
+          'WHERE file_id = ?',
+          [newId, newModifiedMs, oldId],
+        );
+        await _db.customStatement(
+          'DELETE FROM media_locations WHERE file_id = ?',
+          [oldId],
+        );
+        await _db.customStatement(
+          'UPDATE OR IGNORE smart_group_items SET file_id = ? WHERE file_id = ?',
+          [newId, oldId],
+        );
+        await _db.customStatement(
+          'DELETE FROM smart_group_items WHERE file_id = ?',
+          [oldId],
+        );
+        await _db.customStatement(
+          'UPDATE smart_groups SET cover_file_id = ? WHERE cover_file_id = ?',
+          [newId, oldId],
         );
         // B6: the selection keeps the file's place in the order.
         for (final table in ['selection_items', 'selection_snapshots']) {

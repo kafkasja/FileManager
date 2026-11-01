@@ -104,11 +104,18 @@ Stream<int> mediaIndexChanges(Ref ref) =>
 Stream<int> indexAndTagChanges(Ref ref) =>
     ref.watch(mediaIndexDaoProvider).watchChanges(withTags: true);
 
-/// The change signal a view of [query] reloads on: tag/favorite changes
-/// only matter when it filters on them.
+/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+@Riverpod(keepAlive: true)
+Stream<int> indexAndGroupChanges(Ref ref) =>
+    ref.watch(mediaIndexDaoProvider).watchChanges(withGroups: true);
+
+/// The change signal a view of [query] reloads on: tag/favorite (and C5
+/// group) changes only matter when it filters on them.
 ProviderListenable<AsyncValue<int>> changesFor(IndexQuery query) =>
     query.anyTagIds.isNotEmpty || query.favoritesOnly || query.tagged != null
     ? indexAndTagChangesProvider
+    : query.smartGroupId != null || query.selfiesOnly
+    ? indexAndGroupChangesProvider
     : mediaIndexChangesProvider;
 
 @Riverpod(keepAlive: true)

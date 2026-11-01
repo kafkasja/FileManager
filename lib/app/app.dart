@@ -4,9 +4,12 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_theme.dart';
 import 'package:kfm/app/theme/theme_providers.dart';
+import 'package:kfm/core/background/in_app_jobs.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/similar/data/similar_scan_job.dart';
+import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -49,6 +52,12 @@ class _AppState extends ConsumerState<App> {
     // Lives as long as the app; starts scanning once access is granted.
     ref
       ..watch(mediaIndexerProvider)
+      // C2/C3: in-app jobs run while the index is idle and the app is in
+      // front; the similar scan registers itself (idle until turned on).
+      ..watch(inAppJobRunnerProvider)
+      ..watch(similarScanJobProvider)
+      // C5: smart groups (idle until Groups is opened once).
+      ..watch(smartGroupsJobProvider)
       // P2: tags/favorites follow files whose id changes.
       ..watch(fileIdRekeyerProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).

@@ -77,6 +77,24 @@ class AndroidPermissionService implements PermissionService {
     await ph.openAppSettings();
   }
 
+  @override
+  Future<bool> hasMediaLocation() async {
+    if (await _sdkInt() < 29) return true;
+    return (await ph.Permission.accessMediaLocation.status).isGranted;
+  }
+
+  @override
+  Future<bool> requestMediaLocation() async {
+    if (await _sdkInt() < 29) return true;
+    return (await ph.Permission.accessMediaLocation.request()).isGranted;
+  }
+
+  @override
+  Future<bool> mediaLocationPermanentlyDenied() async {
+    if (await _sdkInt() < 29) return false;
+    return (await ph.Permission.accessMediaLocation.status).isPermanentlyDenied;
+  }
+
   Future<MediaAccess> _mediaAccess(PermissionState state, int sdk) async {
     switch (state) {
       case PermissionState.authorized:

@@ -95,6 +95,17 @@ class FilesChannel {
   Future<int?> freeBytes(String path) =>
       _invoke<int>('freeBytes', {'path': path});
 
+  /// C1: total and free bytes of the primary volume.
+  Future<({int totalBytes, int freeBytes})> storageSpace() async {
+    final row = await _invoke<Map<Object?, Object?>>('storageSpace');
+    final total = row?['totalBytes'];
+    final free = row?['freeBytes'];
+    if (total is! int || free is! int) {
+      throw const FilesChannelException('bad_result', 'storageSpace');
+    }
+    return (totalBytes: total, freeBytes: free);
+  }
+
   Future<MediaRow> moveMedia(int id, String targetDir, String displayName) =>
       _invokeRow('moveMedia', {
         'id': id,
@@ -146,6 +157,21 @@ class FilesChannel {
         'mime': mime,
       })) ??
       false;
+
+  /// C5: EXIF GPS + front camera per MediaStore image id (own executor on
+  /// the Kotlin side). Rows: `{id, lat?, lng?, frontCamera,
+  /// locationReadable}` or `{id, error}`.
+  Future<List<MediaRow>> readExif(List<int> ids) async {
+    final rows = await _invokeList('readExif', {'ids': ids});
+    return rows.map(_row).toList(growable: false);
+  }
+
+  /// C5: like [readExif] for `path:` images (All files access); `id` is
+  /// the path.
+  Future<List<MediaRow>> readExifPaths(List<String> paths) async {
+    final rows = await _invokeList('readExifPaths', {'paths': paths});
+    return rows.map(_row).toList(growable: false);
+  }
 
   Future<T?> _invoke<T>(String method, [Map<String, Object?>? args]) async {
     try {

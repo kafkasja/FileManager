@@ -356,6 +356,45 @@ final class IndexAndTagChangesProvider
 String _$indexAndTagChangesHash() =>
     r'a227a0fd573cd4b1cf16ea09f35041feef01e76e';
 
+/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+
+@ProviderFor(indexAndGroupChanges)
+final indexAndGroupChangesProvider = IndexAndGroupChangesProvider._();
+
+/// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+
+final class IndexAndGroupChangesProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// Like [mediaIndexChanges], plus smart group members and EXIF rows (C5).
+  IndexAndGroupChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'indexAndGroupChangesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$indexAndGroupChangesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return indexAndGroupChanges(ref);
+  }
+}
+
+String _$indexAndGroupChangesHash() =>
+    r'c6dbe138414bfa9fe297d19e9bfbe1103432986a';
+
 @ProviderFor(thumbnailCache)
 final thumbnailCacheProvider = ThumbnailCacheProvider._();
 

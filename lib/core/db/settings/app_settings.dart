@@ -15,6 +15,10 @@ abstract final class AppSettings {
     '',
   );
 
+  /// C1. "Big files" row of the Storage overview (bytes).
+  static final SettingKey<int> storageBigFileThresholdBytes =
+      SettingKey.integer('storage.bigFileThresholdBytes', 104857600);
+
   /// D4.
   static final SettingKey<int> pendingFolderRetentionDays = SettingKey.integer(
     'pendingRetentionDays',
@@ -197,6 +201,55 @@ abstract final class AppSettings {
         DropAction.move,
         DropAction.values,
       );
+
+  /// C2. Similar photo finder turned on (the scan job runs only then).
+  static final SettingKey<bool> similarEnabled = SettingKey.boolean(
+    'similar.enabled',
+    defaultValue: false,
+  );
+
+  /// C2. 'loose' | 'normal' | 'strict' (`maxDistanceFor`: 14 / 10 / 6).
+  static final SettingKey<String> similarStrictness = SettingKey.string(
+    'similar.strictness',
+    'normal',
+  );
+
+  /// C2. Blur score below this = blurry (`isBlurry`; tuned for 256 px
+  /// thumbnails).
+  static final SettingKey<int> similarBlurThreshold = SettingKey.integer(
+    'similar.blurThreshold',
+    100,
+  );
+
+  /// C2. Include screenshots in the scan and the groups.
+  static final SettingKey<bool> similarIncludeScreenshots = SettingKey.boolean(
+    'similar.includeScreenshots',
+    defaultValue: false,
+  );
+
+  /// C2 (internal). Groups must be rebuilt (new signals, or strictness /
+  /// screenshot setting changed); the scan job clears it after regrouping.
+  static final SettingKey<bool> similarRegroupNeeded = SettingKey.boolean(
+    'similar.regroupNeeded',
+    defaultValue: false,
+  );
+
+  /// C5. Look up place names online (Android Geocoder); off = "Place N".
+  static final SettingKey<bool> smartGroupsOnlinePlaceNames =
+      SettingKey.boolean('smartGroups.onlinePlaceNames', defaultValue: false);
+
+  /// C5 (internal). Set the first time the Groups screen opens; the job
+  /// does nothing before.
+  static final SettingKey<bool> smartGroupsActivated = SettingKey.boolean(
+    'smartGroups.activated',
+    defaultValue: false,
+  );
+
+  /// C5 (internal). Input of the last recompute; equal = skip it.
+  static final SettingKey<String> smartGroupsInputSignature = SettingKey.string(
+    'smartGroups.inputSignature',
+    '',
+  );
 }
 
 /// B4: the action of a drag & drop onto a folder.

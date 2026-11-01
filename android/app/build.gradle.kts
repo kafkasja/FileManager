@@ -47,3 +47,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // C5 (and X2): EXIF GPS + lens model.
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
+}

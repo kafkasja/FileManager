@@ -64,7 +64,20 @@ void main() {
       for (final s in app.container.read(settingsSectionsProvider)) s.order,
     ];
     expect(orders, [...orders]..sort());
-    expect(orders.take(9), [100, 200, 250, 260, 300, 350, 400, 500, 900]);
+    expect(orders.take(12), [
+      100,
+      200,
+      250,
+      260,
+      300,
+      350,
+      400,
+      500,
+      550,
+      560,
+      650,
+      900,
+    ]);
     expect(find.text('Appearance'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Version 0.1.0'), 200);
     expect(find.text('About'), findsOneWidget);

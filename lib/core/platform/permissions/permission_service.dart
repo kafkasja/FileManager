@@ -17,6 +17,17 @@ abstract interface class PermissionService {
 
   /// App details page (for [MediaAccess.permanentlyDenied]).
   Future<void> openAppSettings();
+
+  /// C5/X2: GPS in photos is readable (`ACCESS_MEDIA_LOCATION`; always
+  /// true below API 29).
+  Future<bool> hasMediaLocation();
+
+  /// Asks for `ACCESS_MEDIA_LOCATION` (Android may grant it without a
+  /// dialog). Only from the Groups screen, never at app start.
+  Future<bool> requestMediaLocation();
+
+  /// The user chose "don't ask again": only the app settings page helps.
+  Future<bool> mediaLocationPermanentlyDenied();
 }
 
 /// Platforms without runtime storage permissions (Windows, PL1).
@@ -43,4 +54,13 @@ class GrantedPermissionService implements PermissionService {
 
   @override
   Future<void> openAppSettings() async {}
+
+  @override
+  Future<bool> hasMediaLocation() async => true;
+
+  @override
+  Future<bool> requestMediaLocation() async => true;
+
+  @override
+  Future<bool> mediaLocationPermanentlyDenied() async => false;
 }

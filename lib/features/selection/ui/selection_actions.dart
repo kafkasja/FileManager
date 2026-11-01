@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/folders/ui/folder_selection_actions.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
+import 'package:kfm/features/swipe/ui/swipe_these.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -53,5 +54,6 @@ List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
     ...folderSelectionActions,
     compressSelectionAction,
     ...tagSelectionActions,
+    swipeSelectionAction,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );

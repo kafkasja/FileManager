@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
@@ -22,8 +23,12 @@ import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/swipe/data/swipe_action_dispatcher.dart';
 import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/data/swipe_queue_repository.dart';
+import 'package:kfm/features/swipe/data/swipe_queue_source.dart';
+import 'package:kfm/features/swipe/data/swipe_source_repository.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/domain/swipe_deck_state.dart';
+import 'package:kfm/features/swipe/domain/swipe_source.dart';
+import 'package:kfm/features/swipe/ui/swipe_source_launcher.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
@@ -120,6 +125,14 @@ class SwipeDeckController extends _$SwipeDeckController {
   @visibleForTesting
   static void debugResetRestoreNotice() => _restoreNoticeShown = false;
 
+  /// SS1: what the deck pages through (the main deck's index query, or a
+  /// swipe source).
+  late SwipeQueueSource _queue;
+
+  /// SS1: highest closedAtSeq of the session's closed sources: the main
+  /// deck resumes only after actions above it.
+  int? _floor;
+
   /// Files acted on in this session (not shown again unless undone).
   Set<String> _acted = {};
   bool _refilling = false;
@@ -141,27 +154,76 @@ class SwipeDeckController extends _$SwipeDeckController {
     ref.watch(swipeQueueRepositoryProvider);
     await ref.read(deleteQueueProvider).recoverStuck();
 
+    final sources = ref.read(swipeSourceRepositoryProvider);
+    await sources.prune();
+
+    // SS1: a debounced cursor write (e.g. cleared by an undo below the
+    // floor) must be on disk: the resume point may fall back to it.
+    await sessions.flush();
     final session = await sessions.getOrCreateActive();
     await undo.prepare(session.id);
+    // SS1: a source opened before this session existed (D1 gate).
+    final launcher = ref.read(swipeSourceLauncherProvider.notifier);
+    final pending = launcher.takePending();
+    if (pending != null) await launcher.attach(session.id, pending);
+    final open = await sources.openFor(session.id);
     _acted = await undo.actedFileIds(session.id);
-    _resumeAt = await _resumePoint(session);
-    final resumeMs = _resumeAt?.sortValue as int?;
+    _presetKey = session.presetId ?? 0;
+    final dao = ref.read(mediaIndexDaoProvider);
+    final repo = ref.read(swipeQueueRepositoryProvider);
+    final generation = _generation;
+    switch (open) {
+      case null:
+        _floor = await sources.mainFloor(session.id);
+        _resumeAt = await _resumePoint(session, floor: _floor);
+        _query = await _queryFor(FileFilter.decode(session.filterJson));
+        _queue = IndexQueueSource(repo, dao, _query);
+      case OpenSwipeSource(kind: SwipeSourceKind.filter, :final filter?):
+        _resumeAt = await _resumePoint(
+          session,
+          floor: open.openedAfterSeq,
+          cursorFallback: false,
+        );
+        // Decision 5: skip-reviewed doesn't apply; an explicit value does.
+        _query = toIndexQuery(
+          filter,
+          now: DateTime.now(),
+          reviewed: deckReviewedClause(
+            presetKey: _presetKey,
+            mode: filter.reviewed,
+            includeReviewed: true,
+          ),
+        );
+        _queue = IndexQueueSource(repo, dao, _query, offersNewFiles: false);
+      case OpenSwipeSource(:final id, :final groupCount):
+        _resumeAt = null;
+        _queue = ListQueueSource(
+          dao,
+          ref.read(fileSourceProvider),
+          await sources.items(id),
+          groupCount: groupCount,
+          onGone: (gone) {
+            if (_stale(generation)) return;
+            sources.dropItems(id, gone).fireAndForget();
+          },
+        );
+    }
+    final resumeMs = _resumeAt?.sortValue;
     final startedMs = session.startedAt.millisecondsSinceEpoch;
-    _newAfterMs = resumeMs == null
+    _newAfterMs = !_queue.offersNewFiles || resumeMs is! int
         ? null
         : (resumeMs > startedMs ? resumeMs : startedMs);
-    _presetKey = session.presetId ?? 0;
     final filter = FileFilter.decode(session.filterJson);
-    _query = await _queryFor(filter);
+    final badgeOn = await ref
+        .read(settingsRepositoryProvider)
+        .read(AppSettings.showReviewedBadge);
     _showBadge =
-        await ref
-            .read(settingsRepositoryProvider)
-            .read(AppSettings.showReviewedBadge) &&
-        (_presetKey == 0 || await _includeReviewed(filter));
+        badgeOn &&
+        (open != null || _presetKey == 0 || await _includeReviewed(filter));
     final window = await _window(skip: _acted, after: _resumeAt);
     _next = window.next;
     // A fresh deck starts at the newest file: anything newer arrives later.
-    _newAfterMs ??= _newestMs(window.files);
+    if (_queue.offersNewFiles) _newAfterMs ??= _newestMs(window.files);
 
     // P2: a move/copy finishes (or fails) after the card has gone.
     final fileOps = ref.read(swipeFileOpsProvider).events.listen(_onFileOp);
@@ -187,17 +249,52 @@ class SwipeDeckController extends _$SwipeDeckController {
       restored: restored,
       reviewedIds: await _reviewedAmong(window.files),
       showReviewedBadge: _showBadge,
+      source: open,
+      groupPositionOf: open?.kind == SwipeSourceKind.groups
+          ? _queue.groupPositionOf
+          : null,
     );
+  }
+
+  /// SS1: closes the open source; the main deck continues where it was.
+  Future<void> closeSource() async {
+    final deck = state.value;
+    final open = deck?.source;
+    if (deck == null || open == null) return;
+    final generation = _generation;
+    try {
+      final undo = ref.read(undoRepositoryProvider);
+      await undo.prepare(deck.session.id);
+      await ref
+          .read(swipeSourceRepositoryProvider)
+          .close(open.id, lastSeq: undo.lastSeq(deck.session.id));
+    } on Object catch (e, st) {
+      if (!_stale(generation)) state = AsyncError(e, st);
+      return;
+    }
+    ref.invalidateSelf();
+    await future;
   }
 
   /// SE2: resume right after the latest non-undone action's file (more
   /// current than the debounced cursor), else the saved cursor file. A
   /// committed delete's file is gone from the index, so its stored FileRef
   /// gives the sort position.
-  Future<IndexCursor?> _resumePoint(Session session) async {
+  ///
+  /// SS1: only actions after [floor] count (the main deck after a closed
+  /// source; a filter source's own actions). Nothing above the floor → the
+  /// saved cursor ([cursorFallback]) or the top.
+  Future<IndexCursor?> _resumePoint(
+    Session session, {
+    int? floor,
+    bool cursorFallback = true,
+  }) async {
     final dao = ref.read(mediaIndexDaoProvider);
     final undo = ref.read(undoRepositoryProvider);
-    final stack = await undo.stack(session.id, limit: 50);
+    final stack = [
+      for (final a in await undo.stack(session.id, limit: 50))
+        if (a.seq > (floor ?? 0)) a,
+    ];
     for (final action in stack) {
       final file = await dao.byId(action.fileId) ?? _trashedOriginal(action);
       if (file != null) {
@@ -206,7 +303,10 @@ class SwipeDeckController extends _$SwipeDeckController {
     }
     // H4: everything was undone. The saved cursor still points at the last
     // (now undone) swipe: start from the top instead.
-    if (stack.isEmpty && await undo.hasAny(session.id)) return null;
+    if (!cursorFallback) return null;
+    if (floor == null && stack.isEmpty && await undo.hasAny(session.id)) {
+      return null;
+    }
     final saved = session.cursorFileId;
     final file = saved == null ? null : await dao.byId(saved);
     return file == null
@@ -239,11 +339,7 @@ class SwipeDeckController extends _$SwipeDeckController {
     required Set<String> skip,
     IndexCursor? after,
   }) async {
-    final query = _query;
-    if (query == null) return const SwipeWindow([], null);
-    return await ref
-        .read(swipeQueueRepositoryProvider)
-        .window(skip: skip, query: query, after: after);
+    return await _queue.window(skip: skip, after: after);
   }
 
   /// P5: the session's current filter.
@@ -385,9 +481,12 @@ class SwipeDeckController extends _$SwipeDeckController {
         remaining: deck.remaining > 0 ? deck.remaining - 1 : 0,
       ),
     );
-    ref
-        .read(sessionRepositoryProvider)
-        .saveCursor(deck.session.id, deck.swiped + 1, file.id);
+    // SS1: a source never moves the main deck's position.
+    if (deck.source == null) {
+      ref
+          .read(sessionRepositoryProvider)
+          .saveCursor(deck.session.id, deck.swiped + 1, file.id);
+    }
     ref.read(deleteQueueProvider).maybeCommit(deck.session.id).ignore();
     if (rest.length < refillBelow && deck.hasMore) unawaited(_refill());
     return true;
@@ -432,13 +531,24 @@ class SwipeDeckController extends _$SwipeDeckController {
           ),
         );
       }
-      ref
-          .read(sessionRepositoryProvider)
-          .saveCursor(
-            deck.session.id,
-            (state.value ?? latest).swiped,
-            file?.id,
-          );
+      // SS1: a source action leaves the main position alone. Undoing an
+      // action at or below the main deck's floor (or an older one while a
+      // source is open) clears the cursor so the file is never skipped.
+      final open = deck.source;
+      final swiped = (state.value ?? latest).swiped;
+      final sessionsRepo = ref.read(sessionRepositoryProvider);
+      if (open != null) {
+        if (action.seq <= open.openedAfterSeq) {
+          sessionsRepo.saveCursor(deck.session.id, swiped, null);
+        }
+      } else if (_floor != null) {
+        // Above a floor the cursor is the fallback once every main action
+        // after it is undone: the undone file must not be the resume point
+        // (it would be skipped). Cleared = first unacted file.
+        sessionsRepo.saveCursor(deck.session.id, swiped, null);
+      } else {
+        sessionsRepo.saveCursor(deck.session.id, swiped, file?.id);
+      }
     } else if (outcome is PermanentlyDeleted) {
       final latest = state.value ?? deck;
       state = AsyncData(
@@ -584,7 +694,9 @@ class SwipeDeckController extends _$SwipeDeckController {
       final window = await _window(skip: {..._acted, ...shown}, after: after);
       if (_stale(generation)) return;
       _next = window.next;
-      _newAfterMs ??= _newestMs([...before.upcoming, ...window.files]);
+      if (_queue.offersNewFiles) {
+        _newAfterMs ??= _newestMs([...before.upcoming, ...window.files]);
+      }
       final latest = state.value ?? before;
       final present = {for (final f in latest.upcoming) f.id};
       final added = await _reviewedAmong(window.files);
@@ -616,7 +728,7 @@ class SwipeDeckController extends _$SwipeDeckController {
   }
 
   /// Files in the queue not yet acted on.
-  Future<int> _remaining() => _remainingFor(_query);
+  Future<int> _remaining() => _queue.remaining(_acted);
 
   Future<int> _remainingFor(IndexQuery? query) async {
     if (query == null) return 0;

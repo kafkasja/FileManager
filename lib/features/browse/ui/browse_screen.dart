@@ -26,9 +26,10 @@ import 'package:kfm/features/folders/ui/last_operation_undo.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_bar.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_these.dart';
 
 /// "Swipe these" needs SS1's swipe sources (Phase 4); SS1 turns it on.
-const swipeSourceAvailable = false;
+const swipeSourceAvailable = true;
 
 /// The Browse tab (TASK-B1): every indexed file, type chips, a flat list
 /// (with the sources carousel on top) or folders, and opening any file.
@@ -147,12 +148,47 @@ class BrowseScreen extends ConsumerWidget {
                 _MenuAction.restoreSelection => unawaited(
                   selector.restoreCleared(),
                 ),
-                _MenuAction.swipeThese => null,
+                _MenuAction.similar => unawaited(
+                  context.push<void>(AppRoutes.similar),
+                ),
+                _MenuAction.storage => unawaited(
+                  context.push<void>(AppRoutes.storage),
+                ),
+                _MenuAction.groups => unawaited(
+                  context.push<void>(AppRoutes.groups),
+                ),
+                _MenuAction.swipeThese => unawaited(
+                  swipeQueryFiles(
+                    context,
+                    ref,
+                    query: view.query,
+                    title: switch (view.folder) {
+                      final folder? when view.folderMode => nameOfFolder(
+                        l10n,
+                        folder,
+                      ),
+                      _ => l10n.tabBrowse,
+                    },
+                    returnRoute: AppRoutes.browse,
+                  ),
+                ),
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
                   value: _MenuAction.newFolder,
                   child: Text(l10n.browseNewFolder),
+                ),
+                PopupMenuItem(
+                  value: _MenuAction.storage,
+                  child: Text(l10n.storageOverviewTitle),
+                ),
+                PopupMenuItem(
+                  value: _MenuAction.similar,
+                  child: Text(l10n.similarTitle),
+                ),
+                PopupMenuItem(
+                  value: _MenuAction.groups,
+                  child: Text(l10n.groupsTitle),
                 ),
                 if (canUndo)
                   PopupMenuItem(
@@ -266,6 +302,9 @@ class BrowseScreen extends ConsumerWidget {
 
 enum _MenuAction {
   newFolder,
+  storage,
+  similar,
+  groups,
   undoLast,
   showHidden,
   restoreSelection,

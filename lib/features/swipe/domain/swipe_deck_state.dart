@@ -1,6 +1,7 @@
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:kfm/features/swipe/domain/swipe_source.dart';
 import 'package:meta/meta.dart';
 
 /// The last undo that brought a file back (the card animates in, and a
@@ -30,6 +31,8 @@ class SwipeDeckState {
     this.undoMark,
     this.reviewedIds = const {},
     this.showReviewedBadge = false,
+    this.source,
+    this.groupPositionOf,
   });
 
   final Session session;
@@ -61,7 +64,20 @@ class SwipeDeckState {
   /// P7: Basic, or a preset that includes reviewed files.
   final bool showReviewedBadge;
 
+  /// SS1: the swipe source shown instead of the main deck, or null.
+  final OpenSwipeSource? source;
+
+  /// SS1: group position of a file (group sources), from the deck's queue.
+  final SwipeGroupPosition? Function(String fileId)? groupPositionOf;
+
   FileRef? get current => upcoming.isEmpty ? null : upcoming.first;
+
+  /// SS1: "Group 2 of 3 · 4/5" for [current]; null for a non-member (an
+  /// undone main-deck file) or outside a group source.
+  SwipeGroupPosition? get groupPosition {
+    final file = current;
+    return file == null ? null : groupPositionOf?.call(file.id);
+  }
 
   bool get isFinished => upcoming.isEmpty && !hasMore;
 
@@ -87,5 +103,7 @@ class SwipeDeckState {
     undoMark: undoMark ?? this.undoMark,
     reviewedIds: reviewedIds ?? this.reviewedIds,
     showReviewedBadge: showReviewedBadge ?? this.showReviewedBadge,
+    source: source,
+    groupPositionOf: groupPositionOf,
   );
 }

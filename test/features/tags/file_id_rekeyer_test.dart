@@ -164,4 +164,96 @@ void main() {
     expect({for (final r in snapshot) r.fileId: r.seq}, {'b': 7, 'z': 8});
     expect((await db.select(db.favorites).get()).single.fileId, 'b');
   });
+
+  test('swipe source items keep their position (SS1)', () async {
+    await db.customStatement(
+      'INSERT INTO swipe_sources (id, session_id, kind, origin, title, '
+      "opened_after_seq, opened_at) VALUES (1, ?, 'files', 'other', 't', 0, 1)",
+      [sessionId],
+    );
+    await db.customStatement(
+      'INSERT INTO swipe_source_items (source_id, position, file_id) '
+      "VALUES (1, 0, 'z'), (1, 1, 'a'), (1, 2, 'y')",
+    );
+
+    await rekeyer.rekey('a', 'b');
+
+    final rows = await (db.select(
+      db.swipeSourceItems,
+    )..orderBy([(i) => OrderingTerm.asc(i.position)])).get();
+    expect(rows.map((r) => r.fileId), ['z', 'b', 'y']);
+  });
+
+  test('similar signals, group items and dismissals follow the file (C2)', () async {
+    await db.customStatement(
+      'INSERT INTO image_signals (file_id, status, d_hash, blur_score, '
+      "file_modified_at_ms, algo_version) VALUES ('a', 'ok', 42, 150.0, 5, 1)",
+    );
+    await db.customStatement(
+      'INSERT INTO similar_groups (id, suggested_file_id, member_count, '
+      "sort_date_ms, created_at) VALUES (1, 'a', 2, 1, 1), (2, 'b', 2, 1, 1)",
+    );
+    // Group 2 already holds the new id: the old row is dropped, not doubled.
+    await db.customStatement(
+      'INSERT INTO similar_group_items (group_id, file_id, position) VALUES '
+      "(1, 'a', 0), (1, 'z', 1), (2, 'a', 1), (2, 'b', 0)",
+    );
+    await db.customStatement(
+      'INSERT INTO similar_dismissed (file_id, dismissed_at) '
+      "VALUES ('a', 1), ('b', 1)",
+    );
+
+    await rekeyer.rekey('a', 'b', newModifiedMs: 9);
+
+    final signal = (await db.select(db.imageSignals).get()).single;
+    expect(signal.fileId, 'b');
+    expect(signal.dHash, 42);
+    expect(signal.fileModifiedAtMs, 9);
+    final items = await db.select(db.similarGroupItems).get();
+    expect(
+      {for (final i in items) '${i.groupId}:${i.fileId}'},
+      {'1:b', '1:z', '2:b'},
+    );
+    final dismissed = await db.select(db.similarDismissed).get();
+    expect(dismissed.map((d) => d.fileId), ['b']);
+  });
+
+  test(
+    'EXIF rows, smart group members and covers follow the file (C5)',
+    () async {
+      await db.customStatement(
+        'INSERT INTO media_locations (file_id, file_modified_at_ms, lat, lng, '
+        'front_camera, location_readable, read_at_ms) VALUES '
+        "('a', 5, 48.8, 2.3, 1, 1, 77)",
+      );
+      await db.customStatement(
+        'INSERT INTO smart_groups (id, kind, rank, start_at_ms, end_at_ms, '
+        "cover_file_id, item_count) VALUES (1, 'trip', 0, 1, 2, 'a', 2), "
+        "(2, 'place', 1, 1, 2, 'b', 2)",
+      );
+      await db.customStatement(
+        'INSERT INTO smart_group_items (group_id, file_id) VALUES '
+        "(1, 'a'), (1, 'z'), (2, 'a'), (2, 'b')",
+      );
+
+      await rekeyer.rekey('a', 'b', newModifiedMs: 9);
+
+      final loc = (await db.select(db.mediaLocations).get()).single;
+      expect(loc.fileId, 'b');
+      expect(loc.lat, 48.8);
+      expect(loc.frontCamera, isTrue);
+      // Moved, not edited: the new modified time, the old read time.
+      expect(loc.fileModifiedAtMs, 9);
+      expect(loc.readAtMs, 77);
+      final items = await db.select(db.smartGroupItems).get();
+      expect(
+        {for (final i in items) '${i.groupId}:${i.fileId}'},
+        {'1:b', '1:z', '2:b'},
+      );
+      final groups = await (db.select(
+        db.smartGroups,
+      )..orderBy([(g) => OrderingTerm.asc(g.id)])).get();
+      expect(groups.map((g) => g.coverFileId), ['b', 'b']);
+    },
+  );
 }

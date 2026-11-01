@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -27,6 +28,8 @@ import 'package:kfm/features/search/ui/search_controller.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_bar.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
+import 'package:kfm/features/swipe/domain/swipe_source.dart';
+import 'package:kfm/features/swipe/ui/swipe_these.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// Search (TASK-B8 §6): an autofocused field, token + filter chips, and
@@ -128,8 +131,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   _MenuAction.undoLast => unawaited(
                     undoLastFileOperation(context),
                   ),
-                  // SS1: FilterSourceRequest / FilesSourceRequest.
-                  _MenuAction.swipeThese => null,
+                  _MenuAction.swipeThese => unawaited(
+                    swipeQueryFiles(
+                      context,
+                      ref,
+                      query: query,
+                      title: state.text,
+                      origin: SwipeSourceOrigin.search,
+                      returnRoute: AppRoutes.search,
+                    ),
+                  ),
                 },
                 itemBuilder: (context) => [
                   if (canUndo)

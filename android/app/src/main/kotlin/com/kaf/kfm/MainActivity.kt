@@ -6,15 +6,19 @@ import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
     private var filesChannel: FilesChannel? = null
+    private var geocoderChannel: GeocoderChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         filesChannel = FilesChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        geocoderChannel = GeocoderChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         filesChannel?.dispose()
         filesChannel = null
+        geocoderChannel?.dispose()
+        geocoderChannel = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

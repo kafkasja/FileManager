@@ -17,6 +17,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^3.4.3
   go_router: ^18.1.1
+  image: ^4.12.0
   intl: any
   meta: ^1.19.0
   path: ^1.9.1

@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:kfm/core/db/tables/image_signals_table.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
+import 'package:kfm/core/db/tables/media_locations_table.dart';
 import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/db/tables/pending_folder_items_table.dart';
 import 'package:kfm/core/db/tables/presets_table.dart';
@@ -11,6 +13,10 @@ import 'package:kfm/core/db/tables/selection_items_table.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/db/tables/sessions_table.dart';
 import 'package:kfm/core/db/tables/settings_table.dart';
+import 'package:kfm/core/db/tables/similar_groups_table.dart';
+import 'package:kfm/core/db/tables/smart_groups_table.dart';
+import 'package:kfm/core/db/tables/swipe_source_items_table.dart';
+import 'package:kfm/core/db/tables/swipe_sources_table.dart';
 import 'package:kfm/core/db/tables/tags_table.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/source_backfill.dart';
@@ -39,6 +45,15 @@ part 'app_database.g.dart';
     ReviewedLabels,
     SelectionItems,
     SelectionSnapshots,
+    SwipeSources,
+    SwipeSourceItems,
+    ImageSignals,
+    SimilarGroups,
+    SimilarGroupItems,
+    SimilarDismissed,
+    MediaLocations,
+    SmartGroups,
+    SmartGroupItems,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -59,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -173,6 +188,31 @@ class AppDatabase extends _$AppDatabase {
         // TASK-B6
         await m.createTable(selectionItems);
         await m.createTable(selectionSnapshots);
+      }
+      if (from < 15) {
+        // TASK-SS1
+        await m.createTable(swipeSources);
+        await m.createTable(swipeSourceItems);
+        await m.createIndex(oneOpenSourcePerSession);
+        await m.createIndex(ssSessionClosedSeq);
+        await m.createIndex(ssiFile);
+      }
+      if (from < 16) {
+        // TASK-C2
+        await m.createTable(imageSignals);
+        await m.createTable(similarGroups);
+        await m.createTable(similarGroupItems);
+        await m.createTable(similarDismissed);
+        await m.createIndex(isBlur);
+        await m.createIndex(sgiFile);
+      }
+      if (from < 17) {
+        // TASK-C5
+        await m.createTable(mediaLocations);
+        await m.createTable(smartGroups);
+        await m.createTable(smartGroupItems);
+        await m.createIndex(sgKindRank);
+        await m.createIndex(smgiFile);
       }
     },
     beforeOpen: (details) async {

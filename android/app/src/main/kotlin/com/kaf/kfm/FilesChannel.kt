@@ -1,11 +1,13 @@
 package com.kaf.kfm
 
+import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.media.MediaScannerConnection
 import android.net.Uri
@@ -19,6 +21,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
+import androidx.exifinterface.media.ExifInterface
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -40,6 +43,8 @@ class FilesChannel(
 ) : MethodChannel.MethodCallHandler {
     private val channel = MethodChannel(messenger, "com.kaf.kfm/files")
     private val io = Executors.newSingleThreadExecutor()
+    /** C5: EXIF batches run here, so they never delay moves/trash calls on [io]. */
+    private val exifIo = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private val context: Context get() = activity.applicationContext
     /** The Dart call waiting for the one system dialog that can be open (TASK-H1). */
@@ -62,6 +67,7 @@ class FilesChannel(
         }
         channel.setMethodCallHandler(null)
         io.shutdown()
+        exifIo.shutdown()
     }
 
     /** Forwarded from MainActivity.onActivityResult. Returns true if handled. */
@@ -97,6 +103,21 @@ class FilesChannel(
                 deleteMedia(call, result)
                 return
             }
+            "readExif", "readExifPaths" -> {
+                exifIo.execute {
+                    try {
+                        val value = if (call.method == "readExif") {
+                            readExif(call.argument<List<Number>>("ids").orEmpty().map { it.toLong() })
+                        } else {
+                            readExifPaths(call.argument<List<String>>("paths").orEmpty())
+                        }
+                        main.post { result.success(value) }
+                    } catch (e: Exception) {
+                        main.post { result.error("IO", e.toString(), null) }
+                    }
+                }
+                return
+            }
         }
         io.execute {
             try {
@@ -106,6 +127,7 @@ class FilesChannel(
                     "statMedia" -> statMedia(call.longArg("id"))
                     "statMediaByPath" -> statMediaByPath(call.stringArg("path"))
                     "freeBytes" -> freeBytes(call.stringArg("path"))
+                    "storageSpace" -> storageSpace()
                     "moveMedia" -> moveMedia(call.longArg("id"), call.stringArg("targetDir"), call.stringArg("displayName"))
                     "renameMedia" -> renameMedia(call.longArg("id"), call.stringArg("displayName"))
                     "copyMedia" -> copyMedia(call.longArg("id"), call.stringArg("targetDir"), call.stringArg("displayName"))
@@ -134,6 +156,59 @@ class FilesChannel(
                 main.post { result.error("IO", e.toString(), null) }
             }
         }
+    }
+
+    // ---- EXIF (TASK-C5) ----
+
+    /**
+     * Per MediaStore image id: `{id, lat?, lng?, frontCamera, locationReadable}` or
+     * `{id, error}`. With ACCESS_MEDIA_LOCATION (API 29+) the original is opened, so
+     * GPS isn't stripped; without it `locationReadable` is false.
+     */
+    private fun readExif(ids: List<Long>): List<Map<String, Any?>> {
+        val original = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        return ids.map { id ->
+            try {
+                var uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+                if (original && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    uri = MediaStore.setRequireOriginal(uri)
+                }
+                val exif = context.contentResolver.openInputStream(uri)?.use { ExifInterface(it) }
+                    ?: throw FilesError("NOT_FOUND", "no stream")
+                exifRow(id, exif, original)
+            } catch (e: Exception) {
+                mapOf("id" to id, "error" to e.toString())
+            }
+        }
+    }
+
+    /** `path:` images (All files access): read straight from the file. */
+    private fun readExifPaths(paths: List<String>): List<Map<String, Any?>> = paths.map { path ->
+        try {
+            exifRow(path, ExifInterface(path), true)
+        } catch (e: Exception) {
+            mapOf("id" to path, "error" to e.toString())
+        }
+    }
+
+    private fun exifRow(id: Any, exif: ExifInterface, locationReadable: Boolean): Map<String, Any?> {
+        val latLng = exif.latLong?.takeIf { ll ->
+            val lat = ll[0]
+            val lng = ll[1]
+            // (0, 0) is what many cameras write without a GPS fix.
+            !lat.isNaN() && !lng.isNaN() && lat in -90.0..90.0 && lng in -180.0..180.0 &&
+                !(lat == 0.0 && lng == 0.0)
+        }
+        val lens = exif.getAttribute(ExifInterface.TAG_LENS_MODEL)
+        return mapOf(
+            "id" to id,
+            "lat" to latLng?.get(0),
+            "lng" to latLng?.get(1),
+            "frontCamera" to (lens?.contains("front", ignoreCase = true) == true),
+            "locationReadable" to locationReadable,
+        )
     }
 
     // ---- query ----
@@ -413,6 +488,12 @@ class FilesChannel(
     }
 
     /** B4: free bytes on the volume holding [path]; null when the path can't be measured. */
+    /** C1: total/free bytes of the primary volume. */
+    private fun storageSpace(): Map<String, Long> {
+        val stat = StatFs(Environment.getExternalStorageDirectory().path)
+        return mapOf("totalBytes" to stat.totalBytes, "freeBytes" to stat.availableBytes)
+    }
+
     private fun freeBytes(path: String): Long? = try {
         StatFs(path).availableBytes
     } catch (e: IllegalArgumentException) {

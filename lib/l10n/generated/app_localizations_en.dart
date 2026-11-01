@@ -2856,4 +2856,430 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagWriteError => 'Couldn\'t save the change. Try again';
+
+  @override
+  String get swipeSourceSelectionTitle => 'Selected files';
+
+  @override
+  String get sameTimeSwipeGroup => 'Swipe this group';
+
+  @override
+  String get swipeSourceClose => 'Back to all files';
+
+  @override
+  String swipeSourceGroupPosition(
+    int group,
+    int groupCount,
+    int index,
+    int groupSize,
+  ) {
+    return 'Group $group of $groupCount · $index/$groupSize';
+  }
+
+  @override
+  String swipeSourceDone(String title) {
+    return 'All done in $title';
+  }
+
+  @override
+  String get swipeSourceBackToMain => 'Back to swiping';
+
+  @override
+  String swipeSourceBackToOrigin(String origin) {
+    return 'Back to $origin';
+  }
+
+  @override
+  String swipeSourceRestored(String title) {
+    return 'Continued in $title';
+  }
+
+  @override
+  String swipeSourcePendingLine(String title) {
+    return 'Opens: $title';
+  }
+
+  @override
+  String swipeSourceSkipped(int files, int skipped) {
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: 'Swiping $files files',
+      one: 'Swiping 1 file',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      skipped,
+      locale: localeName,
+      other: '$skipped can\'t be swiped here',
+      one: '1 can\'t be swiped here',
+    );
+    return '$_temp0 · $_temp1 (photos and videos only)';
+  }
+
+  @override
+  String get swipeSourceTruncated => 'Showing the first 10,000 files';
+
+  @override
+  String get swipeSourceEmpty => 'Nothing to swipe here';
+
+  @override
+  String get swipeSourceNoMedia => 'Only photos and videos can be swiped';
+
+  @override
+  String get swipeSourceInvalidFilter => 'This filter can\'t be used';
+
+  @override
+  String get swipeSourceNoMatches => 'No photos or videos match';
+
+  @override
+  String get swipeSourceOriginStorage => 'Storage overview';
+
+  @override
+  String get swipeSourceOriginSimilar => 'Similar photos';
+
+  @override
+  String get swipeSourceOriginSearch => 'Search';
+
+  @override
+  String get swipeSourceOriginGroups => 'Groups';
+
+  @override
+  String get swipeSourceOriginSameTime => 'Same time';
+
+  @override
+  String get swipeSourceOriginBrowse => 'Browse';
+
+  @override
+  String get swipeSourceOriginSharedIn => 'Shared files';
+
+  @override
+  String get swipeSourceOriginCloud => 'Cloud';
+
+  @override
+  String get swipeSourceOriginExternal => 'External storage';
+
+  @override
+  String get swipeSourceOriginOther => 'Previous screen';
+
+  @override
+  String get storageOverviewTitle => 'Storage overview';
+
+  @override
+  String storageUsedFree(String used, String free) {
+    return '$used used · $free free';
+  }
+
+  @override
+  String get storageSpaceUnknown => 'Free space unknown';
+
+  @override
+  String get storageScanning => 'Still scanning… the numbers keep growing';
+
+  @override
+  String get storageCatVideos => 'Videos';
+
+  @override
+  String get storageCatScreenshots => 'Screenshots';
+
+  @override
+  String storageCatBigFiles(String size) {
+    return 'Big files (over $size)';
+  }
+
+  @override
+  String get storageCatWhatsapp => 'WhatsApp';
+
+  @override
+  String get storageCatDownloads => 'Downloads';
+
+  @override
+  String storageCategorySummary(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files · $size',
+      one: '1 file · $size',
+      zero: 'No files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageCleanUp => 'Clean up';
+
+  @override
+  String get storageCleanUpMediaOnly => 'Clean up shows photos and videos only';
+
+  @override
+  String get storageNeedsAccess =>
+      'Turn on All files access to see these files';
+
+  @override
+  String get storageOverlapNote => 'A file can be in more than one category.';
+
+  @override
+  String get storageBiggestFiles => 'Biggest files';
+
+  @override
+  String get storageWhatsappHint =>
+      'Includes WhatsApp\'s hidden Sent and Status folders';
+
+  @override
+  String get storageBigFileThreshold => 'Big files start at';
+
+  @override
+  String get similarTitle => 'Similar photos';
+
+  @override
+  String get similarSourceTitle => 'Similar photos';
+
+  @override
+  String get similarStorageHint => 'Look-alike and blurry photos';
+
+  @override
+  String get similarTabSimilar => 'Similar';
+
+  @override
+  String get similarTabBlurry => 'Blurry';
+
+  @override
+  String get similarStartTitle => 'Find similar and blurry photos';
+
+  @override
+  String get similarStartBody =>
+      'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.';
+
+  @override
+  String get similarStart => 'Start';
+
+  @override
+  String similarChecking(int done, int total) {
+    return 'Checking photos… $done of $total';
+  }
+
+  @override
+  String get similarGrouping => 'Grouping look-alike photos…';
+
+  @override
+  String get similarNoGroups => 'No similar photos found yet';
+
+  @override
+  String get similarNoBlurry => 'No blurry photos found';
+
+  @override
+  String similarGroupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '1 photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get similarBest => 'Best';
+
+  @override
+  String get similarKeepBest => 'Keep best, remove others';
+
+  @override
+  String get similarSwipeGroup => 'Swipe this group';
+
+  @override
+  String get similarSwipeAll => 'Swipe all groups';
+
+  @override
+  String get similarCleanDuplicates => 'Clean duplicates';
+
+  @override
+  String similarRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Removed $count photos',
+      one: 'Removed 1 photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get similarKeptAll => 'Kept all photos';
+
+  @override
+  String get similarBlurryHint => 'Tap to pick, long-press to view';
+
+  @override
+  String similarRemoveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove $count',
+      zero: 'Remove',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String similarCleanProgress(int group, int total, int keep) {
+    return 'Group $group of $total · keeping $keep';
+  }
+
+  @override
+  String get similarCleanDone => 'All groups done';
+
+  @override
+  String get similarSkip => 'Skip';
+
+  @override
+  String get similarNextGroup => 'Next group';
+
+  @override
+  String get similarKeep => 'Keep';
+
+  @override
+  String get similarRemove => 'Remove';
+
+  @override
+  String get similarSettingEnabled => 'Find similar and blurry photos';
+
+  @override
+  String get similarSettingEnabledHint =>
+      'Checks photos in the background while KFM is open';
+
+  @override
+  String get similarSettingStrictness => 'How alike';
+
+  @override
+  String get similarStrictnessLoose => 'Loosely alike';
+
+  @override
+  String get similarStrictnessNormal => 'Normal';
+
+  @override
+  String get similarStrictnessStrict => 'Nearly identical';
+
+  @override
+  String get similarSettingScreenshots => 'Include screenshots';
+
+  @override
+  String get groupsTitle => 'Groups';
+
+  @override
+  String get groupsScreenshots => 'Screenshots';
+
+  @override
+  String get groupsSelfies => 'Selfies (automatic)';
+
+  @override
+  String get groupsDocuments => 'Documents';
+
+  @override
+  String get groupsTrips => 'Trips';
+
+  @override
+  String get groupsPlaces => 'Places';
+
+  @override
+  String smartGroupPlace(int n) {
+    return 'Place $n';
+  }
+
+  @override
+  String smartGroupTrip(DateTime start, DateTime end) {
+    final intl.DateFormat startDateFormat = intl.DateFormat.yMMMd(localeName);
+    final String startString = startDateFormat.format(start);
+    final intl.DateFormat endDateFormat = intl.DateFormat.yMMMd(localeName);
+    final String endString = endDateFormat.format(end);
+
+    return '$startString – $endString';
+  }
+
+  @override
+  String groupsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String groupsProgress(int done, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: 'Finding trips and places… $done of $total photos',
+      one: 'Finding trips and places… $done of 1 photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupsGrouping => 'Grouping trips and places…';
+
+  @override
+  String get groupsEmpty =>
+      'No groups yet. Trips and places appear here as KFM finds them.';
+
+  @override
+  String get groupsRename => 'Rename';
+
+  @override
+  String get groupsRenameHint => 'Leave empty for the automatic name';
+
+  @override
+  String get groupsRenameSave => 'Save';
+
+  @override
+  String get groupsRenameCancel => 'Cancel';
+
+  @override
+  String get groupsChanged => 'This group changed';
+
+  @override
+  String get groupsChangedBody =>
+      'Trips and places are recalculated as photos are added or removed.';
+
+  @override
+  String get groupsBack => 'Back to groups';
+
+  @override
+  String get groupsSwipe => 'Swipe this group';
+
+  @override
+  String get groupsLocationRow =>
+      'Allow location access to group photos by place';
+
+  @override
+  String get groupsOnlineNames => 'Look up place names online';
+
+  @override
+  String get groupsOnlineNamesHelp =>
+      'Sends the approximate centre of each place group to your phone\'s geocoding service to get names like \'Paris\'';
+
+  @override
+  String get groupsJobError =>
+      'Couldn\'t update the groups. They\'ll be tried again later.';
+
+  @override
+  String groupsFailedFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos couldn\'t be read',
+      one: '1 photo couldn\'t be read',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String smartGroupTripOneDay(DateTime day) {
+    final intl.DateFormat dayDateFormat = intl.DateFormat.yMMMd(localeName);
+    final String dayString = dayDateFormat.format(day);
+
+    return '$dayString';
+  }
 }

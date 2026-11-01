@@ -64,6 +64,9 @@ class IndexQuery {
     this.hidden = HiddenFilter.exclude,
     this.extensions = const {},
     this.panoramaOnly = false,
+    this.smartGroupId,
+    this.selfiesOnly = false,
+    this.documentsGroup = false,
   });
 
   /// Empty = all kinds.
@@ -112,6 +115,15 @@ class IndexQuery {
   /// B1: best-effort panoramas (`PANO_…` names or ≥ 2:1 images).
   final bool panoramaOnly;
 
+  /// C5: only files in this stored smart group (EXISTS on smart_group_items).
+  final int? smartGroupId;
+
+  /// C5: Selfies rule (folder `…/Selfies` or EXIF front camera).
+  final bool selfiesOnly;
+
+  /// C5: documents (+ images labeled 'document' once C3 exists).
+  final bool documentsGroup;
+
   static const all = IndexQuery();
 
   /// Without All files access only media is shown (non-media rows stay in
@@ -148,6 +160,9 @@ class IndexQuery {
     HiddenFilter? hidden,
     Set<String>? extensions,
     bool? panoramaOnly,
+    int? Function()? smartGroupId,
+    bool? selfiesOnly,
+    bool? documentsGroup,
   }) => IndexQuery(
     kinds: kinds ?? this.kinds,
     folderPath: folderPath == null ? this.folderPath : folderPath(),
@@ -169,6 +184,9 @@ class IndexQuery {
     hidden: hidden ?? this.hidden,
     extensions: extensions ?? this.extensions,
     panoramaOnly: panoramaOnly ?? this.panoramaOnly,
+    smartGroupId: smartGroupId == null ? this.smartGroupId : smartGroupId(),
+    selfiesOnly: selfiesOnly ?? this.selfiesOnly,
+    documentsGroup: documentsGroup ?? this.documentsGroup,
   );
 
   @override
@@ -194,7 +212,10 @@ class IndexQuery {
       setEquals(other.sources, sources) &&
       other.hidden == hidden &&
       setEquals(other.extensions, extensions) &&
-      other.panoramaOnly == panoramaOnly;
+      other.panoramaOnly == panoramaOnly &&
+      other.smartGroupId == smartGroupId &&
+      other.selfiesOnly == selfiesOnly &&
+      other.documentsGroup == documentsGroup;
 
   @override
   int get hashCode => Object.hashAll([
@@ -219,6 +240,9 @@ class IndexQuery {
     hidden,
     Object.hashAllUnordered(extensions),
     panoramaOnly,
+    smartGroupId,
+    selfiesOnly,
+    documentsGroup,
   ]);
 }
 

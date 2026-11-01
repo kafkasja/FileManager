@@ -4053,6 +4053,629 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t save the change. Try again'**
   String get tagWriteError;
+
+  /// No description provided for @swipeSourceSelectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected files'**
+  String get swipeSourceSelectionTitle;
+
+  /// No description provided for @sameTimeSwipeGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe this group'**
+  String get sameTimeSwipeGroup;
+
+  /// No description provided for @swipeSourceClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to all files'**
+  String get swipeSourceClose;
+
+  /// No description provided for @swipeSourceGroupPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Group {group} of {groupCount} · {index}/{groupSize}'**
+  String swipeSourceGroupPosition(
+    int group,
+    int groupCount,
+    int index,
+    int groupSize,
+  );
+
+  /// No description provided for @swipeSourceDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All done in {title}'**
+  String swipeSourceDone(String title);
+
+  /// No description provided for @swipeSourceBackToMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to swiping'**
+  String get swipeSourceBackToMain;
+
+  /// No description provided for @swipeSourceBackToOrigin.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to {origin}'**
+  String swipeSourceBackToOrigin(String origin);
+
+  /// No description provided for @swipeSourceRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Continued in {title}'**
+  String swipeSourceRestored(String title);
+
+  /// No description provided for @swipeSourcePendingLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens: {title}'**
+  String swipeSourcePendingLine(String title);
+
+  /// No description provided for @swipeSourceSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{files, plural, =1{Swiping 1 file} other{Swiping {files} files}} · {skipped, plural, =1{1 can\'t be swiped here} other{{skipped} can\'t be swiped here}} (photos and videos only)'**
+  String swipeSourceSkipped(int files, int skipped);
+
+  /// No description provided for @swipeSourceTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first 10,000 files'**
+  String get swipeSourceTruncated;
+
+  /// No description provided for @swipeSourceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to swipe here'**
+  String get swipeSourceEmpty;
+
+  /// No description provided for @swipeSourceNoMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Only photos and videos can be swiped'**
+  String get swipeSourceNoMedia;
+
+  /// No description provided for @swipeSourceInvalidFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'This filter can\'t be used'**
+  String get swipeSourceInvalidFilter;
+
+  /// No description provided for @swipeSourceNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos or videos match'**
+  String get swipeSourceNoMatches;
+
+  /// No description provided for @swipeSourceOriginStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage overview'**
+  String get swipeSourceOriginStorage;
+
+  /// No description provided for @swipeSourceOriginSimilar.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar photos'**
+  String get swipeSourceOriginSimilar;
+
+  /// No description provided for @swipeSourceOriginSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get swipeSourceOriginSearch;
+
+  /// No description provided for @swipeSourceOriginGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get swipeSourceOriginGroups;
+
+  /// No description provided for @swipeSourceOriginSameTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Same time'**
+  String get swipeSourceOriginSameTime;
+
+  /// No description provided for @swipeSourceOriginBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get swipeSourceOriginBrowse;
+
+  /// No description provided for @swipeSourceOriginSharedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared files'**
+  String get swipeSourceOriginSharedIn;
+
+  /// No description provided for @swipeSourceOriginCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud'**
+  String get swipeSourceOriginCloud;
+
+  /// No description provided for @swipeSourceOriginExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'External storage'**
+  String get swipeSourceOriginExternal;
+
+  /// No description provided for @swipeSourceOriginOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous screen'**
+  String get swipeSourceOriginOther;
+
+  /// No description provided for @storageOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage overview'**
+  String get storageOverviewTitle;
+
+  /// No description provided for @storageUsedFree.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} used · {free} free'**
+  String storageUsedFree(String used, String free);
+
+  /// No description provided for @storageSpaceUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Free space unknown'**
+  String get storageSpaceUnknown;
+
+  /// No description provided for @storageScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Still scanning… the numbers keep growing'**
+  String get storageScanning;
+
+  /// No description provided for @storageCatVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get storageCatVideos;
+
+  /// No description provided for @storageCatScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get storageCatScreenshots;
+
+  /// No description provided for @storageCatBigFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Big files (over {size})'**
+  String storageCatBigFiles(String size);
+
+  /// No description provided for @storageCatWhatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get storageCatWhatsapp;
+
+  /// No description provided for @storageCatDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get storageCatDownloads;
+
+  /// No description provided for @storageCategorySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files} =1{1 file · {size}} other{{count} files · {size}}}'**
+  String storageCategorySummary(int count, String size);
+
+  /// No description provided for @storageCleanUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up'**
+  String get storageCleanUp;
+
+  /// No description provided for @storageCleanUpMediaOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up shows photos and videos only'**
+  String get storageCleanUpMediaOnly;
+
+  /// No description provided for @storageNeedsAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on All files access to see these files'**
+  String get storageNeedsAccess;
+
+  /// No description provided for @storageOverlapNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A file can be in more than one category.'**
+  String get storageOverlapNote;
+
+  /// No description provided for @storageBiggestFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Biggest files'**
+  String get storageBiggestFiles;
+
+  /// No description provided for @storageWhatsappHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes WhatsApp\'s hidden Sent and Status folders'**
+  String get storageWhatsappHint;
+
+  /// No description provided for @storageBigFileThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Big files start at'**
+  String get storageBigFileThreshold;
+
+  /// No description provided for @similarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar photos'**
+  String get similarTitle;
+
+  /// No description provided for @similarSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar photos'**
+  String get similarSourceTitle;
+
+  /// No description provided for @similarStorageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Look-alike and blurry photos'**
+  String get similarStorageHint;
+
+  /// No description provided for @similarTabSimilar.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar'**
+  String get similarTabSimilar;
+
+  /// No description provided for @similarTabBlurry.
+  ///
+  /// In en, this message translates to:
+  /// **'Blurry'**
+  String get similarTabBlurry;
+
+  /// No description provided for @similarStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find similar and blurry photos'**
+  String get similarStartTitle;
+
+  /// No description provided for @similarStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.'**
+  String get similarStartBody;
+
+  /// No description provided for @similarStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get similarStart;
+
+  /// No description provided for @similarChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking photos… {done} of {total}'**
+  String similarChecking(int done, int total);
+
+  /// No description provided for @similarGrouping.
+  ///
+  /// In en, this message translates to:
+  /// **'Grouping look-alike photos…'**
+  String get similarGrouping;
+
+  /// No description provided for @similarNoGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'No similar photos found yet'**
+  String get similarNoGroups;
+
+  /// No description provided for @similarNoBlurry.
+  ///
+  /// In en, this message translates to:
+  /// **'No blurry photos found'**
+  String get similarNoBlurry;
+
+  /// No description provided for @similarGroupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo} other{{count} photos}}'**
+  String similarGroupCount(int count);
+
+  /// No description provided for @similarBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best'**
+  String get similarBest;
+
+  /// No description provided for @similarKeepBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep best, remove others'**
+  String get similarKeepBest;
+
+  /// No description provided for @similarSwipeGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe this group'**
+  String get similarSwipeGroup;
+
+  /// No description provided for @similarSwipeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe all groups'**
+  String get similarSwipeAll;
+
+  /// No description provided for @similarCleanDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean duplicates'**
+  String get similarCleanDuplicates;
+
+  /// No description provided for @similarRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Removed 1 photo} other{Removed {count} photos}}'**
+  String similarRemoved(int count);
+
+  /// No description provided for @similarKeptAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept all photos'**
+  String get similarKeptAll;
+
+  /// No description provided for @similarBlurryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to pick, long-press to view'**
+  String get similarBlurryHint;
+
+  /// No description provided for @similarRemoveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Remove} other{Remove {count}}}'**
+  String similarRemoveCount(int count);
+
+  /// No description provided for @similarCleanProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Group {group} of {total} · keeping {keep}'**
+  String similarCleanProgress(int group, int total, int keep);
+
+  /// No description provided for @similarCleanDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All groups done'**
+  String get similarCleanDone;
+
+  /// No description provided for @similarSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get similarSkip;
+
+  /// No description provided for @similarNextGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Next group'**
+  String get similarNextGroup;
+
+  /// No description provided for @similarKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get similarKeep;
+
+  /// No description provided for @similarRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get similarRemove;
+
+  /// No description provided for @similarSettingEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Find similar and blurry photos'**
+  String get similarSettingEnabled;
+
+  /// No description provided for @similarSettingEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks photos in the background while KFM is open'**
+  String get similarSettingEnabledHint;
+
+  /// No description provided for @similarSettingStrictness.
+  ///
+  /// In en, this message translates to:
+  /// **'How alike'**
+  String get similarSettingStrictness;
+
+  /// No description provided for @similarStrictnessLoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Loosely alike'**
+  String get similarStrictnessLoose;
+
+  /// No description provided for @similarStrictnessNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get similarStrictnessNormal;
+
+  /// No description provided for @similarStrictnessStrict.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearly identical'**
+  String get similarStrictnessStrict;
+
+  /// No description provided for @similarSettingScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Include screenshots'**
+  String get similarSettingScreenshots;
+
+  /// No description provided for @groupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get groupsTitle;
+
+  /// No description provided for @groupsScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get groupsScreenshots;
+
+  /// No description provided for @groupsSelfies.
+  ///
+  /// In en, this message translates to:
+  /// **'Selfies (automatic)'**
+  String get groupsSelfies;
+
+  /// No description provided for @groupsDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get groupsDocuments;
+
+  /// No description provided for @groupsTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Trips'**
+  String get groupsTrips;
+
+  /// No description provided for @groupsPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get groupsPlaces;
+
+  /// No description provided for @smartGroupPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Place {n}'**
+  String smartGroupPlace(int n);
+
+  /// Automatic trip title: its date range.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end}'**
+  String smartGroupTrip(DateTime start, DateTime end);
+
+  /// No description provided for @groupsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String groupsCount(int count);
+
+  /// No description provided for @groupsProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =1{Finding trips and places… {done} of 1 photo} other{Finding trips and places… {done} of {total} photos}}'**
+  String groupsProgress(int done, int total);
+
+  /// No description provided for @groupsGrouping.
+  ///
+  /// In en, this message translates to:
+  /// **'Grouping trips and places…'**
+  String get groupsGrouping;
+
+  /// No description provided for @groupsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No groups yet. Trips and places appear here as KFM finds them.'**
+  String get groupsEmpty;
+
+  /// No description provided for @groupsRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get groupsRename;
+
+  /// No description provided for @groupsRenameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty for the automatic name'**
+  String get groupsRenameHint;
+
+  /// No description provided for @groupsRenameSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get groupsRenameSave;
+
+  /// No description provided for @groupsRenameCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get groupsRenameCancel;
+
+  /// No description provided for @groupsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This group changed'**
+  String get groupsChanged;
+
+  /// No description provided for @groupsChangedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Trips and places are recalculated as photos are added or removed.'**
+  String get groupsChangedBody;
+
+  /// No description provided for @groupsBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to groups'**
+  String get groupsBack;
+
+  /// No description provided for @groupsSwipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe this group'**
+  String get groupsSwipe;
+
+  /// No description provided for @groupsLocationRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location access to group photos by place'**
+  String get groupsLocationRow;
+
+  /// No description provided for @groupsOnlineNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up place names online'**
+  String get groupsOnlineNames;
+
+  /// No description provided for @groupsOnlineNamesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends the approximate centre of each place group to your phone\'s geocoding service to get names like \'Paris\''**
+  String get groupsOnlineNamesHelp;
+
+  /// No description provided for @groupsJobError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update the groups. They\'ll be tried again later.'**
+  String get groupsJobError;
+
+  /// No description provided for @groupsFailedFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo couldn\'t be read} other{{count} photos couldn\'t be read}}'**
+  String groupsFailedFiles(int count);
+
+  /// Automatic title of a one-day trip.
+  ///
+  /// In en, this message translates to:
+  /// **'{day}'**
+  String smartGroupTripOneDay(DateTime day);
 }
 
 class _AppLocalizationsDelegate

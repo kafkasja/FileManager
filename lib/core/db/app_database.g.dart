@@ -7627,6 +7627,3870 @@ class SelectionSnapshotsCompanion
   }
 }
 
+class $SwipeSourcesTable extends SwipeSources
+    with TableInfo<$SwipeSourcesTable, SwipeSourceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SwipeSourcesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SwipeSourceKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<SwipeSourceKind>($SwipeSourcesTable.$converterkind);
+  @override
+  late final GeneratedColumnWithTypeConverter<SwipeSourceOrigin, String>
+  origin = GeneratedColumn<String>(
+    'origin',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<SwipeSourceOrigin>($SwipeSourcesTable.$converterorigin);
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _filterJsonMeta = const VerificationMeta(
+    'filterJson',
+  );
+  @override
+  late final GeneratedColumn<String> filterJson = GeneratedColumn<String>(
+    'filter_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _itemCountMeta = const VerificationMeta(
+    'itemCount',
+  );
+  @override
+  late final GeneratedColumn<int> itemCount = GeneratedColumn<int>(
+    'item_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _groupCountMeta = const VerificationMeta(
+    'groupCount',
+  );
+  @override
+  late final GeneratedColumn<int> groupCount = GeneratedColumn<int>(
+    'group_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _returnRouteMeta = const VerificationMeta(
+    'returnRoute',
+  );
+  @override
+  late final GeneratedColumn<String> returnRoute = GeneratedColumn<String>(
+    'return_route',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _openedAfterSeqMeta = const VerificationMeta(
+    'openedAfterSeq',
+  );
+  @override
+  late final GeneratedColumn<int> openedAfterSeq = GeneratedColumn<int>(
+    'opened_after_seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closedAtSeqMeta = const VerificationMeta(
+    'closedAtSeq',
+  );
+  @override
+  late final GeneratedColumn<int> closedAtSeq = GeneratedColumn<int>(
+    'closed_at_seq',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _openedAtMeta = const VerificationMeta(
+    'openedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> openedAt = GeneratedColumn<DateTime>(
+    'opened_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closedAtMeta = const VerificationMeta(
+    'closedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> closedAt = GeneratedColumn<DateTime>(
+    'closed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    kind,
+    origin,
+    title,
+    filterJson,
+    itemCount,
+    groupCount,
+    returnRoute,
+    openedAfterSeq,
+    closedAtSeq,
+    openedAt,
+    closedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'swipe_sources';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SwipeSourceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('filter_json')) {
+      context.handle(
+        _filterJsonMeta,
+        filterJson.isAcceptableOrUnknown(data['filter_json']!, _filterJsonMeta),
+      );
+    }
+    if (data.containsKey('item_count')) {
+      context.handle(
+        _itemCountMeta,
+        itemCount.isAcceptableOrUnknown(data['item_count']!, _itemCountMeta),
+      );
+    }
+    if (data.containsKey('group_count')) {
+      context.handle(
+        _groupCountMeta,
+        groupCount.isAcceptableOrUnknown(data['group_count']!, _groupCountMeta),
+      );
+    }
+    if (data.containsKey('return_route')) {
+      context.handle(
+        _returnRouteMeta,
+        returnRoute.isAcceptableOrUnknown(
+          data['return_route']!,
+          _returnRouteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('opened_after_seq')) {
+      context.handle(
+        _openedAfterSeqMeta,
+        openedAfterSeq.isAcceptableOrUnknown(
+          data['opened_after_seq']!,
+          _openedAfterSeqMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_openedAfterSeqMeta);
+    }
+    if (data.containsKey('closed_at_seq')) {
+      context.handle(
+        _closedAtSeqMeta,
+        closedAtSeq.isAcceptableOrUnknown(
+          data['closed_at_seq']!,
+          _closedAtSeqMeta,
+        ),
+      );
+    }
+    if (data.containsKey('opened_at')) {
+      context.handle(
+        _openedAtMeta,
+        openedAt.isAcceptableOrUnknown(data['opened_at']!, _openedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_openedAtMeta);
+    }
+    if (data.containsKey('closed_at')) {
+      context.handle(
+        _closedAtMeta,
+        closedAt.isAcceptableOrUnknown(data['closed_at']!, _closedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SwipeSourceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SwipeSourceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      )!,
+      kind: $SwipeSourcesTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
+      origin: $SwipeSourcesTable.$converterorigin.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}origin'],
+        )!,
+      ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      filterJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}filter_json'],
+      ),
+      itemCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_count'],
+      )!,
+      groupCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_count'],
+      ),
+      returnRoute: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}return_route'],
+      ),
+      openedAfterSeq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}opened_after_seq'],
+      )!,
+      closedAtSeq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}closed_at_seq'],
+      ),
+      openedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}opened_at'],
+      )!,
+      closedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}closed_at'],
+      ),
+    );
+  }
+
+  @override
+  $SwipeSourcesTable createAlias(String alias) {
+    return $SwipeSourcesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SwipeSourceKind, String, String> $converterkind =
+      const EnumNameConverter<SwipeSourceKind>(SwipeSourceKind.values);
+  static JsonTypeConverter2<SwipeSourceOrigin, String, String>
+  $converterorigin = const EnumNameConverter<SwipeSourceOrigin>(
+    SwipeSourceOrigin.values,
+  );
+}
+
+class SwipeSourceRow extends DataClass implements Insertable<SwipeSourceRow> {
+  final int id;
+  final int sessionId;
+  final SwipeSourceKind kind;
+  final SwipeSourceOrigin origin;
+
+  /// Shown in the source bar as given (caller localizes it or passes user
+  /// data such as a group title or the search text). 1–80 chars.
+  final String title;
+
+  /// P5 FileFilter JSON; set only for kind = filter.
+  final String? filterJson;
+
+  /// Files stored in swipe_source_items (0 for filter sources).
+  final int itemCount;
+
+  /// Number of groups (kind = groups only).
+  final int? groupCount;
+
+  /// go_router location for "Back to …" when the source is finished.
+  final String? returnRoute;
+
+  /// Highest session_actions.seq when opened (0 = none yet).
+  final int openedAfterSeq;
+
+  /// Highest seq when closed; null while open.
+  final int? closedAtSeq;
+  final DateTime openedAt;
+  final DateTime? closedAt;
+  const SwipeSourceRow({
+    required this.id,
+    required this.sessionId,
+    required this.kind,
+    required this.origin,
+    required this.title,
+    this.filterJson,
+    required this.itemCount,
+    this.groupCount,
+    this.returnRoute,
+    required this.openedAfterSeq,
+    this.closedAtSeq,
+    required this.openedAt,
+    this.closedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['session_id'] = Variable<int>(sessionId);
+    {
+      map['kind'] = Variable<String>(
+        $SwipeSourcesTable.$converterkind.toSql(kind),
+      );
+    }
+    {
+      map['origin'] = Variable<String>(
+        $SwipeSourcesTable.$converterorigin.toSql(origin),
+      );
+    }
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || filterJson != null) {
+      map['filter_json'] = Variable<String>(filterJson);
+    }
+    map['item_count'] = Variable<int>(itemCount);
+    if (!nullToAbsent || groupCount != null) {
+      map['group_count'] = Variable<int>(groupCount);
+    }
+    if (!nullToAbsent || returnRoute != null) {
+      map['return_route'] = Variable<String>(returnRoute);
+    }
+    map['opened_after_seq'] = Variable<int>(openedAfterSeq);
+    if (!nullToAbsent || closedAtSeq != null) {
+      map['closed_at_seq'] = Variable<int>(closedAtSeq);
+    }
+    map['opened_at'] = Variable<DateTime>(openedAt);
+    if (!nullToAbsent || closedAt != null) {
+      map['closed_at'] = Variable<DateTime>(closedAt);
+    }
+    return map;
+  }
+
+  SwipeSourcesCompanion toCompanion(bool nullToAbsent) {
+    return SwipeSourcesCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      kind: Value(kind),
+      origin: Value(origin),
+      title: Value(title),
+      filterJson: filterJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(filterJson),
+      itemCount: Value(itemCount),
+      groupCount: groupCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupCount),
+      returnRoute: returnRoute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(returnRoute),
+      openedAfterSeq: Value(openedAfterSeq),
+      closedAtSeq: closedAtSeq == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAtSeq),
+      openedAt: Value(openedAt),
+      closedAt: closedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAt),
+    );
+  }
+
+  factory SwipeSourceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SwipeSourceRow(
+      id: serializer.fromJson<int>(json['id']),
+      sessionId: serializer.fromJson<int>(json['sessionId']),
+      kind: $SwipeSourcesTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
+      origin: $SwipeSourcesTable.$converterorigin.fromJson(
+        serializer.fromJson<String>(json['origin']),
+      ),
+      title: serializer.fromJson<String>(json['title']),
+      filterJson: serializer.fromJson<String?>(json['filterJson']),
+      itemCount: serializer.fromJson<int>(json['itemCount']),
+      groupCount: serializer.fromJson<int?>(json['groupCount']),
+      returnRoute: serializer.fromJson<String?>(json['returnRoute']),
+      openedAfterSeq: serializer.fromJson<int>(json['openedAfterSeq']),
+      closedAtSeq: serializer.fromJson<int?>(json['closedAtSeq']),
+      openedAt: serializer.fromJson<DateTime>(json['openedAt']),
+      closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sessionId': serializer.toJson<int>(sessionId),
+      'kind': serializer.toJson<String>(
+        $SwipeSourcesTable.$converterkind.toJson(kind),
+      ),
+      'origin': serializer.toJson<String>(
+        $SwipeSourcesTable.$converterorigin.toJson(origin),
+      ),
+      'title': serializer.toJson<String>(title),
+      'filterJson': serializer.toJson<String?>(filterJson),
+      'itemCount': serializer.toJson<int>(itemCount),
+      'groupCount': serializer.toJson<int?>(groupCount),
+      'returnRoute': serializer.toJson<String?>(returnRoute),
+      'openedAfterSeq': serializer.toJson<int>(openedAfterSeq),
+      'closedAtSeq': serializer.toJson<int?>(closedAtSeq),
+      'openedAt': serializer.toJson<DateTime>(openedAt),
+      'closedAt': serializer.toJson<DateTime?>(closedAt),
+    };
+  }
+
+  SwipeSourceRow copyWith({
+    int? id,
+    int? sessionId,
+    SwipeSourceKind? kind,
+    SwipeSourceOrigin? origin,
+    String? title,
+    Value<String?> filterJson = const Value.absent(),
+    int? itemCount,
+    Value<int?> groupCount = const Value.absent(),
+    Value<String?> returnRoute = const Value.absent(),
+    int? openedAfterSeq,
+    Value<int?> closedAtSeq = const Value.absent(),
+    DateTime? openedAt,
+    Value<DateTime?> closedAt = const Value.absent(),
+  }) => SwipeSourceRow(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    kind: kind ?? this.kind,
+    origin: origin ?? this.origin,
+    title: title ?? this.title,
+    filterJson: filterJson.present ? filterJson.value : this.filterJson,
+    itemCount: itemCount ?? this.itemCount,
+    groupCount: groupCount.present ? groupCount.value : this.groupCount,
+    returnRoute: returnRoute.present ? returnRoute.value : this.returnRoute,
+    openedAfterSeq: openedAfterSeq ?? this.openedAfterSeq,
+    closedAtSeq: closedAtSeq.present ? closedAtSeq.value : this.closedAtSeq,
+    openedAt: openedAt ?? this.openedAt,
+    closedAt: closedAt.present ? closedAt.value : this.closedAt,
+  );
+  SwipeSourceRow copyWithCompanion(SwipeSourcesCompanion data) {
+    return SwipeSourceRow(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      origin: data.origin.present ? data.origin.value : this.origin,
+      title: data.title.present ? data.title.value : this.title,
+      filterJson: data.filterJson.present
+          ? data.filterJson.value
+          : this.filterJson,
+      itemCount: data.itemCount.present ? data.itemCount.value : this.itemCount,
+      groupCount: data.groupCount.present
+          ? data.groupCount.value
+          : this.groupCount,
+      returnRoute: data.returnRoute.present
+          ? data.returnRoute.value
+          : this.returnRoute,
+      openedAfterSeq: data.openedAfterSeq.present
+          ? data.openedAfterSeq.value
+          : this.openedAfterSeq,
+      closedAtSeq: data.closedAtSeq.present
+          ? data.closedAtSeq.value
+          : this.closedAtSeq,
+      openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
+      closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SwipeSourceRow(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('kind: $kind, ')
+          ..write('origin: $origin, ')
+          ..write('title: $title, ')
+          ..write('filterJson: $filterJson, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('groupCount: $groupCount, ')
+          ..write('returnRoute: $returnRoute, ')
+          ..write('openedAfterSeq: $openedAfterSeq, ')
+          ..write('closedAtSeq: $closedAtSeq, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('closedAt: $closedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    kind,
+    origin,
+    title,
+    filterJson,
+    itemCount,
+    groupCount,
+    returnRoute,
+    openedAfterSeq,
+    closedAtSeq,
+    openedAt,
+    closedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SwipeSourceRow &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.kind == this.kind &&
+          other.origin == this.origin &&
+          other.title == this.title &&
+          other.filterJson == this.filterJson &&
+          other.itemCount == this.itemCount &&
+          other.groupCount == this.groupCount &&
+          other.returnRoute == this.returnRoute &&
+          other.openedAfterSeq == this.openedAfterSeq &&
+          other.closedAtSeq == this.closedAtSeq &&
+          other.openedAt == this.openedAt &&
+          other.closedAt == this.closedAt);
+}
+
+class SwipeSourcesCompanion extends UpdateCompanion<SwipeSourceRow> {
+  final Value<int> id;
+  final Value<int> sessionId;
+  final Value<SwipeSourceKind> kind;
+  final Value<SwipeSourceOrigin> origin;
+  final Value<String> title;
+  final Value<String?> filterJson;
+  final Value<int> itemCount;
+  final Value<int?> groupCount;
+  final Value<String?> returnRoute;
+  final Value<int> openedAfterSeq;
+  final Value<int?> closedAtSeq;
+  final Value<DateTime> openedAt;
+  final Value<DateTime?> closedAt;
+  const SwipeSourcesCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.origin = const Value.absent(),
+    this.title = const Value.absent(),
+    this.filterJson = const Value.absent(),
+    this.itemCount = const Value.absent(),
+    this.groupCount = const Value.absent(),
+    this.returnRoute = const Value.absent(),
+    this.openedAfterSeq = const Value.absent(),
+    this.closedAtSeq = const Value.absent(),
+    this.openedAt = const Value.absent(),
+    this.closedAt = const Value.absent(),
+  });
+  SwipeSourcesCompanion.insert({
+    this.id = const Value.absent(),
+    required int sessionId,
+    required SwipeSourceKind kind,
+    required SwipeSourceOrigin origin,
+    required String title,
+    this.filterJson = const Value.absent(),
+    this.itemCount = const Value.absent(),
+    this.groupCount = const Value.absent(),
+    this.returnRoute = const Value.absent(),
+    required int openedAfterSeq,
+    this.closedAtSeq = const Value.absent(),
+    required DateTime openedAt,
+    this.closedAt = const Value.absent(),
+  }) : sessionId = Value(sessionId),
+       kind = Value(kind),
+       origin = Value(origin),
+       title = Value(title),
+       openedAfterSeq = Value(openedAfterSeq),
+       openedAt = Value(openedAt);
+  static Insertable<SwipeSourceRow> custom({
+    Expression<int>? id,
+    Expression<int>? sessionId,
+    Expression<String>? kind,
+    Expression<String>? origin,
+    Expression<String>? title,
+    Expression<String>? filterJson,
+    Expression<int>? itemCount,
+    Expression<int>? groupCount,
+    Expression<String>? returnRoute,
+    Expression<int>? openedAfterSeq,
+    Expression<int>? closedAtSeq,
+    Expression<DateTime>? openedAt,
+    Expression<DateTime>? closedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (kind != null) 'kind': kind,
+      if (origin != null) 'origin': origin,
+      if (title != null) 'title': title,
+      if (filterJson != null) 'filter_json': filterJson,
+      if (itemCount != null) 'item_count': itemCount,
+      if (groupCount != null) 'group_count': groupCount,
+      if (returnRoute != null) 'return_route': returnRoute,
+      if (openedAfterSeq != null) 'opened_after_seq': openedAfterSeq,
+      if (closedAtSeq != null) 'closed_at_seq': closedAtSeq,
+      if (openedAt != null) 'opened_at': openedAt,
+      if (closedAt != null) 'closed_at': closedAt,
+    });
+  }
+
+  SwipeSourcesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sessionId,
+    Value<SwipeSourceKind>? kind,
+    Value<SwipeSourceOrigin>? origin,
+    Value<String>? title,
+    Value<String?>? filterJson,
+    Value<int>? itemCount,
+    Value<int?>? groupCount,
+    Value<String?>? returnRoute,
+    Value<int>? openedAfterSeq,
+    Value<int?>? closedAtSeq,
+    Value<DateTime>? openedAt,
+    Value<DateTime?>? closedAt,
+  }) {
+    return SwipeSourcesCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      kind: kind ?? this.kind,
+      origin: origin ?? this.origin,
+      title: title ?? this.title,
+      filterJson: filterJson ?? this.filterJson,
+      itemCount: itemCount ?? this.itemCount,
+      groupCount: groupCount ?? this.groupCount,
+      returnRoute: returnRoute ?? this.returnRoute,
+      openedAfterSeq: openedAfterSeq ?? this.openedAfterSeq,
+      closedAtSeq: closedAtSeq ?? this.closedAtSeq,
+      openedAt: openedAt ?? this.openedAt,
+      closedAt: closedAt ?? this.closedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $SwipeSourcesTable.$converterkind.toSql(kind.value),
+      );
+    }
+    if (origin.present) {
+      map['origin'] = Variable<String>(
+        $SwipeSourcesTable.$converterorigin.toSql(origin.value),
+      );
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (filterJson.present) {
+      map['filter_json'] = Variable<String>(filterJson.value);
+    }
+    if (itemCount.present) {
+      map['item_count'] = Variable<int>(itemCount.value);
+    }
+    if (groupCount.present) {
+      map['group_count'] = Variable<int>(groupCount.value);
+    }
+    if (returnRoute.present) {
+      map['return_route'] = Variable<String>(returnRoute.value);
+    }
+    if (openedAfterSeq.present) {
+      map['opened_after_seq'] = Variable<int>(openedAfterSeq.value);
+    }
+    if (closedAtSeq.present) {
+      map['closed_at_seq'] = Variable<int>(closedAtSeq.value);
+    }
+    if (openedAt.present) {
+      map['opened_at'] = Variable<DateTime>(openedAt.value);
+    }
+    if (closedAt.present) {
+      map['closed_at'] = Variable<DateTime>(closedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SwipeSourcesCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('kind: $kind, ')
+          ..write('origin: $origin, ')
+          ..write('title: $title, ')
+          ..write('filterJson: $filterJson, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('groupCount: $groupCount, ')
+          ..write('returnRoute: $returnRoute, ')
+          ..write('openedAfterSeq: $openedAfterSeq, ')
+          ..write('closedAtSeq: $closedAtSeq, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('closedAt: $closedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SwipeSourceItemsTable extends SwipeSourceItems
+    with TableInfo<$SwipeSourceItemsTable, SwipeSourceItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SwipeSourceItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<int> sourceId = GeneratedColumn<int>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES swipe_sources (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIndexMeta = const VerificationMeta(
+    'groupIndex',
+  );
+  @override
+  late final GeneratedColumn<int> groupIndex = GeneratedColumn<int>(
+    'group_index',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sourceId,
+    position,
+    fileId,
+    groupIndex,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'swipe_source_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SwipeSourceItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('group_index')) {
+      context.handle(
+        _groupIndexMeta,
+        groupIndex.isAcceptableOrUnknown(data['group_index']!, _groupIndexMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sourceId, position};
+  @override
+  SwipeSourceItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SwipeSourceItemRow(
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      groupIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_index'],
+      ),
+    );
+  }
+
+  @override
+  $SwipeSourceItemsTable createAlias(String alias) {
+    return $SwipeSourceItemsTable(attachedDatabase, alias);
+  }
+}
+
+class SwipeSourceItemRow extends DataClass
+    implements Insertable<SwipeSourceItemRow> {
+  final int sourceId;
+
+  /// 0..n-1 in the caller's order.
+  final int position;
+  final String fileId;
+
+  /// 0-based group (kind = groups); null otherwise.
+  final int? groupIndex;
+  const SwipeSourceItemRow({
+    required this.sourceId,
+    required this.position,
+    required this.fileId,
+    this.groupIndex,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['source_id'] = Variable<int>(sourceId);
+    map['position'] = Variable<int>(position);
+    map['file_id'] = Variable<String>(fileId);
+    if (!nullToAbsent || groupIndex != null) {
+      map['group_index'] = Variable<int>(groupIndex);
+    }
+    return map;
+  }
+
+  SwipeSourceItemsCompanion toCompanion(bool nullToAbsent) {
+    return SwipeSourceItemsCompanion(
+      sourceId: Value(sourceId),
+      position: Value(position),
+      fileId: Value(fileId),
+      groupIndex: groupIndex == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupIndex),
+    );
+  }
+
+  factory SwipeSourceItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SwipeSourceItemRow(
+      sourceId: serializer.fromJson<int>(json['sourceId']),
+      position: serializer.fromJson<int>(json['position']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+      groupIndex: serializer.fromJson<int?>(json['groupIndex']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sourceId': serializer.toJson<int>(sourceId),
+      'position': serializer.toJson<int>(position),
+      'fileId': serializer.toJson<String>(fileId),
+      'groupIndex': serializer.toJson<int?>(groupIndex),
+    };
+  }
+
+  SwipeSourceItemRow copyWith({
+    int? sourceId,
+    int? position,
+    String? fileId,
+    Value<int?> groupIndex = const Value.absent(),
+  }) => SwipeSourceItemRow(
+    sourceId: sourceId ?? this.sourceId,
+    position: position ?? this.position,
+    fileId: fileId ?? this.fileId,
+    groupIndex: groupIndex.present ? groupIndex.value : this.groupIndex,
+  );
+  SwipeSourceItemRow copyWithCompanion(SwipeSourceItemsCompanion data) {
+    return SwipeSourceItemRow(
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      position: data.position.present ? data.position.value : this.position,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      groupIndex: data.groupIndex.present
+          ? data.groupIndex.value
+          : this.groupIndex,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SwipeSourceItemRow(')
+          ..write('sourceId: $sourceId, ')
+          ..write('position: $position, ')
+          ..write('fileId: $fileId, ')
+          ..write('groupIndex: $groupIndex')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(sourceId, position, fileId, groupIndex);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SwipeSourceItemRow &&
+          other.sourceId == this.sourceId &&
+          other.position == this.position &&
+          other.fileId == this.fileId &&
+          other.groupIndex == this.groupIndex);
+}
+
+class SwipeSourceItemsCompanion extends UpdateCompanion<SwipeSourceItemRow> {
+  final Value<int> sourceId;
+  final Value<int> position;
+  final Value<String> fileId;
+  final Value<int?> groupIndex;
+  final Value<int> rowid;
+  const SwipeSourceItemsCompanion({
+    this.sourceId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.groupIndex = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SwipeSourceItemsCompanion.insert({
+    required int sourceId,
+    required int position,
+    required String fileId,
+    this.groupIndex = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : sourceId = Value(sourceId),
+       position = Value(position),
+       fileId = Value(fileId);
+  static Insertable<SwipeSourceItemRow> custom({
+    Expression<int>? sourceId,
+    Expression<int>? position,
+    Expression<String>? fileId,
+    Expression<int>? groupIndex,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sourceId != null) 'source_id': sourceId,
+      if (position != null) 'position': position,
+      if (fileId != null) 'file_id': fileId,
+      if (groupIndex != null) 'group_index': groupIndex,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SwipeSourceItemsCompanion copyWith({
+    Value<int>? sourceId,
+    Value<int>? position,
+    Value<String>? fileId,
+    Value<int?>? groupIndex,
+    Value<int>? rowid,
+  }) {
+    return SwipeSourceItemsCompanion(
+      sourceId: sourceId ?? this.sourceId,
+      position: position ?? this.position,
+      fileId: fileId ?? this.fileId,
+      groupIndex: groupIndex ?? this.groupIndex,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sourceId.present) {
+      map['source_id'] = Variable<int>(sourceId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (groupIndex.present) {
+      map['group_index'] = Variable<int>(groupIndex.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SwipeSourceItemsCompanion(')
+          ..write('sourceId: $sourceId, ')
+          ..write('position: $position, ')
+          ..write('fileId: $fileId, ')
+          ..write('groupIndex: $groupIndex, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ImageSignalsTable extends ImageSignals
+    with TableInfo<$ImageSignalsTable, ImageSignalRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ImageSignalsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SignalStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<SignalStatus>($ImageSignalsTable.$converterstatus);
+  static const VerificationMeta _dHashMeta = const VerificationMeta('dHash');
+  @override
+  late final GeneratedColumn<int> dHash = GeneratedColumn<int>(
+    'd_hash',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _blurScoreMeta = const VerificationMeta(
+    'blurScore',
+  );
+  @override
+  late final GeneratedColumn<double> blurScore = GeneratedColumn<double>(
+    'blur_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileModifiedAtMsMeta = const VerificationMeta(
+    'fileModifiedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> fileModifiedAtMs = GeneratedColumn<int>(
+    'file_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _algoVersionMeta = const VerificationMeta(
+    'algoVersion',
+  );
+  @override
+  late final GeneratedColumn<int> algoVersion = GeneratedColumn<int>(
+    'algo_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    fileId,
+    status,
+    dHash,
+    blurScore,
+    fileModifiedAtMs,
+    algoVersion,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'image_signals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ImageSignalRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('d_hash')) {
+      context.handle(
+        _dHashMeta,
+        dHash.isAcceptableOrUnknown(data['d_hash']!, _dHashMeta),
+      );
+    }
+    if (data.containsKey('blur_score')) {
+      context.handle(
+        _blurScoreMeta,
+        blurScore.isAcceptableOrUnknown(data['blur_score']!, _blurScoreMeta),
+      );
+    }
+    if (data.containsKey('file_modified_at_ms')) {
+      context.handle(
+        _fileModifiedAtMsMeta,
+        fileModifiedAtMs.isAcceptableOrUnknown(
+          data['file_modified_at_ms']!,
+          _fileModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fileModifiedAtMsMeta);
+    }
+    if (data.containsKey('algo_version')) {
+      context.handle(
+        _algoVersionMeta,
+        algoVersion.isAcceptableOrUnknown(
+          data['algo_version']!,
+          _algoVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_algoVersionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  ImageSignalRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ImageSignalRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      status: $ImageSignalsTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      dHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}d_hash'],
+      ),
+      blurScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}blur_score'],
+      ),
+      fileModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_modified_at_ms'],
+      )!,
+      algoVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}algo_version'],
+      )!,
+    );
+  }
+
+  @override
+  $ImageSignalsTable createAlias(String alias) {
+    return $ImageSignalsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SignalStatus, String, String> $converterstatus =
+      const EnumNameConverter<SignalStatus>(SignalStatus.values);
+}
+
+class ImageSignalRow extends DataClass implements Insertable<ImageSignalRow> {
+  final String fileId;
+  final SignalStatus status;
+  final int? dHash;
+  final double? blurScore;
+
+  /// = media_index.modified_at_ms when computed (ms, not drift DateTime,
+  /// which stores seconds and would make every row look stale).
+  final int fileModifiedAtMs;
+  final int algoVersion;
+  const ImageSignalRow({
+    required this.fileId,
+    required this.status,
+    this.dHash,
+    this.blurScore,
+    required this.fileModifiedAtMs,
+    required this.algoVersion,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    {
+      map['status'] = Variable<String>(
+        $ImageSignalsTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || dHash != null) {
+      map['d_hash'] = Variable<int>(dHash);
+    }
+    if (!nullToAbsent || blurScore != null) {
+      map['blur_score'] = Variable<double>(blurScore);
+    }
+    map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs);
+    map['algo_version'] = Variable<int>(algoVersion);
+    return map;
+  }
+
+  ImageSignalsCompanion toCompanion(bool nullToAbsent) {
+    return ImageSignalsCompanion(
+      fileId: Value(fileId),
+      status: Value(status),
+      dHash: dHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dHash),
+      blurScore: blurScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(blurScore),
+      fileModifiedAtMs: Value(fileModifiedAtMs),
+      algoVersion: Value(algoVersion),
+    );
+  }
+
+  factory ImageSignalRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ImageSignalRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      status: $ImageSignalsTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      dHash: serializer.fromJson<int?>(json['dHash']),
+      blurScore: serializer.fromJson<double?>(json['blurScore']),
+      fileModifiedAtMs: serializer.fromJson<int>(json['fileModifiedAtMs']),
+      algoVersion: serializer.fromJson<int>(json['algoVersion']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'status': serializer.toJson<String>(
+        $ImageSignalsTable.$converterstatus.toJson(status),
+      ),
+      'dHash': serializer.toJson<int?>(dHash),
+      'blurScore': serializer.toJson<double?>(blurScore),
+      'fileModifiedAtMs': serializer.toJson<int>(fileModifiedAtMs),
+      'algoVersion': serializer.toJson<int>(algoVersion),
+    };
+  }
+
+  ImageSignalRow copyWith({
+    String? fileId,
+    SignalStatus? status,
+    Value<int?> dHash = const Value.absent(),
+    Value<double?> blurScore = const Value.absent(),
+    int? fileModifiedAtMs,
+    int? algoVersion,
+  }) => ImageSignalRow(
+    fileId: fileId ?? this.fileId,
+    status: status ?? this.status,
+    dHash: dHash.present ? dHash.value : this.dHash,
+    blurScore: blurScore.present ? blurScore.value : this.blurScore,
+    fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+    algoVersion: algoVersion ?? this.algoVersion,
+  );
+  ImageSignalRow copyWithCompanion(ImageSignalsCompanion data) {
+    return ImageSignalRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      status: data.status.present ? data.status.value : this.status,
+      dHash: data.dHash.present ? data.dHash.value : this.dHash,
+      blurScore: data.blurScore.present ? data.blurScore.value : this.blurScore,
+      fileModifiedAtMs: data.fileModifiedAtMs.present
+          ? data.fileModifiedAtMs.value
+          : this.fileModifiedAtMs,
+      algoVersion: data.algoVersion.present
+          ? data.algoVersion.value
+          : this.algoVersion,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImageSignalRow(')
+          ..write('fileId: $fileId, ')
+          ..write('status: $status, ')
+          ..write('dHash: $dHash, ')
+          ..write('blurScore: $blurScore, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
+          ..write('algoVersion: $algoVersion')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    fileId,
+    status,
+    dHash,
+    blurScore,
+    fileModifiedAtMs,
+    algoVersion,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ImageSignalRow &&
+          other.fileId == this.fileId &&
+          other.status == this.status &&
+          other.dHash == this.dHash &&
+          other.blurScore == this.blurScore &&
+          other.fileModifiedAtMs == this.fileModifiedAtMs &&
+          other.algoVersion == this.algoVersion);
+}
+
+class ImageSignalsCompanion extends UpdateCompanion<ImageSignalRow> {
+  final Value<String> fileId;
+  final Value<SignalStatus> status;
+  final Value<int?> dHash;
+  final Value<double?> blurScore;
+  final Value<int> fileModifiedAtMs;
+  final Value<int> algoVersion;
+  final Value<int> rowid;
+  const ImageSignalsCompanion({
+    this.fileId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.dHash = const Value.absent(),
+    this.blurScore = const Value.absent(),
+    this.fileModifiedAtMs = const Value.absent(),
+    this.algoVersion = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ImageSignalsCompanion.insert({
+    required String fileId,
+    required SignalStatus status,
+    this.dHash = const Value.absent(),
+    this.blurScore = const Value.absent(),
+    required int fileModifiedAtMs,
+    required int algoVersion,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       status = Value(status),
+       fileModifiedAtMs = Value(fileModifiedAtMs),
+       algoVersion = Value(algoVersion);
+  static Insertable<ImageSignalRow> custom({
+    Expression<String>? fileId,
+    Expression<String>? status,
+    Expression<int>? dHash,
+    Expression<double>? blurScore,
+    Expression<int>? fileModifiedAtMs,
+    Expression<int>? algoVersion,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (status != null) 'status': status,
+      if (dHash != null) 'd_hash': dHash,
+      if (blurScore != null) 'blur_score': blurScore,
+      if (fileModifiedAtMs != null) 'file_modified_at_ms': fileModifiedAtMs,
+      if (algoVersion != null) 'algo_version': algoVersion,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ImageSignalsCompanion copyWith({
+    Value<String>? fileId,
+    Value<SignalStatus>? status,
+    Value<int?>? dHash,
+    Value<double?>? blurScore,
+    Value<int>? fileModifiedAtMs,
+    Value<int>? algoVersion,
+    Value<int>? rowid,
+  }) {
+    return ImageSignalsCompanion(
+      fileId: fileId ?? this.fileId,
+      status: status ?? this.status,
+      dHash: dHash ?? this.dHash,
+      blurScore: blurScore ?? this.blurScore,
+      fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+      algoVersion: algoVersion ?? this.algoVersion,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $ImageSignalsTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (dHash.present) {
+      map['d_hash'] = Variable<int>(dHash.value);
+    }
+    if (blurScore.present) {
+      map['blur_score'] = Variable<double>(blurScore.value);
+    }
+    if (fileModifiedAtMs.present) {
+      map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs.value);
+    }
+    if (algoVersion.present) {
+      map['algo_version'] = Variable<int>(algoVersion.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImageSignalsCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('status: $status, ')
+          ..write('dHash: $dHash, ')
+          ..write('blurScore: $blurScore, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
+          ..write('algoVersion: $algoVersion, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SimilarGroupsTable extends SimilarGroups
+    with TableInfo<$SimilarGroupsTable, SimilarGroupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SimilarGroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _suggestedFileIdMeta = const VerificationMeta(
+    'suggestedFileId',
+  );
+  @override
+  late final GeneratedColumn<String> suggestedFileId = GeneratedColumn<String>(
+    'suggested_file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _memberCountMeta = const VerificationMeta(
+    'memberCount',
+  );
+  @override
+  late final GeneratedColumn<int> memberCount = GeneratedColumn<int>(
+    'member_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortDateMsMeta = const VerificationMeta(
+    'sortDateMs',
+  );
+  @override
+  late final GeneratedColumn<int> sortDateMs = GeneratedColumn<int>(
+    'sort_date_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    suggestedFileId,
+    memberCount,
+    sortDateMs,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'similar_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SimilarGroupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('suggested_file_id')) {
+      context.handle(
+        _suggestedFileIdMeta,
+        suggestedFileId.isAcceptableOrUnknown(
+          data['suggested_file_id']!,
+          _suggestedFileIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_suggestedFileIdMeta);
+    }
+    if (data.containsKey('member_count')) {
+      context.handle(
+        _memberCountMeta,
+        memberCount.isAcceptableOrUnknown(
+          data['member_count']!,
+          _memberCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_memberCountMeta);
+    }
+    if (data.containsKey('sort_date_ms')) {
+      context.handle(
+        _sortDateMsMeta,
+        sortDateMs.isAcceptableOrUnknown(
+          data['sort_date_ms']!,
+          _sortDateMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sortDateMsMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SimilarGroupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SimilarGroupRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      suggestedFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}suggested_file_id'],
+      )!,
+      memberCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}member_count'],
+      )!,
+      sortDateMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_date_ms'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SimilarGroupsTable createAlias(String alias) {
+    return $SimilarGroupsTable(attachedDatabase, alias);
+  }
+}
+
+class SimilarGroupRow extends DataClass implements Insertable<SimilarGroupRow> {
+  final int id;
+  final String suggestedFileId;
+  final int memberCount;
+
+  /// Newest member's sort_date_ms (list order: newest groups first).
+  final int sortDateMs;
+  final DateTime createdAt;
+  const SimilarGroupRow({
+    required this.id,
+    required this.suggestedFileId,
+    required this.memberCount,
+    required this.sortDateMs,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['suggested_file_id'] = Variable<String>(suggestedFileId);
+    map['member_count'] = Variable<int>(memberCount);
+    map['sort_date_ms'] = Variable<int>(sortDateMs);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SimilarGroupsCompanion toCompanion(bool nullToAbsent) {
+    return SimilarGroupsCompanion(
+      id: Value(id),
+      suggestedFileId: Value(suggestedFileId),
+      memberCount: Value(memberCount),
+      sortDateMs: Value(sortDateMs),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SimilarGroupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SimilarGroupRow(
+      id: serializer.fromJson<int>(json['id']),
+      suggestedFileId: serializer.fromJson<String>(json['suggestedFileId']),
+      memberCount: serializer.fromJson<int>(json['memberCount']),
+      sortDateMs: serializer.fromJson<int>(json['sortDateMs']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'suggestedFileId': serializer.toJson<String>(suggestedFileId),
+      'memberCount': serializer.toJson<int>(memberCount),
+      'sortDateMs': serializer.toJson<int>(sortDateMs),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SimilarGroupRow copyWith({
+    int? id,
+    String? suggestedFileId,
+    int? memberCount,
+    int? sortDateMs,
+    DateTime? createdAt,
+  }) => SimilarGroupRow(
+    id: id ?? this.id,
+    suggestedFileId: suggestedFileId ?? this.suggestedFileId,
+    memberCount: memberCount ?? this.memberCount,
+    sortDateMs: sortDateMs ?? this.sortDateMs,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SimilarGroupRow copyWithCompanion(SimilarGroupsCompanion data) {
+    return SimilarGroupRow(
+      id: data.id.present ? data.id.value : this.id,
+      suggestedFileId: data.suggestedFileId.present
+          ? data.suggestedFileId.value
+          : this.suggestedFileId,
+      memberCount: data.memberCount.present
+          ? data.memberCount.value
+          : this.memberCount,
+      sortDateMs: data.sortDateMs.present
+          ? data.sortDateMs.value
+          : this.sortDateMs,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SimilarGroupRow(')
+          ..write('id: $id, ')
+          ..write('suggestedFileId: $suggestedFileId, ')
+          ..write('memberCount: $memberCount, ')
+          ..write('sortDateMs: $sortDateMs, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, suggestedFileId, memberCount, sortDateMs, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SimilarGroupRow &&
+          other.id == this.id &&
+          other.suggestedFileId == this.suggestedFileId &&
+          other.memberCount == this.memberCount &&
+          other.sortDateMs == this.sortDateMs &&
+          other.createdAt == this.createdAt);
+}
+
+class SimilarGroupsCompanion extends UpdateCompanion<SimilarGroupRow> {
+  final Value<int> id;
+  final Value<String> suggestedFileId;
+  final Value<int> memberCount;
+  final Value<int> sortDateMs;
+  final Value<DateTime> createdAt;
+  const SimilarGroupsCompanion({
+    this.id = const Value.absent(),
+    this.suggestedFileId = const Value.absent(),
+    this.memberCount = const Value.absent(),
+    this.sortDateMs = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  SimilarGroupsCompanion.insert({
+    this.id = const Value.absent(),
+    required String suggestedFileId,
+    required int memberCount,
+    required int sortDateMs,
+    required DateTime createdAt,
+  }) : suggestedFileId = Value(suggestedFileId),
+       memberCount = Value(memberCount),
+       sortDateMs = Value(sortDateMs),
+       createdAt = Value(createdAt);
+  static Insertable<SimilarGroupRow> custom({
+    Expression<int>? id,
+    Expression<String>? suggestedFileId,
+    Expression<int>? memberCount,
+    Expression<int>? sortDateMs,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (suggestedFileId != null) 'suggested_file_id': suggestedFileId,
+      if (memberCount != null) 'member_count': memberCount,
+      if (sortDateMs != null) 'sort_date_ms': sortDateMs,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  SimilarGroupsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? suggestedFileId,
+    Value<int>? memberCount,
+    Value<int>? sortDateMs,
+    Value<DateTime>? createdAt,
+  }) {
+    return SimilarGroupsCompanion(
+      id: id ?? this.id,
+      suggestedFileId: suggestedFileId ?? this.suggestedFileId,
+      memberCount: memberCount ?? this.memberCount,
+      sortDateMs: sortDateMs ?? this.sortDateMs,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (suggestedFileId.present) {
+      map['suggested_file_id'] = Variable<String>(suggestedFileId.value);
+    }
+    if (memberCount.present) {
+      map['member_count'] = Variable<int>(memberCount.value);
+    }
+    if (sortDateMs.present) {
+      map['sort_date_ms'] = Variable<int>(sortDateMs.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SimilarGroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('suggestedFileId: $suggestedFileId, ')
+          ..write('memberCount: $memberCount, ')
+          ..write('sortDateMs: $sortDateMs, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SimilarGroupItemsTable extends SimilarGroupItems
+    with TableInfo<$SimilarGroupItemsTable, SimilarGroupItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SimilarGroupItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES similar_groups (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [groupId, fileId, position];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'similar_group_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SimilarGroupItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId, fileId};
+  @override
+  SimilarGroupItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SimilarGroupItemRow(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_id'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $SimilarGroupItemsTable createAlias(String alias) {
+    return $SimilarGroupItemsTable(attachedDatabase, alias);
+  }
+}
+
+class SimilarGroupItemRow extends DataClass
+    implements Insertable<SimilarGroupItemRow> {
+  final int groupId;
+  final String fileId;
+
+  /// 0 = suggested best, then by compareBest order.
+  final int position;
+  const SimilarGroupItemRow({
+    required this.groupId,
+    required this.fileId,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<int>(groupId);
+    map['file_id'] = Variable<String>(fileId);
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  SimilarGroupItemsCompanion toCompanion(bool nullToAbsent) {
+    return SimilarGroupItemsCompanion(
+      groupId: Value(groupId),
+      fileId: Value(fileId),
+      position: Value(position),
+    );
+  }
+
+  factory SimilarGroupItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SimilarGroupItemRow(
+      groupId: serializer.fromJson<int>(json['groupId']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<int>(groupId),
+      'fileId': serializer.toJson<String>(fileId),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  SimilarGroupItemRow copyWith({int? groupId, String? fileId, int? position}) =>
+      SimilarGroupItemRow(
+        groupId: groupId ?? this.groupId,
+        fileId: fileId ?? this.fileId,
+        position: position ?? this.position,
+      );
+  SimilarGroupItemRow copyWithCompanion(SimilarGroupItemsCompanion data) {
+    return SimilarGroupItemRow(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SimilarGroupItemRow(')
+          ..write('groupId: $groupId, ')
+          ..write('fileId: $fileId, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, fileId, position);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SimilarGroupItemRow &&
+          other.groupId == this.groupId &&
+          other.fileId == this.fileId &&
+          other.position == this.position);
+}
+
+class SimilarGroupItemsCompanion extends UpdateCompanion<SimilarGroupItemRow> {
+  final Value<int> groupId;
+  final Value<String> fileId;
+  final Value<int> position;
+  final Value<int> rowid;
+  const SimilarGroupItemsCompanion({
+    this.groupId = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SimilarGroupItemsCompanion.insert({
+    required int groupId,
+    required String fileId,
+    required int position,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       fileId = Value(fileId),
+       position = Value(position);
+  static Insertable<SimilarGroupItemRow> custom({
+    Expression<int>? groupId,
+    Expression<String>? fileId,
+    Expression<int>? position,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (fileId != null) 'file_id': fileId,
+      if (position != null) 'position': position,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SimilarGroupItemsCompanion copyWith({
+    Value<int>? groupId,
+    Value<String>? fileId,
+    Value<int>? position,
+    Value<int>? rowid,
+  }) {
+    return SimilarGroupItemsCompanion(
+      groupId: groupId ?? this.groupId,
+      fileId: fileId ?? this.fileId,
+      position: position ?? this.position,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<int>(groupId.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SimilarGroupItemsCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('fileId: $fileId, ')
+          ..write('position: $position, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SimilarDismissedTable extends SimilarDismissed
+    with TableInfo<$SimilarDismissedTable, SimilarDismissedRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SimilarDismissedTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dismissedAtMeta = const VerificationMeta(
+    'dismissedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dismissedAt = GeneratedColumn<DateTime>(
+    'dismissed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [fileId, dismissedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'similar_dismissed';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SimilarDismissedRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('dismissed_at')) {
+      context.handle(
+        _dismissedAtMeta,
+        dismissedAt.isAcceptableOrUnknown(
+          data['dismissed_at']!,
+          _dismissedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dismissedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  SimilarDismissedRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SimilarDismissedRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      dismissedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}dismissed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SimilarDismissedTable createAlias(String alias) {
+    return $SimilarDismissedTable(attachedDatabase, alias);
+  }
+}
+
+class SimilarDismissedRow extends DataClass
+    implements Insertable<SimilarDismissedRow> {
+  final String fileId;
+  final DateTime dismissedAt;
+  const SimilarDismissedRow({required this.fileId, required this.dismissedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['dismissed_at'] = Variable<DateTime>(dismissedAt);
+    return map;
+  }
+
+  SimilarDismissedCompanion toCompanion(bool nullToAbsent) {
+    return SimilarDismissedCompanion(
+      fileId: Value(fileId),
+      dismissedAt: Value(dismissedAt),
+    );
+  }
+
+  factory SimilarDismissedRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SimilarDismissedRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      dismissedAt: serializer.fromJson<DateTime>(json['dismissedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'dismissedAt': serializer.toJson<DateTime>(dismissedAt),
+    };
+  }
+
+  SimilarDismissedRow copyWith({String? fileId, DateTime? dismissedAt}) =>
+      SimilarDismissedRow(
+        fileId: fileId ?? this.fileId,
+        dismissedAt: dismissedAt ?? this.dismissedAt,
+      );
+  SimilarDismissedRow copyWithCompanion(SimilarDismissedCompanion data) {
+    return SimilarDismissedRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      dismissedAt: data.dismissedAt.present
+          ? data.dismissedAt.value
+          : this.dismissedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SimilarDismissedRow(')
+          ..write('fileId: $fileId, ')
+          ..write('dismissedAt: $dismissedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fileId, dismissedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SimilarDismissedRow &&
+          other.fileId == this.fileId &&
+          other.dismissedAt == this.dismissedAt);
+}
+
+class SimilarDismissedCompanion extends UpdateCompanion<SimilarDismissedRow> {
+  final Value<String> fileId;
+  final Value<DateTime> dismissedAt;
+  final Value<int> rowid;
+  const SimilarDismissedCompanion({
+    this.fileId = const Value.absent(),
+    this.dismissedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SimilarDismissedCompanion.insert({
+    required String fileId,
+    required DateTime dismissedAt,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       dismissedAt = Value(dismissedAt);
+  static Insertable<SimilarDismissedRow> custom({
+    Expression<String>? fileId,
+    Expression<DateTime>? dismissedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (dismissedAt != null) 'dismissed_at': dismissedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SimilarDismissedCompanion copyWith({
+    Value<String>? fileId,
+    Value<DateTime>? dismissedAt,
+    Value<int>? rowid,
+  }) {
+    return SimilarDismissedCompanion(
+      fileId: fileId ?? this.fileId,
+      dismissedAt: dismissedAt ?? this.dismissedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (dismissedAt.present) {
+      map['dismissed_at'] = Variable<DateTime>(dismissedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SimilarDismissedCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('dismissedAt: $dismissedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MediaLocationsTable extends MediaLocations
+    with TableInfo<$MediaLocationsTable, MediaLocationRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MediaLocationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileModifiedAtMsMeta = const VerificationMeta(
+    'fileModifiedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> fileModifiedAtMs = GeneratedColumn<int>(
+    'file_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+    'lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lngMeta = const VerificationMeta('lng');
+  @override
+  late final GeneratedColumn<double> lng = GeneratedColumn<double>(
+    'lng',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _frontCameraMeta = const VerificationMeta(
+    'frontCamera',
+  );
+  @override
+  late final GeneratedColumn<bool> frontCamera = GeneratedColumn<bool>(
+    'front_camera',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("front_camera" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _locationReadableMeta = const VerificationMeta(
+    'locationReadable',
+  );
+  @override
+  late final GeneratedColumn<bool> locationReadable = GeneratedColumn<bool>(
+    'location_readable',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("location_readable" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _readAtMsMeta = const VerificationMeta(
+    'readAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> readAtMs = GeneratedColumn<int>(
+    'read_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    fileId,
+    fileModifiedAtMs,
+    lat,
+    lng,
+    frontCamera,
+    locationReadable,
+    readAtMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'media_locations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MediaLocationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('file_modified_at_ms')) {
+      context.handle(
+        _fileModifiedAtMsMeta,
+        fileModifiedAtMs.isAcceptableOrUnknown(
+          data['file_modified_at_ms']!,
+          _fileModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fileModifiedAtMsMeta);
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+        _latMeta,
+        lat.isAcceptableOrUnknown(data['lat']!, _latMeta),
+      );
+    }
+    if (data.containsKey('lng')) {
+      context.handle(
+        _lngMeta,
+        lng.isAcceptableOrUnknown(data['lng']!, _lngMeta),
+      );
+    }
+    if (data.containsKey('front_camera')) {
+      context.handle(
+        _frontCameraMeta,
+        frontCamera.isAcceptableOrUnknown(
+          data['front_camera']!,
+          _frontCameraMeta,
+        ),
+      );
+    }
+    if (data.containsKey('location_readable')) {
+      context.handle(
+        _locationReadableMeta,
+        locationReadable.isAcceptableOrUnknown(
+          data['location_readable']!,
+          _locationReadableMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_locationReadableMeta);
+    }
+    if (data.containsKey('read_at_ms')) {
+      context.handle(
+        _readAtMsMeta,
+        readAtMs.isAcceptableOrUnknown(data['read_at_ms']!, _readAtMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_readAtMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fileId};
+  @override
+  MediaLocationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MediaLocationRow(
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      fileModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_modified_at_ms'],
+      )!,
+      lat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lat'],
+      ),
+      lng: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lng'],
+      ),
+      frontCamera: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}front_camera'],
+      )!,
+      locationReadable: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}location_readable'],
+      )!,
+      readAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}read_at_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $MediaLocationsTable createAlias(String alias) {
+    return $MediaLocationsTable(attachedDatabase, alias);
+  }
+}
+
+class MediaLocationRow extends DataClass
+    implements Insertable<MediaLocationRow> {
+  final String fileId;
+
+  /// media_index.modifiedAtMs when read (epoch ms).
+  final int fileModifiedAtMs;
+  final double? lat;
+  final double? lng;
+  final bool frontCamera;
+
+  /// Location access was granted (or not needed, API < 29) when read. Rows
+  /// read without it are read again once access is granted.
+  final bool locationReadable;
+  final int readAtMs;
+  const MediaLocationRow({
+    required this.fileId,
+    required this.fileModifiedAtMs,
+    this.lat,
+    this.lng,
+    required this.frontCamera,
+    required this.locationReadable,
+    required this.readAtMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['file_id'] = Variable<String>(fileId);
+    map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs);
+    if (!nullToAbsent || lat != null) {
+      map['lat'] = Variable<double>(lat);
+    }
+    if (!nullToAbsent || lng != null) {
+      map['lng'] = Variable<double>(lng);
+    }
+    map['front_camera'] = Variable<bool>(frontCamera);
+    map['location_readable'] = Variable<bool>(locationReadable);
+    map['read_at_ms'] = Variable<int>(readAtMs);
+    return map;
+  }
+
+  MediaLocationsCompanion toCompanion(bool nullToAbsent) {
+    return MediaLocationsCompanion(
+      fileId: Value(fileId),
+      fileModifiedAtMs: Value(fileModifiedAtMs),
+      lat: lat == null && nullToAbsent ? const Value.absent() : Value(lat),
+      lng: lng == null && nullToAbsent ? const Value.absent() : Value(lng),
+      frontCamera: Value(frontCamera),
+      locationReadable: Value(locationReadable),
+      readAtMs: Value(readAtMs),
+    );
+  }
+
+  factory MediaLocationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MediaLocationRow(
+      fileId: serializer.fromJson<String>(json['fileId']),
+      fileModifiedAtMs: serializer.fromJson<int>(json['fileModifiedAtMs']),
+      lat: serializer.fromJson<double?>(json['lat']),
+      lng: serializer.fromJson<double?>(json['lng']),
+      frontCamera: serializer.fromJson<bool>(json['frontCamera']),
+      locationReadable: serializer.fromJson<bool>(json['locationReadable']),
+      readAtMs: serializer.fromJson<int>(json['readAtMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fileId': serializer.toJson<String>(fileId),
+      'fileModifiedAtMs': serializer.toJson<int>(fileModifiedAtMs),
+      'lat': serializer.toJson<double?>(lat),
+      'lng': serializer.toJson<double?>(lng),
+      'frontCamera': serializer.toJson<bool>(frontCamera),
+      'locationReadable': serializer.toJson<bool>(locationReadable),
+      'readAtMs': serializer.toJson<int>(readAtMs),
+    };
+  }
+
+  MediaLocationRow copyWith({
+    String? fileId,
+    int? fileModifiedAtMs,
+    Value<double?> lat = const Value.absent(),
+    Value<double?> lng = const Value.absent(),
+    bool? frontCamera,
+    bool? locationReadable,
+    int? readAtMs,
+  }) => MediaLocationRow(
+    fileId: fileId ?? this.fileId,
+    fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+    lat: lat.present ? lat.value : this.lat,
+    lng: lng.present ? lng.value : this.lng,
+    frontCamera: frontCamera ?? this.frontCamera,
+    locationReadable: locationReadable ?? this.locationReadable,
+    readAtMs: readAtMs ?? this.readAtMs,
+  );
+  MediaLocationRow copyWithCompanion(MediaLocationsCompanion data) {
+    return MediaLocationRow(
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      fileModifiedAtMs: data.fileModifiedAtMs.present
+          ? data.fileModifiedAtMs.value
+          : this.fileModifiedAtMs,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lng: data.lng.present ? data.lng.value : this.lng,
+      frontCamera: data.frontCamera.present
+          ? data.frontCamera.value
+          : this.frontCamera,
+      locationReadable: data.locationReadable.present
+          ? data.locationReadable.value
+          : this.locationReadable,
+      readAtMs: data.readAtMs.present ? data.readAtMs.value : this.readAtMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MediaLocationRow(')
+          ..write('fileId: $fileId, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('frontCamera: $frontCamera, ')
+          ..write('locationReadable: $locationReadable, ')
+          ..write('readAtMs: $readAtMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    fileId,
+    fileModifiedAtMs,
+    lat,
+    lng,
+    frontCamera,
+    locationReadable,
+    readAtMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MediaLocationRow &&
+          other.fileId == this.fileId &&
+          other.fileModifiedAtMs == this.fileModifiedAtMs &&
+          other.lat == this.lat &&
+          other.lng == this.lng &&
+          other.frontCamera == this.frontCamera &&
+          other.locationReadable == this.locationReadable &&
+          other.readAtMs == this.readAtMs);
+}
+
+class MediaLocationsCompanion extends UpdateCompanion<MediaLocationRow> {
+  final Value<String> fileId;
+  final Value<int> fileModifiedAtMs;
+  final Value<double?> lat;
+  final Value<double?> lng;
+  final Value<bool> frontCamera;
+  final Value<bool> locationReadable;
+  final Value<int> readAtMs;
+  final Value<int> rowid;
+  const MediaLocationsCompanion({
+    this.fileId = const Value.absent(),
+    this.fileModifiedAtMs = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.frontCamera = const Value.absent(),
+    this.locationReadable = const Value.absent(),
+    this.readAtMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MediaLocationsCompanion.insert({
+    required String fileId,
+    required int fileModifiedAtMs,
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.frontCamera = const Value.absent(),
+    required bool locationReadable,
+    required int readAtMs,
+    this.rowid = const Value.absent(),
+  }) : fileId = Value(fileId),
+       fileModifiedAtMs = Value(fileModifiedAtMs),
+       locationReadable = Value(locationReadable),
+       readAtMs = Value(readAtMs);
+  static Insertable<MediaLocationRow> custom({
+    Expression<String>? fileId,
+    Expression<int>? fileModifiedAtMs,
+    Expression<double>? lat,
+    Expression<double>? lng,
+    Expression<bool>? frontCamera,
+    Expression<bool>? locationReadable,
+    Expression<int>? readAtMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fileId != null) 'file_id': fileId,
+      if (fileModifiedAtMs != null) 'file_modified_at_ms': fileModifiedAtMs,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      if (frontCamera != null) 'front_camera': frontCamera,
+      if (locationReadable != null) 'location_readable': locationReadable,
+      if (readAtMs != null) 'read_at_ms': readAtMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MediaLocationsCompanion copyWith({
+    Value<String>? fileId,
+    Value<int>? fileModifiedAtMs,
+    Value<double?>? lat,
+    Value<double?>? lng,
+    Value<bool>? frontCamera,
+    Value<bool>? locationReadable,
+    Value<int>? readAtMs,
+    Value<int>? rowid,
+  }) {
+    return MediaLocationsCompanion(
+      fileId: fileId ?? this.fileId,
+      fileModifiedAtMs: fileModifiedAtMs ?? this.fileModifiedAtMs,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      frontCamera: frontCamera ?? this.frontCamera,
+      locationReadable: locationReadable ?? this.locationReadable,
+      readAtMs: readAtMs ?? this.readAtMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (fileModifiedAtMs.present) {
+      map['file_modified_at_ms'] = Variable<int>(fileModifiedAtMs.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lng.present) {
+      map['lng'] = Variable<double>(lng.value);
+    }
+    if (frontCamera.present) {
+      map['front_camera'] = Variable<bool>(frontCamera.value);
+    }
+    if (locationReadable.present) {
+      map['location_readable'] = Variable<bool>(locationReadable.value);
+    }
+    if (readAtMs.present) {
+      map['read_at_ms'] = Variable<int>(readAtMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MediaLocationsCompanion(')
+          ..write('fileId: $fileId, ')
+          ..write('fileModifiedAtMs: $fileModifiedAtMs, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('frontCamera: $frontCamera, ')
+          ..write('locationReadable: $locationReadable, ')
+          ..write('readAtMs: $readAtMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SmartGroupsTable extends SmartGroups
+    with TableInfo<$SmartGroupsTable, SmartGroupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SmartGroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SmartGroupKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<SmartGroupKind>($SmartGroupsTable.$converterkind);
+  static const VerificationMeta _rankMeta = const VerificationMeta('rank');
+  @override
+  late final GeneratedColumn<int> rank = GeneratedColumn<int>(
+    'rank',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startAtMsMeta = const VerificationMeta(
+    'startAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> startAtMs = GeneratedColumn<int>(
+    'start_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endAtMsMeta = const VerificationMeta(
+    'endAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> endAtMs = GeneratedColumn<int>(
+    'end_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _centerLatMeta = const VerificationMeta(
+    'centerLat',
+  );
+  @override
+  late final GeneratedColumn<double> centerLat = GeneratedColumn<double>(
+    'center_lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _centerLngMeta = const VerificationMeta(
+    'centerLng',
+  );
+  @override
+  late final GeneratedColumn<double> centerLng = GeneratedColumn<double>(
+    'center_lng',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _coverFileIdMeta = const VerificationMeta(
+    'coverFileId',
+  );
+  @override
+  late final GeneratedColumn<String> coverFileId = GeneratedColumn<String>(
+    'cover_file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemCountMeta = const VerificationMeta(
+    'itemCount',
+  );
+  @override
+  late final GeneratedColumn<int> itemCount = GeneratedColumn<int>(
+    'item_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userTitleMeta = const VerificationMeta(
+    'userTitle',
+  );
+  @override
+  late final GeneratedColumn<String> userTitle = GeneratedColumn<String>(
+    'user_title',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _placeNameMeta = const VerificationMeta(
+    'placeName',
+  );
+  @override
+  late final GeneratedColumn<String> placeName = GeneratedColumn<String>(
+    'place_name',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 120,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _geocodedAtMsMeta = const VerificationMeta(
+    'geocodedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> geocodedAtMs = GeneratedColumn<int>(
+    'geocoded_at_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    kind,
+    rank,
+    startAtMs,
+    endAtMs,
+    centerLat,
+    centerLng,
+    coverFileId,
+    itemCount,
+    userTitle,
+    placeName,
+    geocodedAtMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'smart_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SmartGroupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('rank')) {
+      context.handle(
+        _rankMeta,
+        rank.isAcceptableOrUnknown(data['rank']!, _rankMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rankMeta);
+    }
+    if (data.containsKey('start_at_ms')) {
+      context.handle(
+        _startAtMsMeta,
+        startAtMs.isAcceptableOrUnknown(data['start_at_ms']!, _startAtMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startAtMsMeta);
+    }
+    if (data.containsKey('end_at_ms')) {
+      context.handle(
+        _endAtMsMeta,
+        endAtMs.isAcceptableOrUnknown(data['end_at_ms']!, _endAtMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endAtMsMeta);
+    }
+    if (data.containsKey('center_lat')) {
+      context.handle(
+        _centerLatMeta,
+        centerLat.isAcceptableOrUnknown(data['center_lat']!, _centerLatMeta),
+      );
+    }
+    if (data.containsKey('center_lng')) {
+      context.handle(
+        _centerLngMeta,
+        centerLng.isAcceptableOrUnknown(data['center_lng']!, _centerLngMeta),
+      );
+    }
+    if (data.containsKey('cover_file_id')) {
+      context.handle(
+        _coverFileIdMeta,
+        coverFileId.isAcceptableOrUnknown(
+          data['cover_file_id']!,
+          _coverFileIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_coverFileIdMeta);
+    }
+    if (data.containsKey('item_count')) {
+      context.handle(
+        _itemCountMeta,
+        itemCount.isAcceptableOrUnknown(data['item_count']!, _itemCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemCountMeta);
+    }
+    if (data.containsKey('user_title')) {
+      context.handle(
+        _userTitleMeta,
+        userTitle.isAcceptableOrUnknown(data['user_title']!, _userTitleMeta),
+      );
+    }
+    if (data.containsKey('place_name')) {
+      context.handle(
+        _placeNameMeta,
+        placeName.isAcceptableOrUnknown(data['place_name']!, _placeNameMeta),
+      );
+    }
+    if (data.containsKey('geocoded_at_ms')) {
+      context.handle(
+        _geocodedAtMsMeta,
+        geocodedAtMs.isAcceptableOrUnknown(
+          data['geocoded_at_ms']!,
+          _geocodedAtMsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SmartGroupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SmartGroupRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: $SmartGroupsTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
+      rank: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rank'],
+      )!,
+      startAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_at_ms'],
+      )!,
+      endAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_at_ms'],
+      )!,
+      centerLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}center_lat'],
+      ),
+      centerLng: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}center_lng'],
+      ),
+      coverFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_file_id'],
+      )!,
+      itemCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_count'],
+      )!,
+      userTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_title'],
+      ),
+      placeName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}place_name'],
+      ),
+      geocodedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}geocoded_at_ms'],
+      ),
+    );
+  }
+
+  @override
+  $SmartGroupsTable createAlias(String alias) {
+    return $SmartGroupsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SmartGroupKind, String, String> $converterkind =
+      const EnumNameConverter<SmartGroupKind>(SmartGroupKind.values);
+}
+
+class SmartGroupRow extends DataClass implements Insertable<SmartGroupRow> {
+  final int id;
+  final SmartGroupKind kind;
+
+  /// Places: 1 = largest shown place ("Place 1"). Trips: 0.
+  final int rank;
+
+  /// Min sortDateMs of the members.
+  final int startAtMs;
+
+  /// Max sortDateMs of the members.
+  final int endAtMs;
+  final double? centerLat;
+  final double? centerLng;
+
+  /// Newest member.
+  final String coverFileId;
+  final int itemCount;
+
+  /// Set by the user (rename); wins over everything. 1–80 chars.
+  final String? userTitle;
+
+  /// Online lookup result (setting on); null = none.
+  final String? placeName;
+
+  /// Last lookup attempt (success or failure), so failures aren't retried
+  /// on every run. Cleared when the setting is turned on again.
+  final int? geocodedAtMs;
+  const SmartGroupRow({
+    required this.id,
+    required this.kind,
+    required this.rank,
+    required this.startAtMs,
+    required this.endAtMs,
+    this.centerLat,
+    this.centerLng,
+    required this.coverFileId,
+    required this.itemCount,
+    this.userTitle,
+    this.placeName,
+    this.geocodedAtMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    {
+      map['kind'] = Variable<String>(
+        $SmartGroupsTable.$converterkind.toSql(kind),
+      );
+    }
+    map['rank'] = Variable<int>(rank);
+    map['start_at_ms'] = Variable<int>(startAtMs);
+    map['end_at_ms'] = Variable<int>(endAtMs);
+    if (!nullToAbsent || centerLat != null) {
+      map['center_lat'] = Variable<double>(centerLat);
+    }
+    if (!nullToAbsent || centerLng != null) {
+      map['center_lng'] = Variable<double>(centerLng);
+    }
+    map['cover_file_id'] = Variable<String>(coverFileId);
+    map['item_count'] = Variable<int>(itemCount);
+    if (!nullToAbsent || userTitle != null) {
+      map['user_title'] = Variable<String>(userTitle);
+    }
+    if (!nullToAbsent || placeName != null) {
+      map['place_name'] = Variable<String>(placeName);
+    }
+    if (!nullToAbsent || geocodedAtMs != null) {
+      map['geocoded_at_ms'] = Variable<int>(geocodedAtMs);
+    }
+    return map;
+  }
+
+  SmartGroupsCompanion toCompanion(bool nullToAbsent) {
+    return SmartGroupsCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      rank: Value(rank),
+      startAtMs: Value(startAtMs),
+      endAtMs: Value(endAtMs),
+      centerLat: centerLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(centerLat),
+      centerLng: centerLng == null && nullToAbsent
+          ? const Value.absent()
+          : Value(centerLng),
+      coverFileId: Value(coverFileId),
+      itemCount: Value(itemCount),
+      userTitle: userTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userTitle),
+      placeName: placeName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeName),
+      geocodedAtMs: geocodedAtMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(geocodedAtMs),
+    );
+  }
+
+  factory SmartGroupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SmartGroupRow(
+      id: serializer.fromJson<int>(json['id']),
+      kind: $SmartGroupsTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
+      rank: serializer.fromJson<int>(json['rank']),
+      startAtMs: serializer.fromJson<int>(json['startAtMs']),
+      endAtMs: serializer.fromJson<int>(json['endAtMs']),
+      centerLat: serializer.fromJson<double?>(json['centerLat']),
+      centerLng: serializer.fromJson<double?>(json['centerLng']),
+      coverFileId: serializer.fromJson<String>(json['coverFileId']),
+      itemCount: serializer.fromJson<int>(json['itemCount']),
+      userTitle: serializer.fromJson<String?>(json['userTitle']),
+      placeName: serializer.fromJson<String?>(json['placeName']),
+      geocodedAtMs: serializer.fromJson<int?>(json['geocodedAtMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'kind': serializer.toJson<String>(
+        $SmartGroupsTable.$converterkind.toJson(kind),
+      ),
+      'rank': serializer.toJson<int>(rank),
+      'startAtMs': serializer.toJson<int>(startAtMs),
+      'endAtMs': serializer.toJson<int>(endAtMs),
+      'centerLat': serializer.toJson<double?>(centerLat),
+      'centerLng': serializer.toJson<double?>(centerLng),
+      'coverFileId': serializer.toJson<String>(coverFileId),
+      'itemCount': serializer.toJson<int>(itemCount),
+      'userTitle': serializer.toJson<String?>(userTitle),
+      'placeName': serializer.toJson<String?>(placeName),
+      'geocodedAtMs': serializer.toJson<int?>(geocodedAtMs),
+    };
+  }
+
+  SmartGroupRow copyWith({
+    int? id,
+    SmartGroupKind? kind,
+    int? rank,
+    int? startAtMs,
+    int? endAtMs,
+    Value<double?> centerLat = const Value.absent(),
+    Value<double?> centerLng = const Value.absent(),
+    String? coverFileId,
+    int? itemCount,
+    Value<String?> userTitle = const Value.absent(),
+    Value<String?> placeName = const Value.absent(),
+    Value<int?> geocodedAtMs = const Value.absent(),
+  }) => SmartGroupRow(
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    rank: rank ?? this.rank,
+    startAtMs: startAtMs ?? this.startAtMs,
+    endAtMs: endAtMs ?? this.endAtMs,
+    centerLat: centerLat.present ? centerLat.value : this.centerLat,
+    centerLng: centerLng.present ? centerLng.value : this.centerLng,
+    coverFileId: coverFileId ?? this.coverFileId,
+    itemCount: itemCount ?? this.itemCount,
+    userTitle: userTitle.present ? userTitle.value : this.userTitle,
+    placeName: placeName.present ? placeName.value : this.placeName,
+    geocodedAtMs: geocodedAtMs.present ? geocodedAtMs.value : this.geocodedAtMs,
+  );
+  SmartGroupRow copyWithCompanion(SmartGroupsCompanion data) {
+    return SmartGroupRow(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      rank: data.rank.present ? data.rank.value : this.rank,
+      startAtMs: data.startAtMs.present ? data.startAtMs.value : this.startAtMs,
+      endAtMs: data.endAtMs.present ? data.endAtMs.value : this.endAtMs,
+      centerLat: data.centerLat.present ? data.centerLat.value : this.centerLat,
+      centerLng: data.centerLng.present ? data.centerLng.value : this.centerLng,
+      coverFileId: data.coverFileId.present
+          ? data.coverFileId.value
+          : this.coverFileId,
+      itemCount: data.itemCount.present ? data.itemCount.value : this.itemCount,
+      userTitle: data.userTitle.present ? data.userTitle.value : this.userTitle,
+      placeName: data.placeName.present ? data.placeName.value : this.placeName,
+      geocodedAtMs: data.geocodedAtMs.present
+          ? data.geocodedAtMs.value
+          : this.geocodedAtMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SmartGroupRow(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('rank: $rank, ')
+          ..write('startAtMs: $startAtMs, ')
+          ..write('endAtMs: $endAtMs, ')
+          ..write('centerLat: $centerLat, ')
+          ..write('centerLng: $centerLng, ')
+          ..write('coverFileId: $coverFileId, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('userTitle: $userTitle, ')
+          ..write('placeName: $placeName, ')
+          ..write('geocodedAtMs: $geocodedAtMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    kind,
+    rank,
+    startAtMs,
+    endAtMs,
+    centerLat,
+    centerLng,
+    coverFileId,
+    itemCount,
+    userTitle,
+    placeName,
+    geocodedAtMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SmartGroupRow &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.rank == this.rank &&
+          other.startAtMs == this.startAtMs &&
+          other.endAtMs == this.endAtMs &&
+          other.centerLat == this.centerLat &&
+          other.centerLng == this.centerLng &&
+          other.coverFileId == this.coverFileId &&
+          other.itemCount == this.itemCount &&
+          other.userTitle == this.userTitle &&
+          other.placeName == this.placeName &&
+          other.geocodedAtMs == this.geocodedAtMs);
+}
+
+class SmartGroupsCompanion extends UpdateCompanion<SmartGroupRow> {
+  final Value<int> id;
+  final Value<SmartGroupKind> kind;
+  final Value<int> rank;
+  final Value<int> startAtMs;
+  final Value<int> endAtMs;
+  final Value<double?> centerLat;
+  final Value<double?> centerLng;
+  final Value<String> coverFileId;
+  final Value<int> itemCount;
+  final Value<String?> userTitle;
+  final Value<String?> placeName;
+  final Value<int?> geocodedAtMs;
+  const SmartGroupsCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.rank = const Value.absent(),
+    this.startAtMs = const Value.absent(),
+    this.endAtMs = const Value.absent(),
+    this.centerLat = const Value.absent(),
+    this.centerLng = const Value.absent(),
+    this.coverFileId = const Value.absent(),
+    this.itemCount = const Value.absent(),
+    this.userTitle = const Value.absent(),
+    this.placeName = const Value.absent(),
+    this.geocodedAtMs = const Value.absent(),
+  });
+  SmartGroupsCompanion.insert({
+    this.id = const Value.absent(),
+    required SmartGroupKind kind,
+    required int rank,
+    required int startAtMs,
+    required int endAtMs,
+    this.centerLat = const Value.absent(),
+    this.centerLng = const Value.absent(),
+    required String coverFileId,
+    required int itemCount,
+    this.userTitle = const Value.absent(),
+    this.placeName = const Value.absent(),
+    this.geocodedAtMs = const Value.absent(),
+  }) : kind = Value(kind),
+       rank = Value(rank),
+       startAtMs = Value(startAtMs),
+       endAtMs = Value(endAtMs),
+       coverFileId = Value(coverFileId),
+       itemCount = Value(itemCount);
+  static Insertable<SmartGroupRow> custom({
+    Expression<int>? id,
+    Expression<String>? kind,
+    Expression<int>? rank,
+    Expression<int>? startAtMs,
+    Expression<int>? endAtMs,
+    Expression<double>? centerLat,
+    Expression<double>? centerLng,
+    Expression<String>? coverFileId,
+    Expression<int>? itemCount,
+    Expression<String>? userTitle,
+    Expression<String>? placeName,
+    Expression<int>? geocodedAtMs,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (rank != null) 'rank': rank,
+      if (startAtMs != null) 'start_at_ms': startAtMs,
+      if (endAtMs != null) 'end_at_ms': endAtMs,
+      if (centerLat != null) 'center_lat': centerLat,
+      if (centerLng != null) 'center_lng': centerLng,
+      if (coverFileId != null) 'cover_file_id': coverFileId,
+      if (itemCount != null) 'item_count': itemCount,
+      if (userTitle != null) 'user_title': userTitle,
+      if (placeName != null) 'place_name': placeName,
+      if (geocodedAtMs != null) 'geocoded_at_ms': geocodedAtMs,
+    });
+  }
+
+  SmartGroupsCompanion copyWith({
+    Value<int>? id,
+    Value<SmartGroupKind>? kind,
+    Value<int>? rank,
+    Value<int>? startAtMs,
+    Value<int>? endAtMs,
+    Value<double?>? centerLat,
+    Value<double?>? centerLng,
+    Value<String>? coverFileId,
+    Value<int>? itemCount,
+    Value<String?>? userTitle,
+    Value<String?>? placeName,
+    Value<int?>? geocodedAtMs,
+  }) {
+    return SmartGroupsCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      rank: rank ?? this.rank,
+      startAtMs: startAtMs ?? this.startAtMs,
+      endAtMs: endAtMs ?? this.endAtMs,
+      centerLat: centerLat ?? this.centerLat,
+      centerLng: centerLng ?? this.centerLng,
+      coverFileId: coverFileId ?? this.coverFileId,
+      itemCount: itemCount ?? this.itemCount,
+      userTitle: userTitle ?? this.userTitle,
+      placeName: placeName ?? this.placeName,
+      geocodedAtMs: geocodedAtMs ?? this.geocodedAtMs,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $SmartGroupsTable.$converterkind.toSql(kind.value),
+      );
+    }
+    if (rank.present) {
+      map['rank'] = Variable<int>(rank.value);
+    }
+    if (startAtMs.present) {
+      map['start_at_ms'] = Variable<int>(startAtMs.value);
+    }
+    if (endAtMs.present) {
+      map['end_at_ms'] = Variable<int>(endAtMs.value);
+    }
+    if (centerLat.present) {
+      map['center_lat'] = Variable<double>(centerLat.value);
+    }
+    if (centerLng.present) {
+      map['center_lng'] = Variable<double>(centerLng.value);
+    }
+    if (coverFileId.present) {
+      map['cover_file_id'] = Variable<String>(coverFileId.value);
+    }
+    if (itemCount.present) {
+      map['item_count'] = Variable<int>(itemCount.value);
+    }
+    if (userTitle.present) {
+      map['user_title'] = Variable<String>(userTitle.value);
+    }
+    if (placeName.present) {
+      map['place_name'] = Variable<String>(placeName.value);
+    }
+    if (geocodedAtMs.present) {
+      map['geocoded_at_ms'] = Variable<int>(geocodedAtMs.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SmartGroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('rank: $rank, ')
+          ..write('startAtMs: $startAtMs, ')
+          ..write('endAtMs: $endAtMs, ')
+          ..write('centerLat: $centerLat, ')
+          ..write('centerLng: $centerLng, ')
+          ..write('coverFileId: $coverFileId, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('userTitle: $userTitle, ')
+          ..write('placeName: $placeName, ')
+          ..write('geocodedAtMs: $geocodedAtMs')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SmartGroupItemsTable extends SmartGroupItems
+    with TableInfo<$SmartGroupItemsTable, SmartGroupItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SmartGroupItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<int> groupId = GeneratedColumn<int>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES smart_groups (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [groupId, fileId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'smart_group_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SmartGroupItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId, fileId};
+  @override
+  SmartGroupItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SmartGroupItemRow(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}group_id'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+    );
+  }
+
+  @override
+  $SmartGroupItemsTable createAlias(String alias) {
+    return $SmartGroupItemsTable(attachedDatabase, alias);
+  }
+}
+
+class SmartGroupItemRow extends DataClass
+    implements Insertable<SmartGroupItemRow> {
+  final int groupId;
+  final String fileId;
+  const SmartGroupItemRow({required this.groupId, required this.fileId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<int>(groupId);
+    map['file_id'] = Variable<String>(fileId);
+    return map;
+  }
+
+  SmartGroupItemsCompanion toCompanion(bool nullToAbsent) {
+    return SmartGroupItemsCompanion(
+      groupId: Value(groupId),
+      fileId: Value(fileId),
+    );
+  }
+
+  factory SmartGroupItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SmartGroupItemRow(
+      groupId: serializer.fromJson<int>(json['groupId']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<int>(groupId),
+      'fileId': serializer.toJson<String>(fileId),
+    };
+  }
+
+  SmartGroupItemRow copyWith({int? groupId, String? fileId}) =>
+      SmartGroupItemRow(
+        groupId: groupId ?? this.groupId,
+        fileId: fileId ?? this.fileId,
+      );
+  SmartGroupItemRow copyWithCompanion(SmartGroupItemsCompanion data) {
+    return SmartGroupItemRow(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SmartGroupItemRow(')
+          ..write('groupId: $groupId, ')
+          ..write('fileId: $fileId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, fileId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SmartGroupItemRow &&
+          other.groupId == this.groupId &&
+          other.fileId == this.fileId);
+}
+
+class SmartGroupItemsCompanion extends UpdateCompanion<SmartGroupItemRow> {
+  final Value<int> groupId;
+  final Value<String> fileId;
+  final Value<int> rowid;
+  const SmartGroupItemsCompanion({
+    this.groupId = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SmartGroupItemsCompanion.insert({
+    required int groupId,
+    required String fileId,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       fileId = Value(fileId);
+  static Insertable<SmartGroupItemRow> custom({
+    Expression<int>? groupId,
+    Expression<String>? fileId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (fileId != null) 'file_id': fileId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SmartGroupItemsCompanion copyWith({
+    Value<int>? groupId,
+    Value<String>? fileId,
+    Value<int>? rowid,
+  }) {
+    return SmartGroupItemsCompanion(
+      groupId: groupId ?? this.groupId,
+      fileId: fileId ?? this.fileId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<int>(groupId.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SmartGroupItemsCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('fileId: $fileId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7649,6 +11513,22 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SelectionItemsTable selectionItems = $SelectionItemsTable(this);
   late final $SelectionSnapshotsTable selectionSnapshots =
       $SelectionSnapshotsTable(this);
+  late final $SwipeSourcesTable swipeSources = $SwipeSourcesTable(this);
+  late final $SwipeSourceItemsTable swipeSourceItems = $SwipeSourceItemsTable(
+    this,
+  );
+  late final $ImageSignalsTable imageSignals = $ImageSignalsTable(this);
+  late final $SimilarGroupsTable similarGroups = $SimilarGroupsTable(this);
+  late final $SimilarGroupItemsTable similarGroupItems =
+      $SimilarGroupItemsTable(this);
+  late final $SimilarDismissedTable similarDismissed = $SimilarDismissedTable(
+    this,
+  );
+  late final $MediaLocationsTable mediaLocations = $MediaLocationsTable(this);
+  late final $SmartGroupsTable smartGroups = $SmartGroupsTable(this);
+  late final $SmartGroupItemsTable smartGroupItems = $SmartGroupItemsTable(
+    this,
+  );
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -7721,6 +11601,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'rl_preset',
     'CREATE INDEX rl_preset ON reviewed_labels (preset_key)',
   );
+  late final Index oneOpenSourcePerSession = Index(
+    'one_open_source_per_session',
+    'CREATE UNIQUE INDEX one_open_source_per_session ON swipe_sources (session_id) WHERE closed_at IS NULL',
+  );
+  late final Index ssSessionClosedSeq = Index(
+    'ss_session_closed_seq',
+    'CREATE INDEX ss_session_closed_seq ON swipe_sources (session_id, closed_at_seq)',
+  );
+  late final Index ssiFile = Index(
+    'ssi_file',
+    'CREATE INDEX ssi_file ON swipe_source_items (file_id)',
+  );
+  late final Index isBlur = Index(
+    'is_blur',
+    'CREATE INDEX is_blur ON image_signals (blur_score)',
+  );
+  late final Index sgiFile = Index(
+    'sgi_file',
+    'CREATE INDEX sgi_file ON similar_group_items (file_id)',
+  );
+  late final Index sgKindRank = Index(
+    'sg_kind_rank',
+    'CREATE INDEX sg_kind_rank ON smart_groups (kind, rank)',
+  );
+  late final Index smgiFile = Index(
+    'smgi_file',
+    'CREATE INDEX smgi_file ON smart_group_items (file_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7741,6 +11649,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     reviewedLabels,
     selectionItems,
     selectionSnapshots,
+    swipeSources,
+    swipeSourceItems,
+    imageSignals,
+    similarGroups,
+    similarGroupItems,
+    similarDismissed,
+    mediaLocations,
+    smartGroups,
+    smartGroupItems,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -7759,6 +11676,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     presetsNameNocase,
     rlFilePreset,
     rlPreset,
+    oneOpenSourcePerSession,
+    ssSessionClosedSeq,
+    ssiFile,
+    isBlur,
+    sgiFile,
+    sgKindRank,
+    smgiFile,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7803,6 +11727,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('rename_batch_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('swipe_sources', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'swipe_sources',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('swipe_source_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'similar_groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('similar_group_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'smart_groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('smart_group_items', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -8556,6 +12508,24 @@ final class $$SessionsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$SwipeSourcesTable, List<SwipeSourceRow>>
+  _swipeSourcesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.swipeSources,
+    aliasName: 'sessions__id__swipe_sources__session_id',
+  );
+
+  $$SwipeSourcesTableProcessedTableManager get swipeSourcesRefs {
+    final manager = $$SwipeSourcesTableTableManager(
+      $_db,
+      $_db.swipeSources,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_swipeSourcesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$SessionsTableFilterComposer
@@ -8688,6 +12658,31 @@ class $$SessionsTableFilterComposer
           }) => $$RenameBatchesTableFilterComposer(
             $db: $db,
             $table: $db.renameBatches,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> swipeSourcesRefs(
+    Expression<bool> Function($$SwipeSourcesTableFilterComposer f) f,
+  ) {
+    final $$SwipeSourcesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.swipeSources,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourcesTableFilterComposer(
+            $db: $db,
+            $table: $db.swipeSources,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8883,6 +12878,31 @@ class $$SessionsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> swipeSourcesRefs<T extends Object>(
+    Expression<T> Function($$SwipeSourcesTableAnnotationComposer a) f,
+  ) {
+    final $$SwipeSourcesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.swipeSources,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourcesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.swipeSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SessionsTableTableManager
@@ -8902,6 +12922,7 @@ class $$SessionsTableTableManager
             bool sessionActionsRefs,
             bool pendingDeletesRefs,
             bool renameBatchesRefs,
+            bool swipeSourcesRefs,
           })
         > {
   $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
@@ -8980,6 +13001,7 @@ class $$SessionsTableTableManager
                 sessionActionsRefs = false,
                 pendingDeletesRefs = false,
                 renameBatchesRefs = false,
+                swipeSourcesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -8987,6 +13009,7 @@ class $$SessionsTableTableManager
                     if (sessionActionsRefs) db.sessionActions,
                     if (pendingDeletesRefs) db.pendingDeletes,
                     if (renameBatchesRefs) db.renameBatches,
+                    if (swipeSourcesRefs) db.swipeSources,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -9051,6 +13074,26 @@ class $$SessionsTableTableManager
                           referencedColumn: 'session_id',
                           typedResults: items,
                         ),
+                      if (swipeSourcesRefs)
+                        await $_getPrefetchedDataByColumns<
+                          SessionRow,
+                          $SessionsTable,
+                          SwipeSourceRow,
+                          $SwipeSourcesTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SessionsTableReferences
+                              ._swipeSourcesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).swipeSourcesRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'session_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9075,6 +13118,7 @@ typedef $$SessionsTableProcessedTableManager =
         bool sessionActionsRefs,
         bool pendingDeletesRefs,
         bool renameBatchesRefs,
+        bool swipeSourcesRefs,
       })
     >;
 typedef $$SessionActionsTableCreateCompanionBuilder =
@@ -12956,6 +17000,2855 @@ typedef $$SelectionSnapshotsTableProcessedTableManager =
       SelectionSnapshotRow,
       PrefetchHooks Function()
     >;
+typedef $$SwipeSourcesTableCreateCompanionBuilder =
+    SwipeSourcesCompanion Function({
+      Value<int> id,
+      required int sessionId,
+      required SwipeSourceKind kind,
+      required SwipeSourceOrigin origin,
+      required String title,
+      Value<String?> filterJson,
+      Value<int> itemCount,
+      Value<int?> groupCount,
+      Value<String?> returnRoute,
+      required int openedAfterSeq,
+      Value<int?> closedAtSeq,
+      required DateTime openedAt,
+      Value<DateTime?> closedAt,
+    });
+typedef $$SwipeSourcesTableUpdateCompanionBuilder =
+    SwipeSourcesCompanion Function({
+      Value<int> id,
+      Value<int> sessionId,
+      Value<SwipeSourceKind> kind,
+      Value<SwipeSourceOrigin> origin,
+      Value<String> title,
+      Value<String?> filterJson,
+      Value<int> itemCount,
+      Value<int?> groupCount,
+      Value<String?> returnRoute,
+      Value<int> openedAfterSeq,
+      Value<int?> closedAtSeq,
+      Value<DateTime> openedAt,
+      Value<DateTime?> closedAt,
+    });
+
+final class $$SwipeSourcesTableReferences
+    extends BaseReferences<_$AppDatabase, $SwipeSourcesTable, SwipeSourceRow> {
+  $$SwipeSourcesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $SessionsTable _sessionIdTable(_$AppDatabase db) =>
+      db.sessions.createAlias('swipe_sources__session_id__sessions__id');
+
+  $$SessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
+    final manager = $$SessionsTableTableManager(
+      $_db,
+      $_db.sessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$SwipeSourceItemsTable, List<SwipeSourceItemRow>>
+  _swipeSourceItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.swipeSourceItems,
+    aliasName: 'swipe_sources__id__swipe_source_items__source_id',
+  );
+
+  $$SwipeSourceItemsTableProcessedTableManager get swipeSourceItemsRefs {
+    final manager = $$SwipeSourceItemsTableTableManager(
+      $_db,
+      $_db.swipeSourceItems,
+    ).filter((f) => f.sourceId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _swipeSourceItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$SwipeSourcesTableFilterComposer
+    extends Composer<_$AppDatabase, $SwipeSourcesTable> {
+  $$SwipeSourcesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SwipeSourceKind, SwipeSourceKind, String>
+  get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SwipeSourceOrigin, SwipeSourceOrigin, String>
+  get origin => $composableBuilder(
+    column: $table.origin,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get groupCount => $composableBuilder(
+    column: $table.groupCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get returnRoute => $composableBuilder(
+    column: $table.returnRoute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get openedAfterSeq => $composableBuilder(
+    column: $table.openedAfterSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get closedAtSeq => $composableBuilder(
+    column: $table.closedAtSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SessionsTableFilterComposer get sessionId {
+    final $$SessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> swipeSourceItemsRefs(
+    Expression<bool> Function($$SwipeSourceItemsTableFilterComposer f) f,
+  ) {
+    final $$SwipeSourceItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.swipeSourceItems,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourceItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.swipeSourceItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SwipeSourcesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SwipeSourcesTable> {
+  $$SwipeSourcesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get origin => $composableBuilder(
+    column: $table.origin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get groupCount => $composableBuilder(
+    column: $table.groupCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get returnRoute => $composableBuilder(
+    column: $table.returnRoute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get openedAfterSeq => $composableBuilder(
+    column: $table.openedAfterSeq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get closedAtSeq => $composableBuilder(
+    column: $table.closedAtSeq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SessionsTableOrderingComposer get sessionId {
+    final $$SessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SwipeSourcesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SwipeSourcesTable> {
+  $$SwipeSourcesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SwipeSourceKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SwipeSourceOrigin, String> get origin =>
+      $composableBuilder(column: $table.origin, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get itemCount =>
+      $composableBuilder(column: $table.itemCount, builder: (column) => column);
+
+  GeneratedColumn<int> get groupCount => $composableBuilder(
+    column: $table.groupCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get returnRoute => $composableBuilder(
+    column: $table.returnRoute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get openedAfterSeq => $composableBuilder(
+    column: $table.openedAfterSeq,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get closedAtSeq => $composableBuilder(
+    column: $table.closedAtSeq,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get openedAt =>
+      $composableBuilder(column: $table.openedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get closedAt =>
+      $composableBuilder(column: $table.closedAt, builder: (column) => column);
+
+  $$SessionsTableAnnotationComposer get sessionId {
+    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> swipeSourceItemsRefs<T extends Object>(
+    Expression<T> Function($$SwipeSourceItemsTableAnnotationComposer a) f,
+  ) {
+    final $$SwipeSourceItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.swipeSourceItems,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourceItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.swipeSourceItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SwipeSourcesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SwipeSourcesTable,
+          SwipeSourceRow,
+          $$SwipeSourcesTableFilterComposer,
+          $$SwipeSourcesTableOrderingComposer,
+          $$SwipeSourcesTableAnnotationComposer,
+          $$SwipeSourcesTableCreateCompanionBuilder,
+          $$SwipeSourcesTableUpdateCompanionBuilder,
+          (SwipeSourceRow, $$SwipeSourcesTableReferences),
+          SwipeSourceRow,
+          PrefetchHooks Function({bool sessionId, bool swipeSourceItemsRefs})
+        > {
+  $$SwipeSourcesTableTableManager(_$AppDatabase db, $SwipeSourcesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SwipeSourcesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SwipeSourcesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SwipeSourcesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sessionId = const Value.absent(),
+                Value<SwipeSourceKind> kind = const Value.absent(),
+                Value<SwipeSourceOrigin> origin = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> filterJson = const Value.absent(),
+                Value<int> itemCount = const Value.absent(),
+                Value<int?> groupCount = const Value.absent(),
+                Value<String?> returnRoute = const Value.absent(),
+                Value<int> openedAfterSeq = const Value.absent(),
+                Value<int?> closedAtSeq = const Value.absent(),
+                Value<DateTime> openedAt = const Value.absent(),
+                Value<DateTime?> closedAt = const Value.absent(),
+              }) => SwipeSourcesCompanion(
+                id: id,
+                sessionId: sessionId,
+                kind: kind,
+                origin: origin,
+                title: title,
+                filterJson: filterJson,
+                itemCount: itemCount,
+                groupCount: groupCount,
+                returnRoute: returnRoute,
+                openedAfterSeq: openedAfterSeq,
+                closedAtSeq: closedAtSeq,
+                openedAt: openedAt,
+                closedAt: closedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sessionId,
+                required SwipeSourceKind kind,
+                required SwipeSourceOrigin origin,
+                required String title,
+                Value<String?> filterJson = const Value.absent(),
+                Value<int> itemCount = const Value.absent(),
+                Value<int?> groupCount = const Value.absent(),
+                Value<String?> returnRoute = const Value.absent(),
+                required int openedAfterSeq,
+                Value<int?> closedAtSeq = const Value.absent(),
+                required DateTime openedAt,
+                Value<DateTime?> closedAt = const Value.absent(),
+              }) => SwipeSourcesCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                kind: kind,
+                origin: origin,
+                title: title,
+                filterJson: filterJson,
+                itemCount: itemCount,
+                groupCount: groupCount,
+                returnRoute: returnRoute,
+                openedAfterSeq: openedAfterSeq,
+                closedAtSeq: closedAtSeq,
+                openedAt: openedAt,
+                closedAt: closedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SwipeSourcesTable, SwipeSourceRow>(table),
+                  $$SwipeSourcesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({sessionId = false, swipeSourceItemsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (swipeSourceItemsRefs) db.swipeSourceItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sessionId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.sessionId,
+                            referencedTable: $$SwipeSourcesTableReferences
+                                ._sessionIdTable(db),
+                            referencedColumn: $$SwipeSourcesTableReferences
+                                ._sessionIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (swipeSourceItemsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          SwipeSourceRow,
+                          $SwipeSourcesTable,
+                          SwipeSourceItemRow,
+                          $SwipeSourceItemsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SwipeSourcesTableReferences
+                              ._swipeSourceItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SwipeSourcesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).swipeSourceItemsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'source_id',
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$SwipeSourcesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SwipeSourcesTable,
+      SwipeSourceRow,
+      $$SwipeSourcesTableFilterComposer,
+      $$SwipeSourcesTableOrderingComposer,
+      $$SwipeSourcesTableAnnotationComposer,
+      $$SwipeSourcesTableCreateCompanionBuilder,
+      $$SwipeSourcesTableUpdateCompanionBuilder,
+      (SwipeSourceRow, $$SwipeSourcesTableReferences),
+      SwipeSourceRow,
+      PrefetchHooks Function({bool sessionId, bool swipeSourceItemsRefs})
+    >;
+typedef $$SwipeSourceItemsTableCreateCompanionBuilder =
+    SwipeSourceItemsCompanion Function({
+      required int sourceId,
+      required int position,
+      required String fileId,
+      Value<int?> groupIndex,
+      Value<int> rowid,
+    });
+typedef $$SwipeSourceItemsTableUpdateCompanionBuilder =
+    SwipeSourceItemsCompanion Function({
+      Value<int> sourceId,
+      Value<int> position,
+      Value<String> fileId,
+      Value<int?> groupIndex,
+      Value<int> rowid,
+    });
+
+final class $$SwipeSourceItemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SwipeSourceItemsTable,
+          SwipeSourceItemRow
+        > {
+  $$SwipeSourceItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SwipeSourcesTable _sourceIdTable(_$AppDatabase db) => db.swipeSources
+      .createAlias('swipe_source_items__source_id__swipe_sources__id');
+
+  $$SwipeSourcesTableProcessedTableManager get sourceId {
+    final $_column = $_itemColumn<int>('source_id')!;
+
+    final manager = $$SwipeSourcesTableTableManager(
+      $_db,
+      $_db.swipeSources,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SwipeSourceItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $SwipeSourceItemsTable> {
+  $$SwipeSourceItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SwipeSourcesTableFilterComposer get sourceId {
+    final $$SwipeSourcesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.swipeSources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourcesTableFilterComposer(
+            $db: $db,
+            $table: $db.swipeSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SwipeSourceItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SwipeSourceItemsTable> {
+  $$SwipeSourceItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SwipeSourcesTableOrderingComposer get sourceId {
+    final $$SwipeSourcesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.swipeSources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourcesTableOrderingComposer(
+            $db: $db,
+            $table: $db.swipeSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SwipeSourceItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SwipeSourceItemsTable> {
+  $$SwipeSourceItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get groupIndex => $composableBuilder(
+    column: $table.groupIndex,
+    builder: (column) => column,
+  );
+
+  $$SwipeSourcesTableAnnotationComposer get sourceId {
+    final $$SwipeSourcesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.swipeSources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SwipeSourcesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.swipeSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SwipeSourceItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SwipeSourceItemsTable,
+          SwipeSourceItemRow,
+          $$SwipeSourceItemsTableFilterComposer,
+          $$SwipeSourceItemsTableOrderingComposer,
+          $$SwipeSourceItemsTableAnnotationComposer,
+          $$SwipeSourceItemsTableCreateCompanionBuilder,
+          $$SwipeSourceItemsTableUpdateCompanionBuilder,
+          (SwipeSourceItemRow, $$SwipeSourceItemsTableReferences),
+          SwipeSourceItemRow,
+          PrefetchHooks Function({bool sourceId})
+        > {
+  $$SwipeSourceItemsTableTableManager(
+    _$AppDatabase db,
+    $SwipeSourceItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SwipeSourceItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SwipeSourceItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SwipeSourceItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> sourceId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<int?> groupIndex = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SwipeSourceItemsCompanion(
+                sourceId: sourceId,
+                position: position,
+                fileId: fileId,
+                groupIndex: groupIndex,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int sourceId,
+                required int position,
+                required String fileId,
+                Value<int?> groupIndex = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SwipeSourceItemsCompanion.insert(
+                sourceId: sourceId,
+                position: position,
+                fileId: fileId,
+                groupIndex: groupIndex,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SwipeSourceItemsTable, SwipeSourceItemRow>(
+                    table,
+                  ),
+                  $$SwipeSourceItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sourceId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sourceId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.sourceId,
+                        referencedTable: $$SwipeSourceItemsTableReferences
+                            ._sourceIdTable(db),
+                        referencedColumn: $$SwipeSourceItemsTableReferences
+                            ._sourceIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SwipeSourceItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SwipeSourceItemsTable,
+      SwipeSourceItemRow,
+      $$SwipeSourceItemsTableFilterComposer,
+      $$SwipeSourceItemsTableOrderingComposer,
+      $$SwipeSourceItemsTableAnnotationComposer,
+      $$SwipeSourceItemsTableCreateCompanionBuilder,
+      $$SwipeSourceItemsTableUpdateCompanionBuilder,
+      (SwipeSourceItemRow, $$SwipeSourceItemsTableReferences),
+      SwipeSourceItemRow,
+      PrefetchHooks Function({bool sourceId})
+    >;
+typedef $$ImageSignalsTableCreateCompanionBuilder =
+    ImageSignalsCompanion Function({
+      required String fileId,
+      required SignalStatus status,
+      Value<int?> dHash,
+      Value<double?> blurScore,
+      required int fileModifiedAtMs,
+      required int algoVersion,
+      Value<int> rowid,
+    });
+typedef $$ImageSignalsTableUpdateCompanionBuilder =
+    ImageSignalsCompanion Function({
+      Value<String> fileId,
+      Value<SignalStatus> status,
+      Value<int?> dHash,
+      Value<double?> blurScore,
+      Value<int> fileModifiedAtMs,
+      Value<int> algoVersion,
+      Value<int> rowid,
+    });
+
+class $$ImageSignalsTableFilterComposer
+    extends Composer<_$AppDatabase, $ImageSignalsTable> {
+  $$ImageSignalsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SignalStatus, SignalStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get dHash => $composableBuilder(
+    column: $table.dHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get blurScore => $composableBuilder(
+    column: $table.blurScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get algoVersion => $composableBuilder(
+    column: $table.algoVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ImageSignalsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ImageSignalsTable> {
+  $$ImageSignalsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dHash => $composableBuilder(
+    column: $table.dHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get blurScore => $composableBuilder(
+    column: $table.blurScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get algoVersion => $composableBuilder(
+    column: $table.algoVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ImageSignalsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ImageSignalsTable> {
+  $$ImageSignalsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SignalStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get dHash =>
+      $composableBuilder(column: $table.dHash, builder: (column) => column);
+
+  GeneratedColumn<double> get blurScore =>
+      $composableBuilder(column: $table.blurScore, builder: (column) => column);
+
+  GeneratedColumn<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get algoVersion => $composableBuilder(
+    column: $table.algoVersion,
+    builder: (column) => column,
+  );
+}
+
+class $$ImageSignalsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ImageSignalsTable,
+          ImageSignalRow,
+          $$ImageSignalsTableFilterComposer,
+          $$ImageSignalsTableOrderingComposer,
+          $$ImageSignalsTableAnnotationComposer,
+          $$ImageSignalsTableCreateCompanionBuilder,
+          $$ImageSignalsTableUpdateCompanionBuilder,
+          (
+            ImageSignalRow,
+            BaseReferences<_$AppDatabase, $ImageSignalsTable, ImageSignalRow>,
+          ),
+          ImageSignalRow,
+          PrefetchHooks Function()
+        > {
+  $$ImageSignalsTableTableManager(_$AppDatabase db, $ImageSignalsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ImageSignalsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ImageSignalsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ImageSignalsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<SignalStatus> status = const Value.absent(),
+                Value<int?> dHash = const Value.absent(),
+                Value<double?> blurScore = const Value.absent(),
+                Value<int> fileModifiedAtMs = const Value.absent(),
+                Value<int> algoVersion = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ImageSignalsCompanion(
+                fileId: fileId,
+                status: status,
+                dHash: dHash,
+                blurScore: blurScore,
+                fileModifiedAtMs: fileModifiedAtMs,
+                algoVersion: algoVersion,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required SignalStatus status,
+                Value<int?> dHash = const Value.absent(),
+                Value<double?> blurScore = const Value.absent(),
+                required int fileModifiedAtMs,
+                required int algoVersion,
+                Value<int> rowid = const Value.absent(),
+              }) => ImageSignalsCompanion.insert(
+                fileId: fileId,
+                status: status,
+                dHash: dHash,
+                blurScore: blurScore,
+                fileModifiedAtMs: fileModifiedAtMs,
+                algoVersion: algoVersion,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ImageSignalsTable, ImageSignalRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ImageSignalsTable,
+                    ImageSignalRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ImageSignalsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ImageSignalsTable,
+      ImageSignalRow,
+      $$ImageSignalsTableFilterComposer,
+      $$ImageSignalsTableOrderingComposer,
+      $$ImageSignalsTableAnnotationComposer,
+      $$ImageSignalsTableCreateCompanionBuilder,
+      $$ImageSignalsTableUpdateCompanionBuilder,
+      (
+        ImageSignalRow,
+        BaseReferences<_$AppDatabase, $ImageSignalsTable, ImageSignalRow>,
+      ),
+      ImageSignalRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SimilarGroupsTableCreateCompanionBuilder =
+    SimilarGroupsCompanion Function({
+      Value<int> id,
+      required String suggestedFileId,
+      required int memberCount,
+      required int sortDateMs,
+      required DateTime createdAt,
+    });
+typedef $$SimilarGroupsTableUpdateCompanionBuilder =
+    SimilarGroupsCompanion Function({
+      Value<int> id,
+      Value<String> suggestedFileId,
+      Value<int> memberCount,
+      Value<int> sortDateMs,
+      Value<DateTime> createdAt,
+    });
+
+final class $$SimilarGroupsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $SimilarGroupsTable, SimilarGroupRow> {
+  $$SimilarGroupsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$SimilarGroupItemsTable, List<SimilarGroupItemRow>>
+  _similarGroupItemsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.similarGroupItems,
+        aliasName: 'similar_groups__id__similar_group_items__group_id',
+      );
+
+  $$SimilarGroupItemsTableProcessedTableManager get similarGroupItemsRefs {
+    final manager = $$SimilarGroupItemsTableTableManager(
+      $_db,
+      $_db.similarGroupItems,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _similarGroupItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$SimilarGroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $SimilarGroupsTable> {
+  $$SimilarGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get suggestedFileId => $composableBuilder(
+    column: $table.suggestedFileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get memberCount => $composableBuilder(
+    column: $table.memberCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortDateMs => $composableBuilder(
+    column: $table.sortDateMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> similarGroupItemsRefs(
+    Expression<bool> Function($$SimilarGroupItemsTableFilterComposer f) f,
+  ) {
+    final $$SimilarGroupItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.similarGroupItems,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SimilarGroupItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.similarGroupItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SimilarGroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SimilarGroupsTable> {
+  $$SimilarGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get suggestedFileId => $composableBuilder(
+    column: $table.suggestedFileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get memberCount => $composableBuilder(
+    column: $table.memberCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortDateMs => $composableBuilder(
+    column: $table.sortDateMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SimilarGroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SimilarGroupsTable> {
+  $$SimilarGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get suggestedFileId => $composableBuilder(
+    column: $table.suggestedFileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get memberCount => $composableBuilder(
+    column: $table.memberCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortDateMs => $composableBuilder(
+    column: $table.sortDateMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> similarGroupItemsRefs<T extends Object>(
+    Expression<T> Function($$SimilarGroupItemsTableAnnotationComposer a) f,
+  ) {
+    final $$SimilarGroupItemsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.similarGroupItems,
+          getReferencedColumn: (t) => t.groupId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SimilarGroupItemsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.similarGroupItems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$SimilarGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SimilarGroupsTable,
+          SimilarGroupRow,
+          $$SimilarGroupsTableFilterComposer,
+          $$SimilarGroupsTableOrderingComposer,
+          $$SimilarGroupsTableAnnotationComposer,
+          $$SimilarGroupsTableCreateCompanionBuilder,
+          $$SimilarGroupsTableUpdateCompanionBuilder,
+          (SimilarGroupRow, $$SimilarGroupsTableReferences),
+          SimilarGroupRow,
+          PrefetchHooks Function({bool similarGroupItemsRefs})
+        > {
+  $$SimilarGroupsTableTableManager(_$AppDatabase db, $SimilarGroupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SimilarGroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SimilarGroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SimilarGroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> suggestedFileId = const Value.absent(),
+                Value<int> memberCount = const Value.absent(),
+                Value<int> sortDateMs = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => SimilarGroupsCompanion(
+                id: id,
+                suggestedFileId: suggestedFileId,
+                memberCount: memberCount,
+                sortDateMs: sortDateMs,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String suggestedFileId,
+                required int memberCount,
+                required int sortDateMs,
+                required DateTime createdAt,
+              }) => SimilarGroupsCompanion.insert(
+                id: id,
+                suggestedFileId: suggestedFileId,
+                memberCount: memberCount,
+                sortDateMs: sortDateMs,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SimilarGroupsTable, SimilarGroupRow>(table),
+                  $$SimilarGroupsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({similarGroupItemsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (similarGroupItemsRefs) db.similarGroupItems,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (similarGroupItemsRefs)
+                    await $_getPrefetchedDataByColumns<
+                      SimilarGroupRow,
+                      $SimilarGroupsTable,
+                      SimilarGroupItemRow,
+                      $SimilarGroupItemsTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$SimilarGroupsTableReferences
+                          ._similarGroupItemsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$SimilarGroupsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).similarGroupItemsRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'group_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SimilarGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SimilarGroupsTable,
+      SimilarGroupRow,
+      $$SimilarGroupsTableFilterComposer,
+      $$SimilarGroupsTableOrderingComposer,
+      $$SimilarGroupsTableAnnotationComposer,
+      $$SimilarGroupsTableCreateCompanionBuilder,
+      $$SimilarGroupsTableUpdateCompanionBuilder,
+      (SimilarGroupRow, $$SimilarGroupsTableReferences),
+      SimilarGroupRow,
+      PrefetchHooks Function({bool similarGroupItemsRefs})
+    >;
+typedef $$SimilarGroupItemsTableCreateCompanionBuilder =
+    SimilarGroupItemsCompanion Function({
+      required int groupId,
+      required String fileId,
+      required int position,
+      Value<int> rowid,
+    });
+typedef $$SimilarGroupItemsTableUpdateCompanionBuilder =
+    SimilarGroupItemsCompanion Function({
+      Value<int> groupId,
+      Value<String> fileId,
+      Value<int> position,
+      Value<int> rowid,
+    });
+
+final class $$SimilarGroupItemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SimilarGroupItemsTable,
+          SimilarGroupItemRow
+        > {
+  $$SimilarGroupItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SimilarGroupsTable _groupIdTable(_$AppDatabase db) => db.similarGroups
+      .createAlias('similar_group_items__group_id__similar_groups__id');
+
+  $$SimilarGroupsTableProcessedTableManager get groupId {
+    final $_column = $_itemColumn<int>('group_id')!;
+
+    final manager = $$SimilarGroupsTableTableManager(
+      $_db,
+      $_db.similarGroups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SimilarGroupItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $SimilarGroupItemsTable> {
+  $$SimilarGroupItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SimilarGroupsTableFilterComposer get groupId {
+    final $$SimilarGroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.similarGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SimilarGroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.similarGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SimilarGroupItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SimilarGroupItemsTable> {
+  $$SimilarGroupItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SimilarGroupsTableOrderingComposer get groupId {
+    final $$SimilarGroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.similarGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SimilarGroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.similarGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SimilarGroupItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SimilarGroupItemsTable> {
+  $$SimilarGroupItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  $$SimilarGroupsTableAnnotationComposer get groupId {
+    final $$SimilarGroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.similarGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SimilarGroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.similarGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SimilarGroupItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SimilarGroupItemsTable,
+          SimilarGroupItemRow,
+          $$SimilarGroupItemsTableFilterComposer,
+          $$SimilarGroupItemsTableOrderingComposer,
+          $$SimilarGroupItemsTableAnnotationComposer,
+          $$SimilarGroupItemsTableCreateCompanionBuilder,
+          $$SimilarGroupItemsTableUpdateCompanionBuilder,
+          (SimilarGroupItemRow, $$SimilarGroupItemsTableReferences),
+          SimilarGroupItemRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $$SimilarGroupItemsTableTableManager(
+    _$AppDatabase db,
+    $SimilarGroupItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SimilarGroupItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SimilarGroupItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SimilarGroupItemsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> groupId = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SimilarGroupItemsCompanion(
+                groupId: groupId,
+                fileId: fileId,
+                position: position,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int groupId,
+                required String fileId,
+                required int position,
+                Value<int> rowid = const Value.absent(),
+              }) => SimilarGroupItemsCompanion.insert(
+                groupId: groupId,
+                fileId: fileId,
+                position: position,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SimilarGroupItemsTable, SimilarGroupItemRow>(
+                    table,
+                  ),
+                  $$SimilarGroupItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $$SimilarGroupItemsTableReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $$SimilarGroupItemsTableReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SimilarGroupItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SimilarGroupItemsTable,
+      SimilarGroupItemRow,
+      $$SimilarGroupItemsTableFilterComposer,
+      $$SimilarGroupItemsTableOrderingComposer,
+      $$SimilarGroupItemsTableAnnotationComposer,
+      $$SimilarGroupItemsTableCreateCompanionBuilder,
+      $$SimilarGroupItemsTableUpdateCompanionBuilder,
+      (SimilarGroupItemRow, $$SimilarGroupItemsTableReferences),
+      SimilarGroupItemRow,
+      PrefetchHooks Function({bool groupId})
+    >;
+typedef $$SimilarDismissedTableCreateCompanionBuilder =
+    SimilarDismissedCompanion Function({
+      required String fileId,
+      required DateTime dismissedAt,
+      Value<int> rowid,
+    });
+typedef $$SimilarDismissedTableUpdateCompanionBuilder =
+    SimilarDismissedCompanion Function({
+      Value<String> fileId,
+      Value<DateTime> dismissedAt,
+      Value<int> rowid,
+    });
+
+class $$SimilarDismissedTableFilterComposer
+    extends Composer<_$AppDatabase, $SimilarDismissedTable> {
+  $$SimilarDismissedTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SimilarDismissedTableOrderingComposer
+    extends Composer<_$AppDatabase, $SimilarDismissedTable> {
+  $$SimilarDismissedTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SimilarDismissedTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SimilarDismissedTable> {
+  $$SimilarDismissedTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$SimilarDismissedTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SimilarDismissedTable,
+          SimilarDismissedRow,
+          $$SimilarDismissedTableFilterComposer,
+          $$SimilarDismissedTableOrderingComposer,
+          $$SimilarDismissedTableAnnotationComposer,
+          $$SimilarDismissedTableCreateCompanionBuilder,
+          $$SimilarDismissedTableUpdateCompanionBuilder,
+          (
+            SimilarDismissedRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SimilarDismissedTable,
+              SimilarDismissedRow
+            >,
+          ),
+          SimilarDismissedRow,
+          PrefetchHooks Function()
+        > {
+  $$SimilarDismissedTableTableManager(
+    _$AppDatabase db,
+    $SimilarDismissedTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SimilarDismissedTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SimilarDismissedTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SimilarDismissedTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<DateTime> dismissedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SimilarDismissedCompanion(
+                fileId: fileId,
+                dismissedAt: dismissedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required DateTime dismissedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SimilarDismissedCompanion.insert(
+                fileId: fileId,
+                dismissedAt: dismissedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SimilarDismissedTable, SimilarDismissedRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SimilarDismissedTable,
+                    SimilarDismissedRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SimilarDismissedTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SimilarDismissedTable,
+      SimilarDismissedRow,
+      $$SimilarDismissedTableFilterComposer,
+      $$SimilarDismissedTableOrderingComposer,
+      $$SimilarDismissedTableAnnotationComposer,
+      $$SimilarDismissedTableCreateCompanionBuilder,
+      $$SimilarDismissedTableUpdateCompanionBuilder,
+      (
+        SimilarDismissedRow,
+        BaseReferences<
+          _$AppDatabase,
+          $SimilarDismissedTable,
+          SimilarDismissedRow
+        >,
+      ),
+      SimilarDismissedRow,
+      PrefetchHooks Function()
+    >;
+typedef $$MediaLocationsTableCreateCompanionBuilder =
+    MediaLocationsCompanion Function({
+      required String fileId,
+      required int fileModifiedAtMs,
+      Value<double?> lat,
+      Value<double?> lng,
+      Value<bool> frontCamera,
+      required bool locationReadable,
+      required int readAtMs,
+      Value<int> rowid,
+    });
+typedef $$MediaLocationsTableUpdateCompanionBuilder =
+    MediaLocationsCompanion Function({
+      Value<String> fileId,
+      Value<int> fileModifiedAtMs,
+      Value<double?> lat,
+      Value<double?> lng,
+      Value<bool> frontCamera,
+      Value<bool> locationReadable,
+      Value<int> readAtMs,
+      Value<int> rowid,
+    });
+
+class $$MediaLocationsTableFilterComposer
+    extends Composer<_$AppDatabase, $MediaLocationsTable> {
+  $$MediaLocationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lng => $composableBuilder(
+    column: $table.lng,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get frontCamera => $composableBuilder(
+    column: $table.frontCamera,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get locationReadable => $composableBuilder(
+    column: $table.locationReadable,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get readAtMs => $composableBuilder(
+    column: $table.readAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MediaLocationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MediaLocationsTable> {
+  $$MediaLocationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lng => $composableBuilder(
+    column: $table.lng,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get frontCamera => $composableBuilder(
+    column: $table.frontCamera,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get locationReadable => $composableBuilder(
+    column: $table.locationReadable,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get readAtMs => $composableBuilder(
+    column: $table.readAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MediaLocationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MediaLocationsTable> {
+  $$MediaLocationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get fileModifiedAtMs => $composableBuilder(
+    column: $table.fileModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lng =>
+      $composableBuilder(column: $table.lng, builder: (column) => column);
+
+  GeneratedColumn<bool> get frontCamera => $composableBuilder(
+    column: $table.frontCamera,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get locationReadable => $composableBuilder(
+    column: $table.locationReadable,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get readAtMs =>
+      $composableBuilder(column: $table.readAtMs, builder: (column) => column);
+}
+
+class $$MediaLocationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MediaLocationsTable,
+          MediaLocationRow,
+          $$MediaLocationsTableFilterComposer,
+          $$MediaLocationsTableOrderingComposer,
+          $$MediaLocationsTableAnnotationComposer,
+          $$MediaLocationsTableCreateCompanionBuilder,
+          $$MediaLocationsTableUpdateCompanionBuilder,
+          (
+            MediaLocationRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MediaLocationsTable,
+              MediaLocationRow
+            >,
+          ),
+          MediaLocationRow,
+          PrefetchHooks Function()
+        > {
+  $$MediaLocationsTableTableManager(
+    _$AppDatabase db,
+    $MediaLocationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MediaLocationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MediaLocationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MediaLocationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> fileId = const Value.absent(),
+                Value<int> fileModifiedAtMs = const Value.absent(),
+                Value<double?> lat = const Value.absent(),
+                Value<double?> lng = const Value.absent(),
+                Value<bool> frontCamera = const Value.absent(),
+                Value<bool> locationReadable = const Value.absent(),
+                Value<int> readAtMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MediaLocationsCompanion(
+                fileId: fileId,
+                fileModifiedAtMs: fileModifiedAtMs,
+                lat: lat,
+                lng: lng,
+                frontCamera: frontCamera,
+                locationReadable: locationReadable,
+                readAtMs: readAtMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fileId,
+                required int fileModifiedAtMs,
+                Value<double?> lat = const Value.absent(),
+                Value<double?> lng = const Value.absent(),
+                Value<bool> frontCamera = const Value.absent(),
+                required bool locationReadable,
+                required int readAtMs,
+                Value<int> rowid = const Value.absent(),
+              }) => MediaLocationsCompanion.insert(
+                fileId: fileId,
+                fileModifiedAtMs: fileModifiedAtMs,
+                lat: lat,
+                lng: lng,
+                frontCamera: frontCamera,
+                locationReadable: locationReadable,
+                readAtMs: readAtMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$MediaLocationsTable, MediaLocationRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $MediaLocationsTable,
+                    MediaLocationRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MediaLocationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MediaLocationsTable,
+      MediaLocationRow,
+      $$MediaLocationsTableFilterComposer,
+      $$MediaLocationsTableOrderingComposer,
+      $$MediaLocationsTableAnnotationComposer,
+      $$MediaLocationsTableCreateCompanionBuilder,
+      $$MediaLocationsTableUpdateCompanionBuilder,
+      (
+        MediaLocationRow,
+        BaseReferences<_$AppDatabase, $MediaLocationsTable, MediaLocationRow>,
+      ),
+      MediaLocationRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SmartGroupsTableCreateCompanionBuilder =
+    SmartGroupsCompanion Function({
+      Value<int> id,
+      required SmartGroupKind kind,
+      required int rank,
+      required int startAtMs,
+      required int endAtMs,
+      Value<double?> centerLat,
+      Value<double?> centerLng,
+      required String coverFileId,
+      required int itemCount,
+      Value<String?> userTitle,
+      Value<String?> placeName,
+      Value<int?> geocodedAtMs,
+    });
+typedef $$SmartGroupsTableUpdateCompanionBuilder =
+    SmartGroupsCompanion Function({
+      Value<int> id,
+      Value<SmartGroupKind> kind,
+      Value<int> rank,
+      Value<int> startAtMs,
+      Value<int> endAtMs,
+      Value<double?> centerLat,
+      Value<double?> centerLng,
+      Value<String> coverFileId,
+      Value<int> itemCount,
+      Value<String?> userTitle,
+      Value<String?> placeName,
+      Value<int?> geocodedAtMs,
+    });
+
+final class $$SmartGroupsTableReferences
+    extends BaseReferences<_$AppDatabase, $SmartGroupsTable, SmartGroupRow> {
+  $$SmartGroupsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$SmartGroupItemsTable, List<SmartGroupItemRow>>
+  _smartGroupItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.smartGroupItems,
+    aliasName: 'smart_groups__id__smart_group_items__group_id',
+  );
+
+  $$SmartGroupItemsTableProcessedTableManager get smartGroupItemsRefs {
+    final manager = $$SmartGroupItemsTableTableManager(
+      $_db,
+      $_db.smartGroupItems,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _smartGroupItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$SmartGroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $SmartGroupsTable> {
+  $$SmartGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SmartGroupKind, SmartGroupKind, String>
+  get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get rank => $composableBuilder(
+    column: $table.rank,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startAtMs => $composableBuilder(
+    column: $table.startAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endAtMs => $composableBuilder(
+    column: $table.endAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get centerLat => $composableBuilder(
+    column: $table.centerLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get centerLng => $composableBuilder(
+    column: $table.centerLng,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coverFileId => $composableBuilder(
+    column: $table.coverFileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userTitle => $composableBuilder(
+    column: $table.userTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get placeName => $composableBuilder(
+    column: $table.placeName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get geocodedAtMs => $composableBuilder(
+    column: $table.geocodedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> smartGroupItemsRefs(
+    Expression<bool> Function($$SmartGroupItemsTableFilterComposer f) f,
+  ) {
+    final $$SmartGroupItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.smartGroupItems,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SmartGroupItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.smartGroupItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SmartGroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SmartGroupsTable> {
+  $$SmartGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rank => $composableBuilder(
+    column: $table.rank,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startAtMs => $composableBuilder(
+    column: $table.startAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endAtMs => $composableBuilder(
+    column: $table.endAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get centerLat => $composableBuilder(
+    column: $table.centerLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get centerLng => $composableBuilder(
+    column: $table.centerLng,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get coverFileId => $composableBuilder(
+    column: $table.coverFileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userTitle => $composableBuilder(
+    column: $table.userTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get placeName => $composableBuilder(
+    column: $table.placeName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get geocodedAtMs => $composableBuilder(
+    column: $table.geocodedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SmartGroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SmartGroupsTable> {
+  $$SmartGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SmartGroupKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<int> get rank =>
+      $composableBuilder(column: $table.rank, builder: (column) => column);
+
+  GeneratedColumn<int> get startAtMs =>
+      $composableBuilder(column: $table.startAtMs, builder: (column) => column);
+
+  GeneratedColumn<int> get endAtMs =>
+      $composableBuilder(column: $table.endAtMs, builder: (column) => column);
+
+  GeneratedColumn<double> get centerLat =>
+      $composableBuilder(column: $table.centerLat, builder: (column) => column);
+
+  GeneratedColumn<double> get centerLng =>
+      $composableBuilder(column: $table.centerLng, builder: (column) => column);
+
+  GeneratedColumn<String> get coverFileId => $composableBuilder(
+    column: $table.coverFileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get itemCount =>
+      $composableBuilder(column: $table.itemCount, builder: (column) => column);
+
+  GeneratedColumn<String> get userTitle =>
+      $composableBuilder(column: $table.userTitle, builder: (column) => column);
+
+  GeneratedColumn<String> get placeName =>
+      $composableBuilder(column: $table.placeName, builder: (column) => column);
+
+  GeneratedColumn<int> get geocodedAtMs => $composableBuilder(
+    column: $table.geocodedAtMs,
+    builder: (column) => column,
+  );
+
+  Expression<T> smartGroupItemsRefs<T extends Object>(
+    Expression<T> Function($$SmartGroupItemsTableAnnotationComposer a) f,
+  ) {
+    final $$SmartGroupItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.smartGroupItems,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SmartGroupItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.smartGroupItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SmartGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SmartGroupsTable,
+          SmartGroupRow,
+          $$SmartGroupsTableFilterComposer,
+          $$SmartGroupsTableOrderingComposer,
+          $$SmartGroupsTableAnnotationComposer,
+          $$SmartGroupsTableCreateCompanionBuilder,
+          $$SmartGroupsTableUpdateCompanionBuilder,
+          (SmartGroupRow, $$SmartGroupsTableReferences),
+          SmartGroupRow,
+          PrefetchHooks Function({bool smartGroupItemsRefs})
+        > {
+  $$SmartGroupsTableTableManager(_$AppDatabase db, $SmartGroupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SmartGroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SmartGroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SmartGroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<SmartGroupKind> kind = const Value.absent(),
+                Value<int> rank = const Value.absent(),
+                Value<int> startAtMs = const Value.absent(),
+                Value<int> endAtMs = const Value.absent(),
+                Value<double?> centerLat = const Value.absent(),
+                Value<double?> centerLng = const Value.absent(),
+                Value<String> coverFileId = const Value.absent(),
+                Value<int> itemCount = const Value.absent(),
+                Value<String?> userTitle = const Value.absent(),
+                Value<String?> placeName = const Value.absent(),
+                Value<int?> geocodedAtMs = const Value.absent(),
+              }) => SmartGroupsCompanion(
+                id: id,
+                kind: kind,
+                rank: rank,
+                startAtMs: startAtMs,
+                endAtMs: endAtMs,
+                centerLat: centerLat,
+                centerLng: centerLng,
+                coverFileId: coverFileId,
+                itemCount: itemCount,
+                userTitle: userTitle,
+                placeName: placeName,
+                geocodedAtMs: geocodedAtMs,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required SmartGroupKind kind,
+                required int rank,
+                required int startAtMs,
+                required int endAtMs,
+                Value<double?> centerLat = const Value.absent(),
+                Value<double?> centerLng = const Value.absent(),
+                required String coverFileId,
+                required int itemCount,
+                Value<String?> userTitle = const Value.absent(),
+                Value<String?> placeName = const Value.absent(),
+                Value<int?> geocodedAtMs = const Value.absent(),
+              }) => SmartGroupsCompanion.insert(
+                id: id,
+                kind: kind,
+                rank: rank,
+                startAtMs: startAtMs,
+                endAtMs: endAtMs,
+                centerLat: centerLat,
+                centerLng: centerLng,
+                coverFileId: coverFileId,
+                itemCount: itemCount,
+                userTitle: userTitle,
+                placeName: placeName,
+                geocodedAtMs: geocodedAtMs,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SmartGroupsTable, SmartGroupRow>(table),
+                  $$SmartGroupsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({smartGroupItemsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (smartGroupItemsRefs) db.smartGroupItems,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (smartGroupItemsRefs)
+                    await $_getPrefetchedDataByColumns<
+                      SmartGroupRow,
+                      $SmartGroupsTable,
+                      SmartGroupItemRow,
+                      $SmartGroupItemsTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$SmartGroupsTableReferences
+                          ._smartGroupItemsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$SmartGroupsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).smartGroupItemsRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'group_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SmartGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SmartGroupsTable,
+      SmartGroupRow,
+      $$SmartGroupsTableFilterComposer,
+      $$SmartGroupsTableOrderingComposer,
+      $$SmartGroupsTableAnnotationComposer,
+      $$SmartGroupsTableCreateCompanionBuilder,
+      $$SmartGroupsTableUpdateCompanionBuilder,
+      (SmartGroupRow, $$SmartGroupsTableReferences),
+      SmartGroupRow,
+      PrefetchHooks Function({bool smartGroupItemsRefs})
+    >;
+typedef $$SmartGroupItemsTableCreateCompanionBuilder =
+    SmartGroupItemsCompanion Function({
+      required int groupId,
+      required String fileId,
+      Value<int> rowid,
+    });
+typedef $$SmartGroupItemsTableUpdateCompanionBuilder =
+    SmartGroupItemsCompanion Function({
+      Value<int> groupId,
+      Value<String> fileId,
+      Value<int> rowid,
+    });
+
+final class $$SmartGroupItemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SmartGroupItemsTable,
+          SmartGroupItemRow
+        > {
+  $$SmartGroupItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SmartGroupsTable _groupIdTable(_$AppDatabase db) => db.smartGroups
+      .createAlias('smart_group_items__group_id__smart_groups__id');
+
+  $$SmartGroupsTableProcessedTableManager get groupId {
+    final $_column = $_itemColumn<int>('group_id')!;
+
+    final manager = $$SmartGroupsTableTableManager(
+      $_db,
+      $_db.smartGroups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SmartGroupItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $SmartGroupItemsTable> {
+  $$SmartGroupItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SmartGroupsTableFilterComposer get groupId {
+    final $$SmartGroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.smartGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SmartGroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.smartGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SmartGroupItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SmartGroupItemsTable> {
+  $$SmartGroupItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SmartGroupsTableOrderingComposer get groupId {
+    final $$SmartGroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.smartGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SmartGroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.smartGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SmartGroupItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SmartGroupItemsTable> {
+  $$SmartGroupItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  $$SmartGroupsTableAnnotationComposer get groupId {
+    final $$SmartGroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.smartGroups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SmartGroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.smartGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SmartGroupItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SmartGroupItemsTable,
+          SmartGroupItemRow,
+          $$SmartGroupItemsTableFilterComposer,
+          $$SmartGroupItemsTableOrderingComposer,
+          $$SmartGroupItemsTableAnnotationComposer,
+          $$SmartGroupItemsTableCreateCompanionBuilder,
+          $$SmartGroupItemsTableUpdateCompanionBuilder,
+          (SmartGroupItemRow, $$SmartGroupItemsTableReferences),
+          SmartGroupItemRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $$SmartGroupItemsTableTableManager(
+    _$AppDatabase db,
+    $SmartGroupItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SmartGroupItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SmartGroupItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SmartGroupItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> groupId = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SmartGroupItemsCompanion(
+                groupId: groupId,
+                fileId: fileId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int groupId,
+                required String fileId,
+                Value<int> rowid = const Value.absent(),
+              }) => SmartGroupItemsCompanion.insert(
+                groupId: groupId,
+                fileId: fileId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SmartGroupItemsTable, SmartGroupItemRow>(table),
+                  $$SmartGroupItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $$SmartGroupItemsTableReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $$SmartGroupItemsTableReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SmartGroupItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SmartGroupItemsTable,
+      SmartGroupItemRow,
+      $$SmartGroupItemsTableFilterComposer,
+      $$SmartGroupItemsTableOrderingComposer,
+      $$SmartGroupItemsTableAnnotationComposer,
+      $$SmartGroupItemsTableCreateCompanionBuilder,
+      $$SmartGroupItemsTableUpdateCompanionBuilder,
+      (SmartGroupItemRow, $$SmartGroupItemsTableReferences),
+      SmartGroupItemRow,
+      PrefetchHooks Function({bool groupId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12989,4 +19882,22 @@ class $AppDatabaseManager {
       $$SelectionItemsTableTableManager(_db, _db.selectionItems);
   $$SelectionSnapshotsTableTableManager get selectionSnapshots =>
       $$SelectionSnapshotsTableTableManager(_db, _db.selectionSnapshots);
+  $$SwipeSourcesTableTableManager get swipeSources =>
+      $$SwipeSourcesTableTableManager(_db, _db.swipeSources);
+  $$SwipeSourceItemsTableTableManager get swipeSourceItems =>
+      $$SwipeSourceItemsTableTableManager(_db, _db.swipeSourceItems);
+  $$ImageSignalsTableTableManager get imageSignals =>
+      $$ImageSignalsTableTableManager(_db, _db.imageSignals);
+  $$SimilarGroupsTableTableManager get similarGroups =>
+      $$SimilarGroupsTableTableManager(_db, _db.similarGroups);
+  $$SimilarGroupItemsTableTableManager get similarGroupItems =>
+      $$SimilarGroupItemsTableTableManager(_db, _db.similarGroupItems);
+  $$SimilarDismissedTableTableManager get similarDismissed =>
+      $$SimilarDismissedTableTableManager(_db, _db.similarDismissed);
+  $$MediaLocationsTableTableManager get mediaLocations =>
+      $$MediaLocationsTableTableManager(_db, _db.mediaLocations);
+  $$SmartGroupsTableTableManager get smartGroups =>
+      $$SmartGroupsTableTableManager(_db, _db.smartGroups);
+  $$SmartGroupItemsTableTableManager get smartGroupItems =>
+      $$SmartGroupItemsTableTableManager(_db, _db.smartGroupItems);
 }

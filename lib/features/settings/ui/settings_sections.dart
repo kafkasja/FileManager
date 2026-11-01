@@ -9,6 +9,9 @@ import 'package:kfm/features/settings/ui/developer_section.dart';
 import 'package:kfm/features/settings/ui/permissions_section.dart';
 import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/settings/ui/storage_cache_section.dart';
+import 'package:kfm/features/similar/ui/similar_section.dart';
+import 'package:kfm/features/smart_groups/ui/smart_groups_settings_section.dart';
+import 'package:kfm/features/storage/ui/storage_overview_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/trash/ui/deleting_section.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -59,6 +62,21 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 500,
       titleBuilder: (c) => c.l10n.settingsStorage,
       builder: (_) => const StorageCacheSection(),
+    ),
+    SettingsSection(
+      order: 560,
+      titleBuilder: (c) => c.l10n.similarTitle,
+      builder: (_) => const SimilarSection(),
+    ),
+    SettingsSection(
+      order: 550,
+      titleBuilder: (c) => c.l10n.storageOverviewTitle,
+      builder: (_) => const StorageOverviewSection(),
+    ),
+    SettingsSection(
+      order: 650,
+      titleBuilder: (c) => c.l10n.groupsTitle,
+      builder: (_) => const SmartGroupsSettingsSection(),
     ),
     if (kDebugMode)
       SettingsSection(

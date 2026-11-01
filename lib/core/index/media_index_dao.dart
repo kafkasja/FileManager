@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
+import 'package:kfm/core/db/tables/media_locations_table.dart';
 import 'package:kfm/core/db/tables/reviewed_labels_table.dart';
+import 'package:kfm/core/db/tables/smart_groups_table.dart';
 import 'package:kfm/core/db/tables/tags_table.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_query.dart';
@@ -17,7 +19,16 @@ part 'media_index_dao.g.dart';
 
 /// Indexed, keyset-paged access to `media_index` (TASK-F5). Never OFFSET:
 /// pages near the end of 50k rows stay as fast as the first.
-@DriftAccessor(tables: [MediaIndex, FileTags, Favorites, ReviewedLabels])
+@DriftAccessor(
+  tables: [
+    MediaIndex,
+    FileTags,
+    Favorites,
+    ReviewedLabels,
+    MediaLocations,
+    SmartGroupItems,
+  ],
+)
 class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     with _$MediaIndexDaoMixin {
   new(super.attachedDatabase);
@@ -133,13 +144,22 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
   ///
   /// [withTags] (B9): tag and favorite changes count too, for views that
   /// filter on them (Favorites, a tag's files).
-  Stream<int> watchChanges({bool withTags = false}) {
+  ///
+  /// [withGroups] (C5): smart group members and EXIF rows count too, for
+  /// the Groups views (a stored group, Selfies).
+  Stream<int> watchChanges({bool withTags = false, bool withGroups = false}) {
     final updates = attachedDatabase.tableUpdates(
-      withTags
+      withTags || withGroups
           ? TableUpdateQuery.allOf([
               TableUpdateQuery.onTable(mediaIndex),
-              TableUpdateQuery.onTable(fileTags),
-              TableUpdateQuery.onTable(favorites),
+              if (withTags) ...[
+                TableUpdateQuery.onTable(fileTags),
+                TableUpdateQuery.onTable(favorites),
+              ],
+              if (withGroups) ...[
+                TableUpdateQuery.onTable(smartGroupItems),
+                TableUpdateQuery.onTable(mediaLocations),
+              ],
             ])
           : TableUpdateQuery.onTable(mediaIndex),
     );
@@ -432,6 +452,33 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
                   (w.isBiggerOrEqual(h * const Constant(2)) |
                       h.isBiggerOrEqual(w * const Constant(2)))));
     }
+    if (q.smartGroupId case final groupId?) {
+      where =
+          where &
+          existsQuery(
+            select(smartGroupItems)..where(
+              (i) => i.fileId.equalsExp(t.id) & i.groupId.equals(groupId),
+            ),
+          );
+    }
+    if (q.selfiesOnly) {
+      final folder = t.folderPath.lower();
+      where =
+          where &
+          t.kind.equals(FileKind.image.index) &
+          (folder.equals('selfies') |
+              folder.like('%/selfies') |
+              existsQuery(
+                select(mediaLocations)..where(
+                  (l) => l.fileId.equalsExp(t.id) & l.frontCamera.equals(true),
+                ),
+              ));
+    }
+    if (q.documentsGroup) {
+      // C3 hook: OR images with the AI label 'document' (`ai_labels`), once
+      // C3 adds that table. Until then Documents = kind document only.
+      where = where & t.kind.equals(FileKind.document.index);
+    }
     return where;
   }
 
@@ -525,6 +572,9 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     hidden: Value(f.hidden),
     extension: Value(extensionOf(f.name)),
   );
+
+  /// A row as a [FileRef] (for other features' joins over media_index).
+  static FileRef refOf(MediaIndexRow r) => _toRef(r);
 
   static FileRef _toRef(MediaIndexRow r) => FileRef(
     id: r.id,

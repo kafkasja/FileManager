@@ -9,6 +9,9 @@ mixin _$MediaIndexDaoMixin on DatabaseAccessor<AppDatabase> {
   $FileTagsTable get fileTags => attachedDatabase.fileTags;
   $FavoritesTable get favorites => attachedDatabase.favorites;
   $ReviewedLabelsTable get reviewedLabels => attachedDatabase.reviewedLabels;
+  $MediaLocationsTable get mediaLocations => attachedDatabase.mediaLocations;
+  $SmartGroupsTable get smartGroups => attachedDatabase.smartGroups;
+  $SmartGroupItemsTable get smartGroupItems => attachedDatabase.smartGroupItems;
   MediaIndexDaoManager get managers => MediaIndexDaoManager(this);
 }
 
@@ -27,5 +30,17 @@ class MediaIndexDaoManager {
       $$ReviewedLabelsTableTableManager(
         _db.attachedDatabase,
         _db.reviewedLabels,
+      );
+  $$MediaLocationsTableTableManager get mediaLocations =>
+      $$MediaLocationsTableTableManager(
+        _db.attachedDatabase,
+        _db.mediaLocations,
+      );
+  $$SmartGroupsTableTableManager get smartGroups =>
+      $$SmartGroupsTableTableManager(_db.attachedDatabase, _db.smartGroups);
+  $$SmartGroupItemsTableTableManager get smartGroupItems =>
+      $$SmartGroupItemsTableTableManager(
+        _db.attachedDatabase,
+        _db.smartGroupItems,
       );
 }

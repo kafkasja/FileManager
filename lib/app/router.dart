@@ -13,7 +13,13 @@ import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
 import 'package:kfm/features/search/ui/search_screen.dart';
 import 'package:kfm/features/selection/ui/selected_files_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
+import 'package:kfm/features/similar/ui/clean_duplicates_screen.dart';
+import 'package:kfm/features/similar/ui/similar_screen.dart';
+import 'package:kfm/features/smart_groups/ui/group_detail_screen.dart';
+import 'package:kfm/features/smart_groups/ui/groups_screen.dart';
+import 'package:kfm/features/smart_groups/ui/smart_group_titles.dart';
 import 'package:kfm/features/stats/ui/stats_screen.dart';
+import 'package:kfm/features/storage/ui/storage_overview_screen.dart';
 import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
 import 'package:kfm/features/tags/ui/collections_screen.dart';
@@ -40,6 +46,17 @@ abstract final class AppRoutes {
 
   /// B8 search; `extra` is the folder it was opened from (or null).
   static const search = '/browse/search';
+
+  /// C2 Similar photos and its Clean duplicates flow.
+  static const similar = '/browse/similar';
+  static const similarClean = '/browse/similar/clean';
+
+  /// C1 Storage overview.
+  static const storage = '/browse/storage';
+
+  /// C5 Smart groups and one group's grid (`GroupKey.value`).
+  static const groups = '/browse/groups';
+  static String groupFor(String key) => '/browse/groups/$key';
 
   /// B9 Tags & favorites.
   static const collections = '/browse/collections';
@@ -138,6 +155,40 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'selected',
                     builder: (context, state) => const SelectedFilesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'similar',
+                    builder: (context, state) => const SimilarScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'clean',
+                        builder: (context, state) =>
+                            const CleanDuplicatesScreen(),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'storage',
+                    builder: (context, state) => const StorageOverviewScreen(),
+                  ),
+                  GoRoute(
+                    path: 'groups',
+                    builder: (context, state) => const GroupsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':key',
+                        redirect: (context, state) =>
+                            GroupKey.parse(state.pathParameters['key'] ?? '') ==
+                                null
+                            ? AppRoutes.groups
+                            : null,
+                        builder: (context, state) => GroupDetailScreen(
+                          groupKey: GroupKey.parse(
+                            state.pathParameters['key']!,
+                          )!,
+                        ),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'collections',

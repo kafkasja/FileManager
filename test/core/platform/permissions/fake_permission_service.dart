@@ -22,6 +22,13 @@ class FakePermissionService implements PermissionService {
 
   final List<String> calls = [];
 
+  /// C5: `ACCESS_MEDIA_LOCATION` granted.
+  bool mediaLocation = false;
+
+  /// What [requestMediaLocation] turns [mediaLocation] into.
+  bool mediaLocationOnRequest = true;
+  bool mediaLocationPermanent = false;
+
   @override
   Future<StorageAccess> check() async {
     calls.add('check');
@@ -49,4 +56,16 @@ class FakePermissionService implements PermissionService {
   Future<void> openAppSettings() async {
     calls.add('openAppSettings');
   }
+
+  @override
+  Future<bool> hasMediaLocation() async => mediaLocation;
+
+  @override
+  Future<bool> requestMediaLocation() async {
+    calls.add('requestMediaLocation');
+    return mediaLocation = mediaLocationOnRequest;
+  }
+
+  @override
+  Future<bool> mediaLocationPermanentlyDenied() async => mediaLocationPermanent;
 }

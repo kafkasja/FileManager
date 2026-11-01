@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
@@ -16,6 +17,7 @@ import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_bar.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_these.dart';
 
 /// One carousel card's files (a source like WhatsApp, or a recent search):
 /// its own type chips, the global Browse sort. "Other apps" lists its
@@ -100,6 +102,22 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               tooltip: l10n.browseSortTitle,
               icon: const Icon(Icons.sort),
               onPressed: () => unawaited(showSortSheet(context)),
+            ),
+            // SS1: swipe the photos and videos shown here.
+            IconButton(
+              tooltip: l10n.browseSwipeThese,
+              icon: const Icon(Icons.swipe_outlined),
+              onPressed: () => unawaited(
+                swipeQueryFiles(
+                  context,
+                  ref,
+                  query: query,
+                  title: group == null
+                      ? collection.title(l10n)
+                      : nameOfFolder(l10n, group),
+                  returnRoute: AppRoutes.browse,
+                ),
+              ),
             ),
           ],
         ),

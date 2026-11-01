@@ -106,6 +106,17 @@ class UndoRepository {
     return next;
   }
 
+  /// SS1: the highest seq handed out for [sessionId] so far (0 = none),
+  /// including seqs reserved by still-running moves/copies. Throws
+  /// [StateError] without [prepare], like [reserveSeq].
+  int lastSeq(int sessionId) {
+    final next = _nextSeq[sessionId];
+    if (next == null) {
+      throw StateError('UndoRepository.prepare($sessionId) not called');
+    }
+    return next - 1;
+  }
+
   void recordAt(
     int seq,
     int sessionId,

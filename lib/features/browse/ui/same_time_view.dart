@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -14,6 +15,8 @@ import 'package:kfm/features/browse/domain/time_clusters.dart';
 import 'package:kfm/features/browse/ui/browse_preview.dart';
 import 'package:kfm/features/browse/ui/same_time_controller.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
+import 'package:kfm/features/swipe/domain/swipe_source.dart';
+import 'package:kfm/features/swipe/ui/swipe_these.dart';
 
 /// B3: photos/videos taken within the window of each other, as cards under
 /// day headers. [leading] slivers scroll with it (access banner).
@@ -241,6 +244,24 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
                     PopupMenuItem(
                       value: () => unawaited(_selectGroup()),
                       child: Text(l10n.sameTimeSelectGroup),
+                    ),
+                    // SS1: swipe this group (photos and videos).
+                    PopupMenuItem(
+                      value: () => unawaited(
+                        swipeFileIds(
+                          context,
+                          ref,
+                          ids: widget.cluster.fileIds,
+                          title: l10n.sameTimeGroupTitle(
+                            c.size,
+                            time.format(local(c.startMs)),
+                            time.format(local(c.endMs)),
+                          ),
+                          origin: SwipeSourceOrigin.sameTime,
+                          returnRoute: AppRoutes.browse,
+                        ),
+                      ),
+                      child: Text(l10n.sameTimeSwipeGroup),
                     ),
                   ],
                 ),
