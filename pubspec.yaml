@@ -24,11 +24,14 @@ dependencies:
   image: ^4.12.0
   intl: any
   meta: ^1.19.0
+  mobile_scanner: ^7.4.2
+  nsd: ^5.0.1
   path: ^1.9.1
   path_provider: ^2.1.6
   permission_handler: 12.0.1
   photo_manager: ^3.12.0
   pointycastle: ^4.0.0
+  qr_flutter: ^4.1.0
   riverpod_annotation: ^4.0.7
   shelf: ^1.4.3
   shelf_router: ^1.1.5

@@ -17,6 +17,7 @@ class ShareServerState {
     this.port,
     this.fingerprint,
     this.error,
+    this.discoveryError,
   });
 
   final ShareServerStatus status;
@@ -28,6 +29,18 @@ class ShareServerState {
   /// This device's cert fingerprint while running (debug view, N2's QR).
   final String? fingerprint;
   final Object? error;
+
+  /// mDNS advertising failed (N2); QR and manual address still work.
+  final Object? discoveryError;
+
+  ShareServerState withDiscoveryError(Object? e) => ShareServerState(
+    status: status,
+    addresses: addresses,
+    port: port,
+    fingerprint: fingerprint,
+    error: error,
+    discoveryError: e,
+  );
 
   static const stopped = ShareServerState(status: ShareServerStatus.stopped);
 }
@@ -76,9 +89,7 @@ typedef InterfaceInfo = ({String name, List<InternetAddress> addresses});
 typedef InterfaceLister = Future<List<InterfaceInfo>> Function();
 
 Future<List<InterfaceInfo>> _listInterfaces() async => [
-  for (final i in await NetworkInterface.list(
-    type: InternetAddressType.IPv4,
-  ))
+  for (final i in await NetworkInterface.list(type: InternetAddressType.IPv4))
     (name: i.name, addresses: i.addresses),
 ];
 
@@ -130,8 +141,11 @@ Future<List<LocalAddress>> localShareAddresses({
         }
       default:
         if (_windowsVirtual.hasMatch(i.name)) continue;
-        rank = RegExp('wi-?fi|wlan|wireless', caseSensitive: false)
-                .hasMatch(i.name)
+        rank =
+            RegExp(
+              'wi-?fi|wlan|wireless',
+              caseSensitive: false,
+            ).hasMatch(i.name)
             ? 0
             : 1;
     }

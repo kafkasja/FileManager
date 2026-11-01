@@ -18,12 +18,11 @@ class ConnectSettingsSection extends StatelessWidget {
           subtitle: Text(l10n.connectShareThisDeviceHint),
           onTap: () => context.push(AppRoutes.connectShare),
         ),
-        // N2 enables it (QR scan / typed code).
         ListTile(
-          enabled: false,
           leading: const Icon(Icons.devices_outlined),
           title: Text(l10n.connectToDevice),
-          subtitle: Text(l10n.connectToDeviceSoon),
+          subtitle: Text(l10n.connectToDeviceHint),
+          onTap: () => context.push(AppRoutes.connect),
         ),
       ],
     );

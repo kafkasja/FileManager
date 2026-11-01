@@ -1,0 +1,349 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart' as crypto;
+import 'package:kfm/core/utils/random_id.dart';
+import 'package:kfm/features/connect/data/crypto/constant_time.dart';
+import 'package:kfm/features/connect/data/crypto/identity_proof.dart';
+import 'package:kfm/features/connect/data/crypto/spake2.dart';
+import 'package:kfm/features/connect/data/pinned_client.dart';
+import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/domain/device_identity.dart';
+import 'package:kfm/features/connect/domain/pairing.dart';
+import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:meta/meta.dart';
+
+/// Why pairing failed; each maps to one message on the Connect screen.
+enum PairingFailure {
+  /// No address answered (AP isolation, guest Wi-Fi, device gone).
+  unreachable,
+
+  /// The server's certificate isn't the one in the QR / the nearby hint.
+  wrongDevice,
+
+  /// SPAKE2 confirmation failed: wrong code, or not the device chosen.
+  wrongCode,
+  secretUsed,
+  expired,
+  tooManyAttempts,
+  busy,
+  declined,
+  timedOut,
+  cancelled,
+  unsupportedVersion,
+  pairingFailed,
+
+  /// The connection broke mid-way.
+  network,
+
+  /// The other device didn't speak protocol v1.
+  badResponse,
+}
+
+/// A typed pairing error the UI shows (rule 8).
+class PairingException implements Exception {
+  const new(this.failure, {this.cause});
+
+  final PairingFailure failure;
+
+  /// For logs only.
+  final Object? cause;
+
+  @override
+  String toString() => 'PairingException(${failure.name})';
+}
+
+/// A finished pairing: the pinned client and N3's answer. Until N5 lands the
+/// Connect screen keeps them and shows "Connected".
+@immutable
+class PairingSuccess {
+  const new({
+    required this.http,
+    required this.accepted,
+    required this.peerName,
+    required this.peerFingerprint,
+  });
+
+  /// Pinned to [peerFingerprint]; the token is set as its bearer.
+  final RemoteHttp http;
+  final PairAcceptedDto accepted;
+  final String peerName;
+  final String peerFingerprint;
+}
+
+/// Cancels a running pairing: closes the current client (the in-flight
+/// request fails) and makes the pairing throw `cancelled`. N3 adds the
+/// `/v1/pair/cancel` call.
+class PairingCancel {
+  bool _cancelled = false;
+  RemoteHttp? _current;
+
+  bool get isCancelled => _cancelled;
+
+  void cancel() {
+    _cancelled = true;
+    _current?.close();
+  }
+
+  void _attach(RemoteHttp http) {
+    _current = http;
+    if (_cancelled) http.close();
+  }
+
+  void _check() {
+    if (_cancelled) {
+      throw const PairingException(PairingFailure.cancelled);
+    }
+  }
+}
+
+typedef PinnedFactory = RemoteHttp Function(Uri base, String fingerprint);
+typedef FirstContactFactory = FirstContactHttp Function(Uri base);
+
+/// Per-address probe timeout on the QR path.
+const Duration kPairProbeTimeout = Duration(seconds: 2);
+
+/// Client timeout of `POST /v1/pair` (the server holds up to 60 s, N3).
+const Duration kPairRequestTimeout = Duration(seconds: 75);
+
+/// The connecting side of both pairing paths (TASK-N2).
+class PairingClient {
+  new({
+    required this._identity,
+    PinnedFactory? pinned,
+    FirstContactFactory? firstContact,
+    this.probeTimeout = kPairProbeTimeout,
+  }) : _pinned = pinned ?? PinnedClient.pinned,
+       _firstContact = firstContact ?? PinnedClient.firstContact;
+
+  final DeviceIdentityRepository _identity;
+  final PinnedFactory _pinned;
+  final FirstContactFactory _firstContact;
+  final Duration probeTimeout;
+
+  /// QR path: pins the QR fingerprint, tries each address (2 s each), signs
+  /// the server nonce and sends `POST /v1/pair`. [onWaiting] runs when the
+  /// request reaches the other device's accept step.
+  Future<PairingSuccess> pairWithQr(
+    PairingOffer offer, {
+    void Function(String peerName)? onWaiting,
+    PairingCancel? cancel,
+  }) async {
+    final me = await _identity.loadOrCreate();
+    RemoteHttp? http;
+    Uint8List? nonce;
+    var sawPinMismatch = false;
+    RemoteApiException? lastApi;
+    for (final a in offer.addresses) {
+      cancel?._check();
+      final c = _pinned(
+        Uri(scheme: 'https', host: a.host, port: a.port),
+        offer.serverFingerprint,
+      );
+      cancel?._attach(c);
+      try {
+        final n = await c.postJson(
+          ApiRoutes.pairNonce,
+          const <String, Object?>{},
+          decode: PairNonceDto.fromJson,
+          timeout: probeTimeout,
+        );
+        final bytes = fromB64url(n.nonce);
+        if (bytes == null || bytes.length != 32) {
+          c.close();
+          continue;
+        }
+        nonce = bytes;
+        http = c;
+        break;
+      } on RemoteUnavailableException catch (e) {
+        c.close();
+        if (e.reason == RemoteUnavailableReason.pinMismatch) {
+          sawPinMismatch = true;
+        }
+      } on RemoteApiException catch (e) {
+        c.close();
+        lastApi = e;
+      }
+    }
+    cancel?._check();
+    if (http == null || nonce == null) {
+      if (sawPinMismatch) {
+        throw const PairingException(PairingFailure.wrongDevice);
+      }
+      if (lastApi != null) throw _fromApi(lastApi);
+      throw const PairingException(PairingFailure.unreachable);
+    }
+    final peerName = offer.deviceName;
+    try {
+      final sig = await _identity.sign(
+        signedMessage(ProofLabels.pairQr, [
+          _utf8(offer.serverFingerprint),
+          nonce,
+          _sha256(offer.secret),
+        ]),
+      );
+      cancel?._check();
+      onWaiting?.call(peerName);
+      final accepted = await http.postJson(
+        ApiRoutes.pair,
+        PairRequestDto(
+          hello: _hello(me),
+          credential: QrCredential(
+            secret: b64url(offer.secret),
+            nonce: b64url(nonce),
+            sig: b64url(sig),
+          ),
+        ).toJson(),
+        decode: PairAcceptedDto.fromJson,
+        timeout: kPairRequestTimeout,
+      );
+      http.bearerToken = accepted.token;
+      return PairingSuccess(
+        http: http,
+        accepted: accepted,
+        peerName: peerName,
+        peerFingerprint: offer.serverFingerprint,
+      );
+    } on Object catch (e) {
+      http.close();
+      throw _map(e, cancel);
+    }
+  }
+
+  /// Short-code path (SPAKE2, RFC 9382). [expectedFingerprint] is the mDNS
+  /// TXT hint (null for a typed address); a mismatch stops early. On a
+  /// failed `confirmB` the client aborts and sends nothing more.
+  Future<PairingSuccess> pairWithCode({
+    required Uri base,
+    required ShortCode code,
+    String? expectedFingerprint,
+    void Function(String peerName)? onWaiting,
+    PairingCancel? cancel,
+  }) async {
+    final me = await _identity.loadOrCreate();
+    cancel?._check();
+    final first = _firstContact(base);
+    cancel?._attach(first);
+    RemoteHttp current = first;
+    try {
+      final info = await first.getJson(
+        ApiRoutes.info,
+        decode: ServerInfoDto.fromJson,
+      );
+      if (info.protocolVersion != kProtocolVersion) {
+        throw const PairingException(PairingFailure.unsupportedVersion);
+      }
+      final seen = first.seenFingerprint;
+      if (seen == null) {
+        throw const PairingException(PairingFailure.badResponse);
+      }
+      if (expectedFingerprint != null &&
+          expectedFingerprint.toLowerCase() != seen) {
+        throw const PairingException(PairingFailure.wrongDevice);
+      }
+      final peerName = info.name;
+      final hello = _hello(me);
+      final spake = Spake2Client(
+        w: spake2PasswordScalar(code.value),
+        idA: _utf8(me.fingerprint),
+        idB: _utf8(seen),
+        aad: _utf8(kSpake2Aad),
+      );
+      cancel?._check();
+      final start = await first.postJson(
+        ApiRoutes.pairCodeStart,
+        CodeStartRequestDto(hello: hello, pA: b64url(spake.pA)).toJson(),
+        decode: CodeStartResponseDto.fromJson,
+      );
+      final pB = fromB64url(start.pB);
+      final confirmB = fromB64url(start.confirmB);
+      final keys = pB == null ? null : spake.finish(pB);
+      if (keys == null ||
+          confirmB == null ||
+          !constantTimeEquals(keys.confirmB, confirmB)) {
+        // Never reveal confirmA after a failed check (offline test).
+        throw const PairingException(PairingFailure.wrongCode);
+      }
+      cancel?._check();
+      final pinned = first.promote();
+      current = pinned;
+      cancel?._attach(pinned);
+      final sig = await _identity.sign(
+        signedMessage(ProofLabels.pairCode, [_utf8(seen), _sha256(keys.tt)]),
+      );
+      cancel?._check();
+      onWaiting?.call(peerName);
+      final accepted = await pinned.postJson(
+        ApiRoutes.pair,
+        PairRequestDto(
+          hello: hello,
+          credential: CodeCredential(
+            attemptId: start.attemptId,
+            confirmA: b64url(keys.confirmA),
+            sig: b64url(sig),
+          ),
+        ).toJson(),
+        decode: PairAcceptedDto.fromJson,
+        timeout: kPairRequestTimeout,
+      );
+      pinned.bearerToken = accepted.token;
+      return PairingSuccess(
+        http: pinned,
+        accepted: accepted,
+        peerName: peerName,
+        peerFingerprint: seen,
+      );
+    } on Object catch (e) {
+      current.close();
+      throw _map(e, cancel);
+    }
+  }
+
+  ClientHelloDto _hello(DeviceIdentity me) => ClientHelloDto(
+    pairAttemptId: randomHexId(),
+    clientDeviceId: me.deviceId,
+    clientName: me.displayName,
+    clientPlatform: me.platform,
+    clientCertPem: me.certPem,
+  );
+
+  static PairingException _map(Object e, PairingCancel? cancel) {
+    if (cancel != null && cancel.isCancelled) {
+      return PairingException(PairingFailure.cancelled, cause: e);
+    }
+    return switch (e) {
+      PairingException() => e,
+      RemoteApiException() => _fromApi(e),
+      RemoteUnavailableException(reason: RemoteUnavailableReason.pinMismatch) =>
+        PairingException(PairingFailure.wrongDevice, cause: e),
+      RemoteUnavailableException(reason: RemoteUnavailableReason.badResponse) =>
+        PairingException(PairingFailure.badResponse, cause: e),
+      RemoteUnavailableException() => PairingException(
+        PairingFailure.network,
+        cause: e,
+      ),
+      _ => PairingException(PairingFailure.pairingFailed, cause: e),
+    };
+  }
+
+  static PairingException _fromApi(RemoteApiException e) =>
+      PairingException(switch (e.code) {
+        ApiErrorCode.secretUsed => PairingFailure.secretUsed,
+        ApiErrorCode.expired => PairingFailure.expired,
+        ApiErrorCode.tooManyAttempts => PairingFailure.tooManyAttempts,
+        ApiErrorCode.busy => PairingFailure.busy,
+        ApiErrorCode.declined => PairingFailure.declined,
+        ApiErrorCode.timedOut => PairingFailure.timedOut,
+        ApiErrorCode.cancelled => PairingFailure.cancelled,
+        ApiErrorCode.unsupportedVersion => PairingFailure.unsupportedVersion,
+        ApiErrorCode.forbidden => PairingFailure.unreachable,
+        _ => PairingFailure.pairingFailed,
+      }, cause: e);
+}
+
+Uint8List _utf8(String s) => Uint8List.fromList(utf8.encode(s));
+
+Uint8List _sha256(List<int> b) =>
+    Uint8List.fromList(crypto.sha256.convert(b).bytes);

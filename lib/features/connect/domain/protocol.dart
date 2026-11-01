@@ -408,3 +408,50 @@ class ApiErrorDto {
 
   Map<String, Object?> toJson() => {'code': code, 'message': message};
 }
+
+/// `POST /v1/pair/code/start` request (N2, SPAKE2 message 1).
+@immutable
+class CodeStartRequestDto {
+  const new({required this.hello, required this.pA});
+
+  factory fromJson(Map<String, Object?> json) => CodeStartRequestDto(
+    hello: ClientHelloDto.fromJson(_map(json, 'hello')),
+    pA: _str(json, 'pA'),
+  );
+
+  final ClientHelloDto hello;
+
+  /// Uncompressed SEC1 point (65 bytes), base64url.
+  final String pA;
+
+  Map<String, Object?> toJson() => {'hello': hello.toJson(), 'pA': pA};
+}
+
+/// `POST /v1/pair/code/start` response (N2, SPAKE2 message 2).
+@immutable
+class CodeStartResponseDto {
+  const new({
+    required this.attemptId,
+    required this.pB,
+    required this.confirmB,
+  });
+
+  factory fromJson(Map<String, Object?> json) => CodeStartResponseDto(
+    attemptId: _str(json, 'attemptId'),
+    pB: _str(json, 'pB'),
+    confirmB: _str(json, 'confirmB'),
+  );
+
+  /// 128-bit hex, valid 30 s, same remote IP only.
+  final String attemptId;
+
+  /// base64url.
+  final String pB;
+  final String confirmB;
+
+  Map<String, Object?> toJson() => {
+    'attemptId': attemptId,
+    'pB': pB,
+    'confirmB': confirmB,
+  };
+}

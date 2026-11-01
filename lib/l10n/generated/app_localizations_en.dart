@@ -3913,11 +3913,174 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectToDevice => 'Connect to a device';
 
   @override
-  String get connectToDeviceSoon => 'Coming in a later update';
+  String get connectToDeviceHint => 'Scan a QR code or type a code';
 
   @override
-  String get connectComingSoon =>
-      'Connecting to another device isn\'t available yet.';
+  String get connectChooseHint =>
+      'On the other device, open Settings → Connect a device → Share this device.';
+
+  @override
+  String get connectScanQr => 'Scan QR code';
+
+  @override
+  String get connectScanQrHint =>
+      'Point the camera at the code on the other device';
+
+  @override
+  String get connectTypeCode => 'Type a code';
+
+  @override
+  String get connectTypeCodeHint => 'For a PC, or when there’s no camera';
+
+  @override
+  String get connectCameraDenied =>
+      'KFM needs the camera to scan the code. You can type the code instead.';
+
+  @override
+  String get connectOpenSettings => 'Open settings';
+
+  @override
+  String get connectAllowCamera => 'Allow camera';
+
+  @override
+  String get connectNotKfmCode => 'Not a KFM code';
+
+  @override
+  String get connectUpdateKfm => 'Update KFM on both devices';
+
+  @override
+  String get connectDebugPasteLabel => 'Pairing link (debug builds only)';
+
+  @override
+  String get connectDebugPasteGo => 'Use link';
+
+  @override
+  String get connectNearbyTitle => 'Nearby devices';
+
+  @override
+  String get connectNearbySearching =>
+      'Looking for devices sharing on this Wi-Fi…';
+
+  @override
+  String get connectNearbyFailed =>
+      'Can’t search this Wi-Fi. Enter the address shown on the other device instead.';
+
+  @override
+  String get connectEnterAddress => 'Enter address';
+
+  @override
+  String get connectAddressLabel => 'Address shown on the other device';
+
+  @override
+  String get connectAddressInvalid => 'Enter it like 192.168.1.23:48211';
+
+  @override
+  String connectHostPort(String host, int port) {
+    return '$host:$port';
+  }
+
+  @override
+  String get connectNext => 'Next';
+
+  @override
+  String connectCodeFor(String name) {
+    return 'Type the code shown on $name';
+  }
+
+  @override
+  String get connectCodeForAddress => 'Type the code shown on the other device';
+
+  @override
+  String get connectCodeLabel => 'Code';
+
+  @override
+  String get connectCodeInvalidChar => 'Only letters and numbers';
+
+  @override
+  String get connectConnect => 'Connect';
+
+  @override
+  String get connectCancel => 'Cancel';
+
+  @override
+  String get connectConnecting => 'Connecting…';
+
+  @override
+  String connectWaiting(String name) {
+    return 'Waiting for $name to accept…';
+  }
+
+  @override
+  String connectConnected(String name) {
+    return 'Connected to $name';
+  }
+
+  @override
+  String get connectDisconnect => 'Disconnect';
+
+  @override
+  String get connectTryAgain => 'Try again';
+
+  @override
+  String get connectBack => 'Back';
+
+  @override
+  String get connectOtherDevice => 'the other device';
+
+  @override
+  String get connectErrorUnreachable =>
+      'Devices can’t reach each other on this Wi-Fi. Try a hotspot.';
+
+  @override
+  String connectErrorWrongDevice(String name) {
+    return 'This isn’t $name.';
+  }
+
+  @override
+  String connectErrorWrongCode(String name) {
+    return 'Wrong code, or this isn’t $name. Check the code and try again.';
+  }
+
+  @override
+  String get connectErrorSecretUsed => 'Code already used';
+
+  @override
+  String get connectErrorExpired => 'This code expired. Scan the new one.';
+
+  @override
+  String get connectErrorTooMany =>
+      'Too many attempts. Wait a moment, then try again.';
+
+  @override
+  String connectErrorBusy(String name) {
+    return '$name is busy with another request. Try again in a moment.';
+  }
+
+  @override
+  String connectErrorDeclined(String name) {
+    return '$name declined the connection.';
+  }
+
+  @override
+  String connectErrorTimedOut(String name) {
+    return 'No answer from $name.';
+  }
+
+  @override
+  String get connectErrorCancelled => 'Request cancelled';
+
+  @override
+  String get connectErrorFailed => 'Pairing failed. Try again.';
+
+  @override
+  String connectErrorNetwork(String name) {
+    return 'The connection to $name was lost.';
+  }
+
+  @override
+  String connectErrorBadResponse(String name) {
+    return '$name didn’t answer like KFM. Update KFM on both devices.';
+  }
 
   @override
   String get shareTitle => 'Share this device';
@@ -3968,6 +4131,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareDebugFingerprint(String fingerprint) {
     return 'Fingerprint: $fingerprint';
   }
+
+  @override
+  String get shareQrHint => 'Scan this with KFM on the other device';
+
+  @override
+  String get shareQrSemantics => 'QR code for pairing';
+
+  @override
+  String shareExpiresIn(String time) {
+    return 'New code in $time';
+  }
+
+  @override
+  String get shareTypeCodeTitle => 'No camera? Type this code';
+
+  @override
+  String shareAddress(String address) {
+    return 'Address: $address';
+  }
+
+  @override
+  String shareCodeCooldown(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'Too many wrong attempts. Typed codes work again in $seconds seconds.',
+      one: 'Too many wrong attempts. Typed codes work again in 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareTypedCodesOff =>
+      'Typed codes are turned off for now. Scan the QR, or stop and start sharing again.';
+
+  @override
+  String get shareRotatedLocked =>
+      'Too many wrong attempts. New code generated';
+
+  @override
+  String get sharePrivacyNote =>
+      'While sharing, devices on this Wi-Fi can see this device’s name.';
+
+  @override
+  String get shareDiscoveryFailed =>
+      'Nearby devices can’t list this one. They can enter the address instead.';
 
   @override
   String get devResetIdentity => 'Reset device identity';

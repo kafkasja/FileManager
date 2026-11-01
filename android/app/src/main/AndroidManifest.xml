@@ -26,6 +26,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Local Wi-Fi / hotspot sharing server (TASK-N1); never reaches the internet. -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- N2: mDNS browse of nearby sharing devices (the nsd plugin refuses
+         discovery without it; normal permission, no prompt). -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- N2: QR scanning only while "Scan QR" is open (asked on tap). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:label="KFM"

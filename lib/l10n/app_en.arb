@@ -2542,8 +2542,133 @@
   "connectShareThisDevice": "Share this device",
   "connectShareThisDeviceHint": "Let a phone or PC on the same Wi-Fi connect to this one",
   "connectToDevice": "Connect to a device",
-  "connectToDeviceSoon": "Coming in a later update",
-  "connectComingSoon": "Connecting to another device isn't available yet.",
+  "connectToDeviceHint": "Scan a QR code or type a code",
+  "connectChooseHint": "On the other device, open Settings → Connect a device → Share this device.",
+  "connectScanQr": "Scan QR code",
+  "connectScanQrHint": "Point the camera at the code on the other device",
+  "connectTypeCode": "Type a code",
+  "connectTypeCodeHint": "For a PC, or when there’s no camera",
+  "connectCameraDenied": "KFM needs the camera to scan the code. You can type the code instead.",
+  "connectOpenSettings": "Open settings",
+  "connectAllowCamera": "Allow camera",
+  "connectNotKfmCode": "Not a KFM code",
+  "connectUpdateKfm": "Update KFM on both devices",
+  "connectDebugPasteLabel": "Pairing link (debug builds only)",
+  "connectDebugPasteGo": "Use link",
+  "connectNearbyTitle": "Nearby devices",
+  "connectNearbySearching": "Looking for devices sharing on this Wi-Fi…",
+  "connectNearbyFailed": "Can’t search this Wi-Fi. Enter the address shown on the other device instead.",
+  "connectEnterAddress": "Enter address",
+  "connectAddressLabel": "Address shown on the other device",
+  "connectAddressInvalid": "Enter it like 192.168.1.23:48211",
+  "connectHostPort": "{host}:{port}",
+  "@connectHostPort": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      },
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "connectNext": "Next",
+  "connectCodeFor": "Type the code shown on {name}",
+  "@connectCodeFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectCodeForAddress": "Type the code shown on the other device",
+  "connectCodeLabel": "Code",
+  "connectCodeInvalidChar": "Only letters and numbers",
+  "connectConnect": "Connect",
+  "connectCancel": "Cancel",
+  "connectConnecting": "Connecting…",
+  "connectWaiting": "Waiting for {name} to accept…",
+  "@connectWaiting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectConnected": "Connected to {name}",
+  "@connectConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectDisconnect": "Disconnect",
+  "connectTryAgain": "Try again",
+  "connectBack": "Back",
+  "connectOtherDevice": "the other device",
+  "connectErrorUnreachable": "Devices can’t reach each other on this Wi-Fi. Try a hotspot.",
+  "connectErrorWrongDevice": "This isn’t {name}.",
+  "@connectErrorWrongDevice": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorWrongCode": "Wrong code, or this isn’t {name}. Check the code and try again.",
+  "@connectErrorWrongCode": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorSecretUsed": "Code already used",
+  "connectErrorExpired": "This code expired. Scan the new one.",
+  "connectErrorTooMany": "Too many attempts. Wait a moment, then try again.",
+  "connectErrorBusy": "{name} is busy with another request. Try again in a moment.",
+  "@connectErrorBusy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorDeclined": "{name} declined the connection.",
+  "@connectErrorDeclined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorTimedOut": "No answer from {name}.",
+  "@connectErrorTimedOut": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorCancelled": "Request cancelled",
+  "connectErrorFailed": "Pairing failed. Try again.",
+  "connectErrorNetwork": "The connection to {name} was lost.",
+  "@connectErrorNetwork": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorBadResponse": "{name} didn’t answer like KFM. Update KFM on both devices.",
+  "@connectErrorBadResponse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "shareTitle": "Share this device",
   "sharePreparing": "Preparing…",
   "shareSharing": "Sharing",
@@ -2584,6 +2709,37 @@
       }
     }
   },
+  "shareQrHint": "Scan this with KFM on the other device",
+  "shareQrSemantics": "QR code for pairing",
+  "shareExpiresIn": "New code in {time}",
+  "@shareExpiresIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTypeCodeTitle": "No camera? Type this code",
+  "shareAddress": "Address: {address}",
+  "@shareAddress": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "shareCodeCooldown": "{seconds, plural, =1{Too many wrong attempts. Typed codes work again in 1 second.} other{Too many wrong attempts. Typed codes work again in {seconds} seconds.}}",
+  "@shareCodeCooldown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTypedCodesOff": "Typed codes are turned off for now. Scan the QR, or stop and start sharing again.",
+  "shareRotatedLocked": "Too many wrong attempts. New code generated",
+  "sharePrivacyNote": "While sharing, devices on this Wi-Fi can see this device’s name.",
+  "shareDiscoveryFailed": "Nearby devices can’t list this one. They can enter the address instead.",
   "devResetIdentity": "Reset device identity",
   "devResetIdentityDone": "New device identity created"
 }

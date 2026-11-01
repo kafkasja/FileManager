@@ -52,6 +52,17 @@ abstract interface class RemoteHttp {
   void close();
 }
 
+/// A [RemoteHttp] in first-contact mode (N2 short-code path): trusts the
+/// first certificate it sees, then [promote] pins it.
+abstract interface class FirstContactHttp implements RemoteHttp {
+  /// The fingerprint of the first certificate presented; null before any
+  /// connection.
+  String? get seenFingerprint;
+
+  /// A pinned client for the same base; closes this one.
+  RemoteHttp promote();
+}
+
 /// Max JSON response the client reads (N7 pages stay far below it).
 const int kMaxJsonResponseBytes = 8 * 1024 * 1024;
 
@@ -64,7 +75,7 @@ const Duration kDefaultRequestTimeout = Duration(seconds: 30);
 /// verification, so [HttpClient.badCertificateCallback] runs for every
 /// handshake and is the only trust decision: a CA-signed cert for the same IP
 /// is still rejected unless its fingerprint matches.
-final class PinnedClient implements RemoteHttp {
+final class PinnedClient implements FirstContactHttp {
   /// Accepts only a server whose cert fingerprint equals
   /// [expectedFingerprint] (from the QR, N6's known_devices row, or a
   /// promoted first contact).
@@ -78,8 +89,7 @@ final class PinnedClient implements RemoteHttp {
   /// has been verified.
   new firstContact(Uri base) : this._(base, null);
 
-  new _(this.base, this._pin)
-    : _http = HttpClient(context: SecurityContext()) {
+  new _(this.base, this._pin) : _http = HttpClient(context: SecurityContext()) {
     _http
       ..connectionTimeout = const Duration(seconds: 5)
       ..idleTimeout = const Duration(seconds: 15)
@@ -105,6 +115,7 @@ final class PinnedClient implements RemoteHttp {
   String? bearerToken;
 
   /// The first fingerprint a server presented to this client.
+  @override
   String? get seenFingerprint => _seen;
 
   /// Whether this client may only call [firstContactRoutes].
@@ -124,6 +135,7 @@ final class PinnedClient implements RemoteHttp {
 
   /// New pinned client for the same base; closes this one. Throws
   /// [StateError] if no certificate was seen yet.
+  @override
   PinnedClient promote() {
     final seen = _seen;
     if (seen == null) {
@@ -253,10 +265,7 @@ final class PinnedClient implements RemoteHttp {
     try {
       json = jsonDecode(utf8.decode(bytes));
     } on FormatException catch (e) {
-      throw RemoteUnavailableException(
-        RemoteUnavailableReason.badResponse,
-        e,
-      );
+      throw RemoteUnavailableException(RemoteUnavailableReason.badResponse, e);
     }
     if (json is! Map<String, Object?>) {
       throw const RemoteUnavailableException(
@@ -266,10 +275,7 @@ final class PinnedClient implements RemoteHttp {
     try {
       return decode(json);
     } on FormatException catch (e) {
-      throw RemoteUnavailableException(
-        RemoteUnavailableReason.badResponse,
-        e,
-      );
+      throw RemoteUnavailableException(RemoteUnavailableReason.badResponse, e);
     }
   }
 

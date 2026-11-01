@@ -233,6 +233,292 @@ final class PairNonceStoreProvider
 
 String _$pairNonceStoreHash() => r'2555070de6bfcb1a2fbdc4104b178958b2bd71e0';
 
+/// QR secret + short code of the current sharing run (N2).
+
+@ProviderFor(pairingSecretStore)
+final pairingSecretStoreProvider = PairingSecretStoreProvider._();
+
+/// QR secret + short code of the current sharing run (N2).
+
+final class PairingSecretStoreProvider
+    extends
+        $FunctionalProvider<
+          PairingSecretStore,
+          PairingSecretStore,
+          PairingSecretStore
+        >
+    with $Provider<PairingSecretStore> {
+  /// QR secret + short code of the current sharing run (N2).
+  PairingSecretStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pairingSecretStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pairingSecretStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<PairingSecretStore> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  PairingSecretStore create(Ref ref) {
+    return pairingSecretStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PairingSecretStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PairingSecretStore>(value),
+    );
+  }
+}
+
+String _$pairingSecretStoreHash() =>
+    r'925cecd2be29d730143e563923bfb9ecebe41bd5';
+
+/// What happens to a verified pairing request. N2 holds it and answers
+/// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+
+@ProviderFor(pairHandOff)
+final pairHandOffProvider = PairHandOffProvider._();
+
+/// What happens to a verified pairing request. N2 holds it and answers
+/// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+
+final class PairHandOffProvider
+    extends $FunctionalProvider<PairHandOff, PairHandOff, PairHandOff>
+    with $Provider<PairHandOff> {
+  /// What happens to a verified pairing request. N2 holds it and answers
+  /// `timed_out` (no accept prompt yet); N3 replaces this with the prompt.
+  PairHandOffProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pairHandOffProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pairHandOffHash();
+
+  @$internal
+  @override
+  $ProviderElement<PairHandOff> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PairHandOff create(Ref ref) {
+    return pairHandOff(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PairHandOff value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PairHandOff>(value),
+    );
+  }
+}
+
+String _$pairHandOffHash() => r'7c76a8b4d377b2f071b7714fe4d81f428c9b7f25';
+
+/// mDNS advertise + browse (N2).
+
+@ProviderFor(shareDiscovery)
+final shareDiscoveryProvider = ShareDiscoveryProvider._();
+
+/// mDNS advertise + browse (N2).
+
+final class ShareDiscoveryProvider
+    extends $FunctionalProvider<ShareDiscovery, ShareDiscovery, ShareDiscovery>
+    with $Provider<ShareDiscovery> {
+  /// mDNS advertise + browse (N2).
+  ShareDiscoveryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shareDiscoveryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$shareDiscoveryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ShareDiscovery> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ShareDiscovery create(Ref ref) {
+    return shareDiscovery(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ShareDiscovery value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ShareDiscovery>(value),
+    );
+  }
+}
+
+String _$shareDiscoveryHash() => r'06ee902ee823958346f61d79668a20d99fc69b38';
+
+/// Nearby sharing devices while the Connect screen lists them.
+
+@ProviderFor(nearbyDevices)
+final nearbyDevicesProvider = NearbyDevicesProvider._();
+
+/// Nearby sharing devices while the Connect screen lists them.
+
+final class NearbyDevicesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<NearbyDevice>>,
+          List<NearbyDevice>,
+          Stream<List<NearbyDevice>>
+        >
+    with
+        $FutureModifier<List<NearbyDevice>>,
+        $StreamProvider<List<NearbyDevice>> {
+  /// Nearby sharing devices while the Connect screen lists them.
+  NearbyDevicesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nearbyDevicesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$nearbyDevicesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<NearbyDevice>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<NearbyDevice>> create(Ref ref) {
+    return nearbyDevices(ref);
+  }
+}
+
+String _$nearbyDevicesHash() => r'd146f1ccef04a5f40aa43eb464296eed6debe1be';
+
+/// The connecting side of pairing (N2).
+
+@ProviderFor(pairingClient)
+final pairingClientProvider = PairingClientProvider._();
+
+/// The connecting side of pairing (N2).
+
+final class PairingClientProvider
+    extends $FunctionalProvider<PairingClient, PairingClient, PairingClient>
+    with $Provider<PairingClient> {
+  /// The connecting side of pairing (N2).
+  PairingClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pairingClientProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pairingClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<PairingClient> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PairingClient create(Ref ref) {
+    return pairingClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PairingClient value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PairingClient>(value),
+    );
+  }
+}
+
+String _$pairingClientHash() => r'77f3a335daee3c3dd0a6062fc0af2364d290a790';
+
+/// Camera permission for "Scan QR".
+
+@ProviderFor(cameraAccess)
+final cameraAccessProvider = CameraAccessProvider._();
+
+/// Camera permission for "Scan QR".
+
+final class CameraAccessProvider
+    extends $FunctionalProvider<CameraAccess, CameraAccess, CameraAccess>
+    with $Provider<CameraAccess> {
+  /// Camera permission for "Scan QR".
+  CameraAccessProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cameraAccessProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cameraAccessHash();
+
+  @$internal
+  @override
+  $ProviderElement<CameraAccess> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CameraAccess create(Ref ref) {
+    return cameraAccess(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CameraAccess value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CameraAccess>(value),
+    );
+  }
+}
+
+String _$cameraAccessHash() => r'e2a5b19d99a79e0546291460a0c93d9c5312f0a4';
+
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 
 @ProviderFor(shareServerRoutes)
@@ -283,7 +569,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'babb82fee8f944364673f711a86f51279fe260e1';
+String _$shareServerRoutesHash() => r'05e51149b90215ac7c5104e7543f682063998c81';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

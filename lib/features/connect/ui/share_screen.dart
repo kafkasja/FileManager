@@ -7,8 +7,11 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 /// "Share this device" (TASK-N1). Sharing runs only while this screen is
 /// open: it starts in `initState` and stops in `dispose`. The QR area is
@@ -106,12 +109,6 @@ class _Running extends ConsumerWidget {
     final name = ref.watch(deviceIdentityProvider).value?.displayName ?? '';
     return ListView(
       children: [
-        Icon(
-          Icons.wifi_tethering,
-          size: 64,
-          color: theme.colorScheme.primary,
-        ),
-        SizedBox(height: spacing * 2),
         Text(
           l10n.shareSharing,
           style: theme.textTheme.headlineSmall,
@@ -123,7 +120,17 @@ class _Running extends ConsumerWidget {
           style: theme.textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: spacing),
+        SizedBox(height: spacing * 2),
+        const PairingPanel(),
+        if (state.discoveryError != null) ...[
+          SizedBox(height: spacing),
+          Text(
+            l10n.shareDiscoveryFailed,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+        SizedBox(height: spacing * 2),
         Text(
           l10n.shareKeepOpen,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -154,6 +161,149 @@ class _Running extends ConsumerWidget {
             icon: const Icon(Icons.stop_circle_outlined),
             label: Text(l10n.shareStop),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// QR + typed code + address + countdown (TASK-N2). Listens to the
+/// [PairingSecretStore] directly so every rotation hint is shown.
+class PairingPanel extends ConsumerStatefulWidget {
+  const new({super.key});
+
+  @override
+  ConsumerState<PairingPanel> createState() => _PairingPanelState();
+}
+
+class _PairingPanelState extends ConsumerState<PairingPanel> {
+  late final PairingSecretStore _store;
+  StreamSubscription<PairingSecretState>? _sub;
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _store = ref.read(pairingSecretStoreProvider);
+    _sub = _store.changes.listen(_onChange);
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    _sub?.cancel().ignore();
+    super.dispose();
+  }
+
+  void _onChange(PairingSecretState s) {
+    if (!mounted) return;
+    if (s case SecretRotated(
+      reason: RotationReason.qrLocked || RotationReason.codeLocked,
+    )) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.shareRotatedLocked)),
+        );
+    }
+    setState(() {});
+  }
+
+  static String _mmss(Duration d) {
+    final s = d.isNegative ? 0 : d.inSeconds;
+    return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final spacing = context.tokens.spacing;
+    final state = _store.state;
+    if (state is! SecretActive) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final now = _store.now();
+    final address = state.offer.addresses.firstOrNull;
+    final cooldown = state.codeCooldownUntil;
+    final muted = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return Column(
+      children: [
+        Text(l10n.shareQrHint, textAlign: TextAlign.center),
+        SizedBox(height: spacing),
+        Center(
+          child: Semantics(
+            label: l10n.shareQrSemantics,
+            image: true,
+            child: ExcludeSemantics(
+              child: QrImageView(
+                key: const ValueKey('share-qr'),
+                data: state.offer.toUri(),
+                size: 260,
+                // White quiet zone also in dark mode, or scanners fail.
+                backgroundColor: Colors.white,
+                padding: EdgeInsets.all(spacing * 2),
+                errorCorrectionLevel: QrErrorCorrectLevel.M,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: spacing),
+        Text(
+          l10n.shareExpiresIn(_mmss(state.expiresAt.difference(now))),
+          style: muted,
+        ),
+        SizedBox(height: spacing * 3),
+        Text(l10n.shareTypeCodeTitle, style: theme.textTheme.titleMedium),
+        SizedBox(height: spacing),
+        if (!state.typedCodesEnabled)
+          Text(
+            l10n.shareTypedCodesOff,
+            key: const ValueKey('share-typed-off'),
+            textAlign: TextAlign.center,
+          )
+        else ...[
+          SelectableText(
+            state.code.display,
+            key: const ValueKey('share-code'),
+            style: theme.textTheme.displaySmall?.copyWith(
+              fontFamily: 'monospace',
+              letterSpacing: 4,
+            ),
+          ),
+          if (cooldown != null)
+            Text(
+              l10n.shareCodeCooldown(
+                cooldown.difference(now).inSeconds.clamp(1, 30),
+              ),
+              textAlign: TextAlign.center,
+            )
+          else
+            Text(
+              l10n.shareExpiresIn(_mmss(state.codeExpiresAt.difference(now))),
+              style: muted,
+            ),
+        ],
+        if (address != null) ...[
+          SizedBox(height: spacing),
+          SelectableText(
+            l10n.shareAddress('${address.host}:${address.port}'),
+            key: const ValueKey('share-address'),
+            style: theme.textTheme.titleSmall,
+          ),
+        ],
+        SizedBox(height: spacing),
+        Text(
+          l10n.sharePrivacyNote,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );

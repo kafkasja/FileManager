@@ -5535,17 +5535,287 @@ abstract class AppLocalizations {
   /// **'Connect to a device'**
   String get connectToDevice;
 
-  /// No description provided for @connectToDeviceSoon.
+  /// No description provided for @connectToDeviceHint.
   ///
   /// In en, this message translates to:
-  /// **'Coming in a later update'**
-  String get connectToDeviceSoon;
+  /// **'Scan a QR code or type a code'**
+  String get connectToDeviceHint;
 
-  /// No description provided for @connectComingSoon.
+  /// No description provided for @connectChooseHint.
   ///
   /// In en, this message translates to:
-  /// **'Connecting to another device isn\'t available yet.'**
-  String get connectComingSoon;
+  /// **'On the other device, open Settings → Connect a device → Share this device.'**
+  String get connectChooseHint;
+
+  /// No description provided for @connectScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get connectScanQr;
+
+  /// No description provided for @connectScanQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the code on the other device'**
+  String get connectScanQrHint;
+
+  /// No description provided for @connectTypeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a code'**
+  String get connectTypeCode;
+
+  /// No description provided for @connectTypeCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For a PC, or when there’s no camera'**
+  String get connectTypeCodeHint;
+
+  /// No description provided for @connectCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM needs the camera to scan the code. You can type the code instead.'**
+  String get connectCameraDenied;
+
+  /// No description provided for @connectOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get connectOpenSettings;
+
+  /// No description provided for @connectAllowCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow camera'**
+  String get connectAllowCamera;
+
+  /// No description provided for @connectNotKfmCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a KFM code'**
+  String get connectNotKfmCode;
+
+  /// No description provided for @connectUpdateKfm.
+  ///
+  /// In en, this message translates to:
+  /// **'Update KFM on both devices'**
+  String get connectUpdateKfm;
+
+  /// No description provided for @connectDebugPasteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing link (debug builds only)'**
+  String get connectDebugPasteLabel;
+
+  /// No description provided for @connectDebugPasteGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Use link'**
+  String get connectDebugPasteGo;
+
+  /// No description provided for @connectNearbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby devices'**
+  String get connectNearbyTitle;
+
+  /// No description provided for @connectNearbySearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for devices sharing on this Wi-Fi…'**
+  String get connectNearbySearching;
+
+  /// No description provided for @connectNearbyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t search this Wi-Fi. Enter the address shown on the other device instead.'**
+  String get connectNearbyFailed;
+
+  /// No description provided for @connectEnterAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter address'**
+  String get connectEnterAddress;
+
+  /// No description provided for @connectAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address shown on the other device'**
+  String get connectAddressLabel;
+
+  /// No description provided for @connectAddressInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter it like 192.168.1.23:48211'**
+  String get connectAddressInvalid;
+
+  /// No description provided for @connectHostPort.
+  ///
+  /// In en, this message translates to:
+  /// **'{host}:{port}'**
+  String connectHostPort(String host, int port);
+
+  /// No description provided for @connectNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get connectNext;
+
+  /// No description provided for @connectCodeFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the code shown on {name}'**
+  String connectCodeFor(String name);
+
+  /// No description provided for @connectCodeForAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the code shown on the other device'**
+  String get connectCodeForAddress;
+
+  /// No description provided for @connectCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get connectCodeLabel;
+
+  /// No description provided for @connectCodeInvalidChar.
+  ///
+  /// In en, this message translates to:
+  /// **'Only letters and numbers'**
+  String get connectCodeInvalidChar;
+
+  /// No description provided for @connectConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connectConnect;
+
+  /// No description provided for @connectCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get connectCancel;
+
+  /// No description provided for @connectConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connectConnecting;
+
+  /// No description provided for @connectWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {name} to accept…'**
+  String connectWaiting(String name);
+
+  /// No description provided for @connectConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {name}'**
+  String connectConnected(String name);
+
+  /// No description provided for @connectDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get connectDisconnect;
+
+  /// No description provided for @connectTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get connectTryAgain;
+
+  /// No description provided for @connectBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get connectBack;
+
+  /// No description provided for @connectOtherDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'the other device'**
+  String get connectOtherDevice;
+
+  /// No description provided for @connectErrorUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices can’t reach each other on this Wi-Fi. Try a hotspot.'**
+  String get connectErrorUnreachable;
+
+  /// No description provided for @connectErrorWrongDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn’t {name}.'**
+  String connectErrorWrongDevice(String name);
+
+  /// No description provided for @connectErrorWrongCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong code, or this isn’t {name}. Check the code and try again.'**
+  String connectErrorWrongCode(String name);
+
+  /// No description provided for @connectErrorSecretUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Code already used'**
+  String get connectErrorSecretUsed;
+
+  /// No description provided for @connectErrorExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This code expired. Scan the new one.'**
+  String get connectErrorExpired;
+
+  /// No description provided for @connectErrorTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a moment, then try again.'**
+  String get connectErrorTooMany;
+
+  /// No description provided for @connectErrorBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is busy with another request. Try again in a moment.'**
+  String connectErrorBusy(String name);
+
+  /// No description provided for @connectErrorDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} declined the connection.'**
+  String connectErrorDeclined(String name);
+
+  /// No description provided for @connectErrorTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer from {name}.'**
+  String connectErrorTimedOut(String name);
+
+  /// No description provided for @connectErrorCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Request cancelled'**
+  String get connectErrorCancelled;
+
+  /// No description provided for @connectErrorFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing failed. Try again.'**
+  String get connectErrorFailed;
+
+  /// No description provided for @connectErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to {name} was lost.'**
+  String connectErrorNetwork(String name);
+
+  /// No description provided for @connectErrorBadResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} didn’t answer like KFM. Update KFM on both devices.'**
+  String connectErrorBadResponse(String name);
 
   /// No description provided for @shareTitle.
   ///
@@ -5630,6 +5900,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fingerprint: {fingerprint}'**
   String shareDebugFingerprint(String fingerprint);
+
+  /// No description provided for @shareQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan this with KFM on the other device'**
+  String get shareQrHint;
+
+  /// No description provided for @shareQrSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code for pairing'**
+  String get shareQrSemantics;
+
+  /// No description provided for @shareExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'New code in {time}'**
+  String shareExpiresIn(String time);
+
+  /// No description provided for @shareTypeCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No camera? Type this code'**
+  String get shareTypeCodeTitle;
+
+  /// No description provided for @shareAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address: {address}'**
+  String shareAddress(String address);
+
+  /// No description provided for @shareCodeCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{Too many wrong attempts. Typed codes work again in 1 second.} other{Too many wrong attempts. Typed codes work again in {seconds} seconds.}}'**
+  String shareCodeCooldown(int seconds);
+
+  /// No description provided for @shareTypedCodesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed codes are turned off for now. Scan the QR, or stop and start sharing again.'**
+  String get shareTypedCodesOff;
+
+  /// No description provided for @shareRotatedLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many wrong attempts. New code generated'**
+  String get shareRotatedLocked;
+
+  /// No description provided for @sharePrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'While sharing, devices on this Wi-Fi can see this device’s name.'**
+  String get sharePrivacyNote;
+
+  /// No description provided for @shareDiscoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby devices can’t list this one. They can enter the address instead.'**
+  String get shareDiscoveryFailed;
 
   /// No description provided for @devResetIdentity.
   ///

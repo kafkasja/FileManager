@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -30,11 +34,66 @@ class ShareServerController extends _$ShareServerController {
         await server.stop();
         return;
       }
+      if (next.status == ShareServerStatus.running) {
+        await _startPairing(next);
+        if (gen != _generation) {
+          ref.read(pairingSecretStoreProvider).clear();
+          await server.stop();
+          return;
+        }
+      }
       state = next;
+      if (next.status == ShareServerStatus.running) {
+        unawaited(_advertise(next, gen));
+      }
     } on Object catch (e) {
       if (gen != _generation) return;
+      ref.read(pairingSecretStoreProvider).clear();
       await server.stop();
       state = ShareServerState(status: ShareServerStatus.error, error: e);
+    }
+  }
+
+  /// New QR secret + short code for this run (N2).
+  Future<void> _startPairing(ShareServerState running) async {
+    final id = await ref.read(deviceIdentityRepositoryProvider).loadOrCreate();
+    final port = running.port ?? 0;
+    ref
+        .read(pairingSecretStoreProvider)
+        .start(
+          addresses: [
+            for (final a in running.addresses)
+              (host: a.address.address, port: port),
+          ],
+          serverFingerprint: id.fingerprint,
+          deviceName: id.displayName,
+        );
+  }
+
+  /// Best effort: QR and manual entry don't need mDNS. A failure is shown
+  /// as a hint on the share screen (rule 8).
+  Future<void> _advertise(ShareServerState running, int gen) async {
+    try {
+      final id = await ref
+          .read(deviceIdentityRepositoryProvider)
+          .loadOrCreate();
+      await ref
+          .read(shareDiscoveryProvider)
+          .advertise(
+            ShareAdvert(
+              deviceId: id.deviceId,
+              name: id.displayName,
+              fingerprint: id.fingerprint,
+              port: running.port ?? 0,
+            ),
+          );
+      if (gen != _generation) {
+        await ref.read(shareDiscoveryProvider).stopAdvertising();
+      }
+    } on Object catch (e) {
+      if (gen == _generation && state.status == ShareServerStatus.running) {
+        state = state.withDiscoveryError(e);
+      }
     }
   }
 
@@ -43,6 +102,14 @@ class ShareServerController extends _$ShareServerController {
   Future<void> stopSharing() async {
     _generation++;
     ref.read(pairNonceStoreProvider).clear();
+    ref.read(pairingSecretStoreProvider).clear();
+    final discovery = ref.read(shareDiscoveryProvider);
+    try {
+      await discovery.stopAdvertising();
+    } on Object catch (e) {
+      // Sharing stops anyway; nothing left to show it on.
+      developer.log('mDNS unregister failed: $e', name: 'kfm.connect');
+    }
     await ref.read(shareServerProvider).stop();
     state = ShareServerState.stopped;
   }
