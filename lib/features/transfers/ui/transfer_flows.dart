@@ -10,6 +10,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/remote_file_source.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
@@ -18,6 +19,8 @@ import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
+import 'package:kfm/features/privacy/domain/location_stripper.dart';
+import 'package:kfm/features/privacy/ui/move_warning_dialog.dart';
 import 'package:kfm/features/selection/ui/selection_actions.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
@@ -185,18 +188,38 @@ Future<void> startUpload(
     _snack(context, l10n.transferNoWritableFolder(name));
     return;
   }
+  // X2: with "Remove location" on, photos and videos go without it;
+  // otherwise only when KFM can read locations (ACCESS_MEDIA_LOCATION):
+  // without it Android redacts GPS from the bytes KFM reads.
+  final hasMedia = files.any(LocationStripper.appliesTo);
+  final strip =
+      hasMedia &&
+      await ref
+          .read(settingsRepositoryProvider)
+          .read(AppSettings.privacyStripLocation);
+  final readable =
+      !Platform.isAndroid ||
+      await ref.read(permissionServiceProvider).hasMediaLocation();
+  if (!context.mounted) return;
+  var jobMode = mode;
+  if (strip && jobMode == TransferMode.move) {
+    // The originals are the only files with location: ask first.
+    final choice = await showLocationMoveWarning(context);
+    if (choice == null || !context.mounted) return;
+    if (choice == LocationMoveChoice.copyInstead) jobMode = TransferMode.copy;
+  }
   final folder = await showRemoteFolderPicker(
     context,
     source: ref.read(remoteSourceProvider(fp)),
     device: name,
     roots: writable,
-    // KFM never asks for ACCESS_MEDIA_LOCATION: Android redacts GPS from
-    // the bytes it reads.
-    note: Platform.isAndroid ? l10n.transferNoLocation : null,
+    note: strip
+        ? l10n.privacyTransferNote
+        : (readable || !hasMedia ? null : l10n.transferNoLocation),
   );
   if (folder == null || !context.mounted) return;
   DeleteMode? deleteMode;
-  if (mode == TransferMode.move) {
+  if (jobMode == TransferMode.move) {
     // Read straight from the settings: awaiting the unwatched
     // `deleteModeSettingProvider` hangs in Riverpod 3 (B4).
     deleteMode = DeleteMode.parse(
@@ -217,13 +240,13 @@ Future<void> startUpload(
         peerName: name,
         rootId: target.rootId,
         path: target.path,
-        mode: mode,
+        mode: jobMode,
         deleteMode: deleteMode,
       );
   if (!context.mounted) return;
   _snack(
     context,
-    mode == TransferMode.move
+    jobMode == TransferMode.move
         ? l10n.transferMoveQueued(files.length, name)
         : l10n.transferUploadQueued(files.length, name),
     showTransfers: true,

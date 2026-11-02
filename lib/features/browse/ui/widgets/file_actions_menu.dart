@@ -8,6 +8,7 @@ import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
+import 'package:kfm/features/privacy/ui/share_flow.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -86,6 +87,7 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
       onSelected: (context, ref, f) => deleteFiles(context, ref, [f]),
     ),
     ...archiveFileMenuItems,
+    shareFileMenuItem,
     ...tagFileMenuItems,
     FileMenuItem(
       order: 90,

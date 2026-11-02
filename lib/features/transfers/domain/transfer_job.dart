@@ -38,6 +38,10 @@ abstract final class TransferErrors {
 
   /// N11: a move whose source is already gone (moved before).
   static const alreadyMoved = 'already_moved';
+
+  /// X2: "Remove location" is on and location couldn't be removed from
+  /// the file, so it isn't sent.
+  static const locationNotRemoved = 'location_not_removed';
 }
 
 /// One file of a [TransferJob] (immutable snapshot of its row).

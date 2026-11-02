@@ -5306,4 +5306,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalLoadError => 'Couldn’t read the storage list.';
+
+  @override
+  String get privacySectionTitle => 'Privacy';
+
+  @override
+  String get privacyStripLocation => 'Remove location when sharing';
+
+  @override
+  String get privacyStripLocationHelp =>
+      'Photos and videos you share or send to another device go without location info. Your originals keep it.';
+
+  @override
+  String get privacyAllowAccess => 'Allow access to photo locations';
+
+  @override
+  String get privacyAllowAccessHelp =>
+      'Without it, photos you send arrive without their location.';
+
+  @override
+  String get privacyNoOriginalNote =>
+      'KFM can\'t read the original location of your photos; they\'re sent without it anyway.';
+
+  @override
+  String get privacyShareAction => 'Share';
+
+  @override
+  String privacyShareTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Share $count files',
+      one: 'Share 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyShareRemoveLocation => 'Remove location';
+
+  @override
+  String get privacyShareRemoveLocationHelp =>
+      'From photos and videos. Your originals keep it.';
+
+  @override
+  String privacyRemovingLocation(int done, int total) {
+    return 'Removing location… $done/$total';
+  }
+
+  @override
+  String get privacyShareNoApp => 'No app can receive these files';
+
+  @override
+  String privacyCouldNotStrip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Location couldn\'t be removed from $count files, so they weren\'t shared',
+      one: 'Location couldn\'t be removed from 1 file, so it wasn\'t shared',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyFailedLine(String name, String reason) {
+    return '$name: $reason';
+  }
+
+  @override
+  String get privacyFailStillHasLocation =>
+      'location info was still found after removing it';
+
+  @override
+  String get privacyFailUnsupported => 'this video\'s info can\'t be edited';
+
+  @override
+  String get privacyFailReadFailed => 'the file couldn\'t be read';
+
+  @override
+  String get privacyTransferNotRemoved =>
+      'Location couldn\'t be removed, so it wasn\'t sent';
+
+  @override
+  String get privacyTransferNote =>
+      'Location info is removed (Settings → Privacy)';
+
+  @override
+  String get privacyMoveWarningTitle => 'Move without location?';
+
+  @override
+  String get privacyMoveWarningBody =>
+      'The copies will have no location, and the originals with location will be deleted from this device.';
+
+  @override
+  String get privacyMoveAnyway => 'Move anyway';
+
+  @override
+  String get privacyCopyInstead => 'Copy instead';
 }

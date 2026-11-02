@@ -71,6 +71,9 @@ void main() {
     // Edit selection: tap removes a selected file, unselected do nothing.
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
+    // X2's "Share" made the More menu longer.
+    await tester.ensureVisible(find.text('Edit selection').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Edit selection').last);
     await tester.pumpAndSettle();
     expect(state().mode, SelectionMode.edit);

@@ -151,7 +151,7 @@ final class PlacesProvider
   }
 }
 
-String _$placesHash() => r'27ca2ea609f5e7db701941ca42dc6effe36fb058';
+String _$placesHash() => r'49e5fc9da72ac4e5e21208a8c0a526bc065aaef2';
 
 /// U1: indexed roots of volumes that aren't mounted now. Their rows are
 /// hidden from every view (`MediaIndexDao.excludedRoots`), never deleted.

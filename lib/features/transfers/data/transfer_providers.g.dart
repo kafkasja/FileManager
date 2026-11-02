@@ -57,14 +57,16 @@ final class TransfersRepositoryProvider
 String _$transfersRepositoryHash() =>
     r'eac764dcefb05f81824c4e1081c15abdcaf6aefd';
 
-/// Runs before an upload reads a file (identity; X2 overrides it to strip
-/// location).
+/// Runs before an upload reads a file: X2 strips location from photos and
+/// videos while "Remove location when sharing" is on (read per file, so a
+/// change applies to the next file), else the file is sent as it is.
 
 @ProviderFor(transferPreprocessor)
 final transferPreprocessorProvider = TransferPreprocessorProvider._();
 
-/// Runs before an upload reads a file (identity; X2 overrides it to strip
-/// location).
+/// Runs before an upload reads a file: X2 strips location from photos and
+/// videos while "Remove location when sharing" is on (read per file, so a
+/// change applies to the next file), else the file is sent as it is.
 
 final class TransferPreprocessorProvider
     extends
@@ -74,8 +76,9 @@ final class TransferPreprocessorProvider
           TransferPreprocessor
         >
     with $Provider<TransferPreprocessor> {
-  /// Runs before an upload reads a file (identity; X2 overrides it to strip
-  /// location).
+  /// Runs before an upload reads a file: X2 strips location from photos and
+  /// videos while "Remove location when sharing" is on (read per file, so a
+  /// change applies to the next file), else the file is sent as it is.
   TransferPreprocessorProvider._()
     : super(
         from: null,
@@ -111,7 +114,7 @@ final class TransferPreprocessorProvider
 }
 
 String _$transferPreprocessorHash() =>
-    r'fb82b9dc3856bc16cd57f5134ed5c19da74363da';
+    r'52b29933aca008f8fd38e355f85e9345d12d0585';
 
 /// Where partials are written (tests override it with a temp folder).
 

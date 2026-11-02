@@ -232,6 +232,29 @@ class FilesChannel {
       })) ??
       false;
 
+  /// X2: copies a file's bytes to [outPath] (own executor on the Kotlin
+  /// side). A MediaStore item ([contentUri]) is opened as the original when
+  /// KFM holds `ACCESS_MEDIA_LOCATION`; other files are read from [path].
+  /// True = the copy carries the location (nothing was redacted).
+  Future<bool> copyOriginal({
+    required String path,
+    required String outPath,
+    String? contentUri,
+  }) async {
+    final row = await _invoke<Map<Object?, Object?>>('copyOriginal', {
+      'contentUri': contentUri,
+      'path': path,
+      'outPath': outPath,
+    });
+    return row?['original'] == true;
+  }
+
+  /// X2: Android share sheet for several files. Each item is
+  /// `{contentUri?, path?, mime?}`: MediaStore items by URI, files through
+  /// the FileProvider. False when no app can receive them.
+  Future<bool> shareFiles(List<Map<String, String?>> items) async =>
+      (await _invoke<bool>('shareFiles', {'items': items})) ?? false;
+
   /// C5: EXIF GPS + front camera per MediaStore image id (own executor on
   /// the Kotlin side). Rows: `{id, lat?, lng?, frontCamera,
   /// locationReadable}` or `{id, error}`.

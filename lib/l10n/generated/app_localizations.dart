@@ -7496,6 +7496,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn’t read the storage list.'**
   String get externalLoadError;
+
+  /// X2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacySectionTitle;
+
+  /// X2 switch: strip GPS/location from photos and videos that leave the device.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove location when sharing'**
+  String get privacyStripLocation;
+
+  /// X2 switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos you share or send to another device go without location info. Your originals keep it.'**
+  String get privacyStripLocationHelp;
+
+  /// X2 row shown while ACCESS_MEDIA_LOCATION isn't granted; tapping asks for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow access to photo locations'**
+  String get privacyAllowAccess;
+
+  /// X2 row subtitle while Remove location is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Without it, photos you send arrive without their location.'**
+  String get privacyAllowAccessHelp;
+
+  /// X2 note while Remove location is on and location access isn't granted.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM can\'t read the original location of your photos; they\'re sent without it anyway.'**
+  String get privacyNoOriginalNote;
+
+  /// X2 file menu / selection action and the share sheet's confirm button: Android share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get privacyShareAction;
+
+  /// X2 share sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Share 1 file} other{Share {count} files}}'**
+  String privacyShareTitle(int count);
+
+  /// X2 share sheet switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove location'**
+  String get privacyShareRemoveLocation;
+
+  /// X2 share sheet switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From photos and videos. Your originals keep it.'**
+  String get privacyShareRemoveLocationHelp;
+
+  /// X2 progress dialog while copies without location are made.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing location… {done}/{total}'**
+  String privacyRemovingLocation(int done, int total);
+
+  /// X2 snackbar: the Android share sheet couldn't open.
+  ///
+  /// In en, this message translates to:
+  /// **'No app can receive these files'**
+  String get privacyShareNoApp;
+
+  /// X2 dialog title; the list of files and reasons follows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Location couldn\'t be removed from 1 file, so it wasn\'t shared} other{Location couldn\'t be removed from {count} files, so they weren\'t shared}}'**
+  String privacyCouldNotStrip(int count);
+
+  /// X2 dialog line: file name and why its location couldn't be removed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {reason}'**
+  String privacyFailedLine(String name, String reason);
+
+  /// X2 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'location info was still found after removing it'**
+  String get privacyFailStillHasLocation;
+
+  /// X2 failure reason (damaged or very large video metadata).
+  ///
+  /// In en, this message translates to:
+  /// **'this video\'s info can\'t be edited'**
+  String get privacyFailUnsupported;
+
+  /// X2 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'the file couldn\'t be read'**
+  String get privacyFailReadFailed;
+
+  /// X2 transfer file error.
+  ///
+  /// In en, this message translates to:
+  /// **'Location couldn\'t be removed, so it wasn\'t sent'**
+  String get privacyTransferNotRemoved;
+
+  /// X2 note in the send-to-device folder picker while Remove location is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Location info is removed (Settings → Privacy)'**
+  String get privacyTransferNote;
+
+  /// X2 dialog before moving photos/videos to another device with Remove location on.
+  ///
+  /// In en, this message translates to:
+  /// **'Move without location?'**
+  String get privacyMoveWarningTitle;
+
+  /// X2 move warning body.
+  ///
+  /// In en, this message translates to:
+  /// **'The copies will have no location, and the originals with location will be deleted from this device.'**
+  String get privacyMoveWarningBody;
+
+  /// X2 move warning button.
+  ///
+  /// In en, this message translates to:
+  /// **'Move anyway'**
+  String get privacyMoveAnyway;
+
+  /// X2 move warning default button: send copies, keep the originals.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy instead'**
+  String get privacyCopyInstead;
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
@@ -10,6 +11,8 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
+import 'package:kfm/features/privacy/data/privacy_providers.dart';
+import 'package:kfm/features/privacy/data/privacy_transfer_preprocessor.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
@@ -27,11 +30,17 @@ TransfersRepository transfersRepository(Ref ref) => TransfersRepository(
   ref.watch(dbWriteQueueProvider),
 );
 
-/// Runs before an upload reads a file (identity; X2 overrides it to strip
-/// location).
+/// Runs before an upload reads a file: X2 strips location from photos and
+/// videos while "Remove location when sharing" is on (read per file, so a
+/// change applies to the next file), else the file is sent as it is.
 @Riverpod(keepAlive: true)
 TransferPreprocessor transferPreprocessor(Ref ref) =>
-    const IdentityPreprocessor();
+    PrivacyTransferPreprocessor(
+      enabled: () => ref
+          .read(settingsRepositoryProvider)
+          .read(AppSettings.privacyStripLocation),
+      stripper: ref.watch(locationStripperProvider),
+    );
 
 /// Where partials are written (tests override it with a temp folder).
 @Riverpod(keepAlive: true)

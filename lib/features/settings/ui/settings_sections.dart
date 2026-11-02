@@ -4,6 +4,7 @@ import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/connect/ui/connect_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
+import 'package:kfm/features/privacy/ui/privacy_settings_section.dart';
 import 'package:kfm/features/search/ui/search_settings_section.dart';
 import 'package:kfm/features/settings/ui/about_section.dart';
 import 'package:kfm/features/settings/ui/accessibility_section.dart';
@@ -90,6 +91,12 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 650,
       titleBuilder: (c) => c.l10n.groupsTitle,
       builder: (_) => const SmartGroupsSettingsSection(),
+    ),
+    // X2: next to the device-connect settings it applies to.
+    SettingsSection(
+      order: 690,
+      titleBuilder: (c) => c.l10n.privacySectionTitle,
+      builder: (_) => const PrivacySettingsSection(),
     ),
     // N1 planned order 600 ("after Storage"), but C3 took 600; 700 keeps
     // every existing section in place.
