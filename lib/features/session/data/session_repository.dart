@@ -226,7 +226,10 @@ class SessionRepository {
           SessionsCompanion(layout: Value(json), updatedAt: Value(_clock())),
         );
         final session = await _byId(sessionId);
-        if (session?.presetId != null) return;
+        // S6: a remote session's layout is its own, not Basic's default.
+        if (session == null || session.presetId != null || session.isRemote) {
+          return;
+        }
         await _db
             .into(_db.settings)
             .insertOnConflictUpdate(

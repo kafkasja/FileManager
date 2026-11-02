@@ -7634,6 +7634,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy instead'**
   String get privacyCopyInstead;
+
+  /// S6 setup sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe setup'**
+  String get swipeSetupTitle;
+
+  /// No description provided for @swipeSetupTuneTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe setup'**
+  String get swipeSetupTuneTooltip;
+
+  /// No description provided for @swipeSetupPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get swipeSetupPresets;
+
+  /// No description provided for @swipeSetupDirections.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe directions'**
+  String get swipeSetupDirections;
+
+  /// No description provided for @swipeSetupFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get swipeSetupFilter;
+
+  /// No description provided for @swipeSetupEditFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit filter'**
+  String get swipeSetupEditFilter;
+
+  /// No description provided for @swipeSetupExtras.
+  ///
+  /// In en, this message translates to:
+  /// **'Extras'**
+  String get swipeSetupExtras;
+
+  /// No description provided for @swipeSetupModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes not saved to {name}'**
+  String swipeSetupModified(String name);
+
+  /// No description provided for @swipeSetupSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get swipeSetupSave;
+
+  /// No description provided for @swipeSetupSaveAsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as new…'**
+  String get swipeSetupSaveAsNew;
+
+  /// No description provided for @swipeSetupRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get swipeSetupRevert;
+
+  /// No description provided for @swipeSetupSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to “{name}”'**
+  String swipeSetupSavedTo(String name);
+
+  /// No description provided for @swipeSetupRemoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup for swiping on {device}'**
+  String swipeSetupRemoteTitle(String device);
+
+  /// No description provided for @swipeSetupPresetSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset {name}'**
+  String swipeSetupPresetSemantics(String name);
+
+  /// No description provided for @swipeSetupPresetModifiedSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset {name}, modified'**
+  String swipeSetupPresetModifiedSemantics(String name);
+
+  /// No description provided for @swipeSetupDirectionSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{direction}: {action}'**
+  String swipeSetupDirectionSemantics(String direction, String action);
+
+  /// No description provided for @swipeSetupFilterOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter on'**
+  String get swipeSetupFilterOn;
+
+  /// S6 chip of a preset whose saved data can't be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t load'**
+  String get swipeSetupPresetBroken;
 }
 
 class _AppLocalizationsDelegate

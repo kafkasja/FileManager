@@ -144,22 +144,18 @@ void main() {
       await _assign(tester, Icons.arrow_downward, 'Move to trash');
       expect(_deckLayout(app).hasVertical, isTrue);
 
-      await tester.scrollUntilVisible(
-        find.text('Reset to basic'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+      // S6: the shared editor is one list child: scroll it into view.
+      await tester.ensureVisible(find.text('Reset to basic'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Reset to basic'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(_deckLayout(app).hasVertical, isTrue);
 
-      await tester.scrollUntilVisible(
-        find.text('Reset to basic'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+      // S6: the shared editor is one list child: scroll it into view.
+      await tester.ensureVisible(find.text('Reset to basic'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Reset to basic'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Reset'));

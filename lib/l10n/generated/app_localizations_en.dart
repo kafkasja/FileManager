@@ -5404,4 +5404,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyCopyInstead => 'Copy instead';
+
+  @override
+  String get swipeSetupTitle => 'Swipe setup';
+
+  @override
+  String get swipeSetupTuneTooltip => 'Swipe setup';
+
+  @override
+  String get swipeSetupPresets => 'Presets';
+
+  @override
+  String get swipeSetupDirections => 'Swipe directions';
+
+  @override
+  String get swipeSetupFilter => 'Filter';
+
+  @override
+  String get swipeSetupEditFilter => 'Edit filter';
+
+  @override
+  String get swipeSetupExtras => 'Extras';
+
+  @override
+  String swipeSetupModified(String name) {
+    return 'Changes not saved to $name';
+  }
+
+  @override
+  String get swipeSetupSave => 'Save';
+
+  @override
+  String get swipeSetupSaveAsNew => 'Save as new…';
+
+  @override
+  String get swipeSetupRevert => 'Revert';
+
+  @override
+  String swipeSetupSavedTo(String name) {
+    return 'Saved to “$name”';
+  }
+
+  @override
+  String swipeSetupRemoteTitle(String device) {
+    return 'Setup for swiping on $device';
+  }
+
+  @override
+  String swipeSetupPresetSemantics(String name) {
+    return 'Preset $name';
+  }
+
+  @override
+  String swipeSetupPresetModifiedSemantics(String name) {
+    return 'Preset $name, modified';
+  }
+
+  @override
+  String swipeSetupDirectionSemantics(String direction, String action) {
+    return '$direction: $action';
+  }
+
+  @override
+  String get swipeSetupFilterOn => 'Filter on';
+
+  @override
+  String get swipeSetupPresetBroken => 'Can\'t load';
 }

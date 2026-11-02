@@ -103,15 +103,15 @@ Future<void> _tap(WidgetTester tester, Finder f) async {
 }
 
 void main() {
-  testWidgets('the bar shows the title; the filter button hides; × goes back '
+  testWidgets('the bar shows the title; the setup strip stays; × goes back '
       'to the main deck', (tester) async {
     final app = await _pump(tester);
-    expect(find.byTooltip('Filter'), findsOneWidget);
+    expect(find.byTooltip('Swipe setup'), findsOneWidget);
     await _open(tester, app, _list([_id(2), _id(5), _id(1)]));
 
     expect(find.byTooltip('Back to all files'), findsOneWidget);
     expect(find.text('Picked'), findsOneWidget);
-    expect(find.byTooltip('Filter'), findsNothing);
+    expect(find.byTooltip('Swipe setup'), findsOneWidget);
     expect(_current(app), 'p2.jpg');
     await _swipeRight(tester);
     expect(_current(app), 'p5.jpg');
@@ -119,7 +119,7 @@ void main() {
     await tester.tap(find.byTooltip('Back to all files'));
     await tester.pumpAndSettle();
     expect(find.text('Picked'), findsNothing);
-    expect(find.byTooltip('Filter'), findsOneWidget);
+    expect(find.byTooltip('Swipe setup'), findsOneWidget);
     expect(_deck(app).source, isNull);
     expect(_current(app), 'p9.jpg');
   });
