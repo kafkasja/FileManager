@@ -3,6 +3,7 @@ import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/tables/local_jobs_table.dart';
+import 'package:kfm/core/db/tables/share_offers_table.dart';
 import 'package:kfm/core/db/tables/transfers_table.dart';
 import 'package:kfm/core/index/source_rule.dart';
 
@@ -19,6 +20,7 @@ import 'generated/schema_v18.dart' as v18;
 import 'generated/schema_v19.dart' as v19;
 import 'generated/schema_v20.dart' as v20;
 import 'generated/schema_v21.dart' as v21;
+import 'generated/schema_v22.dart' as v22;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -57,7 +59,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 22; from++) {
+  for (var from = 1; from < 23; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -962,6 +964,133 @@ void main() {
       await db.into(db.localJobFiles).insert(file('j', 1));
       await (db.delete(db.localJobs)..where((j) => j.id.equals('j'))).go();
       expect(await db.select(db.localJobFiles).get(), isEmpty);
+    });
+  });
+
+  test(
+    'v22 -> v23 adds offer tables + auto_accept_files; data intact',
+    () async {
+      final schema = await verifier.schemaAt(22);
+      final raw = v22.DatabaseAtV22(schema.newConnection());
+      await raw.customStatement(
+        'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+        'public_key_fingerprint, last_seen_at_ms, auto_accept) '
+        'VALUES (?, ?, ?, ?, ?, ?, ?)',
+        ['d', 'peer', 'PC', 'windows', 'ab' * 32, 1, 1],
+      );
+      await raw.close();
+
+      final db = AppDatabase(schema.newConnection());
+      addTearDown(db.close);
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+      final row = await db.select(db.knownDevices).getSingle();
+      expect(row.autoAccept, isTrue);
+      expect(row.autoAcceptFiles, isFalse);
+      expect(await db.select(db.shareOffers).get(), isEmpty);
+      expect(await db.select(db.shareOfferFiles).get(), isEmpty);
+      final names = [
+        for (final r
+            in await db
+                .customSelect(
+                  "SELECT name FROM sqlite_master WHERE type = 'index'",
+                )
+                .get())
+          r.read<String>('name'),
+      ];
+      expect(
+        names,
+        containsAll(['share_offers_status', 'share_offer_files_upload']),
+      );
+      // The N6 unique and CHECK constraints still hold.
+      await expectLater(
+        db.customStatement(
+          'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+          'public_key_fingerprint, last_seen_at_ms) VALUES (?, ?, ?, ?, ?, ?)',
+          ['e', 'peer', 'PC', 'windows', 'ab' * 32, 1],
+        ),
+        throwsA(anything),
+      );
+      await expectLater(
+        db.customStatement(
+          'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+          'public_key_fingerprint, last_seen_at_ms) VALUES (?, ?, ?, ?, ?, ?)',
+          ['f', 'peer', 'PC', 'windows', 'short', 1],
+        ),
+        throwsA(anything),
+      );
+    },
+  );
+
+  group('share offers (v23)', () {
+    late AppDatabase db;
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(22)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+    });
+    tearDown(() => db.close());
+
+    ShareOffersCompanion offer(String id, {String fp = ''}) =>
+        ShareOffersCompanion.insert(
+          id: id,
+          direction: OfferDirection.incoming,
+          peerFingerprint: fp.isEmpty ? 'cd' * 32 : fp,
+          peerName: 'Pixel',
+          status: OfferStatus.pending,
+          fileCount: 1,
+          totalBytes: 3,
+          createdAtMs: 1,
+          expiresAtMs: 2,
+          updatedAtMs: 1,
+        );
+
+    ShareOfferFilesCompanion file(String offer, int seq) =>
+        ShareOfferFilesCompanion.insert(
+          offerId: offer,
+          seq: seq,
+          name: 'a.jpg',
+          sizeBytes: 3,
+          status: OfferFileStatus.waiting,
+        );
+
+    test(
+      'the peer key is 64 characters; autoAccepted defaults false',
+      () async {
+        await expectLater(
+          db.into(db.shareOffers).insert(offer('x', fp: 'short')),
+          throwsA(anything),
+        );
+        await db.into(db.shareOffers).insert(offer('o'));
+        final row = await db.select(db.shareOffers).getSingle();
+        expect(row.autoAccepted, isFalse);
+      },
+    );
+
+    test('files need an offer; deleting the offer cascades', () async {
+      await db.into(db.shareOffers).insert(offer('o'));
+      await db.into(db.shareOfferFiles).insert(file('o', 0));
+      await db.into(db.shareOfferFiles).insert(file('o', 1));
+      await expectLater(
+        db.into(db.shareOfferFiles).insert(file('o', 0)),
+        throwsA(anything),
+      );
+      await expectLater(
+        db.into(db.shareOfferFiles).insert(file('missing', 0)),
+        throwsA(anything),
+      );
+      await (db.delete(db.shareOffers)..where((o) => o.id.equals('o'))).go();
+      expect(await db.select(db.shareOfferFiles).get(), isEmpty);
+    });
+
+    test('deleting a known device leaves offers alone (no FK)', () async {
+      await db.customStatement(
+        'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+        'public_key_fingerprint, last_seen_at_ms) VALUES (?, ?, ?, ?, ?, ?)',
+        ['d', 'peer', 'Pixel', 'android', 'cd' * 32, 1],
+      );
+      await db.into(db.shareOffers).insert(offer('o'));
+      await db.delete(db.knownDevices).go();
+      expect(await db.select(db.shareOffers).get(), hasLength(1));
     });
   });
 }

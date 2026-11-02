@@ -158,6 +158,8 @@ class ShareServerController extends _$ShareServerController {
     state = const ShareServerState(status: ShareServerStatus.starting);
     // N10: partials untouched for 7 days go (one folder, no walk).
     unawaited(ref.read(uploadStoreProvider).purgeStale());
+    // N12: open offers and grants (accepted ones survive restarts).
+    unawaited(ref.read(offerServiceProvider).start());
     final server = ref.read(shareServerProvider);
     try {
       final next = await server.start();
@@ -256,6 +258,8 @@ class ShareServerController extends _$ShareServerController {
     // N9/N10: unfinished chunks end (their streams were cancelled with
     // the sessions); the partials stay so the same client can resume.
     ref.read(uploadStoreProvider).stop();
+    // N12: undecided offers expire (their prompts close); grants stay.
+    await ref.read(offerServiceProvider).onStopSharing();
     await ref.read(shareServerProvider).stop();
     await background;
     state = ShareServerState.stopped;

@@ -80,13 +80,19 @@ class ConnectScreen extends ConsumerWidget {
                   words: words,
                   remember: showRemember ? remember : null,
                 ),
-              ConnectConnected(:final peerName, :final roots) =>
+              ConnectConnected(
+                :final peerName,
+                :final roots,
+                :final sendOnly,
+              ) =>
                 RefreshIndicator(
                   onRefresh: controller.refreshRoots,
                   child: _Message(
                     icon: Icons.check_circle_outline,
                     title: l10n.connectConnected(peerName),
-                    body: roots.isEmpty
+                    body: sendOnly
+                        ? l10n.connectSendOnly(peerName)
+                        : roots.isEmpty
                         ? l10n.connectNoFoldersYet(peerName)
                         : l10n.connectFoldersShared(roots.length),
                     actions: [
@@ -220,6 +226,16 @@ class _Choose extends ConsumerWidget {
             subtitle: Text(l10n.rememberedDevicesHint),
             onTap: () =>
                 unawaited(context.push(AppRoutes.connectDevicesFromConnect)),
+          ),
+        ),
+        // N12: let another device send files here (no folder shared).
+        Card(
+          child: ListTile(
+            key: const ValueKey('connect-receive'),
+            leading: const Icon(Icons.move_to_inbox_outlined),
+            title: Text(l10n.receiveFiles),
+            subtitle: Text(l10n.receiveFilesHint),
+            onTap: () => unawaited(context.push(AppRoutes.connectReceive)),
           ),
         ),
         // N8: swipe sessions on other devices (continue / discard).

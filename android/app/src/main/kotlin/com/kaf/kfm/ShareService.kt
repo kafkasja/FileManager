@@ -132,6 +132,10 @@ class ShareService : Service() {
         const val CHANNEL_ID = "sharing"
         private const val NOTIFICATION_ID = 5002
 
+        /** N12: "Incoming files" (offers to this device). */
+        const val OFFER_CHANNEL_ID = "incoming_files"
+        private const val OFFER_NOTIFICATION_ID = 5003
+
         @Volatile
         var running = false
             private set
@@ -165,6 +169,45 @@ class ShareService : Service() {
                 .setContentIntent(openPending)
                 .addAction(0, stop, stopPending)
                 .build()
+        }
+
+        /**
+         * N12: a heads-up "<S> wants to send you files". A tap opens KFM,
+         * whose prompter shows the offer dialog. Denied notifications only
+         * lose this hint (the offer waits or expires).
+         */
+        fun showOffer(context: Context, channelName: String, title: String, text: String) {
+            val manager = context.getSystemService(NotificationManager::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                manager.createNotificationChannel(
+                    NotificationChannel(
+                        OFFER_CHANNEL_ID,
+                        channelName,
+                        NotificationManager.IMPORTANCE_HIGH,
+                    ),
+                )
+            }
+            val open = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+            }
+            val openPending = open?.let {
+                PendingIntent.getActivity(context, 2, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            }
+            val notification = NotificationCompat.Builder(context, OFFER_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_share)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setAutoCancel(true)
+                .setContentIntent(openPending)
+                .build()
+            manager.notify(OFFER_NOTIFICATION_ID, notification)
+        }
+
+        fun cancelOffer(context: Context) {
+            context.getSystemService(NotificationManager::class.java)
+                .cancel(OFFER_NOTIFICATION_ID)
         }
 
         /**

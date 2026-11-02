@@ -237,6 +237,18 @@ class _DeviceCard extends ConsumerWidget {
                   .setAutoAccept(d.fingerprint, autoAccept: v)
                   .fireAndForget(),
             ),
+            // N12: separate from "Always allow" (writes new files into
+            // Download instead of reading shared folders).
+            SwitchListTile(
+              key: ValueKey('remembered-accept-files-${d.fingerprint}'),
+              value: d.autoAcceptFiles,
+              title: Text(l10n.rememberedAcceptFiles),
+              subtitle: Text(l10n.rememberedAcceptFilesHint),
+              onChanged: (v) => ref
+                  .read(knownDevicesRepositoryProvider)
+                  .setAutoAcceptFiles(d.fingerprint, enabled: v)
+                  .fireAndForget(),
+            ),
             Padding(
               padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
               child: Align(

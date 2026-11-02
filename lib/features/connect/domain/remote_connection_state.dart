@@ -32,10 +32,14 @@ final class RemoteConnected extends RemoteConnectionState {
     required this.peerName,
     required this.peerFingerprint,
     required this.roots,
+    this.sendOnly = false,
   });
 
   final String peerName;
   final String peerFingerprint;
+
+  /// N12: connected only to send files (the other device shares nothing).
+  final bool sendOnly;
 
   /// The folders the other device shares with us (N4).
   final List<RootDto> roots;

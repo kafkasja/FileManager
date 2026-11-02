@@ -77,6 +77,7 @@ Uint8List? certDerFromPem(String pem) {
 }
 
 final ECDomainParameters _p256 = ECCurve_secp256r1();
+
 /// The P-256 field prime 2^256 − 2^224 + 2^192 + 2^96 − 1.
 final BigInt _p256Prime = BigInt.parse(
   'ffffffff00000001000000000000000000000000ffffffffffffffffffffffff',

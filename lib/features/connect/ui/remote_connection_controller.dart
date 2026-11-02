@@ -6,6 +6,7 @@ import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/files_protocol.dart';
+import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/remote_thumbnail_provider.dart';
@@ -50,6 +51,24 @@ class RemoteChangeToken extends _$RemoteChangeToken {
   void publish(String? token) => state = token;
 }
 
+/// TASK-N12b: pending offers the connected (sharing) device makes to us,
+/// read when the heartbeat's `inboxToken` changes. Empty while not
+/// connected.
+@Riverpod(keepAlive: true)
+class RemoteInbox extends _$RemoteInbox {
+  @override
+  List<OfferDto> build() => const [];
+
+  // A method, not a setter: callers publish a fetched inbox.
+  void publish(List<OfferDto> offers) => state = List.unmodifiable(offers);
+
+  /// The offer was answered here: it leaves the list at once.
+  void remove(String offerId) => state = [
+    for (final o in state)
+      if (o.id != offerId) o,
+  ];
+}
+
 /// Lenient: a malformed token is ignored rather than failing the beat.
 SessionDto _decodeSession(Map<String, Object?> json) {
   try {
@@ -78,6 +97,9 @@ class RemoteConnectionController extends _$RemoteConnectionController {
   LoopbackMediaProxy? _proxy;
   Future<void>? _proxyStarted;
   int _epoch = 0;
+
+  /// N12b: the last `inboxToken` seen; null = read the inbox next beat.
+  String? _inboxToken;
 
   /// Read in build: `onDispose` may not use `ref`.
   late RemoteThumbnailCache _thumbs;
@@ -117,6 +139,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
   void connect(PairingSuccess result) {
     _teardown(sendClose: true);
     ref.read(remoteChangeTokenProvider.notifier).publish(null);
+    ref.read(remoteInboxProvider.notifier).publish(const []);
     _http = result.http;
     _failures = 0;
     _beatsSinceRoots = 0;
@@ -125,6 +148,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
       peerName: result.peerName,
       peerFingerprint: result.peerFingerprint,
       roots: result.accepted.roots,
+      sendOnly: result.sendOnly,
     );
     if (ref.read(remoteFollowsAppLifecycleProvider)) {
       _lifecycle = AppLifecycleListener(onStateChange: onLifecycle);
@@ -169,11 +193,16 @@ class RemoteConnectionController extends _$RemoteConnectionController {
       );
       if (!identical(http, _http)) return;
       _beatsSinceRoots = 0;
-      if (state case RemoteConnected(:final peerName, :final peerFingerprint)) {
+      if (state case RemoteConnected(
+        :final peerName,
+        :final peerFingerprint,
+        :final sendOnly,
+      )) {
         state = RemoteConnected(
           peerName: peerName,
           peerFingerprint: peerFingerprint,
           roots: r.roots,
+          sendOnly: sendOnly,
         );
       }
     } on RemoteApiException catch (e) {
@@ -184,6 +213,21 @@ class RemoteConnectionController extends _$RemoteConnectionController {
       // Network blips: the heartbeat decides when the link is gone.
     } finally {
       _refreshingRoots = false;
+    }
+  }
+
+  /// N12b: `GET /v1/inbox` after the token changed.
+  Future<void> _refreshInbox(RemoteHttp http, String token) async {
+    try {
+      final inbox = await http.getJson(
+        ApiRoutes.inbox,
+        decode: InboxDto.fromJson,
+      );
+      if (!identical(http, _http)) return;
+      _inboxToken = token;
+      ref.read(remoteInboxProvider.notifier).publish(inbox.offers);
+    } on Object {
+      // Read again on the next beat (the token stays unseen).
     }
   }
 
@@ -213,12 +257,17 @@ class RemoteConnectionController extends _$RemoteConnectionController {
         if (session.changeToken case final token?) {
           ref.read(remoteChangeTokenProvider.notifier).publish(token);
         }
+        if (session.inboxToken case final inbox? when inbox != _inboxToken) {
+          unawaited(_refreshInbox(http, inbox));
+        }
         _beatsSinceRoots++;
-        final roots = switch (state) {
-          RemoteConnected(:final roots) => roots,
-          _ => const <RootDto>[],
+        final (roots, sendOnly) = switch (state) {
+          RemoteConnected(:final roots, :final sendOnly) => (roots, sendOnly),
+          _ => (const <RootDto>[], false),
         };
-        if (roots.isEmpty || _beatsSinceRoots >= kRootsRefreshEveryBeats) {
+        // N12: a send-only session never gets folders.
+        if (!sendOnly &&
+            (roots.isEmpty || _beatsSinceRoots >= kRootsRefreshEveryBeats)) {
           unawaited(refreshRoots());
         }
         return;
@@ -294,6 +343,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
   void _end(DisconnectReason reason, {String? peerName}) {
     final name = peerName ?? _nameOf(state);
     _teardown(sendClose: false);
+    ref.read(remoteInboxProvider.notifier).publish(const []);
     ref.read(remoteChangeTokenProvider.notifier).publish(null);
     state = RemoteDisconnected(peerName: name, reason: reason);
   }
@@ -302,6 +352,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
   /// [sendClose] an older connection is told it ends (best effort).
   void _teardown({required bool sendClose}) {
     _stopTimer();
+    _inboxToken = null;
     _lifecycle?.dispose();
     _lifecycle = null;
     final proxy = _proxy;

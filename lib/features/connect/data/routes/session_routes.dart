@@ -15,13 +15,19 @@ import 'package:shelf/shelf.dart';
 List<ServerRoute> sessionRoutes(
   ClientSessionStore sessions, {
   Future<String?> Function(String clientFingerprint)? changeToken,
+  String? Function(String clientFingerprint)? inboxToken,
 }) => [
   ServerRoute('GET', ApiRoutes.session, (request) async {
     final session = sessionOf(request);
     if (session == null) return apiError(ApiErrorCode.unauthorized);
     if (changeToken == null) return Response(204);
     final token = await changeToken(session.clientFingerprint);
-    return jsonOk(SessionDto(changeToken: token).toJson());
+    return jsonOk(
+      SessionDto(
+        changeToken: token,
+        inboxToken: inboxToken?.call(session.clientFingerprint),
+      ).toJson(),
+    );
   }),
   ServerRoute('POST', ApiRoutes.sessionClose, (request) {
     final session = sessionOf(request);

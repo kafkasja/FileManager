@@ -1,4 +1,5 @@
 import 'package:kfm/core/db/tables/transfers_table.dart';
+import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:meta/meta.dart';
 
@@ -42,6 +43,18 @@ abstract final class TransferErrors {
   /// X2: "Remove location" is on and location couldn't be removed from
   /// the file, so it isn't sent.
   static const locationNotRemoved = 'location_not_removed';
+
+  /// N12: the receiver declined the offer.
+  static const offerDeclined = 'offer_declined';
+
+  /// N12: the receiver has no room for the offer (declined at once).
+  static const offerNoSpace = 'offer_no_space';
+
+  /// N12: nobody answered within 2 minutes.
+  static const offerExpired = 'offer_expired';
+
+  /// N12: the receiver stopped it (or its grant ended).
+  static const offerCancelled = 'offer_cancelled';
 }
 
 /// One file of a [TransferJob] (immutable snapshot of its row).
@@ -174,6 +187,17 @@ class TransferJob {
   final DeleteMode? deleteMode;
 
   bool get isMove => mode == TransferMode.move;
+
+  /// N12: a send (push) into an offer: the offer id, else null.
+  String? get offerId => offerIdOfRoot(targetRootId);
+  bool get isOffer => offerId != null;
+
+  /// N12b: a download of an offer the other device made: its id.
+  String? get inboxOfferId => offerIdOfInboxRoot(targetRootId);
+
+  /// N12: waiting for the other device to accept.
+  bool get awaitingAccept =>
+      isPaused && pauseReason == TransferPauseReason.awaitingAccept;
 
   /// N11: no file is waiting or running any more.
   bool get allFilesEnded => files.every((f) => f.isFinished);

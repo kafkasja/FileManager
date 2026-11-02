@@ -48,7 +48,7 @@ final class VolumeActivityTrackerProvider
 }
 
 String _$volumeActivityTrackerHash() =>
-    r'934101d82831825e83ca80d61722b218aa381b57';
+    r'cc3e775d3ce3c8c279df4253a74ee8edcba69a10';
 
 /// Counts KFM's own work per removable place and refuses new work while a
 /// place is being ejected (TASK-U3). Internal storage is never tracked.

@@ -10,6 +10,7 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
@@ -72,6 +73,7 @@ class _FakePairingClient extends PairingClient {
   final List<PairingOffer> qrCalls = [];
   final List<({String fp, List<ShareAddress> candidates})> knownCalls = [];
   Completer<PairingSuccess> next = Completer();
+  final List<SessionPurpose> purposes = [];
 
   @override
   Future<PairingSuccess> pairKnown({
@@ -80,7 +82,9 @@ class _FakePairingClient extends PairingClient {
     required List<ShareAddress> candidates,
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) {
+    purposes.add(purpose);
     knownCalls.add((fp: fingerprint, candidates: candidates));
     onWaiting?.call(name, const ['acorn', 'zebra', 'tulip', 'river']);
     return next.future;
@@ -93,7 +97,9 @@ class _FakePairingClient extends PairingClient {
     String? expectedFingerprint,
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) {
+    purposes.add(purpose);
     codeCalls.add((base: base, code: code, fp: expectedFingerprint));
     onWaiting?.call('Phone A', const ['acorn', 'zebra', 'tulip', 'river']);
     return next.future;
@@ -104,7 +110,9 @@ class _FakePairingClient extends PairingClient {
     PairingOffer offer, {
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) {
+    purposes.add(purpose);
     qrCalls.add(offer);
     onWaiting?.call(offer.deviceName, const [
       'acorn',

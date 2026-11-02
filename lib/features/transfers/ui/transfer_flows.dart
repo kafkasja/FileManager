@@ -27,6 +27,7 @@ import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/ui/permanent_move_confirm.dart';
+import 'package:kfm/features/transfers/ui/send_flow.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 void _snack(BuildContext context, String text, {bool showTransfers = false}) {
@@ -253,16 +254,17 @@ Future<void> startUpload(
   );
 }
 
-/// B6 selection bar: "Send to device" (N9).
+/// B6 selection bar: "Send to…" (N12: any device, no shared folder
+/// needed; N9's "put them in a shared folder" is inside its confirm step).
 final SelectionAction sendToDeviceSelectionAction = SelectionAction(
   id: 'n9.send',
   order: 6,
-  label: (c) => c.l10n.transferSendToDevice,
+  label: (c) => c.l10n.sendTo,
   icon: Icons.send_to_mobile_outlined,
   run: (context, ref, ids) async {
     final files = await ref.read(mediaIndexDaoProvider).byIds(ids);
     if (!context.mounted) return;
-    await startUpload(context, ref, files);
+    await startSend(context, ref, files);
   },
 );
 

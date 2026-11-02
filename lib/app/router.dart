@@ -32,6 +32,7 @@ import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
 import 'package:kfm/features/tags/ui/collections_screen.dart';
 import 'package:kfm/features/tags/ui/tag_files_screen.dart';
+import 'package:kfm/features/transfers/ui/send_flow.dart';
 import 'package:kfm/features/transfers/ui/transfers_screen.dart';
 import 'package:kfm/features/trash/ui/trash_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -94,6 +95,12 @@ abstract final class AppRoutes {
   /// N1/N2: top-level (cover the tab bar), opened with `context.push`.
   static const connect = '/connect';
   static const connectShare = '/connect/share';
+
+  /// N12 "Receive files": the share screen headed for receiving.
+  static const connectReceive = '/connect/share?receive=1';
+
+  /// N12: the Connect screen pairing send-only for a pending send.
+  static const connectSend = '/connect?send=1';
 
   /// N6: remembered devices. From the Connect screen with `?from=connect`
   /// (Reconnect then goes back to it instead of pushing a new one).
@@ -185,11 +192,16 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: AppRoutes.connect,
-        builder: (context, state) => const ConnectScreen(),
+        builder: (context, state) => state.uri.queryParameters['send'] == '1'
+            ? const ConnectSendScreen()
+            : const ConnectScreen(),
         routes: [
           GoRoute(
             path: 'share',
-            builder: (context, state) => const ShareScreen(),
+            // N12: `?receive=1` = "Receive files" (same screen).
+            builder: (context, state) => ShareScreen(
+              receive: state.uri.queryParameters['receive'] == '1',
+            ),
           ),
           GoRoute(
             path: 'devices',

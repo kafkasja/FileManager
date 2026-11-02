@@ -179,6 +179,7 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     int? swipeSessionId,
     TransferMode mode = TransferMode.copy,
     DeleteMode? deleteMode,
+    TransferPauseReason? pauseReason,
   }) => transaction(() async {
     final id = randomHexId();
     await into(transfers).insert(
@@ -190,7 +191,12 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
         deleteMode: Value(deleteMode?.name),
         targetRootId: Value(targetRootId),
         targetPath: targetPath,
-        status: files.isEmpty ? TransferStatus.done : TransferStatus.queued,
+        status: files.isEmpty
+            ? TransferStatus.done
+            : pauseReason != null
+            ? TransferStatus.paused
+            : TransferStatus.queued,
+        pauseReason: Value(files.isEmpty ? null : pauseReason),
         swipeSessionId: Value(swipeSessionId),
         createdAt: now,
         updatedAt: now,
@@ -399,9 +405,12 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
               ])
               ..where(
                 transfers.status.equalsValue(TransferStatus.paused) &
-                    transfers.pauseReason.equalsValue(
+                    // N12: a send waiting for its answer needs the
+                    // connection too (its offer is polled over it).
+                    transfers.pauseReason.isInValues([
                       TransferPauseReason.waitingForDevice,
-                    ),
+                      TransferPauseReason.awaitingAccept,
+                    ]),
               )
               ..orderBy([OrderingTerm.asc(transfers.createdAt)]))
             .get();
@@ -469,6 +478,27 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
             status: Value(TransferFileStatus.cancelled),
           ),
         );
+    await refreshJob(jobId, now);
+  }
+
+  /// N12: the offer of [jobId] ended without (more) bytes: its queued
+  /// files are cancelled with [error] and the pause goes.
+  Future<void> endOffer(String jobId, String error, DateTime now) async {
+    await (update(transferFiles)..where(
+          (f) =>
+              f.transferId.equals(jobId) &
+              f.status.equalsValue(TransferFileStatus.queued),
+        ))
+        .write(
+          TransferFilesCompanion(
+            status: const Value(TransferFileStatus.cancelled),
+            error: Value(error),
+            bytesDone: const Value(0),
+          ),
+        );
+    await (update(transfers)..where((t) => t.id.equals(jobId))).write(
+      const TransfersCompanion(pauseReason: Value(null)),
+    );
     await refreshJob(jobId, now);
   }
 
@@ -665,6 +695,7 @@ class TransfersRepository {
     String? targetRootId,
     TransferMode mode = TransferMode.copy,
     DeleteMode? deleteMode,
+    TransferPauseReason? pauseReason,
   }) async {
     late String id;
     await _queue.enqueue(null, () async {
@@ -677,6 +708,7 @@ class TransfersRepository {
         now: _clock(),
         mode: mode,
         deleteMode: deleteMode,
+        pauseReason: pauseReason,
       );
     });
     return id;
@@ -733,6 +765,10 @@ class TransfersRepository {
     () =>
         dao.updateFile(id, TransferFilesCompanion(bytesDone: Value(bytesDone))),
   );
+
+  /// N12: see [TransfersDao.endOffer].
+  Future<void> endOffer(String jobId, String error) =>
+      _queue.enqueue(null, () => dao.endOffer(jobId, error, _clock()));
 
   Future<void> cancelQueued(String jobId, {int? fileId}) => _queue.enqueue(
     null,

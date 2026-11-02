@@ -40,6 +40,22 @@ class ShareNotificationTexts {
   int get hashCode => Object.hash(channel, title, text, stop);
 }
 
+/// Texts of the N12 "Incoming files" notification.
+@immutable
+class OfferNotificationTexts {
+  const new({required this.channel, required this.title, required this.text});
+
+  final String channel;
+  final String title;
+  final String text;
+
+  Map<String, String> toMap() => {
+    'channel': channel,
+    'title': title,
+    'text': text,
+  };
+}
+
 /// Keeps sharing alive while KFM is in the background (TASK-N5b): an
 /// Android foreground service with an ongoing "Sharing with … · Stop"
 /// notification. Other platforms don't support it ([supported] false).
@@ -55,6 +71,13 @@ abstract interface class ShareBackground {
 
   /// The notification's Stop was tapped, or KFM was swiped away.
   Stream<void> get stopRequests;
+
+  /// N12: "<S> wants to send you files" (high importance; a tap opens
+  /// KFM, where the offer dialog shows).
+  Future<void> showOffer(OfferNotificationTexts texts);
+
+  /// N12: removes that notification.
+  Future<void> cancelOffer();
 }
 
 /// `kfm/share_service` (`ShareServiceChannel.kt`).
@@ -89,6 +112,13 @@ class AndroidShareBackground implements ShareBackground {
 
   @override
   Stream<void> get stopRequests => _stops.stream;
+
+  @override
+  Future<void> showOffer(OfferNotificationTexts texts) =>
+      _channel.invokeMethod<void>('showOffer', texts.toMap());
+
+  @override
+  Future<void> cancelOffer() => _channel.invokeMethod<void>('cancelOffer');
 }
 
 /// Desktop, iOS and tests.
@@ -106,4 +136,10 @@ class NoShareBackground implements ShareBackground {
 
   @override
   Stream<void> get stopRequests => const Stream.empty();
+
+  @override
+  Future<void> showOffer(OfferNotificationTexts texts) async {}
+
+  @override
+  Future<void> cancelOffer() async {}
 }

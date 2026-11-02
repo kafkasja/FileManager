@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -132,6 +133,12 @@ class _FakeBackground implements ShareBackground {
 
   @override
   Stream<void> get stopRequests => requests.stream;
+
+  @override
+  Future<void> showOffer(OfferNotificationTexts texts) async {}
+
+  @override
+  Future<void> cancelOffer() async {}
 }
 
 void main() {
@@ -481,6 +488,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         shareServerProvider.overrideWithValue(_ThrowingServer(_FakeIdentity())),
+        appDatabaseProvider.overrideWithValue(
+          AppDatabase(NativeDatabase.memory()),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -633,7 +643,12 @@ void main() {
   test('a stop while starting shuts the late server down', () async {
     final server = _FakeServer(_FakeIdentity());
     final container = ProviderContainer(
-      overrides: [shareServerProvider.overrideWithValue(server)],
+      overrides: [
+        shareServerProvider.overrideWithValue(server),
+        appDatabaseProvider.overrideWithValue(
+          AppDatabase(NativeDatabase.memory()),
+        ),
+      ],
     );
     addTearDown(container.dispose);
     final controller = container.read(shareServerControllerProvider.notifier);

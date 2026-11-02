@@ -86,21 +86,22 @@ Middleware privateNetworkOnly(List<LocalAddress> served) =>
 Middleware requestSizeLimit({
   int maxBytes = kMaxJsonBodyBytes,
   bool Function(Request request)? exempt,
-}) => (inner) => (request) async {
-  if (exempt != null && exempt(request)) return await inner(request);
-  final declared = request.contentLength;
-  if (declared != null) {
-    if (declared > maxBytes) return apiError(ApiErrorCode.tooLarge);
-    return await inner(request);
-  }
-  // No Content-Length (chunked): buffer up to the limit.
-  final out = BytesBuilder(copy: false);
-  await for (final chunk in request.read()) {
-    out.add(chunk);
-    if (out.length > maxBytes) return apiError(ApiErrorCode.tooLarge);
-  }
-  return await inner(request.change(body: out.takeBytes()));
-};
+}) =>
+    (inner) => (request) async {
+      if (exempt != null && exempt(request)) return await inner(request);
+      final declared = request.contentLength;
+      if (declared != null) {
+        if (declared > maxBytes) return apiError(ApiErrorCode.tooLarge);
+        return await inner(request);
+      }
+      // No Content-Length (chunked): buffer up to the limit.
+      final out = BytesBuilder(copy: false);
+      await for (final chunk in request.read()) {
+        out.add(chunk);
+        if (out.length > maxBytes) return apiError(ApiErrorCode.tooLarge);
+      }
+      return await inner(request.change(body: out.takeBytes()));
+    };
 
 /// 3. N1 stub of N3's `authenticate`: every route outside
 /// [kUnauthenticatedRoutes] gets 401 until N3 replaces it.
@@ -162,7 +163,11 @@ List<ServerRoute> coreRoutes({
   required Future<ServerInfoDto> Function() info,
   required PairNonceStore nonces,
 }) => [
-  ServerRoute('GET', ApiRoutes.info, (_) async => jsonOk((await info()).toJson())),
+  ServerRoute(
+    'GET',
+    ApiRoutes.info,
+    (_) async => jsonOk((await info()).toJson()),
+  ),
   ServerRoute('POST', ApiRoutes.pairNonce, (request) {
     final peer = remoteAddressOf(request);
     if (peer == null) return apiError(ApiErrorCode.forbidden);

@@ -10,6 +10,8 @@ ServerRoute rootsRoute(ShareScopeStore scopes) =>
     ServerRoute('GET', ApiRoutes.roots, (request) {
       final session = sessionOf(request);
       if (session == null) return apiError(ApiErrorCode.unauthorized);
+      // N12: send-only sessions see no folder.
+      if (session.sendOnly) return jsonOk(const RootsResponseDto([]).toJson());
       final scope = scopes.scopeOf(session.clientFingerprint);
       return jsonOk(RootsResponseDto(scope.toDtos()).toJson());
     });

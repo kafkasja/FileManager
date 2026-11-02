@@ -8,6 +8,7 @@ import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
@@ -91,6 +92,18 @@ TransferEngine transferEngine(Ref ref) {
     addToIndex: (files) => ref.read(mediaIndexerProvider).addFiles(files),
     onUnauthorized: controller.reportUnauthorized,
     reconnect: (fp) => ref.read(knownDeviceConnectorProvider).reconnect(fp),
+    // N12: sends reconnect without a connection prompt over there.
+    reconnectToSend: (fp) => ref
+        .read(knownDeviceConnectorProvider)
+        .reconnect(fp, purpose: SessionPurpose.send),
+    // N12: a send-only connection ends with its last send.
+    onOffersIdle: (fp) {
+      if (ref.read(remoteConnectionControllerProvider)
+          case RemoteConnected(peerFingerprint: final p, sendOnly: true)
+          when p == fp) {
+        unawaited(controller.disconnect());
+      }
+    },
     isForeground: _inForeground,
     verifiedMove: ref.watch(verifiedMoveProvider),
   );

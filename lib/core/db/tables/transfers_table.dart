@@ -12,8 +12,9 @@ enum TransferMode { copy, move }
 /// `paused` is N10.
 enum TransferStatus { queued, running, paused, done, failed, cancelled }
 
-/// N10.
-enum TransferPauseReason { user, waitingForDevice, noSpace }
+/// N10; `awaitingAccept` is N12 (a send waits for the other device's
+/// answer to its offer).
+enum TransferPauseReason { user, waitingForDevice, noSpace, awaitingAccept }
 
 /// `verifying` is N11.
 enum TransferFileStatus {

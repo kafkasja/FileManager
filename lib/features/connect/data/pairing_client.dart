@@ -9,6 +9,7 @@ import 'package:kfm/features/connect/data/crypto/identity_proof.dart';
 import 'package:kfm/features/connect/data/crypto/spake2.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/fingerprint_words.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
@@ -76,6 +77,7 @@ class PairingSuccess {
     required this.accepted,
     required this.peerName,
     required this.peerFingerprint,
+    this.sendOnly = false,
   });
 
   /// Pinned to [peerFingerprint]; the token is set as its bearer.
@@ -83,6 +85,9 @@ class PairingSuccess {
   final PairAcceptedDto accepted;
   final String peerName;
   final String peerFingerprint;
+
+  /// N12: a send-only session (no folders, no connection prompt).
+  final bool sendOnly;
 }
 
 /// Cancels a running pairing: closes the current client (the in-flight
@@ -155,6 +160,7 @@ class PairingClient {
     PairingOffer offer, {
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) async {
     final me = await _identity.loadOrCreate();
     RemoteHttp? http;
@@ -211,7 +217,7 @@ class PairingClient {
         ]),
       );
       cancel?._check();
-      final hello = _hello(me);
+      final hello = _hello(me, purpose);
       final base = http.base;
       cancel?._withdraw = () =>
           _sendCancel(base, offer.serverFingerprint, hello.pairAttemptId);
@@ -235,6 +241,7 @@ class PairingClient {
       cancel?._withdraw = null;
       http.bearerToken = accepted.token;
       return PairingSuccess(
+        sendOnly: purpose == SessionPurpose.send,
         http: http,
         accepted: accepted,
         peerName: peerName,
@@ -256,6 +263,7 @@ class PairingClient {
     String? expectedFingerprint,
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) async {
     final me = await _identity.loadOrCreate();
     cancel?._check();
@@ -279,7 +287,7 @@ class PairingClient {
         throw const PairingException(PairingFailure.wrongDevice);
       }
       final peerName = info.name;
-      final hello = _hello(me);
+      final hello = _hello(me, purpose);
       final spake = Spake2Client(
         w: spake2PasswordScalar(code.value),
         idA: _utf8(me.fingerprint),
@@ -327,6 +335,7 @@ class PairingClient {
       cancel?._withdraw = null;
       pinned.bearerToken = accepted.token;
       return PairingSuccess(
+        sendOnly: purpose == SessionPurpose.send,
         http: pinned,
         accepted: accepted,
         peerName: peerName,
@@ -351,6 +360,7 @@ class PairingClient {
     required List<ShareAddress> candidates,
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) async {
     final me = await _identity.loadOrCreate();
     RemoteHttp? http;
@@ -402,7 +412,7 @@ class PairingClient {
         signedMessage(ProofLabels.pairKnown, [_utf8(fingerprint), nonce]),
       );
       cancel?._check();
-      final hello = _hello(me);
+      final hello = _hello(me, purpose);
       final base = http.base;
       cancel?._withdraw = () =>
           _sendCancel(base, fingerprint, hello.pairAttemptId);
@@ -420,6 +430,7 @@ class PairingClient {
       cancel?._withdraw = null;
       http.bearerToken = accepted.token;
       return PairingSuccess(
+        sendOnly: purpose == SessionPurpose.send,
         http: http,
         accepted: accepted,
         peerName: name,
@@ -468,13 +479,15 @@ class PairingClient {
     }
   }
 
-  ClientHelloDto _hello(DeviceIdentity me) => ClientHelloDto(
-    pairAttemptId: randomHexId(),
-    clientDeviceId: me.deviceId,
-    clientName: me.displayName,
-    clientPlatform: me.platform,
-    clientCertPem: me.certPem,
-  );
+  ClientHelloDto _hello(DeviceIdentity me, SessionPurpose purpose) =>
+      ClientHelloDto(
+        purpose: purpose.name,
+        pairAttemptId: randomHexId(),
+        clientDeviceId: me.deviceId,
+        clientName: me.displayName,
+        clientPlatform: me.platform,
+        clientCertPem: me.certPem,
+      );
 
   static PairingException _map(Object e, PairingCancel? cancel) {
     if (cancel != null && cancel.isCancelled) {

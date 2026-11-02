@@ -80,6 +80,7 @@ class KnownDevice {
     required this.canShareToUs,
     required this.isTemporary,
     required this.autoAccept,
+    this.autoAcceptFiles = false,
   });
 
   /// Local id.
@@ -99,6 +100,9 @@ class KnownDevice {
   final bool isTemporary;
   final bool autoAccept;
 
+  /// N12 "Accept files without asking".
+  final bool autoAcceptFiles;
+
   @override
   bool operator ==(Object other) =>
       other is KnownDevice &&
@@ -112,7 +116,8 @@ class KnownDevice {
       listEquals(other.allowedRoots, allowedRoots) &&
       other.canShareToUs == canShareToUs &&
       other.isTemporary == isTemporary &&
-      other.autoAccept == autoAccept;
+      other.autoAccept == autoAccept &&
+      other.autoAcceptFiles == autoAcceptFiles;
 
   @override
   int get hashCode => Object.hash(
@@ -127,6 +132,7 @@ class KnownDevice {
     canShareToUs,
     isTemporary,
     autoAccept,
+    autoAcceptFiles,
   );
 }
 

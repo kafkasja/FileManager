@@ -4,6 +4,7 @@ import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
@@ -81,10 +82,17 @@ final class ConnectWaiting extends ConnectState {
 /// `RemoteConnectionController` (N5), which owns the connection, so it
 /// survives closing this screen.
 final class ConnectConnected extends ConnectState {
-  const new({required this.peerName, required this.roots});
+  const new({
+    required this.peerName,
+    required this.roots,
+    this.sendOnly = false,
+  });
 
   final String peerName;
   final List<RootDto> roots;
+
+  /// N12: connected only to send files.
+  final bool sendOnly;
 }
 
 /// The connection ended for [reason] (not this device's Disconnect); the
@@ -122,6 +130,14 @@ class ConnectController extends _$ConnectController {
   /// The running pairing is a remembered device's reconnect.
   bool _known = false;
 
+  /// N12: `send` pairs a send-only session (the "Send to…" flow).
+  SessionPurpose _purpose = SessionPurpose.connect;
+
+  /// N12: how the next pairing connects.
+  // A method, not a setter: the flow sets it before starting a pairing.
+  // ignore: use_setters_to_change_properties
+  void setPurpose(SessionPurpose purpose) => _purpose = purpose;
+
   @override
   ConnectState build() {
     ref
@@ -133,8 +149,14 @@ class ConnectController extends _$ConnectController {
       })
       ..listen(remoteConnectionControllerProvider, (_, next) {
         switch (next) {
-          case RemoteConnected(:final peerName, :final roots):
-            _set(ConnectConnected(peerName: peerName, roots: roots));
+          case RemoteConnected(:final peerName, :final roots, :final sendOnly):
+            _set(
+              ConnectConnected(
+                peerName: peerName,
+                roots: roots,
+                sendOnly: sendOnly,
+              ),
+            );
           case RemoteDisconnected(reason: DisconnectReason.userClosed):
             _set(const ConnectChoose());
           case RemoteDisconnected(:final peerName, :final reason):
@@ -144,10 +166,8 @@ class ConnectController extends _$ConnectController {
         }
       });
     return switch (ref.read(remoteConnectionControllerProvider)) {
-      RemoteConnected(:final peerName, :final roots) => ConnectConnected(
-        peerName: peerName,
-        roots: roots,
-      ),
+      RemoteConnected(:final peerName, :final roots, :final sendOnly) =>
+        ConnectConnected(peerName: peerName, roots: roots, sendOnly: sendOnly),
       _ => const ConnectChoose(),
     };
   }
@@ -199,7 +219,12 @@ class ConnectController extends _$ConnectController {
         retry,
         (cancel) => ref
             .read(pairingClientProvider)
-            .pairWithQr(offer, onWaiting: _waiting, cancel: cancel),
+            .pairWithQr(
+              offer,
+              onWaiting: _waiting,
+              cancel: cancel,
+              purpose: _purpose,
+            ),
       ),
     );
     return ScanOutcome.started;
@@ -224,6 +249,7 @@ class ConnectController extends _$ConnectController {
               expectedFingerprint: s.fingerprintHint,
               onWaiting: _waiting,
               cancel: cancel,
+              purpose: _purpose,
             ),
       ),
     );
@@ -238,7 +264,12 @@ class ConnectController extends _$ConnectController {
         const ConnectChoose(),
         (cancel) => ref
             .read(knownDeviceConnectorProvider)
-            .pair(fingerprint, onWaiting: _waiting, cancel: cancel),
+            .pair(
+              fingerprint,
+              onWaiting: _waiting,
+              cancel: cancel,
+              purpose: _purpose,
+            ),
         reconnectFingerprint: fingerprint,
       ),
     );

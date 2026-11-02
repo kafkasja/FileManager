@@ -8150,6 +8150,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Can\'t open the storage settings'**
   String get ejectFailed;
+
+  /// No description provided for @sendTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to…'**
+  String get sendTo;
+
+  /// No description provided for @sendSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Send 1 file to…} other{Send {count} files to…}}'**
+  String sendSheetTitle(int count);
+
+  /// No description provided for @sendSheetConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get sendSheetConnected;
+
+  /// No description provided for @sendSheetConnectedToYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to you'**
+  String get sendSheetConnectedToYou;
+
+  /// No description provided for @sendSheetRemembered.
+  ///
+  /// In en, this message translates to:
+  /// **'Remembered'**
+  String get sendSheetRemembered;
+
+  /// No description provided for @sendSheetNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get sendSheetNearby;
+
+  /// No description provided for @sendSheetOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby now'**
+  String get sendSheetOnline;
+
+  /// No description provided for @sendAskReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask {device} to open Receive files'**
+  String sendAskReceive(String device);
+
+  /// No description provided for @sendSwitchDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect from {from} to send to {to}?'**
+  String sendSwitchDevice(String from, String to);
+
+  /// No description provided for @sendSwitchAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get sendSwitchAction;
+
+  /// No description provided for @sendConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {device}…'**
+  String sendConnecting(String device);
+
+  /// No description provided for @sendConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Send 1 file ({size}) to {device}?} other{Send {count} files ({size}) to {device}?}}'**
+  String sendConfirmTitle(int count, String size, String device);
+
+  /// No description provided for @sendConfirmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} decides whether to take them. Nothing else is shared.'**
+  String sendConfirmHint(String device);
+
+  /// No description provided for @sendSharedFolderInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Put them in a shared folder on {device}…'**
+  String sendSharedFolderInstead(String device);
+
+  /// No description provided for @sendAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get sendAction;
+
+  /// No description provided for @sendWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {device} to accept…'**
+  String sendWaiting(String device);
+
+  /// No description provided for @sendDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} declined'**
+  String sendDeclined(String device);
+
+  /// No description provided for @sendNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer from {device}'**
+  String sendNoAnswer(String device);
+
+  /// No description provided for @sendNoSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space on {device}'**
+  String sendNoSpace(String device);
+
+  /// No description provided for @sendStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped by {device}'**
+  String sendStopped(String device);
+
+  /// No description provided for @sendSending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Sending 1 file to {device}} other{Sending {count} files to {device}}}'**
+  String sendSending(int count, String device);
+
+  /// No description provided for @sendPairToSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to send files'**
+  String get sendPairToSend;
+
+  /// No description provided for @sendConfirmPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Send 1 file to {device}} other{Send {count} files to {device}}}'**
+  String sendConfirmPanelTitle(int count, String device);
+
+  /// No description provided for @receiveFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive files'**
+  String get receiveFiles;
+
+  /// No description provided for @receiveFilesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Let another device send you files'**
+  String get receiveFilesHint;
+
+  /// No description provided for @receiveReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to receive files'**
+  String get receiveReadyTitle;
+
+  /// No description provided for @receiveReadyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On the other device: Send to… → {device}, or scan this code'**
+  String receiveReadyHint(String device);
+
+  /// No description provided for @offerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{device} wants to send you 1 file} other{{device} wants to send you {count} files}}'**
+  String offerTitle(String device, int count);
+
+  /// No description provided for @offerSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {size}'**
+  String offerSize(String size);
+
+  /// No description provided for @offerMore.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{and 1 more} other{and {count} more}}'**
+  String offerMore(int count);
+
+  /// No description provided for @offerSaveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to {folder}'**
+  String offerSaveTo(String folder);
+
+  /// No description provided for @offerChangeFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get offerChangeFolder;
+
+  /// No description provided for @offerFolderExcluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Files can\'t be saved there'**
+  String get offerFolderExcluded;
+
+  /// No description provided for @offerRemember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember {device}'**
+  String offerRemember(String device);
+
+  /// No description provided for @offerAlwaysAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Always accept files from {device}'**
+  String offerAlwaysAccept(String device);
+
+  /// No description provided for @offerAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get offerAccept;
+
+  /// No description provided for @offerDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get offerDecline;
+
+  /// No description provided for @offerAutoDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{Declines in 1 second} other{Declines in {seconds} seconds}}'**
+  String offerAutoDecline(int seconds);
+
+  /// No description provided for @offerNotificationChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming files'**
+  String get offerNotificationChannel;
+
+  /// No description provided for @offerNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} wants to send you files'**
+  String offerNotificationTitle(String device);
+
+  /// No description provided for @offerNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file · {size} · Tap to answer} other{{count} files · {size} · Tap to answer}}'**
+  String offerNotificationBody(int count, String size);
+
+  /// No description provided for @offerReceiving.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Receiving 1 file from {device}} other{Receiving {count} files from {device}}}'**
+  String offerReceiving(int count, String device);
+
+  /// No description provided for @offerReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Received 1 file from {device}} other{Received {count} files from {device}}}'**
+  String offerReceived(int count, String device);
+
+  /// No description provided for @offerOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get offerOpenFolder;
+
+  /// No description provided for @rememberedAcceptFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept files without asking'**
+  String get rememberedAcceptFiles;
+
+  /// No description provided for @rememberedAcceptFilesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Files this device sends go to your Download folder without a prompt'**
+  String get rememberedAcceptFilesHint;
+
+  /// No description provided for @connectSendOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {device} to send files'**
+  String connectSendOnly(String device);
+
+  /// No description provided for @shareSessionSending.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} · sending files'**
+  String shareSessionSending(String device);
+
+  /// No description provided for @transferReceivedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get transferReceivedSection;
+
+  /// No description provided for @transferOfferedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Offered'**
+  String get transferOfferedSection;
+
+  /// No description provided for @transferWaitingForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you'**
+  String get transferWaitingForYou;
+
+  /// No description provided for @transferPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing…'**
+  String get transferPreparing;
+
+  /// No description provided for @transferFromDeviceOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{From {device} · 1 file · {size}} other{From {device} · {count} files · {size}}}'**
+  String transferFromDeviceOffer(String device, int count, String size);
+
+  /// No description provided for @transferToDeviceOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{To {device} · 1 file · {size}} other{To {device} · {count} files · {size}}}'**
+  String transferToDeviceOffer(String device, int count, String size);
+
+  /// No description provided for @transferOfferReceiving.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {count} received'**
+  String transferOfferReceiving(int done, int count);
+
+  /// No description provided for @transferOfferDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get transferOfferDone;
+
+  /// No description provided for @transferOfferCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get transferOfferCancelled;
+
+  /// No description provided for @transferOfferDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get transferOfferDeclined;
+
+  /// No description provided for @transferOfferExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer'**
+  String get transferOfferExpired;
+
+  /// No description provided for @transferOfferStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get transferOfferStop;
+
+  /// No description provided for @transferOfferAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get transferOfferAnswer;
+
+  /// No description provided for @transferOfferOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get transferOfferOpenFolder;
+
+  /// No description provided for @transferOfferAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get transferOfferAccepted;
+
+  /// No description provided for @transfersEmptyReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Files other devices send you show here'**
+  String get transfersEmptyReceived;
 }
 
 class _AppLocalizationsDelegate

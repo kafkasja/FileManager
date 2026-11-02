@@ -19,12 +19,16 @@ import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/known_pair_limiter.dart';
 import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
+import 'package:kfm/features/connect/data/offer_copy.dart';
+import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/remote_trash_service.dart';
 import 'package:kfm/features/connect/data/routes/file_routes.dart';
+import 'package:kfm/features/connect/data/routes/inbox_routes.dart';
+import 'package:kfm/features/connect/data/routes/offer_routes.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/routes/roots_routes.dart';
 import 'package:kfm/features/connect/data/routes/session_routes.dart';
@@ -33,6 +37,7 @@ import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/data/share_background.dart';
 import 'package:kfm/features/connect/data/share_change_tracker.dart';
+import 'package:kfm/features/connect/data/share_offers_dao.dart';
 import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
@@ -41,7 +46,10 @@ import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/share_offer.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart'
+    show transferPreprocessorProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connect_providers.g.dart';
@@ -170,7 +178,73 @@ AllowListGuard allowListGuard(Ref ref) {
     scopeOf: scopes.scopeOf,
     source: () => ref.read(fileSourceProvider),
     paths: ref.watch(pathGuardProvider),
+    grants: LazyOfferGrants(() => ref.read(offerServiceProvider)),
   );
+}
+
+/// Send-files offers (TASK-N12).
+@Riverpod(keepAlive: true)
+OfferRepository offerRepository(Ref ref) => OfferRepository(
+  ShareOffersDao(ref.watch(appDatabaseProvider)),
+  ref.watch(dbWriteQueueProvider),
+);
+
+/// Where received files go by default: Android
+/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+@Riverpod(keepAlive: true)
+String receiveDownloadsRoot(Ref ref) {
+  if (Platform.isAndroid) return '/storage/emulated/0/Download';
+  final home =
+      Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'] ?? '';
+  return '$home/Downloads'.replaceAll(r'\', '/');
+}
+
+/// The receiving side of send files (N12): offers, prompts, grants.
+@Riverpod(keepAlive: true)
+OfferService offerService(Ref ref) {
+  final service = OfferService(
+    repo: ref.watch(offerRepositoryProvider),
+    devices: ref.watch(knownDevicesRepositoryProvider),
+    sessions: () => ref.read(clientSessionStoreProvider),
+    uploads: ref.watch(uploadStoreProvider),
+    freeBytes: (path) => ref.read(fileSourceProvider).freeBytes(path),
+    downloadsRoot: ref.watch(receiveDownloadsRootProvider),
+    serverFingerprint: () async =>
+        (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
+            .fingerprint,
+    ownName: () async =>
+        (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
+            .displayName,
+    staging: transferStagingDir,
+    prepareCopy: (f, offerId, seq) => prepareOfferCopy(
+      f,
+      dir: () async =>
+          Directory('${(await transferStagingDir()).path}/offer-$offerId'),
+      seq: seq,
+      enabled: () => ref
+          .read(settingsRepositoryProvider)
+          .read(AppSettings.privacyStripLocation),
+      prepare: (f) => ref
+          .read(transferPreprocessorProvider)
+          .prepare(f, ref.read(fileSourceProvider)),
+    ),
+  );
+  ref.onDispose(service.dispose);
+  return service;
+}
+
+/// Every offer this device's server holds, newest first (Transfers
+/// Received / Offered cards).
+@riverpod
+Stream<List<ShareOffer>> shareOffers(Ref ref) =>
+    ref.watch(offerRepositoryProvider).watchAll();
+
+/// Incoming offers waiting for the receiver's decision (N12 prompter).
+@Riverpod(keepAlive: true)
+Stream<List<OfferPrompt>> offerPrompts(Ref ref) async* {
+  final service = ref.watch(offerServiceProvider);
+  yield service.prompts;
+  yield* service.promptChanges;
 }
 
 /// The request the accept dialog shows (N3); null when none.
@@ -344,6 +418,8 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
     ...sessionRoutes(
       ref.watch(clientSessionStoreProvider),
       changeToken: (fp) => ref.read(shareChangeTrackerProvider).tokenFor(fp),
+      // N12b: offers this device makes to that client.
+      inboxToken: (fp) => ref.read(offerServiceProvider).inboxTokenFor(fp),
     ),
     ...fileRoutes(
       FileRoutesEnv(
@@ -371,8 +447,13 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
         stagingFreeBytes: () async => await ref
             .read(fileSourceProvider)
             .freeBytes((await transferStagingDir()).path),
+        grants: LazyOfferGrants(() => ref.read(offerServiceProvider)),
       ),
     ),
+    // N12: send-files offers (push).
+    ...offerRoutes(() => ref.read(offerServiceProvider)),
+    // N12b: offers to connected clients.
+    ...inboxRoutes(() => ref.read(offerServiceProvider)),
     // N6: remembered devices reconnect without a QR.
     knownPairRoute(
       nonces: ref.watch(pairNonceStoreProvider),
@@ -394,8 +475,10 @@ ShareServer shareServer(Ref ref) {
       served: served,
       routes: ref.read(shareServerRoutesProvider),
       authenticate: authenticate(ref.read(clientSessionStoreProvider)),
-      // N9: chunks have their own limit (kTransferChunkBytes).
-      sizeLimitExempt: isUploadChunkRequest,
+      // N9: chunks have their own limit (kTransferChunkBytes); N12 offer
+      // bodies too (kMaxOfferBodyBytes).
+      sizeLimitExempt: (r) =>
+          isUploadChunkRequest(r) || isOfferCreateRequest(r),
     ),
     preferredPort: () =>
         ref.read(settingsRepositoryProvider).read(AppSettings.sharePort),

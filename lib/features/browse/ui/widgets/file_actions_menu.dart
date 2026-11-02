@@ -10,6 +10,7 @@ import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/privacy/ui/share_flow.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
+import 'package:kfm/features/transfers/ui/send_flow.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'file_actions_menu.g.dart';
@@ -88,6 +89,7 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
     ),
     ...archiveFileMenuItems,
     shareFileMenuItem,
+    sendFileMenuItem,
     ...tagFileMenuItems,
     FileMenuItem(
       order: 90,

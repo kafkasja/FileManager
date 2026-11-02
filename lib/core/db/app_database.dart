@@ -16,6 +16,7 @@ import 'package:kfm/core/db/tables/selection_items_table.dart';
 import 'package:kfm/core/db/tables/session_actions_table.dart';
 import 'package:kfm/core/db/tables/sessions_table.dart';
 import 'package:kfm/core/db/tables/settings_table.dart';
+import 'package:kfm/core/db/tables/share_offers_table.dart';
 import 'package:kfm/core/db/tables/similar_groups_table.dart';
 import 'package:kfm/core/db/tables/smart_groups_table.dart';
 import 'package:kfm/core/db/tables/swipe_source_items_table.dart';
@@ -65,6 +66,8 @@ part 'app_database.g.dart';
     TransferFiles,
     LocalJobs,
     LocalJobFiles,
+    ShareOffers,
+    ShareOfferFiles,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -85,7 +88,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -258,6 +261,17 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(localJobs);
         await m.createTable(localJobFiles);
         await m.createIndex(ljfStatus);
+      }
+      if (from < 23) {
+        // TASK-N12
+        await m.createTable(shareOffers);
+        await m.createTable(shareOfferFiles);
+        await m.createIndex(shareOffersStatus);
+        await m.createIndex(shareOfferFilesUpload);
+        // From < 19 the v19 block created known_devices with it already.
+        if (from >= 19) {
+          await m.addColumn(knownDevices, knownDevices.autoAcceptFiles);
+        }
       }
     },
     beforeOpen: (details) async {

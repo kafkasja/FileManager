@@ -12441,6 +12441,21 @@ class $KnownDevicesTable extends KnownDevices
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _autoAcceptFilesMeta = const VerificationMeta(
+    'autoAcceptFiles',
+  );
+  @override
+  late final GeneratedColumn<bool> autoAcceptFiles = GeneratedColumn<bool>(
+    'auto_accept_files',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_accept_files" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -12454,6 +12469,7 @@ class $KnownDevicesTable extends KnownDevices
     canShareToUs,
     isTemporary,
     autoAccept,
+    autoAcceptFiles,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -12563,6 +12579,15 @@ class $KnownDevicesTable extends KnownDevices
         autoAccept.isAcceptableOrUnknown(data['auto_accept']!, _autoAcceptMeta),
       );
     }
+    if (data.containsKey('auto_accept_files')) {
+      context.handle(
+        _autoAcceptFilesMeta,
+        autoAcceptFiles.isAcceptableOrUnknown(
+          data['auto_accept_files']!,
+          _autoAcceptFilesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -12616,6 +12641,10 @@ class $KnownDevicesTable extends KnownDevices
         DriftSqlType.bool,
         data['${effectivePrefix}auto_accept'],
       )!,
+      autoAcceptFiles: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_accept_files'],
+      )!,
     );
   }
 
@@ -12659,6 +12688,10 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
   /// "Always allow": a verified `/v1/pair/known` from this peer is accepted
   /// without the accept prompt (sharing side only).
   final bool autoAccept;
+
+  /// "Accept files without asking" (TASK-N12): a verified, non-temporary
+  /// peer's send-files offers are accepted without the offer prompt.
+  final bool autoAcceptFiles;
   const KnownDeviceRow({
     required this.id,
     required this.peerDeviceId,
@@ -12671,6 +12704,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     required this.canShareToUs,
     required this.isTemporary,
     required this.autoAccept,
+    required this.autoAcceptFiles,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -12686,6 +12720,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     map['can_share_to_us'] = Variable<bool>(canShareToUs);
     map['is_temporary'] = Variable<bool>(isTemporary);
     map['auto_accept'] = Variable<bool>(autoAccept);
+    map['auto_accept_files'] = Variable<bool>(autoAcceptFiles);
     return map;
   }
 
@@ -12702,6 +12737,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       canShareToUs: Value(canShareToUs),
       isTemporary: Value(isTemporary),
       autoAccept: Value(autoAccept),
+      autoAcceptFiles: Value(autoAcceptFiles),
     );
   }
 
@@ -12724,6 +12760,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       canShareToUs: serializer.fromJson<bool>(json['canShareToUs']),
       isTemporary: serializer.fromJson<bool>(json['isTemporary']),
       autoAccept: serializer.fromJson<bool>(json['autoAccept']),
+      autoAcceptFiles: serializer.fromJson<bool>(json['autoAcceptFiles']),
     );
   }
   @override
@@ -12741,6 +12778,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       'canShareToUs': serializer.toJson<bool>(canShareToUs),
       'isTemporary': serializer.toJson<bool>(isTemporary),
       'autoAccept': serializer.toJson<bool>(autoAccept),
+      'autoAcceptFiles': serializer.toJson<bool>(autoAcceptFiles),
     };
   }
 
@@ -12756,6 +12794,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     bool? canShareToUs,
     bool? isTemporary,
     bool? autoAccept,
+    bool? autoAcceptFiles,
   }) => KnownDeviceRow(
     id: id ?? this.id,
     peerDeviceId: peerDeviceId ?? this.peerDeviceId,
@@ -12768,6 +12807,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     canShareToUs: canShareToUs ?? this.canShareToUs,
     isTemporary: isTemporary ?? this.isTemporary,
     autoAccept: autoAccept ?? this.autoAccept,
+    autoAcceptFiles: autoAcceptFiles ?? this.autoAcceptFiles,
   );
   KnownDeviceRow copyWithCompanion(KnownDevicesCompanion data) {
     return KnownDeviceRow(
@@ -12798,6 +12838,9 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       autoAccept: data.autoAccept.present
           ? data.autoAccept.value
           : this.autoAccept,
+      autoAcceptFiles: data.autoAcceptFiles.present
+          ? data.autoAcceptFiles.value
+          : this.autoAcceptFiles,
     );
   }
 
@@ -12814,7 +12857,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
           ..write('allowedRootsJson: $allowedRootsJson, ')
           ..write('canShareToUs: $canShareToUs, ')
           ..write('isTemporary: $isTemporary, ')
-          ..write('autoAccept: $autoAccept')
+          ..write('autoAccept: $autoAccept, ')
+          ..write('autoAcceptFiles: $autoAcceptFiles')
           ..write(')'))
         .toString();
   }
@@ -12832,6 +12876,7 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     canShareToUs,
     isTemporary,
     autoAccept,
+    autoAcceptFiles,
   );
   @override
   bool operator ==(Object other) =>
@@ -12847,7 +12892,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
           other.allowedRootsJson == this.allowedRootsJson &&
           other.canShareToUs == this.canShareToUs &&
           other.isTemporary == this.isTemporary &&
-          other.autoAccept == this.autoAccept);
+          other.autoAccept == this.autoAccept &&
+          other.autoAcceptFiles == this.autoAcceptFiles);
 }
 
 class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
@@ -12862,6 +12908,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
   final Value<bool> canShareToUs;
   final Value<bool> isTemporary;
   final Value<bool> autoAccept;
+  final Value<bool> autoAcceptFiles;
   final Value<int> rowid;
   const KnownDevicesCompanion({
     this.id = const Value.absent(),
@@ -12875,6 +12922,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     this.canShareToUs = const Value.absent(),
     this.isTemporary = const Value.absent(),
     this.autoAccept = const Value.absent(),
+    this.autoAcceptFiles = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnownDevicesCompanion.insert({
@@ -12889,6 +12937,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     this.canShareToUs = const Value.absent(),
     this.isTemporary = const Value.absent(),
     this.autoAccept = const Value.absent(),
+    this.autoAcceptFiles = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        peerDeviceId = Value(peerDeviceId),
@@ -12908,6 +12957,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     Expression<bool>? canShareToUs,
     Expression<bool>? isTemporary,
     Expression<bool>? autoAccept,
+    Expression<bool>? autoAcceptFiles,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -12923,6 +12973,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
       if (canShareToUs != null) 'can_share_to_us': canShareToUs,
       if (isTemporary != null) 'is_temporary': isTemporary,
       if (autoAccept != null) 'auto_accept': autoAccept,
+      if (autoAcceptFiles != null) 'auto_accept_files': autoAcceptFiles,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -12939,6 +12990,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     Value<bool>? canShareToUs,
     Value<bool>? isTemporary,
     Value<bool>? autoAccept,
+    Value<bool>? autoAcceptFiles,
     Value<int>? rowid,
   }) {
     return KnownDevicesCompanion(
@@ -12953,6 +13005,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
       canShareToUs: canShareToUs ?? this.canShareToUs,
       isTemporary: isTemporary ?? this.isTemporary,
       autoAccept: autoAccept ?? this.autoAccept,
+      autoAcceptFiles: autoAcceptFiles ?? this.autoAcceptFiles,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -12995,6 +13048,9 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     if (autoAccept.present) {
       map['auto_accept'] = Variable<bool>(autoAccept.value);
     }
+    if (autoAcceptFiles.present) {
+      map['auto_accept_files'] = Variable<bool>(autoAcceptFiles.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -13015,6 +13071,7 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
           ..write('canShareToUs: $canShareToUs, ')
           ..write('isTemporary: $isTemporary, ')
           ..write('autoAccept: $autoAccept, ')
+          ..write('autoAcceptFiles: $autoAcceptFiles, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -16396,6 +16453,1564 @@ class LocalJobFilesCompanion extends UpdateCompanion<LocalJobFileRow> {
   }
 }
 
+class $ShareOffersTable extends ShareOffers
+    with TableInfo<$ShareOffersTable, ShareOfferRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ShareOffersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<OfferDirection, String>
+  direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<OfferDirection>($ShareOffersTable.$converterdirection);
+  static const VerificationMeta _peerFingerprintMeta = const VerificationMeta(
+    'peerFingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> peerFingerprint = GeneratedColumn<String>(
+    'peer_fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _peerNameMeta = const VerificationMeta(
+    'peerName',
+  );
+  @override
+  late final GeneratedColumn<String> peerName = GeneratedColumn<String>(
+    'peer_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<OfferStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<OfferStatus>($ShareOffersTable.$converterstatus);
+  static const VerificationMeta _declineReasonMeta = const VerificationMeta(
+    'declineReason',
+  );
+  @override
+  late final GeneratedColumn<String> declineReason = GeneratedColumn<String>(
+    'decline_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _folderMeta = const VerificationMeta('folder');
+  @override
+  late final GeneratedColumn<String> folder = GeneratedColumn<String>(
+    'folder',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileCountMeta = const VerificationMeta(
+    'fileCount',
+  );
+  @override
+  late final GeneratedColumn<int> fileCount = GeneratedColumn<int>(
+    'file_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalBytesMeta = const VerificationMeta(
+    'totalBytes',
+  );
+  @override
+  late final GeneratedColumn<int> totalBytes = GeneratedColumn<int>(
+    'total_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _autoAcceptedMeta = const VerificationMeta(
+    'autoAccepted',
+  );
+  @override
+  late final GeneratedColumn<bool> autoAccepted = GeneratedColumn<bool>(
+    'auto_accepted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_accepted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMsMeta = const VerificationMeta(
+    'createdAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMs = GeneratedColumn<int>(
+    'created_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expiresAtMsMeta = const VerificationMeta(
+    'expiresAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> expiresAtMs = GeneratedColumn<int>(
+    'expires_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _decidedAtMsMeta = const VerificationMeta(
+    'decidedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> decidedAtMs = GeneratedColumn<int>(
+    'decided_at_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMsMeta = const VerificationMeta(
+    'updatedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMs = GeneratedColumn<int>(
+    'updated_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    direction,
+    peerFingerprint,
+    peerName,
+    status,
+    declineReason,
+    folder,
+    fileCount,
+    totalBytes,
+    autoAccepted,
+    createdAtMs,
+    expiresAtMs,
+    decidedAtMs,
+    updatedAtMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'share_offers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ShareOfferRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('peer_fingerprint')) {
+      context.handle(
+        _peerFingerprintMeta,
+        peerFingerprint.isAcceptableOrUnknown(
+          data['peer_fingerprint']!,
+          _peerFingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_peerFingerprintMeta);
+    }
+    if (data.containsKey('peer_name')) {
+      context.handle(
+        _peerNameMeta,
+        peerName.isAcceptableOrUnknown(data['peer_name']!, _peerNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_peerNameMeta);
+    }
+    if (data.containsKey('decline_reason')) {
+      context.handle(
+        _declineReasonMeta,
+        declineReason.isAcceptableOrUnknown(
+          data['decline_reason']!,
+          _declineReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('folder')) {
+      context.handle(
+        _folderMeta,
+        folder.isAcceptableOrUnknown(data['folder']!, _folderMeta),
+      );
+    }
+    if (data.containsKey('file_count')) {
+      context.handle(
+        _fileCountMeta,
+        fileCount.isAcceptableOrUnknown(data['file_count']!, _fileCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileCountMeta);
+    }
+    if (data.containsKey('total_bytes')) {
+      context.handle(
+        _totalBytesMeta,
+        totalBytes.isAcceptableOrUnknown(data['total_bytes']!, _totalBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_totalBytesMeta);
+    }
+    if (data.containsKey('auto_accepted')) {
+      context.handle(
+        _autoAcceptedMeta,
+        autoAccepted.isAcceptableOrUnknown(
+          data['auto_accepted']!,
+          _autoAcceptedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at_ms')) {
+      context.handle(
+        _createdAtMsMeta,
+        createdAtMs.isAcceptableOrUnknown(
+          data['created_at_ms']!,
+          _createdAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMsMeta);
+    }
+    if (data.containsKey('expires_at_ms')) {
+      context.handle(
+        _expiresAtMsMeta,
+        expiresAtMs.isAcceptableOrUnknown(
+          data['expires_at_ms']!,
+          _expiresAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expiresAtMsMeta);
+    }
+    if (data.containsKey('decided_at_ms')) {
+      context.handle(
+        _decidedAtMsMeta,
+        decidedAtMs.isAcceptableOrUnknown(
+          data['decided_at_ms']!,
+          _decidedAtMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at_ms')) {
+      context.handle(
+        _updatedAtMsMeta,
+        updatedAtMs.isAcceptableOrUnknown(
+          data['updated_at_ms']!,
+          _updatedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ShareOfferRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShareOfferRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      direction: $ShareOffersTable.$converterdirection.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}direction'],
+        )!,
+      ),
+      peerFingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}peer_fingerprint'],
+      )!,
+      peerName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}peer_name'],
+      )!,
+      status: $ShareOffersTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      declineReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}decline_reason'],
+      ),
+      folder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folder'],
+      ),
+      fileCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_count'],
+      )!,
+      totalBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_bytes'],
+      )!,
+      autoAccepted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_accepted'],
+      )!,
+      createdAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_ms'],
+      )!,
+      expiresAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}expires_at_ms'],
+      )!,
+      decidedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}decided_at_ms'],
+      ),
+      updatedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $ShareOffersTable createAlias(String alias) {
+    return $ShareOffersTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<OfferDirection, String, String>
+  $converterdirection = const EnumNameConverter<OfferDirection>(
+    OfferDirection.values,
+  );
+  static JsonTypeConverter2<OfferStatus, String, String> $converterstatus =
+      const EnumNameConverter<OfferStatus>(OfferStatus.values);
+}
+
+class ShareOfferRow extends DataClass implements Insertable<ShareOfferRow> {
+  /// 32 hex. Incoming: the sender's offerId (owner-bound: another fp → 404).
+  final String id;
+  final OfferDirection direction;
+
+  /// The verified peer key.
+  final String peerFingerprint;
+  final String peerName;
+  final OfferStatus status;
+
+  /// `OfferDeclineReason` wire name.
+  final String? declineReason;
+
+  /// Incoming + accepted: the absolute local folder files land in.
+  final String? folder;
+  final int fileCount;
+  final int totalBytes;
+  final bool autoAccepted;
+  final int createdAtMs;
+
+  /// Pending: the decision deadline. Accepted: the grant end (last
+  /// activity + 7 days).
+  final int expiresAtMs;
+  final int? decidedAtMs;
+  final int updatedAtMs;
+  const ShareOfferRow({
+    required this.id,
+    required this.direction,
+    required this.peerFingerprint,
+    required this.peerName,
+    required this.status,
+    this.declineReason,
+    this.folder,
+    required this.fileCount,
+    required this.totalBytes,
+    required this.autoAccepted,
+    required this.createdAtMs,
+    required this.expiresAtMs,
+    this.decidedAtMs,
+    required this.updatedAtMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    {
+      map['direction'] = Variable<String>(
+        $ShareOffersTable.$converterdirection.toSql(direction),
+      );
+    }
+    map['peer_fingerprint'] = Variable<String>(peerFingerprint);
+    map['peer_name'] = Variable<String>(peerName);
+    {
+      map['status'] = Variable<String>(
+        $ShareOffersTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || declineReason != null) {
+      map['decline_reason'] = Variable<String>(declineReason);
+    }
+    if (!nullToAbsent || folder != null) {
+      map['folder'] = Variable<String>(folder);
+    }
+    map['file_count'] = Variable<int>(fileCount);
+    map['total_bytes'] = Variable<int>(totalBytes);
+    map['auto_accepted'] = Variable<bool>(autoAccepted);
+    map['created_at_ms'] = Variable<int>(createdAtMs);
+    map['expires_at_ms'] = Variable<int>(expiresAtMs);
+    if (!nullToAbsent || decidedAtMs != null) {
+      map['decided_at_ms'] = Variable<int>(decidedAtMs);
+    }
+    map['updated_at_ms'] = Variable<int>(updatedAtMs);
+    return map;
+  }
+
+  ShareOffersCompanion toCompanion(bool nullToAbsent) {
+    return ShareOffersCompanion(
+      id: Value(id),
+      direction: Value(direction),
+      peerFingerprint: Value(peerFingerprint),
+      peerName: Value(peerName),
+      status: Value(status),
+      declineReason: declineReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(declineReason),
+      folder: folder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(folder),
+      fileCount: Value(fileCount),
+      totalBytes: Value(totalBytes),
+      autoAccepted: Value(autoAccepted),
+      createdAtMs: Value(createdAtMs),
+      expiresAtMs: Value(expiresAtMs),
+      decidedAtMs: decidedAtMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decidedAtMs),
+      updatedAtMs: Value(updatedAtMs),
+    );
+  }
+
+  factory ShareOfferRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShareOfferRow(
+      id: serializer.fromJson<String>(json['id']),
+      direction: $ShareOffersTable.$converterdirection.fromJson(
+        serializer.fromJson<String>(json['direction']),
+      ),
+      peerFingerprint: serializer.fromJson<String>(json['peerFingerprint']),
+      peerName: serializer.fromJson<String>(json['peerName']),
+      status: $ShareOffersTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      declineReason: serializer.fromJson<String?>(json['declineReason']),
+      folder: serializer.fromJson<String?>(json['folder']),
+      fileCount: serializer.fromJson<int>(json['fileCount']),
+      totalBytes: serializer.fromJson<int>(json['totalBytes']),
+      autoAccepted: serializer.fromJson<bool>(json['autoAccepted']),
+      createdAtMs: serializer.fromJson<int>(json['createdAtMs']),
+      expiresAtMs: serializer.fromJson<int>(json['expiresAtMs']),
+      decidedAtMs: serializer.fromJson<int?>(json['decidedAtMs']),
+      updatedAtMs: serializer.fromJson<int>(json['updatedAtMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'direction': serializer.toJson<String>(
+        $ShareOffersTable.$converterdirection.toJson(direction),
+      ),
+      'peerFingerprint': serializer.toJson<String>(peerFingerprint),
+      'peerName': serializer.toJson<String>(peerName),
+      'status': serializer.toJson<String>(
+        $ShareOffersTable.$converterstatus.toJson(status),
+      ),
+      'declineReason': serializer.toJson<String?>(declineReason),
+      'folder': serializer.toJson<String?>(folder),
+      'fileCount': serializer.toJson<int>(fileCount),
+      'totalBytes': serializer.toJson<int>(totalBytes),
+      'autoAccepted': serializer.toJson<bool>(autoAccepted),
+      'createdAtMs': serializer.toJson<int>(createdAtMs),
+      'expiresAtMs': serializer.toJson<int>(expiresAtMs),
+      'decidedAtMs': serializer.toJson<int?>(decidedAtMs),
+      'updatedAtMs': serializer.toJson<int>(updatedAtMs),
+    };
+  }
+
+  ShareOfferRow copyWith({
+    String? id,
+    OfferDirection? direction,
+    String? peerFingerprint,
+    String? peerName,
+    OfferStatus? status,
+    Value<String?> declineReason = const Value.absent(),
+    Value<String?> folder = const Value.absent(),
+    int? fileCount,
+    int? totalBytes,
+    bool? autoAccepted,
+    int? createdAtMs,
+    int? expiresAtMs,
+    Value<int?> decidedAtMs = const Value.absent(),
+    int? updatedAtMs,
+  }) => ShareOfferRow(
+    id: id ?? this.id,
+    direction: direction ?? this.direction,
+    peerFingerprint: peerFingerprint ?? this.peerFingerprint,
+    peerName: peerName ?? this.peerName,
+    status: status ?? this.status,
+    declineReason: declineReason.present
+        ? declineReason.value
+        : this.declineReason,
+    folder: folder.present ? folder.value : this.folder,
+    fileCount: fileCount ?? this.fileCount,
+    totalBytes: totalBytes ?? this.totalBytes,
+    autoAccepted: autoAccepted ?? this.autoAccepted,
+    createdAtMs: createdAtMs ?? this.createdAtMs,
+    expiresAtMs: expiresAtMs ?? this.expiresAtMs,
+    decidedAtMs: decidedAtMs.present ? decidedAtMs.value : this.decidedAtMs,
+    updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+  );
+  ShareOfferRow copyWithCompanion(ShareOffersCompanion data) {
+    return ShareOfferRow(
+      id: data.id.present ? data.id.value : this.id,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      peerFingerprint: data.peerFingerprint.present
+          ? data.peerFingerprint.value
+          : this.peerFingerprint,
+      peerName: data.peerName.present ? data.peerName.value : this.peerName,
+      status: data.status.present ? data.status.value : this.status,
+      declineReason: data.declineReason.present
+          ? data.declineReason.value
+          : this.declineReason,
+      folder: data.folder.present ? data.folder.value : this.folder,
+      fileCount: data.fileCount.present ? data.fileCount.value : this.fileCount,
+      totalBytes: data.totalBytes.present
+          ? data.totalBytes.value
+          : this.totalBytes,
+      autoAccepted: data.autoAccepted.present
+          ? data.autoAccepted.value
+          : this.autoAccepted,
+      createdAtMs: data.createdAtMs.present
+          ? data.createdAtMs.value
+          : this.createdAtMs,
+      expiresAtMs: data.expiresAtMs.present
+          ? data.expiresAtMs.value
+          : this.expiresAtMs,
+      decidedAtMs: data.decidedAtMs.present
+          ? data.decidedAtMs.value
+          : this.decidedAtMs,
+      updatedAtMs: data.updatedAtMs.present
+          ? data.updatedAtMs.value
+          : this.updatedAtMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShareOfferRow(')
+          ..write('id: $id, ')
+          ..write('direction: $direction, ')
+          ..write('peerFingerprint: $peerFingerprint, ')
+          ..write('peerName: $peerName, ')
+          ..write('status: $status, ')
+          ..write('declineReason: $declineReason, ')
+          ..write('folder: $folder, ')
+          ..write('fileCount: $fileCount, ')
+          ..write('totalBytes: $totalBytes, ')
+          ..write('autoAccepted: $autoAccepted, ')
+          ..write('createdAtMs: $createdAtMs, ')
+          ..write('expiresAtMs: $expiresAtMs, ')
+          ..write('decidedAtMs: $decidedAtMs, ')
+          ..write('updatedAtMs: $updatedAtMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    direction,
+    peerFingerprint,
+    peerName,
+    status,
+    declineReason,
+    folder,
+    fileCount,
+    totalBytes,
+    autoAccepted,
+    createdAtMs,
+    expiresAtMs,
+    decidedAtMs,
+    updatedAtMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShareOfferRow &&
+          other.id == this.id &&
+          other.direction == this.direction &&
+          other.peerFingerprint == this.peerFingerprint &&
+          other.peerName == this.peerName &&
+          other.status == this.status &&
+          other.declineReason == this.declineReason &&
+          other.folder == this.folder &&
+          other.fileCount == this.fileCount &&
+          other.totalBytes == this.totalBytes &&
+          other.autoAccepted == this.autoAccepted &&
+          other.createdAtMs == this.createdAtMs &&
+          other.expiresAtMs == this.expiresAtMs &&
+          other.decidedAtMs == this.decidedAtMs &&
+          other.updatedAtMs == this.updatedAtMs);
+}
+
+class ShareOffersCompanion extends UpdateCompanion<ShareOfferRow> {
+  final Value<String> id;
+  final Value<OfferDirection> direction;
+  final Value<String> peerFingerprint;
+  final Value<String> peerName;
+  final Value<OfferStatus> status;
+  final Value<String?> declineReason;
+  final Value<String?> folder;
+  final Value<int> fileCount;
+  final Value<int> totalBytes;
+  final Value<bool> autoAccepted;
+  final Value<int> createdAtMs;
+  final Value<int> expiresAtMs;
+  final Value<int?> decidedAtMs;
+  final Value<int> updatedAtMs;
+  final Value<int> rowid;
+  const ShareOffersCompanion({
+    this.id = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.peerFingerprint = const Value.absent(),
+    this.peerName = const Value.absent(),
+    this.status = const Value.absent(),
+    this.declineReason = const Value.absent(),
+    this.folder = const Value.absent(),
+    this.fileCount = const Value.absent(),
+    this.totalBytes = const Value.absent(),
+    this.autoAccepted = const Value.absent(),
+    this.createdAtMs = const Value.absent(),
+    this.expiresAtMs = const Value.absent(),
+    this.decidedAtMs = const Value.absent(),
+    this.updatedAtMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ShareOffersCompanion.insert({
+    required String id,
+    required OfferDirection direction,
+    required String peerFingerprint,
+    required String peerName,
+    required OfferStatus status,
+    this.declineReason = const Value.absent(),
+    this.folder = const Value.absent(),
+    required int fileCount,
+    required int totalBytes,
+    this.autoAccepted = const Value.absent(),
+    required int createdAtMs,
+    required int expiresAtMs,
+    this.decidedAtMs = const Value.absent(),
+    required int updatedAtMs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       direction = Value(direction),
+       peerFingerprint = Value(peerFingerprint),
+       peerName = Value(peerName),
+       status = Value(status),
+       fileCount = Value(fileCount),
+       totalBytes = Value(totalBytes),
+       createdAtMs = Value(createdAtMs),
+       expiresAtMs = Value(expiresAtMs),
+       updatedAtMs = Value(updatedAtMs);
+  static Insertable<ShareOfferRow> custom({
+    Expression<String>? id,
+    Expression<String>? direction,
+    Expression<String>? peerFingerprint,
+    Expression<String>? peerName,
+    Expression<String>? status,
+    Expression<String>? declineReason,
+    Expression<String>? folder,
+    Expression<int>? fileCount,
+    Expression<int>? totalBytes,
+    Expression<bool>? autoAccepted,
+    Expression<int>? createdAtMs,
+    Expression<int>? expiresAtMs,
+    Expression<int>? decidedAtMs,
+    Expression<int>? updatedAtMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (direction != null) 'direction': direction,
+      if (peerFingerprint != null) 'peer_fingerprint': peerFingerprint,
+      if (peerName != null) 'peer_name': peerName,
+      if (status != null) 'status': status,
+      if (declineReason != null) 'decline_reason': declineReason,
+      if (folder != null) 'folder': folder,
+      if (fileCount != null) 'file_count': fileCount,
+      if (totalBytes != null) 'total_bytes': totalBytes,
+      if (autoAccepted != null) 'auto_accepted': autoAccepted,
+      if (createdAtMs != null) 'created_at_ms': createdAtMs,
+      if (expiresAtMs != null) 'expires_at_ms': expiresAtMs,
+      if (decidedAtMs != null) 'decided_at_ms': decidedAtMs,
+      if (updatedAtMs != null) 'updated_at_ms': updatedAtMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ShareOffersCompanion copyWith({
+    Value<String>? id,
+    Value<OfferDirection>? direction,
+    Value<String>? peerFingerprint,
+    Value<String>? peerName,
+    Value<OfferStatus>? status,
+    Value<String?>? declineReason,
+    Value<String?>? folder,
+    Value<int>? fileCount,
+    Value<int>? totalBytes,
+    Value<bool>? autoAccepted,
+    Value<int>? createdAtMs,
+    Value<int>? expiresAtMs,
+    Value<int?>? decidedAtMs,
+    Value<int>? updatedAtMs,
+    Value<int>? rowid,
+  }) {
+    return ShareOffersCompanion(
+      id: id ?? this.id,
+      direction: direction ?? this.direction,
+      peerFingerprint: peerFingerprint ?? this.peerFingerprint,
+      peerName: peerName ?? this.peerName,
+      status: status ?? this.status,
+      declineReason: declineReason ?? this.declineReason,
+      folder: folder ?? this.folder,
+      fileCount: fileCount ?? this.fileCount,
+      totalBytes: totalBytes ?? this.totalBytes,
+      autoAccepted: autoAccepted ?? this.autoAccepted,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+      expiresAtMs: expiresAtMs ?? this.expiresAtMs,
+      decidedAtMs: decidedAtMs ?? this.decidedAtMs,
+      updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(
+        $ShareOffersTable.$converterdirection.toSql(direction.value),
+      );
+    }
+    if (peerFingerprint.present) {
+      map['peer_fingerprint'] = Variable<String>(peerFingerprint.value);
+    }
+    if (peerName.present) {
+      map['peer_name'] = Variable<String>(peerName.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $ShareOffersTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (declineReason.present) {
+      map['decline_reason'] = Variable<String>(declineReason.value);
+    }
+    if (folder.present) {
+      map['folder'] = Variable<String>(folder.value);
+    }
+    if (fileCount.present) {
+      map['file_count'] = Variable<int>(fileCount.value);
+    }
+    if (totalBytes.present) {
+      map['total_bytes'] = Variable<int>(totalBytes.value);
+    }
+    if (autoAccepted.present) {
+      map['auto_accepted'] = Variable<bool>(autoAccepted.value);
+    }
+    if (createdAtMs.present) {
+      map['created_at_ms'] = Variable<int>(createdAtMs.value);
+    }
+    if (expiresAtMs.present) {
+      map['expires_at_ms'] = Variable<int>(expiresAtMs.value);
+    }
+    if (decidedAtMs.present) {
+      map['decided_at_ms'] = Variable<int>(decidedAtMs.value);
+    }
+    if (updatedAtMs.present) {
+      map['updated_at_ms'] = Variable<int>(updatedAtMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShareOffersCompanion(')
+          ..write('id: $id, ')
+          ..write('direction: $direction, ')
+          ..write('peerFingerprint: $peerFingerprint, ')
+          ..write('peerName: $peerName, ')
+          ..write('status: $status, ')
+          ..write('declineReason: $declineReason, ')
+          ..write('folder: $folder, ')
+          ..write('fileCount: $fileCount, ')
+          ..write('totalBytes: $totalBytes, ')
+          ..write('autoAccepted: $autoAccepted, ')
+          ..write('createdAtMs: $createdAtMs, ')
+          ..write('expiresAtMs: $expiresAtMs, ')
+          ..write('decidedAtMs: $decidedAtMs, ')
+          ..write('updatedAtMs: $updatedAtMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ShareOfferFilesTable extends ShareOfferFiles
+    with TableInfo<$ShareOfferFilesTable, ShareOfferFileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ShareOfferFilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _offerIdMeta = const VerificationMeta(
+    'offerId',
+  );
+  @override
+  late final GeneratedColumn<String> offerId = GeneratedColumn<String>(
+    'offer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES share_offers (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _localFileIdMeta = const VerificationMeta(
+    'localFileId',
+  );
+  @override
+  late final GeneratedColumn<String> localFileId = GeneratedColumn<String>(
+    'local_file_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _canonicalPathMeta = const VerificationMeta(
+    'canonicalPath',
+  );
+  @override
+  late final GeneratedColumn<String> canonicalPath = GeneratedColumn<String>(
+    'canonical_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceModifiedAtMsMeta =
+      const VerificationMeta('sourceModifiedAtMs');
+  @override
+  late final GeneratedColumn<int> sourceModifiedAtMs = GeneratedColumn<int>(
+    'source_modified_at_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _uploadIdMeta = const VerificationMeta(
+    'uploadId',
+  );
+  @override
+  late final GeneratedColumn<String> uploadId = GeneratedColumn<String>(
+    'upload_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<OfferFileStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<OfferFileStatus>($ShareOfferFilesTable.$converterstatus);
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    offerId,
+    seq,
+    name,
+    sizeBytes,
+    mimeType,
+    localFileId,
+    canonicalPath,
+    sourceModifiedAtMs,
+    uploadId,
+    status,
+    error,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'share_offer_files';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ShareOfferFileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('offer_id')) {
+      context.handle(
+        _offerIdMeta,
+        offerId.isAcceptableOrUnknown(data['offer_id']!, _offerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_offerIdMeta);
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seqMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    }
+    if (data.containsKey('local_file_id')) {
+      context.handle(
+        _localFileIdMeta,
+        localFileId.isAcceptableOrUnknown(
+          data['local_file_id']!,
+          _localFileIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('canonical_path')) {
+      context.handle(
+        _canonicalPathMeta,
+        canonicalPath.isAcceptableOrUnknown(
+          data['canonical_path']!,
+          _canonicalPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_modified_at_ms')) {
+      context.handle(
+        _sourceModifiedAtMsMeta,
+        sourceModifiedAtMs.isAcceptableOrUnknown(
+          data['source_modified_at_ms']!,
+          _sourceModifiedAtMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('upload_id')) {
+      context.handle(
+        _uploadIdMeta,
+        uploadId.isAcceptableOrUnknown(data['upload_id']!, _uploadIdMeta),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {offerId, seq};
+  @override
+  ShareOfferFileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShareOfferFileRow(
+      offerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}offer_id'],
+      )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      ),
+      localFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_file_id'],
+      ),
+      canonicalPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}canonical_path'],
+      ),
+      sourceModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_modified_at_ms'],
+      ),
+      uploadId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}upload_id'],
+      ),
+      status: $ShareOfferFilesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+    );
+  }
+
+  @override
+  $ShareOfferFilesTable createAlias(String alias) {
+    return $ShareOfferFilesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<OfferFileStatus, String, String> $converterstatus =
+      const EnumNameConverter<OfferFileStatus>(OfferFileStatus.values);
+}
+
+class ShareOfferFileRow extends DataClass
+    implements Insertable<ShareOfferFileRow> {
+  final String offerId;
+  final int seq;
+  final String name;
+  final int sizeBytes;
+  final String? mimeType;
+
+  /// Outgoing: the offered local file id. Incoming: the imported file's id.
+  final String? localFileId;
+
+  /// Outgoing: the canonical path read clients may fetch (original or
+  /// staged copy) and its mtime at offer time.
+  final String? canonicalPath;
+  final int? sourceModifiedAtMs;
+
+  /// Incoming: the claimed N9 upload.
+  final String? uploadId;
+  final OfferFileStatus status;
+  final String? error;
+  const ShareOfferFileRow({
+    required this.offerId,
+    required this.seq,
+    required this.name,
+    required this.sizeBytes,
+    this.mimeType,
+    this.localFileId,
+    this.canonicalPath,
+    this.sourceModifiedAtMs,
+    this.uploadId,
+    required this.status,
+    this.error,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['offer_id'] = Variable<String>(offerId);
+    map['seq'] = Variable<int>(seq);
+    map['name'] = Variable<String>(name);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    if (!nullToAbsent || mimeType != null) {
+      map['mime_type'] = Variable<String>(mimeType);
+    }
+    if (!nullToAbsent || localFileId != null) {
+      map['local_file_id'] = Variable<String>(localFileId);
+    }
+    if (!nullToAbsent || canonicalPath != null) {
+      map['canonical_path'] = Variable<String>(canonicalPath);
+    }
+    if (!nullToAbsent || sourceModifiedAtMs != null) {
+      map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs);
+    }
+    if (!nullToAbsent || uploadId != null) {
+      map['upload_id'] = Variable<String>(uploadId);
+    }
+    {
+      map['status'] = Variable<String>(
+        $ShareOfferFilesTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    return map;
+  }
+
+  ShareOfferFilesCompanion toCompanion(bool nullToAbsent) {
+    return ShareOfferFilesCompanion(
+      offerId: Value(offerId),
+      seq: Value(seq),
+      name: Value(name),
+      sizeBytes: Value(sizeBytes),
+      mimeType: mimeType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mimeType),
+      localFileId: localFileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localFileId),
+      canonicalPath: canonicalPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(canonicalPath),
+      sourceModifiedAtMs: sourceModifiedAtMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceModifiedAtMs),
+      uploadId: uploadId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uploadId),
+      status: Value(status),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+    );
+  }
+
+  factory ShareOfferFileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShareOfferFileRow(
+      offerId: serializer.fromJson<String>(json['offerId']),
+      seq: serializer.fromJson<int>(json['seq']),
+      name: serializer.fromJson<String>(json['name']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      mimeType: serializer.fromJson<String?>(json['mimeType']),
+      localFileId: serializer.fromJson<String?>(json['localFileId']),
+      canonicalPath: serializer.fromJson<String?>(json['canonicalPath']),
+      sourceModifiedAtMs: serializer.fromJson<int?>(json['sourceModifiedAtMs']),
+      uploadId: serializer.fromJson<String?>(json['uploadId']),
+      status: $ShareOfferFilesTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      error: serializer.fromJson<String?>(json['error']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'offerId': serializer.toJson<String>(offerId),
+      'seq': serializer.toJson<int>(seq),
+      'name': serializer.toJson<String>(name),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'mimeType': serializer.toJson<String?>(mimeType),
+      'localFileId': serializer.toJson<String?>(localFileId),
+      'canonicalPath': serializer.toJson<String?>(canonicalPath),
+      'sourceModifiedAtMs': serializer.toJson<int?>(sourceModifiedAtMs),
+      'uploadId': serializer.toJson<String?>(uploadId),
+      'status': serializer.toJson<String>(
+        $ShareOfferFilesTable.$converterstatus.toJson(status),
+      ),
+      'error': serializer.toJson<String?>(error),
+    };
+  }
+
+  ShareOfferFileRow copyWith({
+    String? offerId,
+    int? seq,
+    String? name,
+    int? sizeBytes,
+    Value<String?> mimeType = const Value.absent(),
+    Value<String?> localFileId = const Value.absent(),
+    Value<String?> canonicalPath = const Value.absent(),
+    Value<int?> sourceModifiedAtMs = const Value.absent(),
+    Value<String?> uploadId = const Value.absent(),
+    OfferFileStatus? status,
+    Value<String?> error = const Value.absent(),
+  }) => ShareOfferFileRow(
+    offerId: offerId ?? this.offerId,
+    seq: seq ?? this.seq,
+    name: name ?? this.name,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    mimeType: mimeType.present ? mimeType.value : this.mimeType,
+    localFileId: localFileId.present ? localFileId.value : this.localFileId,
+    canonicalPath: canonicalPath.present
+        ? canonicalPath.value
+        : this.canonicalPath,
+    sourceModifiedAtMs: sourceModifiedAtMs.present
+        ? sourceModifiedAtMs.value
+        : this.sourceModifiedAtMs,
+    uploadId: uploadId.present ? uploadId.value : this.uploadId,
+    status: status ?? this.status,
+    error: error.present ? error.value : this.error,
+  );
+  ShareOfferFileRow copyWithCompanion(ShareOfferFilesCompanion data) {
+    return ShareOfferFileRow(
+      offerId: data.offerId.present ? data.offerId.value : this.offerId,
+      seq: data.seq.present ? data.seq.value : this.seq,
+      name: data.name.present ? data.name.value : this.name,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      localFileId: data.localFileId.present
+          ? data.localFileId.value
+          : this.localFileId,
+      canonicalPath: data.canonicalPath.present
+          ? data.canonicalPath.value
+          : this.canonicalPath,
+      sourceModifiedAtMs: data.sourceModifiedAtMs.present
+          ? data.sourceModifiedAtMs.value
+          : this.sourceModifiedAtMs,
+      uploadId: data.uploadId.present ? data.uploadId.value : this.uploadId,
+      status: data.status.present ? data.status.value : this.status,
+      error: data.error.present ? data.error.value : this.error,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShareOfferFileRow(')
+          ..write('offerId: $offerId, ')
+          ..write('seq: $seq, ')
+          ..write('name: $name, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('localFileId: $localFileId, ')
+          ..write('canonicalPath: $canonicalPath, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('uploadId: $uploadId, ')
+          ..write('status: $status, ')
+          ..write('error: $error')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    offerId,
+    seq,
+    name,
+    sizeBytes,
+    mimeType,
+    localFileId,
+    canonicalPath,
+    sourceModifiedAtMs,
+    uploadId,
+    status,
+    error,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShareOfferFileRow &&
+          other.offerId == this.offerId &&
+          other.seq == this.seq &&
+          other.name == this.name &&
+          other.sizeBytes == this.sizeBytes &&
+          other.mimeType == this.mimeType &&
+          other.localFileId == this.localFileId &&
+          other.canonicalPath == this.canonicalPath &&
+          other.sourceModifiedAtMs == this.sourceModifiedAtMs &&
+          other.uploadId == this.uploadId &&
+          other.status == this.status &&
+          other.error == this.error);
+}
+
+class ShareOfferFilesCompanion extends UpdateCompanion<ShareOfferFileRow> {
+  final Value<String> offerId;
+  final Value<int> seq;
+  final Value<String> name;
+  final Value<int> sizeBytes;
+  final Value<String?> mimeType;
+  final Value<String?> localFileId;
+  final Value<String?> canonicalPath;
+  final Value<int?> sourceModifiedAtMs;
+  final Value<String?> uploadId;
+  final Value<OfferFileStatus> status;
+  final Value<String?> error;
+  final Value<int> rowid;
+  const ShareOfferFilesCompanion({
+    this.offerId = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.name = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.localFileId = const Value.absent(),
+    this.canonicalPath = const Value.absent(),
+    this.sourceModifiedAtMs = const Value.absent(),
+    this.uploadId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.error = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ShareOfferFilesCompanion.insert({
+    required String offerId,
+    required int seq,
+    required String name,
+    required int sizeBytes,
+    this.mimeType = const Value.absent(),
+    this.localFileId = const Value.absent(),
+    this.canonicalPath = const Value.absent(),
+    this.sourceModifiedAtMs = const Value.absent(),
+    this.uploadId = const Value.absent(),
+    required OfferFileStatus status,
+    this.error = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : offerId = Value(offerId),
+       seq = Value(seq),
+       name = Value(name),
+       sizeBytes = Value(sizeBytes),
+       status = Value(status);
+  static Insertable<ShareOfferFileRow> custom({
+    Expression<String>? offerId,
+    Expression<int>? seq,
+    Expression<String>? name,
+    Expression<int>? sizeBytes,
+    Expression<String>? mimeType,
+    Expression<String>? localFileId,
+    Expression<String>? canonicalPath,
+    Expression<int>? sourceModifiedAtMs,
+    Expression<String>? uploadId,
+    Expression<String>? status,
+    Expression<String>? error,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (offerId != null) 'offer_id': offerId,
+      if (seq != null) 'seq': seq,
+      if (name != null) 'name': name,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (localFileId != null) 'local_file_id': localFileId,
+      if (canonicalPath != null) 'canonical_path': canonicalPath,
+      if (sourceModifiedAtMs != null)
+        'source_modified_at_ms': sourceModifiedAtMs,
+      if (uploadId != null) 'upload_id': uploadId,
+      if (status != null) 'status': status,
+      if (error != null) 'error': error,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ShareOfferFilesCompanion copyWith({
+    Value<String>? offerId,
+    Value<int>? seq,
+    Value<String>? name,
+    Value<int>? sizeBytes,
+    Value<String?>? mimeType,
+    Value<String?>? localFileId,
+    Value<String?>? canonicalPath,
+    Value<int?>? sourceModifiedAtMs,
+    Value<String?>? uploadId,
+    Value<OfferFileStatus>? status,
+    Value<String?>? error,
+    Value<int>? rowid,
+  }) {
+    return ShareOfferFilesCompanion(
+      offerId: offerId ?? this.offerId,
+      seq: seq ?? this.seq,
+      name: name ?? this.name,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      mimeType: mimeType ?? this.mimeType,
+      localFileId: localFileId ?? this.localFileId,
+      canonicalPath: canonicalPath ?? this.canonicalPath,
+      sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+      uploadId: uploadId ?? this.uploadId,
+      status: status ?? this.status,
+      error: error ?? this.error,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (offerId.present) {
+      map['offer_id'] = Variable<String>(offerId.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (localFileId.present) {
+      map['local_file_id'] = Variable<String>(localFileId.value);
+    }
+    if (canonicalPath.present) {
+      map['canonical_path'] = Variable<String>(canonicalPath.value);
+    }
+    if (sourceModifiedAtMs.present) {
+      map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs.value);
+    }
+    if (uploadId.present) {
+      map['upload_id'] = Variable<String>(uploadId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $ShareOfferFilesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShareOfferFilesCompanion(')
+          ..write('offerId: $offerId, ')
+          ..write('seq: $seq, ')
+          ..write('name: $name, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('localFileId: $localFileId, ')
+          ..write('canonicalPath: $canonicalPath, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('uploadId: $uploadId, ')
+          ..write('status: $status, ')
+          ..write('error: $error, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -16441,6 +18056,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TransferFilesTable transferFiles = $TransferFilesTable(this);
   late final $LocalJobsTable localJobs = $LocalJobsTable(this);
   late final $LocalJobFilesTable localJobFiles = $LocalJobFilesTable(this);
+  late final $ShareOffersTable shareOffers = $ShareOffersTable(this);
+  late final $ShareOfferFilesTable shareOfferFiles = $ShareOfferFilesTable(
+    this,
+  );
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -16557,6 +18176,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'ljf_status',
     'CREATE INDEX ljf_status ON local_job_files (job_id, status)',
   );
+  late final Index shareOffersStatus = Index(
+    'share_offers_status',
+    'CREATE INDEX share_offers_status ON share_offers (status, direction)',
+  );
+  late final Index shareOfferFilesUpload = Index(
+    'share_offer_files_upload',
+    'CREATE INDEX share_offer_files_upload ON share_offer_files (upload_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -16593,6 +18220,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     transferFiles,
     localJobs,
     localJobFiles,
+    shareOffers,
+    shareOfferFiles,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -16622,6 +18251,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     transfersStatus,
     transferFilesJobStatus,
     ljfStatus,
+    shareOffersStatus,
+    shareOfferFilesUpload,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -16722,6 +18353,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('local_job_files', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'share_offers',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('share_offer_files', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -25366,6 +27004,7 @@ typedef $$KnownDevicesTableCreateCompanionBuilder =
       Value<bool> canShareToUs,
       Value<bool> isTemporary,
       Value<bool> autoAccept,
+      Value<bool> autoAcceptFiles,
       Value<int> rowid,
     });
 typedef $$KnownDevicesTableUpdateCompanionBuilder =
@@ -25381,6 +27020,7 @@ typedef $$KnownDevicesTableUpdateCompanionBuilder =
       Value<bool> canShareToUs,
       Value<bool> isTemporary,
       Value<bool> autoAccept,
+      Value<bool> autoAcceptFiles,
       Value<int> rowid,
     });
 
@@ -25468,6 +27108,11 @@ class $$KnownDevicesTableFilterComposer
 
   ColumnFilters<bool> get autoAccept => $composableBuilder(
     column: $table.autoAccept,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoAcceptFiles => $composableBuilder(
+    column: $table.autoAcceptFiles,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25560,6 +27205,11 @@ class $$KnownDevicesTableOrderingComposer
     column: $table.autoAccept,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get autoAcceptFiles => $composableBuilder(
+    column: $table.autoAcceptFiles,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnownDevicesTableAnnotationComposer
@@ -25617,6 +27267,11 @@ class $$KnownDevicesTableAnnotationComposer
 
   GeneratedColumn<bool> get autoAccept => $composableBuilder(
     column: $table.autoAccept,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get autoAcceptFiles => $composableBuilder(
+    column: $table.autoAcceptFiles,
     builder: (column) => column,
   );
 
@@ -25685,6 +27340,7 @@ class $$KnownDevicesTableTableManager
                 Value<bool> canShareToUs = const Value.absent(),
                 Value<bool> isTemporary = const Value.absent(),
                 Value<bool> autoAccept = const Value.absent(),
+                Value<bool> autoAcceptFiles = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnownDevicesCompanion(
                 id: id,
@@ -25698,6 +27354,7 @@ class $$KnownDevicesTableTableManager
                 canShareToUs: canShareToUs,
                 isTemporary: isTemporary,
                 autoAccept: autoAccept,
+                autoAcceptFiles: autoAcceptFiles,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -25713,6 +27370,7 @@ class $$KnownDevicesTableTableManager
                 Value<bool> canShareToUs = const Value.absent(),
                 Value<bool> isTemporary = const Value.absent(),
                 Value<bool> autoAccept = const Value.absent(),
+                Value<bool> autoAcceptFiles = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnownDevicesCompanion.insert(
                 id: id,
@@ -25726,6 +27384,7 @@ class $$KnownDevicesTableTableManager
                 canShareToUs: canShareToUs,
                 isTemporary: isTemporary,
                 autoAccept: autoAccept,
+                autoAcceptFiles: autoAcceptFiles,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -27937,6 +29596,948 @@ typedef $$LocalJobFilesTableProcessedTableManager =
       LocalJobFileRow,
       PrefetchHooks Function({bool jobId})
     >;
+typedef $$ShareOffersTableCreateCompanionBuilder =
+    ShareOffersCompanion Function({
+      required String id,
+      required OfferDirection direction,
+      required String peerFingerprint,
+      required String peerName,
+      required OfferStatus status,
+      Value<String?> declineReason,
+      Value<String?> folder,
+      required int fileCount,
+      required int totalBytes,
+      Value<bool> autoAccepted,
+      required int createdAtMs,
+      required int expiresAtMs,
+      Value<int?> decidedAtMs,
+      required int updatedAtMs,
+      Value<int> rowid,
+    });
+typedef $$ShareOffersTableUpdateCompanionBuilder =
+    ShareOffersCompanion Function({
+      Value<String> id,
+      Value<OfferDirection> direction,
+      Value<String> peerFingerprint,
+      Value<String> peerName,
+      Value<OfferStatus> status,
+      Value<String?> declineReason,
+      Value<String?> folder,
+      Value<int> fileCount,
+      Value<int> totalBytes,
+      Value<bool> autoAccepted,
+      Value<int> createdAtMs,
+      Value<int> expiresAtMs,
+      Value<int?> decidedAtMs,
+      Value<int> updatedAtMs,
+      Value<int> rowid,
+    });
+
+final class $$ShareOffersTableReferences
+    extends BaseReferences<_$AppDatabase, $ShareOffersTable, ShareOfferRow> {
+  $$ShareOffersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ShareOfferFilesTable, List<ShareOfferFileRow>>
+  _shareOfferFilesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.shareOfferFiles,
+    aliasName: 'share_offers__id__share_offer_files__offer_id',
+  );
+
+  $$ShareOfferFilesTableProcessedTableManager get shareOfferFilesRefs {
+    final manager = $$ShareOfferFilesTableTableManager(
+      $_db,
+      $_db.shareOfferFiles,
+    ).filter((f) => f.offerId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _shareOfferFilesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ShareOffersTableFilterComposer
+    extends Composer<_$AppDatabase, $ShareOffersTable> {
+  $$ShareOffersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<OfferDirection, OfferDirection, String>
+  get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get peerFingerprint => $composableBuilder(
+    column: $table.peerFingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get peerName => $composableBuilder(
+    column: $table.peerName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<OfferStatus, OfferStatus, String> get status =>
+      $composableBuilder(
+        column: $table.status,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get declineReason => $composableBuilder(
+    column: $table.declineReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folder => $composableBuilder(
+    column: $table.folder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileCount => $composableBuilder(
+    column: $table.fileCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalBytes => $composableBuilder(
+    column: $table.totalBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoAccepted => $composableBuilder(
+    column: $table.autoAccepted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMs => $composableBuilder(
+    column: $table.createdAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get expiresAtMs => $composableBuilder(
+    column: $table.expiresAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get decidedAtMs => $composableBuilder(
+    column: $table.decidedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMs => $composableBuilder(
+    column: $table.updatedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> shareOfferFilesRefs(
+    Expression<bool> Function($$ShareOfferFilesTableFilterComposer f) f,
+  ) {
+    final $$ShareOfferFilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.shareOfferFiles,
+      getReferencedColumn: (t) => t.offerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShareOfferFilesTableFilterComposer(
+            $db: $db,
+            $table: $db.shareOfferFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ShareOffersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ShareOffersTable> {
+  $$ShareOffersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get peerFingerprint => $composableBuilder(
+    column: $table.peerFingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get peerName => $composableBuilder(
+    column: $table.peerName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get declineReason => $composableBuilder(
+    column: $table.declineReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get folder => $composableBuilder(
+    column: $table.folder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileCount => $composableBuilder(
+    column: $table.fileCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalBytes => $composableBuilder(
+    column: $table.totalBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get autoAccepted => $composableBuilder(
+    column: $table.autoAccepted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMs => $composableBuilder(
+    column: $table.createdAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get expiresAtMs => $composableBuilder(
+    column: $table.expiresAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get decidedAtMs => $composableBuilder(
+    column: $table.decidedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMs => $composableBuilder(
+    column: $table.updatedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ShareOffersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ShareOffersTable> {
+  $$ShareOffersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<OfferDirection, String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<String> get peerFingerprint => $composableBuilder(
+    column: $table.peerFingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get peerName =>
+      $composableBuilder(column: $table.peerName, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<OfferStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get declineReason => $composableBuilder(
+    column: $table.declineReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get folder =>
+      $composableBuilder(column: $table.folder, builder: (column) => column);
+
+  GeneratedColumn<int> get fileCount =>
+      $composableBuilder(column: $table.fileCount, builder: (column) => column);
+
+  GeneratedColumn<int> get totalBytes => $composableBuilder(
+    column: $table.totalBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get autoAccepted => $composableBuilder(
+    column: $table.autoAccepted,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtMs => $composableBuilder(
+    column: $table.createdAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get expiresAtMs => $composableBuilder(
+    column: $table.expiresAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get decidedAtMs => $composableBuilder(
+    column: $table.decidedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMs => $composableBuilder(
+    column: $table.updatedAtMs,
+    builder: (column) => column,
+  );
+
+  Expression<T> shareOfferFilesRefs<T extends Object>(
+    Expression<T> Function($$ShareOfferFilesTableAnnotationComposer a) f,
+  ) {
+    final $$ShareOfferFilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.shareOfferFiles,
+      getReferencedColumn: (t) => t.offerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShareOfferFilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.shareOfferFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ShareOffersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ShareOffersTable,
+          ShareOfferRow,
+          $$ShareOffersTableFilterComposer,
+          $$ShareOffersTableOrderingComposer,
+          $$ShareOffersTableAnnotationComposer,
+          $$ShareOffersTableCreateCompanionBuilder,
+          $$ShareOffersTableUpdateCompanionBuilder,
+          (ShareOfferRow, $$ShareOffersTableReferences),
+          ShareOfferRow,
+          PrefetchHooks Function({bool shareOfferFilesRefs})
+        > {
+  $$ShareOffersTableTableManager(_$AppDatabase db, $ShareOffersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ShareOffersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ShareOffersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ShareOffersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<OfferDirection> direction = const Value.absent(),
+                Value<String> peerFingerprint = const Value.absent(),
+                Value<String> peerName = const Value.absent(),
+                Value<OfferStatus> status = const Value.absent(),
+                Value<String?> declineReason = const Value.absent(),
+                Value<String?> folder = const Value.absent(),
+                Value<int> fileCount = const Value.absent(),
+                Value<int> totalBytes = const Value.absent(),
+                Value<bool> autoAccepted = const Value.absent(),
+                Value<int> createdAtMs = const Value.absent(),
+                Value<int> expiresAtMs = const Value.absent(),
+                Value<int?> decidedAtMs = const Value.absent(),
+                Value<int> updatedAtMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ShareOffersCompanion(
+                id: id,
+                direction: direction,
+                peerFingerprint: peerFingerprint,
+                peerName: peerName,
+                status: status,
+                declineReason: declineReason,
+                folder: folder,
+                fileCount: fileCount,
+                totalBytes: totalBytes,
+                autoAccepted: autoAccepted,
+                createdAtMs: createdAtMs,
+                expiresAtMs: expiresAtMs,
+                decidedAtMs: decidedAtMs,
+                updatedAtMs: updatedAtMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required OfferDirection direction,
+                required String peerFingerprint,
+                required String peerName,
+                required OfferStatus status,
+                Value<String?> declineReason = const Value.absent(),
+                Value<String?> folder = const Value.absent(),
+                required int fileCount,
+                required int totalBytes,
+                Value<bool> autoAccepted = const Value.absent(),
+                required int createdAtMs,
+                required int expiresAtMs,
+                Value<int?> decidedAtMs = const Value.absent(),
+                required int updatedAtMs,
+                Value<int> rowid = const Value.absent(),
+              }) => ShareOffersCompanion.insert(
+                id: id,
+                direction: direction,
+                peerFingerprint: peerFingerprint,
+                peerName: peerName,
+                status: status,
+                declineReason: declineReason,
+                folder: folder,
+                fileCount: fileCount,
+                totalBytes: totalBytes,
+                autoAccepted: autoAccepted,
+                createdAtMs: createdAtMs,
+                expiresAtMs: expiresAtMs,
+                decidedAtMs: decidedAtMs,
+                updatedAtMs: updatedAtMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ShareOffersTable, ShareOfferRow>(table),
+                  $$ShareOffersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({shareOfferFilesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (shareOfferFilesRefs) db.shareOfferFiles,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (shareOfferFilesRefs)
+                    await $_getPrefetchedDataByColumns<
+                      ShareOfferRow,
+                      $ShareOffersTable,
+                      ShareOfferFileRow,
+                      $ShareOfferFilesTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ShareOffersTableReferences
+                          ._shareOfferFilesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ShareOffersTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).shareOfferFilesRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'offer_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ShareOffersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ShareOffersTable,
+      ShareOfferRow,
+      $$ShareOffersTableFilterComposer,
+      $$ShareOffersTableOrderingComposer,
+      $$ShareOffersTableAnnotationComposer,
+      $$ShareOffersTableCreateCompanionBuilder,
+      $$ShareOffersTableUpdateCompanionBuilder,
+      (ShareOfferRow, $$ShareOffersTableReferences),
+      ShareOfferRow,
+      PrefetchHooks Function({bool shareOfferFilesRefs})
+    >;
+typedef $$ShareOfferFilesTableCreateCompanionBuilder =
+    ShareOfferFilesCompanion Function({
+      required String offerId,
+      required int seq,
+      required String name,
+      required int sizeBytes,
+      Value<String?> mimeType,
+      Value<String?> localFileId,
+      Value<String?> canonicalPath,
+      Value<int?> sourceModifiedAtMs,
+      Value<String?> uploadId,
+      required OfferFileStatus status,
+      Value<String?> error,
+      Value<int> rowid,
+    });
+typedef $$ShareOfferFilesTableUpdateCompanionBuilder =
+    ShareOfferFilesCompanion Function({
+      Value<String> offerId,
+      Value<int> seq,
+      Value<String> name,
+      Value<int> sizeBytes,
+      Value<String?> mimeType,
+      Value<String?> localFileId,
+      Value<String?> canonicalPath,
+      Value<int?> sourceModifiedAtMs,
+      Value<String?> uploadId,
+      Value<OfferFileStatus> status,
+      Value<String?> error,
+      Value<int> rowid,
+    });
+
+final class $$ShareOfferFilesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ShareOfferFilesTable,
+          ShareOfferFileRow
+        > {
+  $$ShareOfferFilesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ShareOffersTable _offerIdTable(_$AppDatabase db) => db.shareOffers
+      .createAlias('share_offer_files__offer_id__share_offers__id');
+
+  $$ShareOffersTableProcessedTableManager get offerId {
+    final $_column = $_itemColumn<String>('offer_id')!;
+
+    final manager = $$ShareOffersTableTableManager(
+      $_db,
+      $_db.shareOffers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_offerIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ShareOfferFilesTableFilterComposer
+    extends Composer<_$AppDatabase, $ShareOfferFilesTable> {
+  $$ShareOfferFilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localFileId => $composableBuilder(
+    column: $table.localFileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get canonicalPath => $composableBuilder(
+    column: $table.canonicalPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uploadId => $composableBuilder(
+    column: $table.uploadId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<OfferFileStatus, OfferFileStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ShareOffersTableFilterComposer get offerId {
+    final $$ShareOffersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.offerId,
+      referencedTable: $db.shareOffers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShareOffersTableFilterComposer(
+            $db: $db,
+            $table: $db.shareOffers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ShareOfferFilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ShareOfferFilesTable> {
+  $$ShareOfferFilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localFileId => $composableBuilder(
+    column: $table.localFileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get canonicalPath => $composableBuilder(
+    column: $table.canonicalPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uploadId => $composableBuilder(
+    column: $table.uploadId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ShareOffersTableOrderingComposer get offerId {
+    final $$ShareOffersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.offerId,
+      referencedTable: $db.shareOffers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShareOffersTableOrderingComposer(
+            $db: $db,
+            $table: $db.shareOffers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ShareOfferFilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ShareOfferFilesTable> {
+  $$ShareOfferFilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<String> get localFileId => $composableBuilder(
+    column: $table.localFileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get canonicalPath => $composableBuilder(
+    column: $table.canonicalPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get uploadId =>
+      $composableBuilder(column: $table.uploadId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<OfferFileStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  $$ShareOffersTableAnnotationComposer get offerId {
+    final $$ShareOffersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.offerId,
+      referencedTable: $db.shareOffers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShareOffersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.shareOffers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ShareOfferFilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ShareOfferFilesTable,
+          ShareOfferFileRow,
+          $$ShareOfferFilesTableFilterComposer,
+          $$ShareOfferFilesTableOrderingComposer,
+          $$ShareOfferFilesTableAnnotationComposer,
+          $$ShareOfferFilesTableCreateCompanionBuilder,
+          $$ShareOfferFilesTableUpdateCompanionBuilder,
+          (ShareOfferFileRow, $$ShareOfferFilesTableReferences),
+          ShareOfferFileRow,
+          PrefetchHooks Function({bool offerId})
+        > {
+  $$ShareOfferFilesTableTableManager(
+    _$AppDatabase db,
+    $ShareOfferFilesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ShareOfferFilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ShareOfferFilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ShareOfferFilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> offerId = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<String?> mimeType = const Value.absent(),
+                Value<String?> localFileId = const Value.absent(),
+                Value<String?> canonicalPath = const Value.absent(),
+                Value<int?> sourceModifiedAtMs = const Value.absent(),
+                Value<String?> uploadId = const Value.absent(),
+                Value<OfferFileStatus> status = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ShareOfferFilesCompanion(
+                offerId: offerId,
+                seq: seq,
+                name: name,
+                sizeBytes: sizeBytes,
+                mimeType: mimeType,
+                localFileId: localFileId,
+                canonicalPath: canonicalPath,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                uploadId: uploadId,
+                status: status,
+                error: error,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String offerId,
+                required int seq,
+                required String name,
+                required int sizeBytes,
+                Value<String?> mimeType = const Value.absent(),
+                Value<String?> localFileId = const Value.absent(),
+                Value<String?> canonicalPath = const Value.absent(),
+                Value<int?> sourceModifiedAtMs = const Value.absent(),
+                Value<String?> uploadId = const Value.absent(),
+                required OfferFileStatus status,
+                Value<String?> error = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ShareOfferFilesCompanion.insert(
+                offerId: offerId,
+                seq: seq,
+                name: name,
+                sizeBytes: sizeBytes,
+                mimeType: mimeType,
+                localFileId: localFileId,
+                canonicalPath: canonicalPath,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                uploadId: uploadId,
+                status: status,
+                error: error,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ShareOfferFilesTable, ShareOfferFileRow>(table),
+                  $$ShareOfferFilesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({offerId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (offerId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.offerId,
+                        referencedTable: $$ShareOfferFilesTableReferences
+                            ._offerIdTable(db),
+                        referencedColumn: $$ShareOfferFilesTableReferences
+                            ._offerIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ShareOfferFilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ShareOfferFilesTable,
+      ShareOfferFileRow,
+      $$ShareOfferFilesTableFilterComposer,
+      $$ShareOfferFilesTableOrderingComposer,
+      $$ShareOfferFilesTableAnnotationComposer,
+      $$ShareOfferFilesTableCreateCompanionBuilder,
+      $$ShareOfferFilesTableUpdateCompanionBuilder,
+      (ShareOfferFileRow, $$ShareOfferFilesTableReferences),
+      ShareOfferFileRow,
+      PrefetchHooks Function({bool offerId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -28002,4 +30603,8 @@ class $AppDatabaseManager {
       $$LocalJobsTableTableManager(_db, _db.localJobs);
   $$LocalJobFilesTableTableManager get localJobFiles =>
       $$LocalJobFilesTableTableManager(_db, _db.localJobFiles);
+  $$ShareOffersTableTableManager get shareOffers =>
+      $$ShareOffersTableTableManager(_db, _db.shareOffers);
+  $$ShareOfferFilesTableTableManager get shareOfferFiles =>
+      $$ShareOfferFilesTableTableManager(_db, _db.shareOfferFiles);
 }

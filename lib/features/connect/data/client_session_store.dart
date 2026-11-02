@@ -53,6 +53,7 @@ class ClientSessionStore {
     required String clientFingerprint,
     required String clientDeviceId,
     required String clientName,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) {
     _removeWhere(
       (s) => s.clientFingerprint == clientFingerprint,
@@ -68,6 +69,7 @@ class ClientSessionStore {
       tokenHash: hashToken(token),
       createdAt: at,
       lastUsedAt: at,
+      purpose: purpose,
     );
     _byHash[session.tokenHash] = session;
     _sweep ??= Timer.periodic(const Duration(minutes: 1), (_) => _expireIdle());
