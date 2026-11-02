@@ -57,10 +57,14 @@ class SwipeActionBar extends ConsumerStatefulWidget {
     required this.deleteMode,
     required this.onApply,
     required this.onBlocked,
+    this.problemOf,
     super.key,
   });
 
   final SwipeLayout layout;
+
+  /// The deck's check (N8: remote rules); default: tags and types only.
+  final SwipeActionProblem? Function(SwipeAction action)? problemOf;
   final DeleteMode deleteMode;
   final bool Function(SwipeAction action) onApply;
 
@@ -97,7 +101,7 @@ class _SwipeActionBarState extends ConsumerState<SwipeActionBar> {
               action: action,
               deleteMode: widget.deleteMode,
               tags: tags,
-              problem: SwipeActionDispatcher.problemFor(action, tags),
+              problem: _problem(action, tags),
               onPressed: () => _tap(action, tags),
             ),
           );
@@ -106,8 +110,12 @@ class _SwipeActionBarState extends ConsumerState<SwipeActionBar> {
     );
   }
 
+  SwipeActionProblem? _problem(SwipeAction action, Map<int, Tag> tags) =>
+      widget.problemOf?.call(action) ??
+      SwipeActionDispatcher.problemFor(action, tags);
+
   void _tap(SwipeAction action, Map<int, Tag> tags) {
-    final problem = SwipeActionDispatcher.problemFor(action, tags);
+    final problem = _problem(action, tags);
     if (problem != null) {
       widget.onBlocked(problem);
       return;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
@@ -60,7 +61,7 @@ class _UndoButtonState extends ConsumerState<UndoButton> {
     }
     try {
       final outcome = await ref
-          .read(swipeDeckControllerProvider.notifier)
+          .read(SwipeDeckScope.providerOf(context).notifier)
           .undo();
       if (context.mounted) showUndoOutcome(context, outcome);
     } finally {
@@ -113,7 +114,8 @@ class _UndoButtonState extends ConsumerState<UndoButton> {
       },
     );
     if (steps == null) return;
-    final controller = ref.read(swipeDeckControllerProvider.notifier);
+    if (!context.mounted) return;
+    final controller = ref.read(SwipeDeckScope.providerOf(context).notifier);
     for (var i = 0; i < steps; i++) {
       final outcome = await controller.undo();
       if (context.mounted) showUndoOutcome(context, outcome);
@@ -126,7 +128,14 @@ class _UndoButtonState extends ConsumerState<UndoButton> {
 /// file again).
 void showUndoOutcome(BuildContext context, UndoOutcome outcome) {
   final l10n = context.l10n;
+  final remote = SwipeDeckScope.isRemote(context);
+  final named = SwipeDeckScope.deviceNameOf(context);
+  final device = named.isEmpty ? l10n.remoteSwipeUnknownDevice : named;
   final text = switch (outcome) {
+    // N8: a committed remote delete is restored on the other device.
+    UndoFailed(error: FileOpException(failure: FileOpFailure.unsupported))
+        when remote =>
+      l10n.remoteSwipeRestoreOnDevice(device),
     Undone(restoredFromTrash: true) => l10n.undoRestored,
     PermanentlyDeleted() => l10n.undoPermanentlyDeleted,
     UndoFailed(error: UnimplementedError()) => l10n.undoNotPossibleYet,

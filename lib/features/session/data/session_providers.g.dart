@@ -182,7 +182,7 @@ final class DeleteQueueProvider
   }
 }
 
-String _$deleteQueueHash() => r'cb52c54295f8123ee99afc007b2ed5baffbc9001';
+String _$deleteQueueHash() => r'c19800d6a332f55b97f699c2211221707467f0b9';
 
 @ProviderFor(undoService)
 final undoServiceProvider = UndoServiceProvider._();
@@ -223,7 +223,7 @@ final class UndoServiceProvider
   }
 }
 
-String _$undoServiceHash() => r'6db80491165ad290b0fd3c3e7b49b644de7e8d25';
+String _$undoServiceHash() => r'db6b117833baefa0e7232a438b98e456a7452a00';
 
 /// Commit problems that aren't per file (shown as a snackbar).
 

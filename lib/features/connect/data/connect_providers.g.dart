@@ -950,7 +950,7 @@ final class StoredScopeLoaderProvider
   }
 }
 
-String _$storedScopeLoaderHash() => r'cef7dbdb27b10df1abb14f4327651baa77bfbaf7';
+String _$storedScopeLoaderHash() => r'075c8fa3466c0c224ab869f325fe2423fcb589c1';
 
 /// What happens to a verified pairing request: the accept prompt (N3).
 /// N6: on accept, a remembered device's stored folders are seeded before

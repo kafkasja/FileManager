@@ -67,7 +67,9 @@ class SwipeSourceBar extends ConsumerWidget {
               icon: const Icon(Icons.close),
               color: scheme.onSecondaryContainer,
               onPressed: () => unawaited(
-                ref.read(swipeDeckControllerProvider.notifier).closeSource(),
+                ref
+                    .read(SwipeDeckScope.providerOf(context).notifier)
+                    .closeSource(),
               ),
             ),
           ],
@@ -89,7 +91,7 @@ class SwipeSourceFinished extends ConsumerWidget {
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
     final route = source.returnRoute;
-    final controller = ref.read(swipeDeckControllerProvider.notifier);
+    final controller = ref.read(SwipeDeckScope.providerOf(context).notifier);
     return Center(
       child: SingleChildScrollView(
         padding: EdgeInsetsDirectional.all(spacing * 3),

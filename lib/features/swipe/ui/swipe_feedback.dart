@@ -43,7 +43,11 @@ abstract final class SwipeFeedback {
   /// Can [d] run right now (mapped and no P2 problem)?
   static bool canSwipe(WidgetRef ref, SwipeDeckState deck, SwipeDirection d) =>
       deck.session.layout.actionFor(d) != null &&
-      ref.read(swipeDeckControllerProvider.notifier).problemFor(d) == null;
+      _deck(ref, deck).problemFor(d) == null;
+
+  /// The deck [deck] belongs to (N8: local or a connected device's).
+  static SwipeDeckController _deck(WidgetRef ref, SwipeDeckState deck) =>
+      ref.read(swipeDeckForSourceProvider(deck.session.sourceId).notifier);
 
   /// Threshold crossed: a light tick (if vibration is on).
   static void tick(WidgetRef ref) {
@@ -61,7 +65,7 @@ abstract final class SwipeFeedback {
     SwipeToastController toast,
     SwipeAction action,
   ) {
-    final done = ref.read(swipeDeckControllerProvider.notifier).apply(action);
+    final done = _deck(ref, deck).apply(action);
     if (!done) return false;
     if (ref.read(hapticsEnabledProvider).value ?? true) {
       HapticFeedback.lightImpact().ignore();
@@ -79,18 +83,26 @@ abstract final class SwipeFeedback {
   /// P2: released on a direction whose action can't run right now.
   static void blocked(BuildContext context, WidgetRef ref, SwipeDirection d) {
     final problem = ref
-        .read(swipeDeckControllerProvider.notifier)
+        .read(SwipeDeckScope.providerOf(context).notifier)
         .problemFor(d);
     if (problem != null) explain(context, problem); // unmapped: nothing to say
   }
 
   static void explain(BuildContext context, SwipeActionProblem problem) {
     final l10n = context.l10n;
+    final named = SwipeDeckScope.deviceNameOf(context);
+    final device = named.isEmpty ? l10n.remoteSwipeUnknownDevice : named;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(switch (problem) {
           SwipeActionProblem.tagMissing => l10n.swipeProblemTagMissing,
           SwipeActionProblem.unsupported => l10n.swipeProblemUnsupported,
+          SwipeActionProblem.folderNotOnSource =>
+            l10n.swipeProblemFolderNotOnSource(device),
+          SwipeActionProblem.readOnly => l10n.swipeProblemReadOnly(device),
+          SwipeActionProblem.notOnDevice => l10n.swipeProblemNotOnDevice(
+            device,
+          ),
         }),
       ),
     );

@@ -61,18 +61,29 @@ Future<void> openViewer(
     context,
     listen: false,
   ).read(viewerOpenProvider.notifier)..opened();
+  // N8: the pushed viewer swipes the same deck as the screen it came from.
+  final scope = context.getInheritedWidgetOfExactType<SwipeDeckScope>();
   try {
     await Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder<void>(
         opaque: false,
         transitionDuration: const Duration(milliseconds: 150),
         reverseTransitionDuration: const Duration(milliseconds: 150),
-        pageBuilder: (_, _, _) => FileViewer(
-          file: file,
-          swipeable: swipeable,
-          title: title,
-          actions: actions,
-        ),
+        pageBuilder: (_, _, _) {
+          final viewer = FileViewer(
+            file: file,
+            swipeable: swipeable,
+            title: title,
+            actions: actions,
+          );
+          return scope == null
+              ? viewer
+              : SwipeDeckScope(
+                  sourceId: scope.sourceId,
+                  deviceName: scope.deviceName,
+                  child: viewer,
+                );
+        },
         transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
@@ -154,7 +165,7 @@ class _FileViewerState extends ConsumerState<FileViewer> {
   @override
   Widget build(BuildContext context) {
     final deck = widget.swipeable
-        ? ref.watch(swipeDeckControllerProvider).value
+        ? ref.watch(SwipeDeckScope.providerOf(context)).value
         : null;
     // Keeps the vibration setting loaded, so a swipe never reads a default.
     if (widget.swipeable) ref.watch(hapticsEnabledProvider);

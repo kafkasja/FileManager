@@ -9,6 +9,26 @@ import 'package:kfm/features/tags/domain/tag.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/previous_state.dart';
+import 'package:meta/meta.dart';
+
+/// N8: what a remote session's swipes may do. [roots] maps the other
+/// device's shared root ids to "read-only" (N4); null = not known right now
+/// (not connected: nothing is checked, nothing runs on the device anyway).
+@immutable
+class RemoteSwipeRules {
+  const new({this.roots});
+
+  final Map<String, bool>? roots;
+
+  /// The root id of a remote `folderPath` (`'<rootId>[/<path>]'`), or null
+  /// for a local (absolute) path.
+  static String? rootOf(String? folderPath) {
+    if (folderPath == null || folderPath.isEmpty) return null;
+    if (folderPath.startsWith('/')) return null;
+    final slash = folderPath.indexOf('/');
+    return slash < 0 ? folderPath : folderPath.substring(0, slash);
+  }
+}
 
 /// Routes a swipe to the undo log (S2) and, for trash, the delete queue (D2),
 /// without awaiting any I/O on the gesture path. Write failures surface on
@@ -43,11 +63,19 @@ class SwipeActionDispatcher {
   };
 
   /// Synchronous pre-check (no I/O). A missing folder is only found by the
-  /// file operation itself.
+  /// file operation itself. N8: in a remote session ([remote]) the target
+  /// must be a writable folder on that device, and [file]'s folder must be
+  /// writable for trash and move.
   static SwipeActionProblem? problemFor(
     SwipeAction action,
-    Map<int, Tag> tags,
-  ) {
+    Map<int, Tag> tags, {
+    RemoteSwipeRules? remote,
+    FileRef? file,
+  }) {
+    if (remote != null) {
+      final problem = _remoteProblem(action, remote, file);
+      if (problem != null) return problem;
+    }
     if (!supported.contains(action.type)) {
       return SwipeActionProblem.unsupported;
     }
@@ -59,6 +87,37 @@ class SwipeActionDispatcher {
             action.type == SwipeActionType.copyTo) &&
         action.targetFolder == null) {
       return SwipeActionProblem.unsupported;
+    }
+    return null;
+  }
+
+  static SwipeActionProblem? _remoteProblem(
+    SwipeAction action,
+    RemoteSwipeRules rules,
+    FileRef? file,
+  ) {
+    switch (action.type) {
+      case SwipeActionType.renameBatch || SwipeActionType.sendToDevice:
+        return SwipeActionProblem.notOnDevice;
+      case SwipeActionType.moveTo || SwipeActionType.copyTo:
+        final target = RemoteSwipeRules.rootOf(action.targetFolder);
+        if (action.targetFolder != null && target == null) {
+          return SwipeActionProblem.folderNotOnSource;
+        }
+        final roots = rules.roots;
+        if (roots != null && target != null && roots[target] != false) {
+          return SwipeActionProblem.folderNotOnSource;
+        }
+      case _:
+        break;
+    }
+    final writes =
+        action.type == SwipeActionType.trash ||
+        action.type == SwipeActionType.moveTo;
+    final roots = rules.roots;
+    final root = RemoteSwipeRules.rootOf(file?.folderPath);
+    if (writes && roots != null && root != null && roots[root] == true) {
+      return SwipeActionProblem.readOnly;
     }
     return null;
   }

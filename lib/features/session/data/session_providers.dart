@@ -4,6 +4,7 @@ import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_repository.dart';
+import 'package:kfm/features/swipe/data/file_source_resolver.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
@@ -36,6 +37,9 @@ DeleteQueue deleteQueue(Ref ref) {
     source: ref.watch(fileSourceProvider),
     undo: ref.watch(undoRepositoryProvider),
     index: ref.watch(mediaIndexDaoProvider),
+    // N8: rows of remote sessions commit through that device.
+    remoteSource: (id) => ref.read(fileSourceResolverProvider)(id),
+    trash: FileSourceResolver.swipeTrash,
   );
   ref.onDispose(queue.dispose);
   return queue;
@@ -46,6 +50,7 @@ UndoService undoService(Ref ref) => UndoService(
   repo: ref.watch(undoRepositoryProvider),
   deletes: ref.watch(deleteQueueProvider),
   source: ref.watch(fileSourceProvider),
+  remoteSource: (id) => ref.read(fileSourceResolverProvider)(id),
   lock: ref.watch(historyLockProvider),
   queue: ref.watch(dbWriteQueueProvider),
   indexer: ref.watch(mediaIndexerProvider),

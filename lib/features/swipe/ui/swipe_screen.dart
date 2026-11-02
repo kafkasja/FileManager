@@ -15,6 +15,8 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/connect/data/remote_source_provider.dart';
+import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
 import 'package:kfm/features/presets/ui/preset_chip.dart';
@@ -24,6 +26,7 @@ import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
 import 'package:kfm/features/stats/data/stats_repository.dart';
 import 'package:kfm/features/stats/ui/session_summary_sheet.dart';
+import 'package:kfm/features/swipe/data/file_source_resolver.dart';
 import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -50,12 +53,19 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// Swipe tab (TASK-S1): one file large in the middle, left = trash,
 /// right = keep, undo always visible.
+///
+/// N8: with a `'remote:<fp>'` [sourceId] (inside a [SwipeDeckScope]) it
+/// swipes a connected device's folder: no preset chip, filter, Clear…,
+/// rename pill or D1 question; Done needs the connection.
 class SwipeScreen extends ConsumerWidget {
-  const new({super.key});
+  const new({super.key, this.sourceId = kLocalSourceId});
+
+  final String sourceId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final peer = peerOfSourceId(sourceId);
     ref
       ..listen(swipeFileOpEventsProvider, (_, next) {
         if (next.value case SwipeFileOpFailed(
@@ -63,6 +73,8 @@ class SwipeScreen extends ConsumerWidget {
           :final action,
           :final error,
         )) {
+          // N8: the Swipe tab and a remote screen can both be alive.
+          if (sourceIdOfFile(file.id) != sourceId) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -79,7 +91,9 @@ class SwipeScreen extends ConsumerWidget {
             ..showSnackBar(SnackBar(content: Text(l10n.deleteCommitFailed)));
         }
       });
-    final needsChoice = ref.watch(needsDeleteModeChoiceProvider);
+    final needsChoice = peer == null
+        ? ref.watch(needsDeleteModeChoiceProvider)
+        : const AsyncData(false);
     if (needsChoice.value != false) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.tabSwipe)),
@@ -90,20 +104,32 @@ class SwipeScreen extends ConsumerWidget {
             : const Center(child: CircularProgressIndicator()),
       );
     }
-    final deck = ref.watch(swipeDeckControllerProvider);
+    final deckProvider = swipeDeckForSourceProvider(sourceId);
+    final deck = ref.watch(deckProvider);
     final value = deck.value;
+    final connected =
+        peer != null && ref.watch(remotePeerConnectedProvider(peer));
+    final device = _deviceName(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.tabSwipe),
+        title: Text(peer == null ? l10n.tabSwipe : device),
         actions: [
-          const PresetChip(),
+          if (peer == null) const PresetChip(),
           if (value != null && value.swiped > 0)
             TextButton(
-              onPressed: () => _finish(context, ref, value),
+              onPressed: peer != null && !connected
+                  ? () => ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          l10n.remoteSwipeFinishNeedsConnection(device),
+                        ),
+                      ),
+                    )
+                  : () => _finish(context, ref, value),
               child: Text(l10n.swipeDone),
             ),
           // SS1: the main filter is hidden (and kept) while a source is open.
-          if (value != null && value.source == null)
+          if (value != null && value.source == null && peer == null)
             IconButton(
               tooltip: l10n.filterButton,
               onPressed: () => showFilterSheet(context),
@@ -114,7 +140,7 @@ class SwipeScreen extends ConsumerWidget {
                 child: const Icon(Icons.filter_list),
               ),
             ),
-          if (value != null)
+          if (value != null && peer == null)
             PopupMenuButton<String>(
               onSelected: (_) => showClearSheet(context, ref),
               itemBuilder: (_) => [
@@ -129,9 +155,7 @@ class SwipeScreen extends ConsumerWidget {
           canPop: value.source == null,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            unawaited(
-              ref.read(swipeDeckControllerProvider.notifier).closeSource(),
-            );
+            unawaited(ref.read(deckProvider.notifier).closeSource());
           },
           child: Column(
             children: [
@@ -144,7 +168,7 @@ class SwipeScreen extends ConsumerWidget {
           icon: Icons.error_outline,
           text: l10n.swipeErrorGeneric,
           action: TextButton(
-            onPressed: () => ref.invalidate(swipeDeckControllerProvider),
+            onPressed: () => ref.invalidate(deckProvider),
             child: Text(l10n.retry),
           ),
         ),
@@ -159,10 +183,12 @@ class SwipeScreen extends ConsumerWidget {
     SwipeDeckState deck,
   ) async {
     final l10n = context.l10n;
+    final remote = deck.session.isRemote;
+    final device = _deviceName(context);
     // P3: an unapplied rename batch would be dropped: ask first.
-    final renameCount = await ref.read(
-      renameBatchCountProvider(deck.session.id).future,
-    );
+    final renameCount = remote
+        ? 0
+        : await ref.read(renameBatchCountProvider(deck.session.id).future);
     if (!context.mounted) return;
     if (renameCount > 0) {
       final choice = await showDialog<_RenameChoice>(
@@ -202,7 +228,9 @@ class SwipeScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: Text(l10n.swipeFinishTitle),
         content: Text(
-          deck.session.deleteMode == DeleteMode.permanent
+          remote
+              ? l10n.remoteSwipeFinishBody(waiting, device)
+              : deck.session.deleteMode == DeleteMode.permanent
               ? l10n.swipeFinishPermanent(waiting)
               : l10n.swipeFinishTrash(waiting),
         ),
@@ -220,12 +248,33 @@ class SwipeScreen extends ConsumerWidget {
     );
     if (confirmed != true) return;
     final result = await ref
-        .read(swipeDeckControllerProvider.notifier)
+        .read(swipeDeckForSourceProvider(deck.session.sourceId).notifier)
         .finish();
     if (!context.mounted) return;
     if (!result.sessionEnded) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.newSessionFailed)));
+      final text = !remote
+          ? l10n.newSessionFailed
+          : result.commit.userCancelled
+          ? l10n.remoteSwipeDeclined(device)
+          : result.commit.sourceUnavailable
+          ? l10n.remoteSwipeWaiting(device)
+          : l10n.newSessionFailed;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+      return;
+    }
+    if (remote) {
+      // N8: the session on that device is over: back to where it started.
+      final locale = Localizations.localeOf(context).toLanguageTag();
+      final messenger = ScaffoldMessenger.of(context);
+      final count = result.commit.committed + summary.committed;
+      final size = formatBytes(
+        result.commit.bytes + summary.committedBytes,
+        locale: locale,
+      );
+      await Navigator.of(context).maybePop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.sessionSummaryTrash(count, size))),
+      );
       return;
     }
     // H2: files the pending folder couldn't take weren't deleted.
@@ -303,7 +352,7 @@ class _DeckState extends ConsumerState<_Deck> {
   /// SE2: once per app start when a session with history was continued.
   void _showRestored() {
     if (!mounted) return;
-    ref.read(swipeDeckControllerProvider.notifier).restoreNoticeSeen();
+    ref.read(SwipeDeckScope.providerOf(context).notifier).restoreNoticeSeen();
     final l10n = context.l10n;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -374,7 +423,9 @@ class _DeckState extends ConsumerState<_Deck> {
   }
 
   Future<void> _undoFromSemantics() async {
-    final outcome = await ref.read(swipeDeckControllerProvider.notifier).undo();
+    final outcome = await ref
+        .read(SwipeDeckScope.providerOf(context).notifier)
+        .undo();
     if (mounted) showUndoOutcome(context, outcome);
   }
 
@@ -414,8 +465,11 @@ class _DeckState extends ConsumerState<_Deck> {
     });
     final spacing = context.tokens.spacing;
     final current = deck.current;
+    final peer = peerOfSourceId(deck.session.sourceId);
     final Widget body;
-    if (current == null && deck.source != null) {
+    if (current == null && peer != null) {
+      body = _RemoteDeckEnd(deck: deck, peerFingerprint: peer);
+    } else if (current == null && deck.source != null) {
       body = SwipeSourceFinished(deck: deck);
     } else if (current == null) {
       final scanning = ref.watch(indexStatusProvider).value is IndexScanning;
@@ -534,7 +588,7 @@ class _DeckState extends ConsumerState<_Deck> {
                 l10n.swipeProgress(deck.swiped, deck.remaining),
                 style: Theme.of(context).textTheme.labelLarge,
               ),
-              _RenamePill(sessionId: deck.session.id),
+              if (peer == null) _RenamePill(sessionId: deck.session.id),
             ],
           ),
         ),
@@ -544,7 +598,7 @@ class _DeckState extends ConsumerState<_Deck> {
             avatar: const Icon(Icons.fiber_new_outlined),
             label: Text(l10n.newFilesChip(deck.newFiles)),
             onPressed: () => ref
-                .read(swipeDeckControllerProvider.notifier)
+                .read(SwipeDeckScope.providerOf(context).notifier)
                 .showNewFiles()
                 .ignore(),
           ),
@@ -583,6 +637,9 @@ class _DeckState extends ConsumerState<_Deck> {
             deleteMode: deck.session.deleteMode,
             onApply: _onApplied,
             onBlocked: (p) => SwipeFeedback.explain(context, p),
+            problemOf: ref
+                .read(SwipeDeckScope.providerOf(context).notifier)
+                .problemForAction,
           ),
         Padding(
           padding: EdgeInsetsDirectional.fromSTEB(
@@ -749,13 +806,97 @@ class _PendingDeleteBanner extends ConsumerWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => ref
-              .read(swipeDeckControllerProvider.notifier)
-              .retryDeletes()
-              .ignore(),
+          onPressed: () => _retry(context, ref),
           child: Text(l10n.deleteBatchRetry),
         ),
       ],
+    );
+  }
+}
+
+/// N8: the other device's name for messages (from [SwipeDeckScope]).
+String _deviceName(BuildContext context) {
+  final named = SwipeDeckScope.deviceNameOf(context);
+  return named.isEmpty ? context.l10n.remoteSwipeUnknownDevice : named;
+}
+
+/// Banner Retry. N8: a remote device's answer needs words.
+Future<void> _retry(BuildContext context, WidgetRef ref) async {
+  final result = await ref
+      .read(SwipeDeckScope.providerOf(context).notifier)
+      .retryDeletes();
+  if (!context.mounted || !SwipeDeckScope.isRemote(context)) return;
+  final device = _deviceName(context);
+  final text = result.userCancelled
+      ? context.l10n.remoteSwipeDeclined(device)
+      : result.sourceUnavailable
+      ? context.l10n.remoteSwipeWaiting(device)
+      : null;
+  if (text == null) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(text)));
+}
+
+/// N8: a remote deck without a card: "Waiting for <A>…" with Connect
+/// again (N6 reconnect) while the device is away, else "All done".
+class _RemoteDeckEnd extends ConsumerStatefulWidget {
+  const new({required this.deck, required this.peerFingerprint});
+
+  final SwipeDeckState deck;
+  final String peerFingerprint;
+
+  @override
+  ConsumerState<_RemoteDeckEnd> createState() => _RemoteDeckEndState();
+}
+
+class _RemoteDeckEndState extends ConsumerState<_RemoteDeckEnd> {
+  bool _connecting = false;
+
+  Future<void> _reconnect() async {
+    setState(() => _connecting = true);
+    final device = _deviceName(context);
+    try {
+      await ref
+          .read(knownDeviceConnectorProvider)
+          .reconnect(widget.peerFingerprint);
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.remoteDeviceNotConnected(device)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _connecting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final connected = ref.watch(
+      remotePeerConnectedProvider(widget.peerFingerprint),
+    );
+    if (connected && !widget.deck.waiting) {
+      return _Message(
+        icon: Icons.check_circle_outline,
+        text: l10n.remoteSwipeAllDone,
+      );
+    }
+    return _Message(
+      icon: Icons.link_off,
+      text: l10n.remoteSwipeWaiting(_deviceName(context)),
+      action: Padding(
+        padding: EdgeInsetsDirectional.only(top: context.tokens.spacing * 2),
+        child: _connecting
+            ? const CircularProgressIndicator()
+            : FilledButton(
+                onPressed: connected ? null : () => unawaited(_reconnect()),
+                child: Text(l10n.remoteReconnect),
+              ),
+      ),
     );
   }
 }

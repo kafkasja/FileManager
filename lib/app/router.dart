@@ -11,6 +11,7 @@ import 'package:kfm/features/browse/ui/collection_screen.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart';
 import 'package:kfm/features/connect/ui/remembered_devices_screen.dart';
 import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
+import 'package:kfm/features/connect/ui/remote_swipe_screen.dart';
 import 'package:kfm/features/connect/ui/share_screen.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
@@ -91,6 +92,11 @@ abstract final class AppRoutes {
   static const connectBrowse = '/connect/browse/:fp';
   static String connectBrowseFor(String peerFingerprint) =>
       '/connect/browse/$peerFingerprint';
+
+  /// N8: swipe the connected device `:fp`'s folder (its session).
+  static const connectSwipe = '/connect/swipe/:fp';
+  static String connectSwipeFor(String peerFingerprint) =>
+      '/connect/swipe/$peerFingerprint';
   static String presetEditorFor(int id) => '/settings/presets/$id';
 }
 
@@ -177,6 +183,11 @@ GoRouter router(Ref ref) {
             builder: (context, state) => RemoteBrowseScreen(
               peerFingerprint: state.pathParameters['fp']!,
             ),
+          ),
+          GoRoute(
+            path: 'swipe/:fp',
+            builder: (context, state) =>
+                RemoteSwipeScreen(peerFingerprint: state.pathParameters['fp']!),
           ),
         ],
       ),

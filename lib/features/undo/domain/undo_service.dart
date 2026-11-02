@@ -9,6 +9,7 @@ import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/features/rename/data/rename_batch_repository.dart';
 import 'package:kfm/features/rename/data/rename_runner.dart';
+import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/tags/data/favorites_repository.dart';
 import 'package:kfm/features/tags/data/tag_repository.dart';
@@ -79,11 +80,24 @@ class UndoService {
     required this._favorites,
     required this._renames,
     required this._renameRunner,
+    this._remoteSource,
   });
 
   final UndoRepository _repo;
   final DeleteQueue _deletes;
   final FileSource _source;
+
+  /// N8: the source of a non-local source id (remote session actions).
+  final FileSource Function(String sourceId)? _remoteSource;
+
+  FileSource _sourceOf(String fileId) {
+    final id = sourceIdOfFile(fileId);
+    if (id == kLocalSourceId) return _source;
+    final remote = _remoteSource;
+    if (remote == null) throw ArgumentError.value(id, 'sourceId');
+    return remote(id);
+  }
+
   final SerialLock _lock;
   final DbWriteQueue _queue;
   final MediaIndexer _indexer;
@@ -119,7 +133,9 @@ class UndoService {
   }
 
   Future<UndoOutcome> _undo(SessionAction a) async {
+    final remote = sourceIdOfFile(a.fileId) != kLocalSourceId;
     try {
+      final source = _sourceOf(a.fileId);
       switch (a.action.type) {
         case SwipeActionType.keep:
         case SwipeActionType.sendToDevice:
@@ -134,29 +150,42 @@ class UndoService {
               await _repo.markUndone(a.id);
               return PermanentlyDeleted(a);
             }
-            await _source.restore(TrashedItem.fromJson(item));
+            // A remote file can't come back from here: `unsupported` →
+            // "Restore it from the Trash on <A>" (N8).
+            await source.restore(TrashedItem.fromJson(item));
             await _repo.markUndone(a.id);
             return Undone(a, restoredFromTrash: true);
           }
         case SwipeActionType.moveTo:
           final previous = a.previous as MovePreviousState;
-          final current = await _source.stat(a.fileId);
+          final current = await source.stat(a.fileId);
           if (current == null) {
             throw FileOpException(
               FileOpFailure.notFound,
               'moved file gone: ${a.fileId}',
             );
           }
-          final back = await _source.move(current, previous.folderPath);
-          await _indexer.addFiles([back]);
+          final back = await source.move(current, previous.folderPath);
+          // Remote files never go into this device's index (N8).
+          if (!remote) await _indexer.addFiles([back]);
           await _repo.markUndone(a.id);
           return Undone(a, file: back);
         case SwipeActionType.copyTo:
           final previous = a.previous as CopyPreviousState;
-          final copy = await _source.stat(previous.createdFileId);
-          if (copy != null) {
+          final copy = await source.stat(previous.createdFileId);
+          if (copy != null && remote) {
+            // N8: never deleted permanently on another device: the copy
+            // goes to its trash (recoverable, harmless).
+            final result = await source.trashBatch([copy]);
+            if (result.userCancelled) {
+              throw const FileOpException(
+                FileOpFailure.userCancelled,
+                'copy not trashed',
+              );
+            }
+          } else if (copy != null) {
             // KFM's own copy: deleted without a system dialog (P2 Kotlin).
-            await _source.deletePermanentlyBatch([copy]);
+            await source.deletePermanentlyBatch([copy]);
           }
           await _index.deleteIds([previous.createdFileId]);
         case SwipeActionType.addTag:

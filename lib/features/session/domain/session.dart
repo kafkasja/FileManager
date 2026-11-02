@@ -1,3 +1,4 @@
+import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:meta/meta.dart';
@@ -15,6 +16,7 @@ class Session {
     this.filterJson,
     this.cursorFileId,
     this.presetId,
+    this.sourceId = kLocalSourceId,
   });
 
   final int id;
@@ -32,4 +34,9 @@ class Session {
   final int? presetId;
   final DateTime startedAt;
   final DateTime updatedAt;
+
+  /// Whose files (N8): [kLocalSourceId] or `'remote:<fp>'`.
+  final String sourceId;
+
+  bool get isRemote => sourceId != kLocalSourceId;
 }

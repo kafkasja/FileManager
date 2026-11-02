@@ -6,6 +6,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/trash_types.dart';
+import 'package:kfm/features/session/domain/session_source.dart';
 
 /// Whether files KFM put in the trash are still there (TASK-P8 stats:
 /// "in trash" vs "freed").
@@ -52,6 +53,8 @@ class TrashLedger {
     for (final r in rows) {
       final id = r.trashId!;
       if (present.contains(id)) continue;
+      // N8: in another device's trash; this device can't see it.
+      if (sourceIdOfFile(r.fileId) != kLocalSourceId) continue;
       (await _source.stat(r.fileId) != null ? restored : purged).add(id);
     }
     await markLeft(restored, TrashExit.restored);

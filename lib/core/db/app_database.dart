@@ -79,7 +79,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -229,6 +229,17 @@ class AppDatabase extends _$AppDatabase {
         // TASK-N6
         await m.createTable(knownDevices);
       }
+      if (from < 20) {
+        // TASK-N8
+        // From < 3 the v3 block created `sessions` with source_id already.
+        if (from >= 3) await m.addColumn(sessions, sessions.sourceId);
+        await customStatement('DROP INDEX IF EXISTS one_active_session');
+        await customStatement(
+          'DROP INDEX IF EXISTS one_open_session_per_preset',
+        );
+        await m.createIndex(oneActiveSessionPerSource);
+        await m.createIndex(oneOpenSessionPerSourcePreset);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -238,6 +249,22 @@ class AppDatabase extends _$AppDatabase {
       // for the user.
       await customStatement('PRAGMA synchronous = FULL');
     },
+  );
+
+  /// The v3–v19 one-active-session index (SE1); replaced in v20 (N8). Kept
+  /// for the shipped v3 block.
+  late final Index oneActiveSession = Index(
+    'one_active_session',
+    'CREATE UNIQUE INDEX one_active_session ON sessions (is_active) '
+        'WHERE is_active = 1',
+  );
+
+  /// The v10–v19 one-open-session-per-preset index (P6); replaced in v20
+  /// (N8). Kept for the shipped v10 block.
+  late final Index oneOpenSessionPerPreset = Index(
+    'one_open_session_per_preset',
+    'CREATE UNIQUE INDEX one_open_session_per_preset ON sessions '
+        '(COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
   );
 
   /// P5 backfill; mirrors `isScreenshot` (kind 0 = FileKind.image).

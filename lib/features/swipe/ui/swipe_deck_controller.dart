@@ -1,14 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/features/connect/data/remote_source_provider.dart';
+import 'package:kfm/features/connect/data/remote_swipe_queue_source.dart';
+import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/filters/data/filter_query.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
@@ -19,7 +25,9 @@ import 'package:kfm/features/reviewed/domain/reviewed_rules.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/clear_session.dart';
+import 'package:kfm/features/session/domain/remote_deck_root.dart';
 import 'package:kfm/features/session/domain/session.dart';
+import 'package:kfm/features/swipe/data/file_source_resolver.dart';
 import 'package:kfm/features/swipe/data/swipe_action_dispatcher.dart';
 import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/data/swipe_queue_repository.dart';
@@ -36,7 +44,6 @@ import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/previous_state.dart';
 import 'package:kfm/features/undo/domain/undo_service.dart';
-import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'swipe_deck_controller.g.dart';
@@ -61,6 +68,7 @@ SwipeFileOps swipeFileOps(Ref ref) {
     undo: ref.watch(undoRepositoryProvider),
     lock: ref.watch(historyLockProvider),
     indexer: ref.watch(mediaIndexerProvider),
+    remoteSource: (id) => ref.read(fileSourceResolverProvider)(id),
   );
   ref.onDispose(ops.dispose);
   return ops;
@@ -98,9 +106,60 @@ Future<void> startSessionWith(WidgetRef ref, DeleteMode mode) async {
     ..invalidate(swipeDeckControllerProvider);
 }
 
+/// The Swipe tab's deck: this device's files (N8: one deck per source).
+final SwipeDeckControllerProvider swipeDeckControllerProvider =
+    swipeDeckForSourceProvider(kLocalSourceId);
+
+/// Which deck the widgets below swipe (N8): the Swipe tab's (default) or a
+/// connected device's (`/connect/swipe/:fp`). [deviceName] names that
+/// device in messages.
+class SwipeDeckScope extends InheritedWidget {
+  const new({
+    required this.sourceId,
+    required super.child,
+    this.deviceName = '',
+    super.key,
+  });
+
+  final String sourceId;
+  final String deviceName;
+
+  static SwipeDeckScope? _of(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<SwipeDeckScope>();
+
+  /// The deck provider for [context] (local outside any scope).
+  static SwipeDeckControllerProvider providerOf(BuildContext context) =>
+      swipeDeckForSourceProvider(_of(context)?.sourceId ?? kLocalSourceId);
+
+  static bool isRemote(BuildContext context) =>
+      (_of(context)?.sourceId ?? kLocalSourceId) != kLocalSourceId;
+
+  static String deviceNameOf(BuildContext context) =>
+      _of(context)?.deviceName ?? '';
+
+  @override
+  bool updateShouldNotify(SwipeDeckScope oldWidget) =>
+      oldWidget.sourceId != sourceId || oldWidget.deviceName != deviceName;
+}
+
+/// N8: starts (or continues) the swipe session on the device
+/// [peerFingerprint] in [root]'s folder and rebuilds its deck.
+Future<void> startRemoteSwipe(
+  WidgetRef ref,
+  String peerFingerprint,
+  RemoteDeckRoot root,
+) async {
+  await ref.read(sessionRepositoryProvider).startRemote(peerFingerprint, root);
+  ref.invalidate(swipeDeckForSourceProvider(remoteSourceId(peerFingerprint)));
+}
+
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.
-@Riverpod(keepAlive: true)
+///
+/// N8: one per source: [kLocalSourceId] (the Swipe tab,
+/// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+/// folder; built only while its screen is open).
+@Riverpod(keepAlive: true, name: 'swipeDeckForSourceProvider')
 class SwipeDeckController extends _$SwipeDeckController {
   /// Refill the window when fewer than this many files are left in it.
   static const refillBelow = 20;
@@ -145,9 +204,25 @@ class SwipeDeckController extends _$SwipeDeckController {
   bool _stale(int generation) =>
       generation != _generation || !ref.mounted || state.isLoading;
 
+  /// N8: [kLocalSourceId] or `'remote:<fp>'`.
+  String _sourceId = kLocalSourceId;
+
+  /// N8: the connected device's fingerprint (remote decks only).
+  String? _peer;
+
+  /// N8: files swiped on a remote deck, so an undo shows them again without
+  /// asking the device.
+  final Map<String, FileRef> _swipedRemote = {};
+
   @override
-  Future<SwipeDeckState> build() async {
+  Future<SwipeDeckState> build(String sourceId) async {
     _generation++;
+    _sourceId = sourceId;
+    _peer = peerOfSourceId(sourceId);
+    if (_peer case final fp?) return await _buildRemote(fp);
+    if (sourceId != kLocalSourceId) {
+      throw ArgumentError.value(sourceId, 'sourceId');
+    }
     final sessions = ref.watch(sessionRepositoryProvider);
     final undo = ref.watch(undoRepositoryProvider);
     // Rebuild when the queue's source changes (tests swap the index).
@@ -256,6 +331,99 @@ class SwipeDeckController extends _$SwipeDeckController {
     );
   }
 
+  /// N8: a connected device's folder. Always trash mode; no filter, preset,
+  /// new-files chip or swipe sources. Acted files are skipped, so the deck
+  /// continues where it was. Not connected → an empty, waiting deck (never
+  /// an error), refilled on reconnect.
+  Future<SwipeDeckState> _buildRemote(String fp) async {
+    final sessions = ref.watch(sessionRepositoryProvider);
+    final undo = ref.watch(undoRepositoryProvider);
+    ref.watch(fileSourceResolverProvider);
+    await ref.read(deleteQueueProvider).recoverStuck();
+    await sessions.flush();
+    final session =
+        await sessions.active(sourceId: _sourceId) ??
+        (throw StateError('no swipe session on $fp'));
+    await undo.prepare(session.id);
+    _acted = await undo.actedFileIds(session.id);
+    _presetKey = 0;
+    _query = null;
+    _resumeAt = null;
+    _floor = null;
+    _newAfterMs = null;
+    final settings = ref.read(settingsRepositoryProvider);
+    final includeReviewed = await settings.read(
+      AppSettings.basicIncludeReviewed,
+    );
+    _showBadge =
+        includeReviewed && await settings.read(AppSettings.showReviewedBadge);
+    final reviewed = ref.read(reviewedRepositoryProvider);
+    final root = RemoteDeckRoot.decode(session.filterJson);
+    _queue = root == null
+        ? IndexQueueSource(
+            ref.read(swipeQueueRepositoryProvider),
+            ref.read(mediaIndexDaoProvider),
+            null,
+            offersNewFiles: false,
+          )
+        : RemoteQueueSource(
+            ref.read(remoteSourceProvider(fp)).page,
+            root,
+            exclude: includeReviewed
+                ? null
+                : (files) => reviewed.reviewedAmong(0, files),
+          );
+    var window = const SwipeWindow([], null);
+    var waiting = false;
+    try {
+      window = await _window(skip: _acted);
+    } on FileOpException catch (e) {
+      if (e.failure != FileOpFailure.unavailable) rethrow;
+      waiting = true;
+    }
+    _next = window.next;
+
+    final fileOps = ref.read(swipeFileOpsProvider).events.listen(_onFileOp);
+    ref.onDispose(fileOps.cancel);
+    ref.listen(tagsByIdProvider, (_, _) {});
+    // Back online: load what was missing and commit what waited (D2).
+    ref.listen(remotePeerConnectedProvider(fp), (before, now) {
+      if (now && before != true) unawaited(_onReconnected());
+    });
+
+    return SwipeDeckState(
+      session: session,
+      upcoming: window.files,
+      swiped: _acted.length,
+      remaining: await _remaining(),
+      hasMore: waiting || window.next != null,
+      reviewedIds: await _reviewedAmong(window.files),
+      showReviewedBadge: _showBadge,
+      waiting: waiting,
+    );
+  }
+
+  /// N8: the device is connected again.
+  Future<void> _onReconnected() async {
+    final deck = state.value;
+    if (deck == null) return;
+    if (deck.waiting) await _load(after: _next);
+    final sessionId = (state.value ?? deck).session.id;
+    await ref.read(deleteQueueProvider).maybeCommit(sessionId);
+  }
+
+  /// N8: the remote rules for [problemFor] (null for this device's deck).
+  RemoteSwipeRules? _remoteRules() {
+    final fp = _peer;
+    if (fp == null) return null;
+    return switch (ref.read(remoteConnectionControllerProvider)) {
+      RemoteConnected(:final peerFingerprint, :final roots)
+          when peerFingerprint == fp =>
+        RemoteSwipeRules(roots: {for (final r in roots) r.id: r.readOnly}),
+      _ => const RemoteSwipeRules(),
+    };
+  }
+
   /// SS1: closes the open source; the main deck continues where it was.
   Future<void> closeSource() async {
     final deck = state.value;
@@ -335,10 +503,24 @@ class SwipeDeckController extends _$SwipeDeckController {
     );
   }
 
+  /// The file [id] from its source, or null (also while a device isn't
+  /// connected: N8).
+  Future<FileRef?> _statQuietly(String id) async {
+    try {
+      return await ref.read(fileSourceResolverProvider).forFile(id).stat(id);
+    } on FileOpException catch (e) {
+      if (e.failure == FileOpFailure.unavailable) return null;
+      rethrow;
+    }
+  }
+
   Future<SwipeWindow> _window({
     required Set<String> skip,
     IndexCursor? after,
   }) async {
+    // A remote listing's cursor is the device's (N8); a local one is never
+    // a String.
+    assert(_peer != null || after?.sortValue is! String, 'remote cursor');
     return await _queue.window(skip: skip, after: after);
   }
 
@@ -451,6 +633,8 @@ class SwipeDeckController extends _$SwipeDeckController {
       SwipeActionDispatcher.problemFor(
         action,
         ref.read(tagsByIdProvider).value ?? const {},
+        remote: _remoteRules(),
+        file: state.value?.current,
       );
 
   /// Returns false when nothing happened (no file, the direction has no
@@ -473,6 +657,7 @@ class SwipeDeckController extends _$SwipeDeckController {
         .read(swipeActionDispatcherProvider)
         .dispatch(deck.session, file, action);
     _acted.add(file.id);
+    if (_peer != null) _swipedRemote[file.id] = file;
     final rest = deck.upcoming.sublist(1);
     state = AsyncData(
       deck.copyWith(
@@ -481,8 +666,9 @@ class SwipeDeckController extends _$SwipeDeckController {
         remaining: deck.remaining > 0 ? deck.remaining - 1 : 0,
       ),
     );
-    // SS1: a source never moves the main deck's position.
-    if (deck.source == null) {
+    // SS1: a source never moves the main deck's position. N8: a remote deck
+    // skips acted files instead.
+    if (deck.source == null && _peer == null) {
       ref
           .read(sessionRepositoryProvider)
           .saveCursor(deck.session.id, deck.swiped + 1, file.id);
@@ -504,8 +690,9 @@ class SwipeDeckController extends _$SwipeDeckController {
     } else if (outcome case Undone(:final action, file: final undoneFile)) {
       final file =
           undoneFile ??
+          _swipedRemote.remove(action.fileId) ??
           await ref.read(mediaIndexDaoProvider).byId(action.fileId) ??
-          await ref.read(fileSourceProvider).stat(action.fileId);
+          await _statQuietly(action.fileId);
       _acted.remove(action.fileId);
       final latest = state.value ?? deck;
       if (file != null) {
@@ -537,7 +724,9 @@ class SwipeDeckController extends _$SwipeDeckController {
       final open = deck.source;
       final swiped = (state.value ?? latest).swiped;
       final sessionsRepo = ref.read(sessionRepositoryProvider);
-      if (open != null) {
+      if (_peer != null) {
+        // N8: no cursor on a remote deck.
+      } else if (open != null) {
         if (action.seq <= open.openedAfterSeq) {
           sessionsRepo.saveCursor(deck.session.id, swiped, null);
         }
@@ -571,6 +760,8 @@ class SwipeDeckController extends _$SwipeDeckController {
         .read(clearSessionUseCaseProvider)
         .execute(deck.session, request);
     if (result.sessionEnded) {
+      // N8: the remote screen closes; its next "Swipe these" starts anew.
+      if (_peer != null) return result;
       ref.invalidate(needsDeleteModeChoiceProvider);
       // D1: a permanent-mode setting asks before every new session. A
       // rebuild here would create that session at once and skip the
@@ -602,6 +793,8 @@ class SwipeDeckController extends _$SwipeDeckController {
   void _onFileOp(SwipeFileOpEvent event) {
     final deck = state.value;
     if (deck == null) return;
+    // N8: every deck hears every move/copy; only its own files count.
+    if (sourceIdOfFile(event.file.id) != _sourceId) return;
     switch (event) {
       case SwipeFileOpDone(:final result):
         // The moved file (new id?) or the copy is never offered.
@@ -632,7 +825,9 @@ class SwipeDeckController extends _$SwipeDeckController {
   /// Picks up layout changes (SE3 reset, P1 Customize swipes); applies from
   /// the next swipe.
   Future<void> reloadSession() async {
-    final session = await ref.read(sessionRepositoryProvider).active();
+    final session = await ref
+        .read(sessionRepositoryProvider)
+        .active(sourceId: _sourceId);
     final latest = state.value;
     if (session != null && latest != null) {
       state = AsyncData(latest.copyWith(session: session));
@@ -691,7 +886,18 @@ class SwipeDeckController extends _$SwipeDeckController {
       final before = state.value;
       if (before == null || _stale(generation)) return;
       final shown = {for (final f in before.upcoming) f.id};
-      final window = await _window(skip: {..._acted, ...shown}, after: after);
+      final SwipeWindow window;
+      try {
+        window = await _window(skip: {..._acted, ...shown}, after: after);
+      } on FileOpException catch (e) {
+        // N8: the device went away: keep the deck, wait for it.
+        if (_peer == null || e.failure != FileOpFailure.unavailable) rethrow;
+        if (!_stale(generation)) {
+          final latest = state.value ?? before;
+          state = AsyncData(latest.copyWith(waiting: true, hasMore: true));
+        }
+        return;
+      }
       if (_stale(generation)) return;
       _next = window.next;
       if (_queue.offersNewFiles) {
@@ -718,6 +924,7 @@ class SwipeDeckController extends _$SwipeDeckController {
           remaining: remaining,
           newFiles: newFiles,
           reviewedIds: {...latest.reviewedIds, ...added},
+          waiting: false,
         ),
       );
     } on Object catch (e, st) {

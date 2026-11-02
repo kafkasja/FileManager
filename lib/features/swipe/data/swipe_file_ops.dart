@@ -4,6 +4,7 @@ import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/previous_state.dart';
@@ -43,9 +44,13 @@ class SwipeFileOps {
     required this._undo,
     required this._lock,
     required this._indexer,
+    this._remoteSource,
   });
 
   final FileSource _source;
+
+  /// N8: the source of a non-local source id (remote session swipes).
+  final FileSource Function(String sourceId)? _remoteSource;
   final UndoRepository _undo;
   final SerialLock _lock;
   final MediaIndexer _indexer;
@@ -71,11 +76,18 @@ class SwipeFileOps {
       final target = action.targetFolder;
       if (target == null) throw ArgumentError('no target folder');
       final isMove = action.type == SwipeActionType.moveTo;
+      final sourceId = sourceIdOfFile(file.id);
+      final remote = sourceId != kLocalSourceId;
+      final source = remote
+          ? (_remoteSource ??
+                (throw ArgumentError.value(sourceId, 'sourceId')))(sourceId)
+          : _source;
       final result = isMove
-          ? await _source.move(file, target)
-          : await _source.copy(file, target);
-      // The new folder / the copy shows up in the index right away.
-      await _indexer.addFiles([result]);
+          ? await source.move(file, target)
+          : await source.copy(file, target);
+      // The new folder / the copy shows up in the index right away (never
+      // a remote file: N8).
+      if (!remote) await _indexer.addFiles([result]);
       _undo.recordAt(
         seq,
         sessionId,

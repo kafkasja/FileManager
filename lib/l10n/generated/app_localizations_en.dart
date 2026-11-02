@@ -4675,4 +4675,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resetIdentityFailed => 'Couldn’t reset the identity. Try again.';
+
+  @override
+  String swipeProblemFolderNotOnSource(String device) {
+    return 'Pick a folder on $device';
+  }
+
+  @override
+  String swipeProblemReadOnly(String device) {
+    return 'Read-only on $device';
+  }
+
+  @override
+  String swipeProblemNotOnDevice(String device) {
+    return 'Not available for files on $device';
+  }
+
+  @override
+  String remoteSwipeWaiting(String device) {
+    return 'Waiting for $device…';
+  }
+
+  @override
+  String remoteSwipeContinue(String device) {
+    return 'Continue swiping on $device';
+  }
+
+  @override
+  String remoteSwipeSwiped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count swiped',
+      one: '1 swiped',
+      zero: 'Nothing swiped yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteSwipePaused(String device) {
+    return 'Paused · $device not connected';
+  }
+
+  @override
+  String remoteSwipeOrphaned(String device) {
+    return '$device isn\'t remembered any more';
+  }
+
+  @override
+  String remoteSwipeFinishNeedsConnection(String device) {
+    return 'Connect to $device to finish';
+  }
+
+  @override
+  String remoteSwipeFinishBody(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files will be moved to the trash on $device.',
+      one: '1 file will be moved to the trash on $device.',
+      zero: 'Nothing is waiting to be deleted.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteSwipeRestoreOnDevice(String device) {
+    return 'Restore it from the Trash on $device';
+  }
+
+  @override
+  String remoteSwipeDeclined(String device) {
+    return '$device declined the delete';
+  }
+
+  @override
+  String get remoteSwipeAllDone => 'All done in this folder.';
+
+  @override
+  String get remoteSwipeDiscard => 'Discard session';
+
+  @override
+  String remoteSwipeDiscardTitle(String device) {
+    return 'Discard the swipe session on $device?';
+  }
+
+  @override
+  String get remoteSwipeDiscardBody =>
+      'Your swipes there are forgotten. Nothing is deleted on that device.';
+
+  @override
+  String get remoteSwipeUnknownDevice => 'the other device';
 }

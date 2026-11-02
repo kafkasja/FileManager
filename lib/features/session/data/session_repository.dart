@@ -8,7 +8,9 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/utils/debouncer.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/presets/domain/preset.dart';
+import 'package:kfm/features/session/domain/remote_deck_root.dart';
 import 'package:kfm/features/session/domain/session.dart';
+import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 
@@ -28,21 +30,107 @@ class SessionRepository {
   final DateTime Function() _clock;
   final Debouncer _cursorDebouncer = Debouncer(cursorDebounce);
 
-  Future<Session?> active() async {
-    final row = await (_db.select(
-      _db.sessions,
-    )..where((s) => s.isActive.equals(true))).getSingleOrNull();
+  /// The active session of [sourceId] (one per source, N8).
+  Future<Session?> active({String sourceId = kLocalSourceId}) async {
+    final row =
+        await (_db.select(_db.sessions)..where(
+              (s) => s.isActive.equals(true) & s.sourceId.equals(sourceId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _toSession(row);
   }
 
-  Stream<Session?> watchActive() =>
-      (_db.select(_db.sessions)..where((s) => s.isActive.equals(true)))
+  Stream<Session?> watchActive({String sourceId = kLocalSourceId}) =>
+      (_db.select(_db.sessions)..where(
+            (s) => s.isActive.equals(true) & s.sourceId.equals(sourceId),
+          ))
           .watchSingleOrNull()
           .map((row) => row == null ? null : _toSession(row));
+
+  /// N8: the active sessions on other devices, newest first.
+  Stream<List<Session>> watchActiveRemote() =>
+      (_db.select(_db.sessions)
+            ..where(
+              (s) =>
+                  s.isActive.equals(true) &
+                  s.sourceId.equals(kLocalSourceId).not(),
+            )
+            ..orderBy([(s) => OrderingTerm.desc(s.updatedAt)]))
+          .watch()
+          .map((rows) => [for (final r in rows) _toSession(r)]);
+
+  /// N8: the active session on the device [peerFingerprint], or a new one
+  /// swiping [remote]'s folder: always trash mode (never D1's question),
+  /// no preset (P6 switching is local), the active preset's layout (else
+  /// Basic's). An existing session gets [remote] as its folder.
+  Future<Session> startRemote(
+    String peerFingerprint,
+    RemoteDeckRoot remote,
+  ) async {
+    final sourceId = remoteSourceId(peerFingerprint);
+    final filterJson = jsonEncode(remote.toJson());
+    late int sessionId;
+    await _queue.enqueue(
+      null,
+      () => _db.transaction(() async {
+        final existing = await active(sourceId: sourceId);
+        if (existing != null) {
+          await (_db.update(
+            _db.sessions,
+          )..where((s) => s.id.equals(existing.id))).write(
+            SessionsCompanion(
+              filter: Value(filterJson),
+              updatedAt: Value(_clock()),
+            ),
+          );
+          sessionId = existing.id;
+          return;
+        }
+        final presetKey = AppSettings.activePresetId.decodeFromDb(
+          await _setting(AppSettings.activePresetId.name) ?? '0',
+        );
+        final preset = presetKey == 0
+            ? null
+            : await (_db.select(
+                _db.presets,
+              )..where((p) => p.id.equals(presetKey))).getSingleOrNull();
+        final layoutJson =
+            preset?.layoutJson ??
+            _layoutOrBasic(await _setting(AppSettings.swipeLayoutCurrent.name));
+        final now = _clock();
+        final id = await _db
+            .into(_db.sessions)
+            .insert(
+              SessionsCompanion.insert(
+                layout: layoutJson,
+                filter: Value(filterJson),
+                deleteMode: Value(DeleteMode.trash.name),
+                startedAt: now,
+                updatedAt: now,
+                isActive: true,
+                sourceId: Value(sourceId),
+              ),
+            );
+        sessionId = id;
+      }),
+    );
+    return (await _byId(sessionId))!;
+  }
+
+  /// N8: deletes [sessionId] and (FK cascade) its actions, pending deletes,
+  /// sources and rename batch. Never touches a file: an orphaned remote
+  /// session's files stay as they are on the other device.
+  Future<void> discard(int sessionId) => _queue.enqueue(
+    null,
+    () => (_db.delete(_db.sessions)..where((s) => s.id.equals(sessionId))).go(),
+  );
 
   /// The active session; else the active preset's paused session (P6),
   /// resumed; else a new one for the active preset (or Basic's saved
   /// layout) with [deleteMode] (default: the current setting).
+  ///
+  /// N8: only for the local source; remote sessions start through
+  /// [startRemote].
   Future<Session> getOrCreateActive({DeleteMode? deleteMode}) async {
     await _queue.flush();
     return await _db.transaction(() async {
@@ -162,19 +250,23 @@ class SessionRepository {
         ),
   );
 
-  /// Ends the active session (Done / SE3). Its history stays for stats.
-  Future<void> endActive() async {
+  /// Ends the active session of [sourceId] (Done / SE3). Its history stays
+  /// for stats.
+  Future<void> endActive({String sourceId = kLocalSourceId}) async {
     await flush();
     await _queue.enqueue(
       null,
-      () => (_db.update(_db.sessions)..where((s) => s.isActive.equals(true)))
-          .write(
-            SessionsCompanion(
-              isActive: const Value(false),
-              updatedAt: Value(_clock()),
-              endedAt: Value(_clock()),
-            ),
-          ),
+      () =>
+          (_db.update(_db.sessions)..where(
+                (s) => s.isActive.equals(true) & s.sourceId.equals(sourceId),
+              ))
+              .write(
+                SessionsCompanion(
+                  isActive: const Value(false),
+                  updatedAt: Value(_clock()),
+                  endedAt: Value(_clock()),
+                ),
+              ),
     );
   }
 
@@ -187,6 +279,7 @@ class SessionRepository {
   Future<SessionRow?> _pausedRow(int? presetId) =>
       (_db.select(_db.sessions)..where(
             (s) =>
+                s.sourceId.equals(kLocalSourceId) &
                 s.isActive.equals(false) &
                 s.endedAt.isNull() &
                 (presetId == null
@@ -244,8 +337,12 @@ class SessionRepository {
   }) => _queue.enqueue(
     null,
     () =>
-        (_db.update(_db.sessions)
-              ..where((s) => s.presetId.equals(presetId) & s.endedAt.isNull()))
+        (_db.update(_db.sessions)..where(
+              (s) =>
+                  s.presetId.equals(presetId) &
+                  s.endedAt.isNull() &
+                  s.sourceId.equals(kLocalSourceId),
+            ))
             .write(
               SessionsCompanion(
                 layout: Value(jsonEncode(layout.toJson())),
@@ -292,6 +389,7 @@ class SessionRepository {
     cursor: r.cursor,
     cursorFileId: r.cursorFileId,
     presetId: r.presetId,
+    sourceId: r.sourceId,
     startedAt: r.startedAt,
     updatedAt: r.updatedAt,
   );

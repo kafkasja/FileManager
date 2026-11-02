@@ -144,7 +144,7 @@ final class SwipeFileOpsProvider
   }
 }
 
-String _$swipeFileOpsHash() => r'5eef643081d32e1efc0d7b7777b29009e05e8c46';
+String _$swipeFileOpsHash() => r'fe1bbc91f9004899e554022ff350f2650ce3f98b';
 
 /// Move/copy results for the swipe screen's snackbars (P2).
 
@@ -282,43 +282,118 @@ String _$needsDeleteModeChoiceHash() =>
 
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.
+///
+/// N8: one per source: [kLocalSourceId] (the Swipe tab,
+/// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+/// folder; built only while its screen is open).
 
 @ProviderFor(SwipeDeckController)
-final swipeDeckControllerProvider = SwipeDeckControllerProvider._();
+final swipeDeckForSourceProvider = SwipeDeckControllerFamily._();
 
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.
+///
+/// N8: one per source: [kLocalSourceId] (the Swipe tab,
+/// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+/// folder; built only while its screen is open).
 final class SwipeDeckControllerProvider
     extends $AsyncNotifierProvider<SwipeDeckController, SwipeDeckState> {
   /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
   /// saving happens in the background through the write queue.
-  SwipeDeckControllerProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'swipeDeckControllerProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  ///
+  /// N8: one per source: [kLocalSourceId] (the Swipe tab,
+  /// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+  /// folder; built only while its screen is open).
+  SwipeDeckControllerProvider._({
+    required SwipeDeckControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'swipeDeckForSourceProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$swipeDeckControllerHash();
 
+  @override
+  String toString() {
+    return r'swipeDeckForSourceProvider'
+        ''
+        '($argument)';
+  }
+
   @$internal
   @override
   SwipeDeckController create() => SwipeDeckController();
+
+  @override
+  bool operator ==(Object other) {
+    return other is SwipeDeckControllerProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$swipeDeckControllerHash() =>
-    r'6fd5fd76c0295c2787eb05d585b5681396a95cb2';
+    r'20ae046aa592dbdc5b8da0520aca5c53ade24e30';
 
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.
+///
+/// N8: one per source: [kLocalSourceId] (the Swipe tab,
+/// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+/// folder; built only while its screen is open).
+
+final class SwipeDeckControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          SwipeDeckController,
+          AsyncValue<SwipeDeckState>,
+          SwipeDeckState,
+          FutureOr<SwipeDeckState>,
+          String
+        > {
+  SwipeDeckControllerFamily._()
+    : super(
+        retry: null,
+        name: r'swipeDeckForSourceProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
+  /// saving happens in the background through the write queue.
+  ///
+  /// N8: one per source: [kLocalSourceId] (the Swipe tab,
+  /// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+  /// folder; built only while its screen is open).
+
+  SwipeDeckControllerProvider call(String sourceId) =>
+      SwipeDeckControllerProvider._(argument: sourceId, from: this);
+
+  @override
+  String toString() => r'swipeDeckForSourceProvider';
+}
+
+/// The swipe deck (TASK-S1). Swipes advance the state immediately; all
+/// saving happens in the background through the write queue.
+///
+/// N8: one per source: [kLocalSourceId] (the Swipe tab,
+/// [swipeDeckControllerProvider]) or `'remote:<fp>'` (a connected device's
+/// folder; built only while its screen is open).
 
 abstract class _$SwipeDeckController extends $AsyncNotifier<SwipeDeckState> {
-  FutureOr<SwipeDeckState> build();
+  late final _$args = ref.$arg as String;
+  String get sourceId => _$args;
+
+  FutureOr<SwipeDeckState> build(String sourceId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -331,6 +406,6 @@ abstract class _$SwipeDeckController extends $AsyncNotifier<SwipeDeckState> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -15,6 +15,7 @@ import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
+import 'package:kfm/features/connect/ui/remote_swipe_screen.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -101,6 +102,7 @@ class ConnectScreen extends ConsumerWidget {
                           child: Text(l10n.remoteBrowseAction(peerName)),
                         ),
                     ],
+                    footer: const RemoteSwipeSessionsList(),
                   ),
                 ),
               ConnectDisconnected(:final name, :final reason) => _Message(
@@ -216,6 +218,8 @@ class _Choose extends ConsumerWidget {
                 unawaited(context.push(AppRoutes.connectDevicesFromConnect)),
           ),
         ),
+        // N8: swipe sessions on other devices (continue / discard).
+        const RemoteSwipeSessionsList(),
       ],
     );
   }
@@ -686,6 +690,7 @@ class _Message extends StatelessWidget {
     this.body,
     this.words = const [],
     this.extra,
+    this.footer,
   });
 
   /// Null shows a progress indicator.
@@ -699,6 +704,9 @@ class _Message extends StatelessWidget {
 
   /// Shown above [actions] (N6: the remember checkbox).
   final Widget? extra;
+
+  /// Shown below [actions] (N8: swipe sessions on other devices).
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -746,6 +754,7 @@ class _Message extends StatelessWidget {
                 alignment: WrapAlignment.center,
                 children: actions,
               ),
+              if (footer case final f?) ...[SizedBox(height: spacing * 3), f],
             ],
           ),
         ),

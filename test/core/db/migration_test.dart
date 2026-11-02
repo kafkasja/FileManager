@@ -14,6 +14,7 @@ import 'generated/schema_v15.dart' as v15;
 import 'generated/schema_v16.dart' as v16;
 import 'generated/schema_v17.dart' as v17;
 import 'generated/schema_v18.dart' as v18;
+import 'generated/schema_v19.dart' as v19;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -52,7 +53,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 19; from++) {
+  for (var from = 1; from < 20; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -97,7 +98,7 @@ void main() {
     final indexes = await db.customSelect('PRAGMA index_list(sessions)').get();
     expect(
       indexes.map((r) => r.read<String>('name')),
-      contains('one_active_session'),
+      contains('one_active_session_per_source'),
     );
   });
 
@@ -660,6 +661,92 @@ void main() {
       await expectLater(insert('d', 'ab' * 33), throwsA(anything));
       await insert('e', 'cd' * 32);
       expect(await db.select(db.knownDevices).get(), hasLength(2));
+    });
+  });
+
+  test('v19 -> v20 adds sessions.source_id; rows get local; indexes', () async {
+    final schema = await verifier.schemaAt(19);
+    final raw = v19.DatabaseAtV19(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO sessions (layout, delete_mode, cursor, started_at, '
+      "updated_at, is_active) VALUES ('{}', 'trash', 3, 1, 1, 1)",
+    );
+    await raw.customStatement(
+      'INSERT INTO sessions (layout, delete_mode, cursor, started_at, '
+      "updated_at, is_active, ended_at) VALUES ('{}', 'trash', 0, 1, 1, 0, 1)",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    final rows = await db.select(db.sessions).get();
+    expect(rows, hasLength(2));
+    expect(rows.map((r) => r.sourceId), everyElement('local'));
+    final names = [
+      for (final r
+          in await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type = 'index' "
+                "AND tbl_name = 'sessions'",
+              )
+              .get())
+        r.read<String>('name'),
+    ];
+    expect(
+      names,
+      containsAll([
+        'one_active_session_per_source',
+        'one_open_session_per_source_preset',
+      ]),
+    );
+    expect(names, isNot(contains('one_active_session')));
+    expect(names, isNot(contains('one_open_session_per_preset')));
+  });
+
+  group('sessions per source (v20)', () {
+    late AppDatabase db;
+    final now = DateTime.utc(2026);
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(19)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+    });
+    tearDown(() => db.close());
+
+    Future<int> insert(String source, {bool active = true, int? preset}) => db
+        .into(db.sessions)
+        .insert(
+          SessionsCompanion.insert(
+            layout: '{}',
+            startedAt: now,
+            updatedAt: now,
+            isActive: active,
+            presetId: Value(preset),
+            sourceId: Value(source),
+          ),
+        );
+
+    test('a second active local session is rejected', () async {
+      await insert('local');
+      await expectLater(insert('local'), throwsA(anything));
+    });
+
+    test('an active local and an active remote session coexist', () async {
+      await insert('local');
+      await insert('remote:${'ab' * 32}');
+      await expectLater(insert('remote:${'ab' * 32}'), throwsA(anything));
+      await insert('remote:${'cd' * 32}');
+      expect(await db.select(db.sessions).get(), hasLength(3));
+    });
+
+    test('one open session per source and preset', () async {
+      await insert('local', active: false, preset: 1);
+      await expectLater(
+        insert('local', active: false, preset: 1),
+        throwsA(anything),
+      );
+      await insert('remote:${'ab' * 32}', active: false, preset: 1);
     });
   });
 }

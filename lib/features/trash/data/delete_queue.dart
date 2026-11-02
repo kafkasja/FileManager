@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
+import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/trash/domain/delete_batch_policy.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
@@ -54,6 +55,7 @@ class CommitResult {
     this.bytes = 0,
     this.userCancelled = false,
     this.folderUnavailable = 0,
+    this.sourceUnavailable = false,
   });
 
   final int committed;
@@ -65,7 +67,27 @@ class CommitResult {
 
   /// The user declined the system dialog: rows went back to queued.
   final bool userCancelled;
+
+  /// N8: the other device isn't connected: its rows stay queued (the deck
+  /// shows "Waiting for <A>…", not an error).
+  final bool sourceUnavailable;
+
+  CommitResult operator +(CommitResult o) => CommitResult(
+    committed: committed + o.committed,
+    failed: failed + o.failed,
+    bytes: bytes + o.bytes,
+    userCancelled: userCancelled || o.userCancelled,
+    folderUnavailable: folderUnavailable + o.folderUnavailable,
+    sourceUnavailable: sourceUnavailable || o.sourceUnavailable,
+  );
 }
+
+/// Trashes [files] on [source] for a commit (N8: a remote source is told the
+/// reason is a swipe).
+typedef CommitTrash = Future<TrashResult> Function(
+  FileSource source,
+  List<FileRef> files,
+);
 
 /// Deferred, batched deletes (TASK-D2). Shares [SerialLock] with undo so a
 /// commit and an undo never interleave.
@@ -76,6 +98,8 @@ class DeleteQueue {
     required this._source,
     required this._undo,
     required this._index,
+    this._remoteSource,
+    this._trash,
     this._policy = const DeleteBatchPolicy(),
     this._clock = DateTime.now,
   });
@@ -83,6 +107,10 @@ class DeleteQueue {
   final AppDatabase _db;
   final SerialLock _lock;
   final FileSource _source;
+
+  /// N8: the source of a non-local source id (rows of remote sessions).
+  final FileSource Function(String sourceId)? _remoteSource;
+  final CommitTrash? _trash;
   final UndoRepository _undo;
   final MediaIndexDao _index;
   final DeleteBatchPolicy _policy;
@@ -93,6 +121,18 @@ class DeleteQueue {
   /// After a declined/failed batch, wait until this many deletes are
   /// eligible before trying again during the session (per session).
   final Map<int, int> _retryAt = {};
+
+  /// The source of [fileId]'s row: local, or the remote device's (N8).
+  FileSource _sourceOf(String fileId) {
+    final id = sourceIdOfFile(fileId);
+    if (id == kLocalSourceId) return _source;
+    final remote = _remoteSource;
+    if (remote == null) throw ArgumentError.value(id, 'sourceId');
+    return remote(id);
+  }
+
+  static bool _isUnavailable(Object e) =>
+      e is FileOpException && e.failure == FileOpFailure.unavailable;
 
   /// Commit failures that aren't per-file (e.g. platform not supported yet).
   Stream<Object> get errors => _errors.stream;
@@ -138,7 +178,9 @@ class DeleteQueue {
       }
       final rows = await _rowsForActions([for (final a in eligible) a.id]);
       final result = await _commit(rows);
-      if (result.userCancelled || result.committed == 0) {
+      if (result.sourceUnavailable) {
+        // N8: no back-off: the reconnect commits at once.
+      } else if (result.userCancelled || result.committed == 0) {
         _retryAt[sessionId] = eligible.length + _policy.threshold;
       } else {
         _retryAt.remove(sessionId);
@@ -215,7 +257,17 @@ class DeleteQueue {
             .get();
     final trashed = _TrashLookup(this);
     for (final row in stuck) {
-      if (await _source.stat(row.fileId) != null) {
+      final FileRef? current;
+      try {
+        current = await _sourceOf(row.fileId).stat(row.fileId);
+      } on Object catch (e) {
+        // N8: the other device isn't connected: queued again without a stat
+        // (the next commit re-checks it).
+        if (!_isUnavailable(e) && e is! ArgumentError) rethrow;
+        await _setStatus([row.id], PendingDeleteStatus.queued);
+        continue;
+      }
+      if (current != null) {
         await _setStatus([row.id], PendingDeleteStatus.queued);
       } else {
         await _markCommitted(row, await trashed.itemFor(row));
@@ -272,7 +324,11 @@ class DeleteQueue {
   Future<CommitResult> deleteUnavailablePermanently(
     List<int> rowIds,
   ) => _lock.run(() async {
-    final rows = await _unavailableRows(rowIds);
+    // N8: a remote file is never deleted permanently.
+    final rows = [
+      for (final r in await _unavailableRows(rowIds))
+        if (sourceIdOfFile(r.fileId) == kLocalSourceId) r,
+    ];
     if (rows.isEmpty) return const CommitResult();
     await _setStatus([
       for (final r in rows) r.id,
@@ -375,6 +431,28 @@ class DeleteQueue {
 
   Future<CommitResult> _commit(List<PendingDeleteRow> rows) async {
     if (rows.isEmpty) return const CommitResult();
+    // N8: rows of different sources (local, a remote device) commit apart.
+    final bySource = <String, List<PendingDeleteRow>>{};
+    for (final r in rows) {
+      (bySource[sourceIdOfFile(r.fileId)] ??= []).add(r);
+    }
+    var result = const CommitResult();
+    for (final MapEntry(key: sourceId, value: part) in bySource.entries) {
+      result += await _commitFrom(sourceId, part);
+    }
+    return result;
+  }
+
+  Future<CommitResult> _commitFrom(
+    String sourceId,
+    List<PendingDeleteRow> rows,
+  ) async {
+    final remote = sourceId != kLocalSourceId;
+    if (remote && _remoteSource == null) {
+      _report(ArgumentError.value(sourceId, 'sourceId'));
+      return const CommitResult();
+    }
+    final source = _sourceOf(rows.first.fileId);
     await _setStatus([
       for (final r in rows) r.id,
     ], PendingDeleteStatus.committing);
@@ -388,9 +466,26 @@ class DeleteQueue {
     // Re-check every file: gone already = goal reached; changed = never
     // delete something the user didn't see.
     final toDelete = <DeleteMode, List<(PendingDeleteRow, FileRef)>>{};
-    final trashed = _TrashLookup(this);
-    for (final row in rows) {
-      final current = await _source.stat(row.fileId);
+    final trashed = _TrashLookup(this, source);
+    for (final (i, row) in rows.indexed) {
+      final FileRef? current;
+      try {
+        current = await source.stat(row.fileId);
+      } on Object catch (e) {
+        if (!_isUnavailable(e)) rethrow;
+        // N8: the device went away: this row and the rest wait, queued.
+        await _setStatus([
+          for (final r in rows.skip(i)) r.id,
+          for (final batch in toDelete.values)
+            for (final (r, _) in batch) r.id,
+        ], PendingDeleteStatus.queued);
+        return CommitResult(
+          committed: committed,
+          failed: failed,
+          bytes: bytes,
+          sourceUnavailable: true,
+        );
+      }
       if (current == null) {
         // Gone already (trashed elsewhere, or an interrupted earlier batch
         // that the system did carry out): keep its trash item for undo.
@@ -402,15 +497,18 @@ class DeleteQueue {
         await _markFailed(row, 'file changed since it was swiped');
         failed++;
       } else {
-        (toDelete[DeleteMode.parse(row.mode)] ??= []).add((row, current));
+        // N8: a remote row is never deleted permanently.
+        final mode = remote ? DeleteMode.trash : DeleteMode.parse(row.mode);
+        (toDelete[mode] ??= []).add((row, current));
       }
     }
+    var sourceUnavailable = false;
 
     for (final MapEntry(key: mode, value: batch) in toDelete.entries) {
       final files = [for (final (_, f) in batch) f];
       try {
         if (mode == DeleteMode.permanent) {
-          await _source.deletePermanentlyBatch(files);
+          await source.deletePermanentlyBatch(files);
           for (final (row, _) in batch) {
             await _markCommitted(row, null);
             committed++;
@@ -418,7 +516,10 @@ class DeleteQueue {
           }
           continue;
         }
-        final result = await _source.trashBatch(files);
+        final trash = _trash;
+        final result = trash == null
+            ? await source.trashBatch(files)
+            : await trash(source, files);
         if (result.userCancelled) {
           cancelled = true;
           await _setStatus([
@@ -437,7 +538,8 @@ class DeleteQueue {
             await _markCommitted(row, null);
             committed++;
             bytes += row.sizeBytes;
-          } else if (error?.failure == FileOpFailure.pendingFolderUnavailable) {
+          } else if (!remote &&
+              error?.failure == FileOpFailure.pendingFolderUnavailable) {
             // H2: not deleted; the user picks Keep / Delete permanently.
             await _markFailed(row, _unavailableCode);
             failed++;
@@ -450,6 +552,11 @@ class DeleteQueue {
       } on FileOpException catch (e) {
         if (e.failure == FileOpFailure.userCancelled) {
           cancelled = true;
+          await _setStatus([
+            for (final (r, _) in batch) r.id,
+          ], PendingDeleteStatus.queued);
+        } else if (e.failure == FileOpFailure.unavailable) {
+          sourceUnavailable = true;
           await _setStatus([
             for (final (r, _) in batch) r.id,
           ], PendingDeleteStatus.queued);
@@ -468,16 +575,19 @@ class DeleteQueue {
       bytes: bytes,
       userCancelled: cancelled,
       folderUnavailable: unavailable,
+      sourceUnavailable: sourceUnavailable,
     );
   }
 
   /// Where files that vanished from normal queries are now, keyed by the
   /// FileRef.id they had before (H1). The newest item wins when the same id
   /// was trashed twice. Null when the trash can't be listed (reported).
-  Future<Map<String, TrashedItem>?> _trashedByOriginalId() async {
+  Future<Map<String, TrashedItem>?> _trashedByOriginalId(
+    FileSource source,
+  ) async {
     try {
       final byId = <String, TrashedItem>{};
-      for (final item in await _source.listTrashed()) {
+      for (final item in await source.listTrashed()) {
         final seen = byId[item.original.id];
         if (seen == null || item.trashedAt.isAfter(seen.trashedAt)) {
           byId[item.original.id] = item;
@@ -553,9 +663,12 @@ class DeleteQueue {
 /// Lists the trash at most once per run, and only when a trash-mode row's
 /// file is gone.
 class _TrashLookup {
-  new(this._queue);
+  new(this._queue, [this._source]);
 
   final DeleteQueue _queue;
+
+  /// Default: the local source.
+  final FileSource? _source;
   Map<String, TrashedItem>? _byId;
   var _listed = false;
 
@@ -563,7 +676,7 @@ class _TrashLookup {
     if (DeleteMode.parse(row.mode) != DeleteMode.trash) return null;
     if (!_listed) {
       _listed = true;
-      _byId = await _queue._trashedByOriginalId();
+      _byId = await _queue._trashedByOriginalId(_source ?? _queue._source);
     }
     return _byId?[row.fileId];
   }

@@ -1526,6 +1526,18 @@ class $SessionsTable extends Sessions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('local'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1539,6 +1551,7 @@ class $SessionsTable extends Sessions
     updatedAt,
     isActive,
     endedAt,
+    sourceId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1626,6 +1639,12 @@ class $SessionsTable extends Sessions
         endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
       );
     }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
     return context;
   }
 
@@ -1679,6 +1698,10 @@ class $SessionsTable extends Sessions
         DriftSqlType.dateTime,
         data['${effectivePrefix}ended_at'],
       ),
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
     );
   }
 
@@ -1718,6 +1741,10 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
   /// Set when the session ends (Done / SE3 / preset deleted). Null with
   /// isActive false = paused by a preset switch (P6).
   final DateTime? endedAt;
+
+  /// Whose files the session swipes (N8): `local`,
+  /// `remote:<peerFingerprint>` or (U2) `external:<volumeId>`.
+  final String sourceId;
   const SessionRow({
     required this.id,
     this.presetId,
@@ -1730,6 +1757,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     required this.updatedAt,
     required this.isActive,
     this.endedAt,
+    required this.sourceId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1753,6 +1781,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     if (!nullToAbsent || endedAt != null) {
       map['ended_at'] = Variable<DateTime>(endedAt);
     }
+    map['source_id'] = Variable<String>(sourceId);
     return map;
   }
 
@@ -1777,6 +1806,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       endedAt: endedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(endedAt),
+      sourceId: Value(sourceId),
     );
   }
 
@@ -1797,6 +1827,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
     );
   }
   @override
@@ -1814,6 +1845,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isActive': serializer.toJson<bool>(isActive),
       'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'sourceId': serializer.toJson<String>(sourceId),
     };
   }
 
@@ -1829,6 +1861,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     DateTime? updatedAt,
     bool? isActive,
     Value<DateTime?> endedAt = const Value.absent(),
+    String? sourceId,
   }) => SessionRow(
     id: id ?? this.id,
     presetId: presetId.present ? presetId.value : this.presetId,
@@ -1841,6 +1874,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     updatedAt: updatedAt ?? this.updatedAt,
     isActive: isActive ?? this.isActive,
     endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    sourceId: sourceId ?? this.sourceId,
   );
   SessionRow copyWithCompanion(SessionsCompanion data) {
     return SessionRow(
@@ -1859,6 +1893,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
     );
   }
 
@@ -1875,7 +1910,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           ..write('startedAt: $startedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isActive: $isActive, ')
-          ..write('endedAt: $endedAt')
+          ..write('endedAt: $endedAt, ')
+          ..write('sourceId: $sourceId')
           ..write(')'))
         .toString();
   }
@@ -1893,6 +1929,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     updatedAt,
     isActive,
     endedAt,
+    sourceId,
   );
   @override
   bool operator ==(Object other) =>
@@ -1908,7 +1945,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           other.startedAt == this.startedAt &&
           other.updatedAt == this.updatedAt &&
           other.isActive == this.isActive &&
-          other.endedAt == this.endedAt);
+          other.endedAt == this.endedAt &&
+          other.sourceId == this.sourceId);
 }
 
 class SessionsCompanion extends UpdateCompanion<SessionRow> {
@@ -1923,6 +1961,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
   final Value<DateTime> updatedAt;
   final Value<bool> isActive;
   final Value<DateTime?> endedAt;
+  final Value<String> sourceId;
   const SessionsCompanion({
     this.id = const Value.absent(),
     this.presetId = const Value.absent(),
@@ -1935,6 +1974,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     this.updatedAt = const Value.absent(),
     this.isActive = const Value.absent(),
     this.endedAt = const Value.absent(),
+    this.sourceId = const Value.absent(),
   });
   SessionsCompanion.insert({
     this.id = const Value.absent(),
@@ -1948,6 +1988,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     required DateTime updatedAt,
     required bool isActive,
     this.endedAt = const Value.absent(),
+    this.sourceId = const Value.absent(),
   }) : layout = Value(layout),
        startedAt = Value(startedAt),
        updatedAt = Value(updatedAt),
@@ -1964,6 +2005,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     Expression<DateTime>? updatedAt,
     Expression<bool>? isActive,
     Expression<DateTime>? endedAt,
+    Expression<String>? sourceId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1977,6 +2019,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isActive != null) 'is_active': isActive,
       if (endedAt != null) 'ended_at': endedAt,
+      if (sourceId != null) 'source_id': sourceId,
     });
   }
 
@@ -1992,6 +2035,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     Value<DateTime>? updatedAt,
     Value<bool>? isActive,
     Value<DateTime?>? endedAt,
+    Value<String>? sourceId,
   }) {
     return SessionsCompanion(
       id: id ?? this.id,
@@ -2005,6 +2049,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
       endedAt: endedAt ?? this.endedAt,
+      sourceId: sourceId ?? this.sourceId,
     );
   }
 
@@ -2044,6 +2089,9 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     if (endedAt.present) {
       map['ended_at'] = Variable<DateTime>(endedAt.value);
     }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
     return map;
   }
 
@@ -2060,7 +2108,8 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
           ..write('startedAt: $startedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isActive: $isActive, ')
-          ..write('endedAt: $endedAt')
+          ..write('endedAt: $endedAt, ')
+          ..write('sourceId: $sourceId')
           ..write(')'))
         .toString();
   }
@@ -13045,13 +13094,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'mi_ext',
     'CREATE INDEX mi_ext ON media_index (extension)',
   );
-  late final Index oneActiveSession = Index(
-    'one_active_session',
-    'CREATE UNIQUE INDEX one_active_session ON sessions (is_active) WHERE is_active = 1',
+  late final Index oneActiveSessionPerSource = Index(
+    'one_active_session_per_source',
+    'CREATE UNIQUE INDEX one_active_session_per_source ON sessions (source_id) WHERE is_active = 1',
   );
-  late final Index oneOpenSessionPerPreset = Index(
-    'one_open_session_per_preset',
-    'CREATE UNIQUE INDEX one_open_session_per_preset ON sessions (COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
+  late final Index oneOpenSessionPerSourcePreset = Index(
+    'one_open_session_per_source_preset',
+    'CREATE UNIQUE INDEX one_open_session_per_source_preset ON sessions (source_id, COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
   );
   late final Index saSessionStatusSeq = Index(
     'sa_session_status_seq',
@@ -13157,8 +13206,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     miScreenshotDate,
     miSourceDate,
     miExt,
-    oneActiveSession,
-    oneOpenSessionPerPreset,
+    oneActiveSessionPerSource,
+    oneOpenSessionPerSourcePreset,
     saSessionStatusSeq,
     pdSessionStatus,
     pfiExpires,
@@ -13928,6 +13977,7 @@ typedef $$SessionsTableCreateCompanionBuilder = SessionsCompanion Function({
   required DateTime updatedAt,
   required bool isActive,
   Value<DateTime?> endedAt,
+  Value<String> sourceId,
 });
 typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
   Value<int> id,
@@ -13941,6 +13991,7 @@ typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
   Value<DateTime> updatedAt,
   Value<bool> isActive,
   Value<DateTime?> endedAt,
+  Value<String> sourceId,
 });
 
 final class $$SessionsTableReferences
@@ -14081,6 +14132,11 @@ class $$SessionsTableFilterComposer
 
   ColumnFilters<DateTime> get endedAt => $composableBuilder(
     column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14248,6 +14304,11 @@ class $$SessionsTableOrderingComposer
     column: $table.endedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SessionsTableAnnotationComposer
@@ -14295,6 +14356,9 @@ class $$SessionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get endedAt =>
       $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
 
   Expression<T> sessionActionsRefs<T extends Object>(
     Expression<T> Function($$SessionActionsTableAnnotationComposer a) f,
@@ -14441,6 +14505,7 @@ class $$SessionsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
               }) => SessionsCompanion(
                 id: id,
                 presetId: presetId,
@@ -14453,6 +14518,7 @@ class $$SessionsTableTableManager
                 updatedAt: updatedAt,
                 isActive: isActive,
                 endedAt: endedAt,
+                sourceId: sourceId,
               ),
           createCompanionCallback:
               ({
@@ -14467,6 +14533,7 @@ class $$SessionsTableTableManager
                 required DateTime updatedAt,
                 required bool isActive,
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
               }) => SessionsCompanion.insert(
                 id: id,
                 presetId: presetId,
@@ -14479,6 +14546,7 @@ class $$SessionsTableTableManager
                 updatedAt: updatedAt,
                 isActive: isActive,
                 endedAt: endedAt,
+                sourceId: sourceId,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -80,7 +80,7 @@ class ClearSessionUseCase {
       );
     }
     await _renames?.discardForSession(session.id);
-    await _sessions.endActive();
+    await _sessions.endActive(sourceId: session.sourceId);
     return ClearResult(
       layoutBefore: before,
       sessionEnded: true,

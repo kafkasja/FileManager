@@ -6608,6 +6608,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn’t reset the identity. Try again.'**
   String get resetIdentityFailed;
+
+  /// No description provided for @swipeProblemFolderNotOnSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a folder on {device}'**
+  String swipeProblemFolderNotOnSource(String device);
+
+  /// No description provided for @swipeProblemReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only on {device}'**
+  String swipeProblemReadOnly(String device);
+
+  /// No description provided for @swipeProblemNotOnDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available for files on {device}'**
+  String swipeProblemNotOnDevice(String device);
+
+  /// No description provided for @remoteSwipeWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {device}…'**
+  String remoteSwipeWaiting(String device);
+
+  /// No description provided for @remoteSwipeContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue swiping on {device}'**
+  String remoteSwipeContinue(String device);
+
+  /// No description provided for @remoteSwipeSwiped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing swiped yet} =1{1 swiped} other{{count} swiped}}'**
+  String remoteSwipeSwiped(int count);
+
+  /// No description provided for @remoteSwipePaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused · {device} not connected'**
+  String remoteSwipePaused(String device);
+
+  /// No description provided for @remoteSwipeOrphaned.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} isn\'t remembered any more'**
+  String remoteSwipeOrphaned(String device);
+
+  /// No description provided for @remoteSwipeFinishNeedsConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to {device} to finish'**
+  String remoteSwipeFinishNeedsConnection(String device);
+
+  /// No description provided for @remoteSwipeFinishBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing is waiting to be deleted.} =1{1 file will be moved to the trash on {device}.} other{{count} files will be moved to the trash on {device}.}}'**
+  String remoteSwipeFinishBody(int count, String device);
+
+  /// No description provided for @remoteSwipeRestoreOnDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore it from the Trash on {device}'**
+  String remoteSwipeRestoreOnDevice(String device);
+
+  /// No description provided for @remoteSwipeDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} declined the delete'**
+  String remoteSwipeDeclined(String device);
+
+  /// No description provided for @remoteSwipeAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All done in this folder.'**
+  String get remoteSwipeAllDone;
+
+  /// No description provided for @remoteSwipeDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard session'**
+  String get remoteSwipeDiscard;
+
+  /// No description provided for @remoteSwipeDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the swipe session on {device}?'**
+  String remoteSwipeDiscardTitle(String device);
+
+  /// No description provided for @remoteSwipeDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your swipes there are forgotten. Nothing is deleted on that device.'**
+  String get remoteSwipeDiscardBody;
+
+  /// No description provided for @remoteSwipeUnknownDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'the other device'**
+  String get remoteSwipeUnknownDevice;
 }
 
 class _AppLocalizationsDelegate

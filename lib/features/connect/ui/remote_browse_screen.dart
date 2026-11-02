@@ -19,8 +19,10 @@ import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/remote_browse_controller.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
+import 'package:kfm/features/connect/ui/remote_swipe_screen.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
+import 'package:kfm/features/session/domain/remote_deck_root.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
@@ -177,11 +179,30 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
                   ),
                 ],
               ),
-            ] else if (connected && !view.atRoots)
+            ] else if (connected && !view.atRoots) ...[
+              // N8: swipe this folder's photos and videos (subfolders too).
+              IconButton(
+                key: const ValueKey('remote-swipe-these'),
+                tooltip: l10n.browseSwipeThese,
+                icon: const Icon(Icons.swipe_outlined),
+                onPressed: () => unawaited(
+                  openRemoteSwipe(
+                    context,
+                    ref,
+                    _fp,
+                    RemoteDeckRoot(
+                      rootId: view.rootId!,
+                      path: view.path,
+                      device: name,
+                    ),
+                  ),
+                ),
+              ),
               _SortButton(
                 sort: view.sort,
                 onSort: (s) => unawaited(_controller.setSort(s)),
               ),
+            ],
           ],
         ),
         body: SafeArea(child: body),

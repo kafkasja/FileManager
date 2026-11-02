@@ -1,15 +1,15 @@
 import 'package:drift/drift.dart';
 
-/// One row per swipe session (TASK-SE1). At most one is active; at most one
-/// open (not ended) per preset (P6).
+/// One row per swipe session (TASK-SE1). At most one is active per source
+/// (N8); at most one open (not ended) per source and preset (P6).
 @DataClassName('SessionRow')
 @TableIndex.sql(
-  'CREATE UNIQUE INDEX one_active_session ON sessions (is_active) '
-  'WHERE is_active = 1',
+  'CREATE UNIQUE INDEX one_active_session_per_source ON sessions '
+  '(source_id) WHERE is_active = 1',
 )
 @TableIndex.sql(
-  'CREATE UNIQUE INDEX one_open_session_per_preset ON sessions '
-  '(COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
+  'CREATE UNIQUE INDEX one_open_session_per_source_preset ON sessions '
+  '(source_id, COALESCE(preset_id, 0)) WHERE ended_at IS NULL',
 )
 class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -41,4 +41,8 @@ class Sessions extends Table {
   /// Set when the session ends (Done / SE3 / preset deleted). Null with
   /// isActive false = paused by a preset switch (P6).
   DateTimeColumn get endedAt => dateTime().nullable()();
+
+  /// Whose files the session swipes (N8): `local`,
+  /// `remote:<peerFingerprint>` or (U2) `external:<volumeId>`.
+  TextColumn get sourceId => text().withDefault(const Constant('local'))();
 }

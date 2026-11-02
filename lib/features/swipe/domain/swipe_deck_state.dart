@@ -33,6 +33,7 @@ class SwipeDeckState {
     this.showReviewedBadge = false,
     this.source,
     this.groupPositionOf,
+    this.waiting = false,
   });
 
   final Session session;
@@ -70,6 +71,10 @@ class SwipeDeckState {
   /// SS1: group position of a file (group sources), from the deck's queue.
   final SwipeGroupPosition? Function(String fileId)? groupPositionOf;
 
+  /// N8: a remote deck couldn't load more because the device isn't
+  /// connected ("Waiting for <A>…" once [upcoming] runs out).
+  final bool waiting;
+
   FileRef? get current => upcoming.isEmpty ? null : upcoming.first;
 
   /// SS1: "Group 2 of 3 · 4/5" for [current]; null for a non-member (an
@@ -92,6 +97,7 @@ class SwipeDeckState {
     UndoMark? undoMark,
     Set<String>? reviewedIds,
     bool? showReviewedBadge,
+    bool? waiting,
   }) => SwipeDeckState(
     session: session ?? this.session,
     upcoming: upcoming ?? this.upcoming,
@@ -105,5 +111,6 @@ class SwipeDeckState {
     showReviewedBadge: showReviewedBadge ?? this.showReviewedBadge,
     source: source,
     groupPositionOf: groupPositionOf,
+    waiting: waiting ?? this.waiting,
   );
 }

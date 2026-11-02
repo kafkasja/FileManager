@@ -104,7 +104,20 @@ extension SwipeActionTypeX on SwipeActionType {
 }
 
 /// Why a mapped direction can't run right now (the card springs back).
-enum SwipeActionProblem { unsupported, tagMissing }
+enum SwipeActionProblem {
+  unsupported,
+  tagMissing,
+
+  /// N8: a remote session's move/copy target isn't a writable folder on
+  /// that device (e.g. a local folder from a saved layout).
+  folderNotOnSource,
+
+  /// N8: the file's shared folder is read-only on the other device.
+  readOnly,
+
+  /// N8: not available for another device's files (rename batch, send).
+  notOnDevice,
+}
 
 /// What each direction (and the optional action bar, P4) does.
 @immutable
