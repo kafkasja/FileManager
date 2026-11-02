@@ -6166,4 +6166,214 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareInDone => 'Done';
+
+  @override
+  String get backupSectionTitle => 'Backup';
+
+  @override
+  String get backupExport => 'Export backup';
+
+  @override
+  String get backupExportHelp =>
+      'Tags, presets, favorites, reviewed labels and settings in one file. Your photos stay where they are.';
+
+  @override
+  String get backupImport => 'Import backup';
+
+  @override
+  String get backupImportHelp =>
+      'Adds a backup\'s data to this phone. Nothing here is deleted.';
+
+  @override
+  String get backupUndoImport => 'Undo last import';
+
+  @override
+  String get backupUndoImportHelp =>
+      'Go back to how things were before the last import';
+
+  @override
+  String get backupExported => 'Backup saved';
+
+  @override
+  String backupExportFailed(String error) {
+    return 'Couldn\'t save the backup: $error';
+  }
+
+  @override
+  String backupImportFailed(String error) {
+    return 'Couldn\'t import the backup: $error';
+  }
+
+  @override
+  String get backupNotKfm => 'This isn\'t a KFM backup.';
+
+  @override
+  String get backupTooNew =>
+      'This backup was made by a newer version of KFM. Update the app first.';
+
+  @override
+  String get backupPreviewTitle => 'Import backup';
+
+  @override
+  String get backupScanning => 'Scanning…';
+
+  @override
+  String backupPreviewNewTags(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new tags',
+      one: '1 new tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewReusedTags(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tags already on this phone',
+      one: '1 tag already on this phone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewNewPresets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new presets',
+      one: '1 new preset',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewSkippedPresets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count presets already on this phone',
+      one: '1 preset already on this phone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewMatched(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files found on this phone',
+      one: '1 file found on this phone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewFileTags(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tags added to files',
+      one: '1 tag added to a file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewFavorites(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new favorites',
+      one: '1 new favorite',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewReviewed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reviewed labels',
+      one: '1 reviewed label',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewUnmatched(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files not found on this phone',
+      one: '1 file not found on this phone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewUnmatchedMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'and $count more',
+      one: 'and 1 more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPreviewFilePath(String folder, String name) {
+    return '$folder/$name';
+  }
+
+  @override
+  String get backupApplySettings => 'Also apply settings';
+
+  @override
+  String backupPreviewSettings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count settings change',
+      one: '1 setting changes',
+      zero: 'No settings change',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPreviewNothing => 'Nothing new to import.';
+
+  @override
+  String get backupImportedSuffix => 'imported';
+
+  @override
+  String get backupImportButton => 'Import';
+
+  @override
+  String get backupImported => 'Backup imported';
+
+  @override
+  String get backupUndoConfirmTitle => 'Undo last import?';
+
+  @override
+  String get backupUndoConfirmBody =>
+      'Tags, presets, favorites, reviewed labels and settings go back to how they were before the import. Changes you made after it are lost too.';
+
+  @override
+  String get backupUndoConfirm => 'Undo import';
+
+  @override
+  String get backupUndone => 'Import undone';
+
+  @override
+  String backupUndoFailed(String error) {
+    return 'Couldn\'t undo the import: $error';
+  }
 }

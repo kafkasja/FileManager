@@ -64,7 +64,7 @@ void main() {
       for (final s in app.container.read(settingsSectionsProvider)) s.order,
     ];
     expect(orders, [...orders]..sort());
-    expect(orders.take(16), [
+    expect(orders.take(17), [
       100,
       150,
       200,
@@ -80,6 +80,7 @@ void main() {
       650,
       690,
       700,
+      800,
       900,
     ]);
     expect(find.text('Appearance'), findsOneWidget);

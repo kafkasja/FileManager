@@ -8630,6 +8630,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get shareInDone;
+
+  /// X6 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupSectionTitle;
+
+  /// X6 row: save a backup file.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get backupExport;
+
+  /// X6 row subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags, presets, favorites, reviewed labels and settings in one file. Your photos stay where they are.'**
+  String get backupExportHelp;
+
+  /// X6 row: read a backup file.
+  ///
+  /// In en, this message translates to:
+  /// **'Import backup'**
+  String get backupImport;
+
+  /// X6 row subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a backup\'s data to this phone. Nothing here is deleted.'**
+  String get backupImportHelp;
+
+  /// X6 row: restore the pre-import state.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo last import'**
+  String get backupUndoImport;
+
+  /// X6 row subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to how things were before the last import'**
+  String get backupUndoImportHelp;
+
+  /// X6 snackbar after export.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved'**
+  String get backupExported;
+
+  /// X6 export error.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the backup: {error}'**
+  String backupExportFailed(String error);
+
+  /// X6 import error.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t import the backup: {error}'**
+  String backupImportFailed(String error);
+
+  /// X6: picked file is not a backup.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a KFM backup.'**
+  String get backupNotKfm;
+
+  /// X6: backup schema too new.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was made by a newer version of KFM. Update the app first.'**
+  String get backupTooNew;
+
+  /// X6 preview screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Import backup'**
+  String get backupPreviewTitle;
+
+  /// X6: the file index is refreshed before matching.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get backupScanning;
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new tag} other{{count} new tags}}'**
+  String backupPreviewNewTags(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 tag already on this phone} other{{count} tags already on this phone}}'**
+  String backupPreviewReusedTags(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new preset} other{{count} new presets}}'**
+  String backupPreviewNewPresets(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 preset already on this phone} other{{count} presets already on this phone}}'**
+  String backupPreviewSkippedPresets(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file found on this phone} other{{count} files found on this phone}}'**
+  String backupPreviewMatched(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 tag added to a file} other{{count} tags added to files}}'**
+  String backupPreviewFileTags(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new favorite} other{{count} new favorites}}'**
+  String backupPreviewFavorites(int count);
+
+  /// X6 preview count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reviewed label} other{{count} reviewed labels}}'**
+  String backupPreviewReviewed(int count);
+
+  /// X6 preview: expandable list title.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file not found on this phone} other{{count} files not found on this phone}}'**
+  String backupPreviewUnmatched(int count);
+
+  /// X6 preview: files beyond the first 200.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{and 1 more} other{and {count} more}}'**
+  String backupPreviewUnmatchedMore(int count);
+
+  /// X6 preview: one unmatched file.
+  ///
+  /// In en, this message translates to:
+  /// **'{folder}/{name}'**
+  String backupPreviewFilePath(String folder, String name);
+
+  /// X6 preview switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Also apply settings'**
+  String get backupApplySettings;
+
+  /// X6 preview: settings diff title.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No settings change} =1{1 setting changes} other{{count} settings change}}'**
+  String backupPreviewSettings(int count);
+
+  /// X6 preview: empty plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new to import.'**
+  String get backupPreviewNothing;
+
+  /// X6: a same-named but different preset is added as 'Name (imported)'.
+  ///
+  /// In en, this message translates to:
+  /// **'imported'**
+  String get backupImportedSuffix;
+
+  /// X6 preview button.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get backupImportButton;
+
+  /// X6 snackbar after import (with Undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Backup imported'**
+  String get backupImported;
+
+  /// X6 confirm dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo last import?'**
+  String get backupUndoConfirmTitle;
+
+  /// X6 confirm dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags, presets, favorites, reviewed labels and settings go back to how they were before the import. Changes you made after it are lost too.'**
+  String get backupUndoConfirmBody;
+
+  /// X6 confirm dialog button.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo import'**
+  String get backupUndoConfirm;
+
+  /// X6 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Import undone'**
+  String get backupUndone;
+
+  /// X6 undo error.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t undo the import: {error}'**
+  String backupUndoFailed(String error);
 }
 
 class _AppLocalizationsDelegate

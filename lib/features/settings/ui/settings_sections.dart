@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
+import 'package:kfm/features/backup/ui/backup_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/connect/ui/connect_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
@@ -104,6 +105,11 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 700,
       titleBuilder: (c) => c.l10n.connectSettingsTitle,
       builder: (_) => const ConnectSettingsSection(),
+    ),
+    SettingsSection(
+      order: 800,
+      titleBuilder: (c) => c.l10n.backupSectionTitle,
+      builder: (_) => const BackupSection(),
     ),
     if (kDebugMode)
       SettingsSection(
