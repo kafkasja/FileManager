@@ -50,6 +50,8 @@ class TrashedItem {
   /// A FileRef that can be displayed while the file is trashed (H3).
   FileRef get preview => switch (storedPath) {
     null => original,
+    // U2: a SAF pending item (the id is enough for its thumbnail).
+    final p when p.startsWith('saf:') => original.copyWith(id: p),
     final p => original.copyWith(
       id: 'path:$p',
       uri: p,

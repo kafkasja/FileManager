@@ -20,6 +20,7 @@ import 'package:kfm/features/folders/domain/file_operation.dart';
 import 'package:kfm/features/folders/ui/collision_dialog.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
 import 'package:kfm/features/folders/ui/last_operation_undo.dart';
+import 'package:kfm/features/folders/ui/local_job_flow.dart';
 import 'package:kfm/features/folders/ui/operation_progress_sheet.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -67,6 +68,11 @@ Future<void> moveOrCopyFiles(
     disabledFolder: !copy && folders.length == 1 ? folders.single : null,
   );
   if (target == null || !context.mounted) return;
+  // U2: another place (SD card, USB drive) → a verified local job.
+  if (needsLocalJob(ref, files, target)) {
+    await startLocalJobFlow(context, ref, files, target, move: !copy);
+    return;
+  }
   await runFileOperation(
     context,
     ref,
@@ -173,6 +179,17 @@ Future<void> dropSelectionOnFolder(
             if (f.folderPath != folder) f,
         ]
       : loaded.files;
+  if (!context.mounted) return;
+  if (needsLocalJob(ref, files, folder)) {
+    await startLocalJobFlow(
+      context,
+      ref,
+      files,
+      folder,
+      move: action != DropAction.copy,
+    );
+    return;
+  }
   await runFileOperation(
     context,
     ref,

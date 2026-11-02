@@ -281,6 +281,12 @@ class AndroidFileSource implements FileSource {
   static const _registerChunk = 500;
   static const _mediaTypes = {'image', 'video', 'audio'};
 
+  /// Everything works on device storage; `mtp:`/`saf:` ids never reach
+  /// this source (`RoutingFileSource`).
+  @override
+  bool supports(FileOp op, FileRef f) =>
+      f.id.startsWith('ms:') || f.id.startsWith('path:');
+
   @override
   Stream<FileIdChange> get idChanges => _idChanges.stream;
 

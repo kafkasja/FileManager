@@ -6,10 +6,19 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/core/files/android/android_file_source.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
+import 'package:kfm/core/files/cross_place_ops.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/files/mtp/mtp_file_source.dart';
 import 'package:kfm/core/files/pending_folder.dart';
+import 'package:kfm/core/files/routing_file_source.dart';
+import 'package:kfm/core/files/saf/saf_channel.dart';
+import 'package:kfm/core/files/saf/saf_file_source.dart';
+import 'package:kfm/core/files/saf/saf_pending_folder.dart';
+import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/external_storage/domain/storage_place.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'file_source_provider.g.dart';
@@ -41,11 +50,46 @@ PendingFolder createAndroidPendingFolder(
   );
 }
 
-/// The device's own storage. Tests override this with `FakeFileSource`.
+/// SAF trees of mounted, granted places (U1 grants are volume roots, so
+/// the tree's document id is `<uuid>:`).
+List<SafTree> safTreesOf(List<StoragePlace> places) => [
+  for (final p in places)
+    if (p.isMounted && p.access == AccessMethod.saf)
+      if ((p.rootPath, p.treeUri) case (final root?, final tree?))
+        SafTree(root: root, treeUri: tree, rootDoc: '${p.id}:'),
+];
+
+/// The SAF trees KFM can use right now (kept current from `placesProvider`
+/// without rebuilding the file source).
+@Riverpod(keepAlive: true)
+SafLocator safLocator(Ref ref) {
+  var trees = const <SafTree>[];
+  ref.listen(placesProvider, (_, next) {
+    if (next.value case final places?) trees = safTreesOf(places);
+  }, fireImmediately: true);
+  return SafLocator(() => trees);
+}
+
+/// D4 on SAF volumes (TASK-U2). Null off Android.
+@Riverpod(keepAlive: true)
+SafPendingFolder? safPendingFolder(Ref ref) {
+  if (!Platform.isAndroid) return null;
+  final settings = ref.watch(settingsRepositoryProvider);
+  return SafPendingFolder(
+    db: ref.watch(appDatabaseProvider),
+    channel: SafChannel(),
+    locator: ref.watch(safLocatorProvider),
+    retentionDays: () => settings.read(AppSettings.pendingFolderRetentionDays),
+  );
+}
+
+/// Every place KFM can reach: device storage, SAF volumes and cameras
+/// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+/// `FakeFileSource`.
 @Riverpod(keepAlive: true)
 FileSource fileSource(Ref ref) {
   if (Platform.isAndroid) {
-    final source = AndroidFileSource(
+    final android = AndroidFileSource(
       channel: FilesChannel(),
       canSeeAllFiles: () =>
           ref.read(storageAccessControllerProvider).value?.canSeeAllFiles ??
@@ -53,7 +97,27 @@ FileSource fileSource(Ref ref) {
       pendingFolder: ref.watch(pendingFolderProvider),
       tempLedger: ref.watch(tempFileLedgerProvider.future),
     );
-    ref.onDispose(source.dispose);
+    final locator = ref.watch(safLocatorProvider);
+    final saf = SafFileSource(
+      channel: SafChannel(),
+      trees: () => locator.trees,
+      pendingFolder: ref.watch(safPendingFolderProvider),
+    );
+    final source = RoutingFileSource(
+      android: android,
+      saf: saf,
+      mtp: MtpFileSource(channel: MtpObjectsChannel()),
+      crossPlace: (self) => CrossPlaceOps(
+        sourceOfId: self.sourceForId,
+        sourceOfFolder: self.sourceForFolder,
+        staging: transferStagingDir,
+      ),
+    );
+    ref.onDispose(() async {
+      await source.dispose();
+      await saf.dispose();
+      await android.dispose();
+    });
     return source;
   }
   throw UnsupportedError(

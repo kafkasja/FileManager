@@ -10,6 +10,7 @@ class MainActivity : FlutterActivity() {
     private var shareServiceChannel: ShareServiceChannel? = null
     private var volumesChannel: VolumesChannel? = null
     private var mtpChannel: MtpChannel? = null
+    private var safChannel: SafChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -18,6 +19,7 @@ class MainActivity : FlutterActivity() {
         shareServiceChannel = ShareServiceChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
         volumesChannel = VolumesChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
         mtpChannel = MtpChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+        safChannel = SafChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
@@ -31,6 +33,8 @@ class MainActivity : FlutterActivity() {
         volumesChannel = null
         mtpChannel?.dispose()
         mtpChannel = null
+        safChannel?.dispose()
+        safChannel = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

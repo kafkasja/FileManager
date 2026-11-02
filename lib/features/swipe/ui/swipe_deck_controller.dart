@@ -10,6 +10,7 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
@@ -74,6 +75,15 @@ SwipeFileOps swipeFileOps(Ref ref) {
     lock: ref.watch(historyLockProvider),
     indexer: ref.watch(mediaIndexerProvider),
     remoteSource: (id) => ref.read(fileSourceResolverProvider)(id),
+    crossPlaceCopy: switch (ref.watch(fileSourceProvider)) {
+      final RoutingFileSource fs => (file, target) async =>
+          fs.isCrossPlace(file, target)
+          ? (await fs.crossPlace.copyVerified(file, target)).copy
+          : null,
+      _ => null,
+    },
+    queueDelete: ref.watch(deleteQueueProvider).queueInTransaction,
+    copyLabels: ref.watch(fileIdRekeyerProvider).copyLabels,
   );
   ref.onDispose(ops.dispose);
   return ops;
@@ -83,6 +93,11 @@ SwipeFileOps swipeFileOps(Ref ref) {
 @Riverpod(keepAlive: true)
 Stream<SwipeFileOpEvent> swipeFileOpEvents(Ref ref) =>
     ref.watch(swipeFileOpsProvider).events;
+
+/// U2: the first delete swipe of a camera file in a session (permanent).
+@Riverpod(keepAlive: true)
+Stream<int> cameraDeleteWarnings(Ref ref) =>
+    ref.watch(swipeActionDispatcherProvider).cameraDeleteWarnings;
 
 @Riverpod(keepAlive: true)
 SwipeActionDispatcher swipeActionDispatcher(Ref ref) => SwipeActionDispatcher(

@@ -11,12 +11,19 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/files/folder_listing.dart';
+import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
+import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/external_storage/domain/storage_place.dart';
+import 'package:kfm/features/external_storage/ui/place_browser_screen.dart';
+import 'package:kfm/features/external_storage/ui/place_labels.dart';
+import 'package:kfm/features/external_storage/ui/saf_grant_flow.dart';
 
 /// What the picked folder is for: sets the default title and the label of
 /// the "… here" button in the All folders section.
@@ -109,6 +116,21 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
 
   bool _isDisabled(String path) => path == widget.disabledFolder;
 
+  /// U2: [path] is on a SAF place (listed by scanning, written via SAF).
+  bool _isSaf(String path) => switch (ref.read(fileSourceProvider)) {
+    final RoutingFileSource r => r.saf.locator.owns(path),
+    _ => false,
+  };
+
+  /// U2 Places group: opens a removable place's root (after its one-time
+  /// SAF grant where needed).
+  Future<void> _openPlace(StoragePlace place) async {
+    final root = place.rootPath;
+    if (root == null) return;
+    if (!await ensureSafGrant(context, ref, place)) return;
+    if (mounted) _open(root);
+  }
+
   void _open(String? path) => setState(() => _at = path);
 
   void _up() {
@@ -134,7 +156,7 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
 
     Widget folder(String path, {int? count}) {
       final disabled = _isDisabled(path);
-      final needsAccess = !canSeeAll && !_isMediaFolder(path);
+      final needsAccess = !canSeeAll && !_isMediaFolder(path) && !_isSaf(path);
       return ListTile(
         leading: const Icon(Icons.folder_outlined),
         title: Text(_leaf(path)),
@@ -166,11 +188,30 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
       final recent = ref.watch(_recentTargets).value ?? const [];
       final folders = ref.watch(_folderSummaries).value ?? const [];
       final volumes = ref.watch(_childFolders(null)).value ?? const [];
+      // U2: SD cards and USB drives (cameras are read-only).
+      final places = [
+        for (final p
+            in ref.watch(placesProvider).value ?? const <StoragePlace>[])
+          if (p.isMounted &&
+              p.isRemovable &&
+              p.access != AccessMethod.mtp &&
+              p.rootPath != null)
+            p,
+      ];
       children = [
         newFolder,
         if (recent.isNotEmpty) ...[
           _Header(l10n.folderPickerRecent),
           for (final path in recent) folder(path),
+        ],
+        if (places.isNotEmpty) ...[
+          _Header(l10n.externalPlacesTitle),
+          for (final p in places)
+            _BrowseTile(
+              label: placeLabel(l10n, p),
+              icon: placeIcon(p.kind),
+              onTap: () => _openPlace(p),
+            ),
         ],
         if (volumes.isNotEmpty) ...[
           _Header(l10n.pickerAllFolders),
@@ -188,7 +229,14 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
         ],
       ];
     } else {
-      final sub = ref.watch(_childFolders(at)).value ?? const [];
+      final saf = _isSaf(at);
+      final sub = saf
+          ? const <FolderEntry>[]
+          : ref.watch(_childFolders(at)).value ?? const [];
+      final safSub = saf
+          ? ref.watch(placeFolderProvider(at)).value?.folders ??
+                const <FolderItem>[]
+          : const <FolderItem>[];
       children = [
         _Breadcrumb(folder: at, onOpen: _open),
         newFolder,
@@ -198,6 +246,12 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
             count: f.fileCount,
             icon: Icons.folder_outlined,
             onTap: () => _open(f.path),
+          ),
+        for (final f in safSub)
+          _BrowseTile(
+            label: f.name,
+            icon: Icons.folder_outlined,
+            onTap: () => _open(f.id),
           ),
       ];
     }
@@ -246,7 +300,10 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
                           ? null
                           : () => _pick(
                               at,
-                              needsAccess: !canSeeAll && !_isMediaFolder(at),
+                              needsAccess:
+                                  !canSeeAll &&
+                                  !_isMediaFolder(at) &&
+                                  !_isSaf(at),
                             ),
                       child: Text(switch (widget.mode) {
                         FolderPickerMode.move => l10n.pickerMoveHere,
@@ -287,6 +344,7 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
         false;
     if (!canSeeAll &&
         !_isMediaFolder(parent) &&
+        !_isSaf(parent) &&
         !await ensureAllFilesAccess(context, ref)) {
       return;
     }
@@ -343,13 +401,15 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
 class _BrowseTile extends StatelessWidget {
   const new({
     required this.label,
-    required this.count,
     required this.icon,
     required this.onTap,
+    this.count,
   });
 
   final String label;
-  final int count;
+
+  /// Null = not known (U2 places and SAF folders aren't indexed).
+  final int? count;
   final IconData icon;
   final VoidCallback onTap;
 
@@ -357,7 +417,10 @@ class _BrowseTile extends StatelessWidget {
   Widget build(BuildContext context) => ListTile(
     leading: Icon(icon),
     title: Text(label),
-    subtitle: Text(context.l10n.folderFileCount(count)),
+    subtitle: switch (count) {
+      final c? => Text(context.l10n.folderFileCount(c)),
+      null => null,
+    },
     trailing: const Icon(Icons.chevron_right),
     onTap: onTap,
   );

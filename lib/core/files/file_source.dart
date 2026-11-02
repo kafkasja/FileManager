@@ -5,6 +5,18 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:meta/meta.dart';
 
+/// What a file action needs from its source (TASK-U2). The UI disables an
+/// action before the tap when [FileSource.supports] says no.
+enum FileOp {
+  move,
+  copy,
+  rename,
+  trash,
+  deletePermanently,
+  createFolder,
+  write,
+}
+
 /// A file got a new id (move/rename/restore). Tables keyed by fileId re-key
 /// in the same transaction.
 @immutable
@@ -100,6 +112,12 @@ abstract interface class FileSource {
     required String name,
     String? mimeType,
   });
+
+  /// U2: false = this source can't do [op] with [f] (e.g. a camera is
+  /// read-only); the UI disables the action before the tap. For
+  /// [FileOp.createFolder] / [FileOp.write], [f] is any file of the target
+  /// place.
+  bool supports(FileOp op, FileRef f);
 
   /// Emitted whenever move/rename/restore gives a file a new id.
   Stream<FileIdChange> get idChanges;

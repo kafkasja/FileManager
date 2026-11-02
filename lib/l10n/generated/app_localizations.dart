@@ -7634,6 +7634,324 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy instead'**
   String get privacyCopyInstead;
+
+  /// U2 job card title (On this phone).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Copying 1 file to {place}} other{Copying {count} files to {place}}}'**
+  String externalJobTitleCopy(int count, String place);
+
+  /// U2 job card title.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moving 1 file to {place}} other{Moving {count} files to {place}}}'**
+  String externalJobTitleMove(int count, String place);
+
+  /// U2 job card progress line.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} · {size}'**
+  String externalJobProgress(int done, int total, String size);
+
+  /// U2 job status.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get externalJobQueued;
+
+  /// U2 job status.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get externalJobRunning;
+
+  /// U2 job status (paused by the user or after a restart).
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get externalJobPaused;
+
+  /// U2 job status when a place was removed mid-job.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused · connect the storage again to continue'**
+  String get externalJobPausedUnplugged;
+
+  /// U2 job status.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get externalJobDone;
+
+  /// U2 job status.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get externalJobCancelled;
+
+  /// U2 job status.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file failed} other{{count} files failed}}'**
+  String externalJobFailed(int count);
+
+  /// U2 job status.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped: not enough space'**
+  String get externalJobStoppedNoSpace;
+
+  /// U2 job button.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get externalJobResume;
+
+  /// U2 job button.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get externalJobPause;
+
+  /// U2 job button: shows the job log.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get externalJobDetails;
+
+  /// U2 snackbar after a copy job started.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Copying 1 file…} other{Copying {count} files…}}'**
+  String externalJobStartedCopy(int count);
+
+  /// U2 snackbar after a move job started.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moving 1 file…} other{Moving {count} files…}}'**
+  String externalJobStartedMove(int count);
+
+  /// U2 snackbar action: open the Transfers page.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get externalJobView;
+
+  /// U2 pre-check.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space on {place}'**
+  String externalNotEnoughSpace(String place);
+
+  /// U2 pre-check (files pass through an app folder on internal storage).
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free space on this phone to copy through it'**
+  String get externalStagingNoSpace;
+
+  /// U2 job log line.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: 4 GB or larger, too big for this drive (FAT32)'**
+  String externalFat32TooLarge(String name);
+
+  /// U2 job log line: the drive refuses some characters.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} saved as {to}'**
+  String externalRenamedForDrive(String from, String to);
+
+  /// U2 dialog before a job.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file is already there} other{{count} files are already there}}'**
+  String externalCollisionTitle(int count);
+
+  /// U2 collision choice (default).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep both'**
+  String get externalCollisionKeepBoth;
+
+  /// U2 collision choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get externalCollisionSkip;
+
+  /// U2 collision choice: the old file is removed only after the new one is verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get externalCollisionReplace;
+
+  /// U2 collision dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your choice applies to every file of this job.'**
+  String get externalApplyToAll;
+
+  /// U2 shown once per session on the first delete swipe of a camera file.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera photos have no trash: deleting them here deletes them for good.'**
+  String get externalCameraDeleteWarning;
+
+  /// U2 job line for a move whose originals were kept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 original wasn’t removed} other{{count} originals weren’t removed}}'**
+  String externalOriginalNotRemoved(int count);
+
+  /// U2 job button: retry deleting kept originals.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete originals'**
+  String get externalDeleteOriginals;
+
+  /// U2 place browser action.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe this folder'**
+  String get externalSwipeFolder;
+
+  /// U2 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos or videos in this folder'**
+  String get externalSwipeFolderEmpty;
+
+  /// U2 Transfers tab: copies and moves between places on this device.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone'**
+  String get transfersLocalSection;
+
+  /// U2 empty On this phone tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No copies or moves between storage places in the last 7 days'**
+  String get externalNoJobs;
+
+  /// U2 On this phone action.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear finished'**
+  String get externalClearFinished;
+
+  /// U2 job log line.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed. Original kept.'**
+  String get externalVerifyFailed;
+
+  /// U2 job log line.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is gone'**
+  String get externalSourceGone;
+
+  /// U2 job log line.
+  ///
+  /// In en, this message translates to:
+  /// **'Already moved'**
+  String get externalAlreadyMoved;
+
+  /// U2 job log line.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped: already there'**
+  String get externalSkippedExists;
+
+  /// U2 job log line (other errors).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t copy'**
+  String get externalFileFailed;
+
+  /// U2 job log line.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {reason}'**
+  String externalLogLine(String name, String reason);
+
+  /// U2 place browser.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder is empty'**
+  String get externalFolderEmpty;
+
+  /// U2 place browser error.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t open this folder'**
+  String get externalFolderError;
+
+  /// U2 place browser sort option.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get externalSortByName;
+
+  /// U2 place browser sort option.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get externalSortByDate;
+
+  /// U2 place browser sort option.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get externalSortBySize;
+
+  /// U2 place browser filter option.
+  ///
+  /// In en, this message translates to:
+  /// **'All files'**
+  String get externalShowAll;
+
+  /// U2 place browser filter option.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos'**
+  String get externalShowMedia;
+
+  /// U2 place browser file menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to…'**
+  String get externalCopyTo;
+
+  /// U2 place browser file menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get externalMoveTo;
+
+  /// U2 place browser file menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get externalDelete;
+
+  /// U2 place browser subtitle for cameras.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only'**
+  String get externalReadOnly;
+
+  /// U2 place browser snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file deleted} other{{count} files deleted}}'**
+  String externalDeleted(int count);
+
+  /// U2 place browser snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t delete'**
+  String get externalDeleteFailed;
 }
 
 class _AppLocalizationsDelegate

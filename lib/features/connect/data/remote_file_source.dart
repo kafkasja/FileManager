@@ -509,6 +509,10 @@ class RemoteFileSource implements FileSource {
     String? mimeType,
   }) => Future.error(_unsupported('importFile'));
 
+  /// Read-only roots are checked by the other device (N4 → 403).
+  @override
+  bool supports(FileOp op, FileRef f) => true;
+
   @override
   Stream<FileIdChange> get idChanges => _ids.stream;
 

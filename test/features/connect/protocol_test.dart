@@ -17,28 +17,31 @@ void main() {
   );
 
   test('error codes: complete list with wire names and statuses', () {
-    expect({for (final c in ApiErrorCode.values) c.wire: c.status}, {
-      'unauthorized': 401,
-      'forbidden': 403,
-      'forbidden_path': 403,
-      'not_found': 404,
-      'conflict': 409,
-      'busy': 409,
-      'pairing_failed': 401,
-      'secret_used': 401,
-      'expired': 401,
-      'too_many_attempts': 429,
-      'declined': 403,
-      'timed_out': 403,
-      'cancelled': 410,
-      'unsupported_version': 400,
-      'insufficient_storage': 507,
-      'too_large': 413,
-      'pending_folder_unavailable': 409,
-      'invalid_name': 400,
-      'verification_failed': 409,
-      'internal': 500,
-    });
+    expect(
+      {for (final c in ApiErrorCode.values) c.wire: c.status},
+      {
+        'unauthorized': 401,
+        'forbidden': 403,
+        'forbidden_path': 403,
+        'not_found': 404,
+        'conflict': 409,
+        'busy': 409,
+        'pairing_failed': 401,
+        'secret_used': 401,
+        'expired': 401,
+        'too_many_attempts': 429,
+        'declined': 403,
+        'timed_out': 403,
+        'cancelled': 410,
+        'unsupported_version': 400,
+        'insufficient_storage': 507,
+        'too_large': 413,
+        'pending_folder_unavailable': 409,
+        'invalid_name': 400,
+        'verification_failed': 409,
+        'internal': 500,
+      },
+    );
     expect(ApiErrorCode.fromWire('forbidden_path'), ApiErrorCode.forbiddenPath);
     expect(ApiErrorCode.fromWire('new_in_v2'), isNull);
   });

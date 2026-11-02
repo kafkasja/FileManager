@@ -144,7 +144,7 @@ final class SwipeFileOpsProvider
   }
 }
 
-String _$swipeFileOpsHash() => r'fe1bbc91f9004899e554022ff350f2650ce3f98b';
+String _$swipeFileOpsHash() => r'1f85d441ad387a4ffd47b08226410e32ac18fbb2';
 
 /// Move/copy results for the swipe screen's snackbars (P2).
 
@@ -189,6 +189,45 @@ final class SwipeFileOpEventsProvider
 }
 
 String _$swipeFileOpEventsHash() => r'0e58284501316605de926e0e918255e4a56bad86';
+
+/// U2: the first delete swipe of a camera file in a session (permanent).
+
+@ProviderFor(cameraDeleteWarnings)
+final cameraDeleteWarningsProvider = CameraDeleteWarningsProvider._();
+
+/// U2: the first delete swipe of a camera file in a session (permanent).
+
+final class CameraDeleteWarningsProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// U2: the first delete swipe of a camera file in a session (permanent).
+  CameraDeleteWarningsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cameraDeleteWarningsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cameraDeleteWarningsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return cameraDeleteWarnings(ref);
+  }
+}
+
+String _$cameraDeleteWarningsHash() =>
+    r'6ffdf7097ebd8021aa1adfad5e32acebeccbc601';
 
 @ProviderFor(swipeActionDispatcher)
 final swipeActionDispatcherProvider = SwipeActionDispatcherProvider._();

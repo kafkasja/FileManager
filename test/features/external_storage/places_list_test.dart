@@ -9,6 +9,7 @@ import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
 import 'package:kfm/features/external_storage/data/saf_grants.dart';
+import 'package:kfm/features/external_storage/ui/place_browser_screen.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../core/platform/permissions/fake_permission_service.dart';
@@ -130,6 +131,7 @@ void main() {
           .read(AppSettings.externalSafGrants),
       {'1234-ABCD': 'root'},
     );
-    expect(app.container.read(browseViewControllerProvider).folder, _sd);
+    // U2: a SAF volume opens in the place browser (scan-based).
+    expect(find.byType(PlaceBrowserScreen), findsOneWidget);
   });
 }

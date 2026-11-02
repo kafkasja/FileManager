@@ -71,9 +71,10 @@ class PlacesList extends ConsumerWidget {
   }
 }
 
-/// Opens [place]: cameras ask for the USB permission (browsing them is
-/// U2); SAF volumes get their one-time grant; then Browse's folder layout
-/// at the place's root.
+/// Opens [place]: cameras ask for the USB permission first, then open in
+/// U2's place browser; SAF volumes get their one-time grant and open in
+/// the place browser too; places reached by path open Browse's folder
+/// layout at their root (indexed: B1 filters and B2 sorting work).
 Future<void> openPlace(
   BuildContext context,
   WidgetRef ref,
@@ -88,14 +89,14 @@ Future<void> openPlace(
       await mtp.requestPermission(device);
       return;
     }
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          place.isUnsupported
-              ? l10n.externalCameraUnsupported
-              : l10n.externalCameraNotYet,
-        ),
-      ),
+    if (place.isUnsupported) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.externalCameraUnsupported)),
+      );
+      return;
+    }
+    await context.push(
+      placeBrowserLocation(root: place.id, title: placeLabel(l10n, place)),
     );
     return;
   }
@@ -103,6 +104,12 @@ Future<void> openPlace(
   if (root == null) return;
   if (!await ensureSafGrant(context, ref, place)) return;
   if (!context.mounted) return;
+  if (place.access == AccessMethod.saf) {
+    await context.push(
+      placeBrowserLocation(root: root, title: placeLabel(l10n, place)),
+    );
+    return;
+  }
   context.go(AppRoutes.browse);
   // The Browse tab may only now be built: set its folder after this frame.
   await WidgetsBinding.instance.endOfFrame;

@@ -122,8 +122,16 @@ class UndoRepository {
     int sessionId,
     String fileId,
     SwipeAction action,
-    PreviousState previous,
-  ) => _write(seq, sessionId, fileId, action, () async => previous, null);
+    PreviousState previous, {
+    Future<void> Function(int actionId)? alsoInTransaction,
+  }) => _write(
+    seq,
+    sessionId,
+    fileId,
+    action,
+    () async => previous,
+    alsoInTransaction,
+  );
 
   void _write(
     int seq,
@@ -224,7 +232,8 @@ class UndoRepository {
         .where(
           (a) =>
               a.status == ActionStatus.applied &&
-              a.action.type == SwipeActionType.trash,
+              (a.action.type == SwipeActionType.trash ||
+                  a.previous is CrossPlaceMovePreviousState),
         )
         .toList()
         .reversed
@@ -245,15 +254,29 @@ class UndoRepository {
   });
 
   /// D2 commit: status + the trashed item undo will restore from.
-  Future<void> markCommitted(int actionId, PreviousState previous) =>
-      (_db.update(
-        _db.sessionActions,
-      )..where((a) => a.id.equals(actionId))).write(
-        SessionActionsCompanion(
-          status: const Value(ActionStatus.committed),
-          previousState: Value(jsonEncode(previous.toJson())),
-        ),
-      );
+  /// U2: a cross-place move keeps its own JSON; the commit's mode and
+  /// trashed item are merged into it.
+  Future<void> markCommitted(int actionId, PreviousState previous) async {
+    var json = previous.toJson();
+    final row = await (_db.select(
+      _db.sessionActions,
+    )..where((a) => a.id.equals(actionId))).getSingleOrNull();
+    if (row != null && row.actionType == SwipeActionType.moveTo.name) {
+      final old = jsonDecode(row.previousState);
+      if (old is Map<String, Object?> &&
+          old['kind'] == CrossPlaceMovePreviousState.kind) {
+        json = {...old, ...json};
+      }
+    }
+    await (_db.update(
+      _db.sessionActions,
+    )..where((a) => a.id.equals(actionId))).write(
+      SessionActionsCompanion(
+        status: const Value(ActionStatus.committed),
+        previousState: Value(jsonEncode(json)),
+      ),
+    );
+  }
 
   /// D5: a file restored from the trash page is no longer "deleted" in the
   /// active session's undo log.

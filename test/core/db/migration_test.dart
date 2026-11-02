@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/db/tables/local_jobs_table.dart';
 import 'package:kfm/core/db/tables/transfers_table.dart';
 import 'package:kfm/core/index/source_rule.dart';
 
@@ -17,6 +18,7 @@ import 'generated/schema_v17.dart' as v17;
 import 'generated/schema_v18.dart' as v18;
 import 'generated/schema_v19.dart' as v19;
 import 'generated/schema_v20.dart' as v20;
+import 'generated/schema_v21.dart' as v21;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -55,7 +57,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 21; from++) {
+  for (var from = 1; from < 22; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -879,6 +881,87 @@ void main() {
       expect(f.bytesDone, 0);
       expect(f.attempts, 0);
       expect(f.error, null);
+    });
+  });
+
+  test('v21 -> v22 adds empty local job tables; data intact', () async {
+    final schema = await verifier.schemaAt(21);
+    final raw = v21.DatabaseAtV21(schema.newConnection());
+    await raw.customStatement(
+      "INSERT INTO settings (key, value) VALUES ('themeMode', '\"dark\"')",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    expect(await db.select(db.settings).get(), hasLength(1));
+    expect(await db.select(db.localJobs).get(), isEmpty);
+    expect(await db.select(db.localJobFiles).get(), isEmpty);
+    final names = [
+      for (final r
+          in await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type = 'index'",
+              )
+              .get())
+        r.read<String>('name'),
+    ];
+    expect(names, contains('ljf_status'));
+  });
+
+  group('local jobs (v22)', () {
+    late AppDatabase db;
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(21)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+      await db
+          .into(db.localJobs)
+          .insert(
+            LocalJobsCompanion.insert(
+              id: 'j',
+              mode: LocalJobMode.move,
+              targetPlaceId: '1234-ABCD',
+              targetFolder: '/storage/1234-ABCD/Photos',
+              status: LocalJobStatus.queued,
+              createdAtMs: 1,
+              updatedAtMs: 1,
+            ),
+          );
+    });
+    tearDown(() => db.close());
+
+    LocalJobFilesCompanion file(String job, int position) =>
+        LocalJobFilesCompanion.insert(
+          jobId: job,
+          position: position,
+          sourceId: 'ms:$position',
+          sourcePlaceId: 'primary',
+          originalName: 'a.jpg',
+          targetName: 'a.jpg',
+          sizeBytes: 3,
+          status: LocalFileStatus.queued,
+          sourceModifiedAtMs: 1,
+        );
+
+    test('files need an existing job; (job, position) is the key', () async {
+      await db.into(db.localJobFiles).insert(file('j', 0));
+      await expectLater(
+        db.into(db.localJobFiles).insert(file('j', 0)),
+        throwsA(anything),
+      );
+      await expectLater(
+        db.into(db.localJobFiles).insert(file('missing', 0)),
+        throwsA(anything),
+      );
+    });
+
+    test('deleting the job cascades to its files', () async {
+      await db.into(db.localJobFiles).insert(file('j', 0));
+      await db.into(db.localJobFiles).insert(file('j', 1));
+      await (db.delete(db.localJobs)..where((j) => j.id.equals('j'))).go();
+      expect(await db.select(db.localJobFiles).get(), isEmpty);
     });
   });
 }

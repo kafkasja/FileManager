@@ -54,17 +54,124 @@ final class PendingFolderProvider
 
 String _$pendingFolderHash() => r'e67158a19ed9314e37863fcf91da532432f29534';
 
-/// The device's own storage. Tests override this with `FakeFileSource`.
+/// The SAF trees KFM can use right now (kept current from `placesProvider`
+/// without rebuilding the file source).
+
+@ProviderFor(safLocator)
+final safLocatorProvider = SafLocatorProvider._();
+
+/// The SAF trees KFM can use right now (kept current from `placesProvider`
+/// without rebuilding the file source).
+
+final class SafLocatorProvider
+    extends $FunctionalProvider<SafLocator, SafLocator, SafLocator>
+    with $Provider<SafLocator> {
+  /// The SAF trees KFM can use right now (kept current from `placesProvider`
+  /// without rebuilding the file source).
+  SafLocatorProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'safLocatorProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$safLocatorHash();
+
+  @$internal
+  @override
+  $ProviderElement<SafLocator> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SafLocator create(Ref ref) {
+    return safLocator(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SafLocator value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SafLocator>(value),
+    );
+  }
+}
+
+String _$safLocatorHash() => r'5c64bc785034a123d424211127b8e6c57bc13cdd';
+
+/// D4 on SAF volumes (TASK-U2). Null off Android.
+
+@ProviderFor(safPendingFolder)
+final safPendingFolderProvider = SafPendingFolderProvider._();
+
+/// D4 on SAF volumes (TASK-U2). Null off Android.
+
+final class SafPendingFolderProvider
+    extends
+        $FunctionalProvider<
+          SafPendingFolder?,
+          SafPendingFolder?,
+          SafPendingFolder?
+        >
+    with $Provider<SafPendingFolder?> {
+  /// D4 on SAF volumes (TASK-U2). Null off Android.
+  SafPendingFolderProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'safPendingFolderProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$safPendingFolderHash();
+
+  @$internal
+  @override
+  $ProviderElement<SafPendingFolder?> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SafPendingFolder? create(Ref ref) {
+    return safPendingFolder(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SafPendingFolder? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SafPendingFolder?>(value),
+    );
+  }
+}
+
+String _$safPendingFolderHash() => r'bd22db4243e8476681cb54ac2bff25c540532549';
+
+/// Every place KFM can reach: device storage, SAF volumes and cameras
+/// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+/// `FakeFileSource`.
 
 @ProviderFor(fileSource)
 final fileSourceProvider = FileSourceProvider._();
 
-/// The device's own storage. Tests override this with `FakeFileSource`.
+/// Every place KFM can reach: device storage, SAF volumes and cameras
+/// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+/// `FakeFileSource`.
 
 final class FileSourceProvider
     extends $FunctionalProvider<FileSource, FileSource, FileSource>
     with $Provider<FileSource> {
-  /// The device's own storage. Tests override this with `FakeFileSource`.
+  /// Every place KFM can reach: device storage, SAF volumes and cameras
+  /// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+  /// `FakeFileSource`.
   FileSourceProvider._()
     : super(
         from: null,
@@ -98,7 +205,7 @@ final class FileSourceProvider
   }
 }
 
-String _$fileSourceHash() => r'bfba4028f4e52f4fb90dd575d74d6a9863dd05eb';
+String _$fileSourceHash() => r'89548a9bbd0c004f86527a9ba717a8d47f8c23a5';
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
 

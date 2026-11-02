@@ -5404,4 +5404,242 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyCopyInstead => 'Copy instead';
+
+  @override
+  String externalJobTitleCopy(int count, String place) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Copying $count files to $place',
+      one: 'Copying 1 file to $place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String externalJobTitleMove(int count, String place) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moving $count files to $place',
+      one: 'Moving 1 file to $place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String externalJobProgress(int done, int total, String size) {
+    return '$done of $total · $size';
+  }
+
+  @override
+  String get externalJobQueued => 'Waiting';
+
+  @override
+  String get externalJobRunning => 'In progress';
+
+  @override
+  String get externalJobPaused => 'Paused';
+
+  @override
+  String get externalJobPausedUnplugged =>
+      'Paused · connect the storage again to continue';
+
+  @override
+  String get externalJobDone => 'Done';
+
+  @override
+  String get externalJobCancelled => 'Cancelled';
+
+  @override
+  String externalJobFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files failed',
+      one: '1 file failed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get externalJobStoppedNoSpace => 'Stopped: not enough space';
+
+  @override
+  String get externalJobResume => 'Resume';
+
+  @override
+  String get externalJobPause => 'Pause';
+
+  @override
+  String get externalJobDetails => 'Details';
+
+  @override
+  String externalJobStartedCopy(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Copying $count files…',
+      one: 'Copying 1 file…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String externalJobStartedMove(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moving $count files…',
+      one: 'Moving 1 file…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get externalJobView => 'View';
+
+  @override
+  String externalNotEnoughSpace(String place) {
+    return 'Not enough space on $place';
+  }
+
+  @override
+  String get externalStagingNoSpace =>
+      'Not enough free space on this phone to copy through it';
+
+  @override
+  String externalFat32TooLarge(String name) {
+    return '$name: 4 GB or larger, too big for this drive (FAT32)';
+  }
+
+  @override
+  String externalRenamedForDrive(String from, String to) {
+    return '$from saved as $to';
+  }
+
+  @override
+  String externalCollisionTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files are already there',
+      one: '1 file is already there',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get externalCollisionKeepBoth => 'Keep both';
+
+  @override
+  String get externalCollisionSkip => 'Skip';
+
+  @override
+  String get externalCollisionReplace => 'Replace';
+
+  @override
+  String get externalApplyToAll =>
+      'Your choice applies to every file of this job.';
+
+  @override
+  String get externalCameraDeleteWarning =>
+      'Camera photos have no trash: deleting them here deletes them for good.';
+
+  @override
+  String externalOriginalNotRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count originals weren’t removed',
+      one: '1 original wasn’t removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get externalDeleteOriginals => 'Delete originals';
+
+  @override
+  String get externalSwipeFolder => 'Swipe this folder';
+
+  @override
+  String get externalSwipeFolderEmpty => 'No photos or videos in this folder';
+
+  @override
+  String get transfersLocalSection => 'On this phone';
+
+  @override
+  String get externalNoJobs =>
+      'No copies or moves between storage places in the last 7 days';
+
+  @override
+  String get externalClearFinished => 'Clear finished';
+
+  @override
+  String get externalVerifyFailed => 'Verification failed. Original kept.';
+
+  @override
+  String get externalSourceGone => 'The file is gone';
+
+  @override
+  String get externalAlreadyMoved => 'Already moved';
+
+  @override
+  String get externalSkippedExists => 'Skipped: already there';
+
+  @override
+  String get externalFileFailed => 'Couldn’t copy';
+
+  @override
+  String externalLogLine(String name, String reason) {
+    return '$name: $reason';
+  }
+
+  @override
+  String get externalFolderEmpty => 'This folder is empty';
+
+  @override
+  String get externalFolderError => 'Couldn’t open this folder';
+
+  @override
+  String get externalSortByName => 'Name';
+
+  @override
+  String get externalSortByDate => 'Date';
+
+  @override
+  String get externalSortBySize => 'Size';
+
+  @override
+  String get externalShowAll => 'All files';
+
+  @override
+  String get externalShowMedia => 'Photos and videos';
+
+  @override
+  String get externalCopyTo => 'Copy to…';
+
+  @override
+  String get externalMoveTo => 'Move to…';
+
+  @override
+  String get externalDelete => 'Delete';
+
+  @override
+  String get externalReadOnly => 'Read-only';
+
+  @override
+  String externalDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files deleted',
+      one: '1 file deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get externalDeleteFailed => 'Couldn’t delete';
 }

@@ -7,7 +7,10 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
+import 'package:kfm/core/files/file_ids.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/mtp/mtp_file_source.dart';
+import 'package:kfm/core/files/saf/saf_channel.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 enum ThumbPriority { visible, prefetch }
@@ -56,12 +59,27 @@ typedef FileThumbGenerator = Future<Uint8List?> Function(String path, int size);
 /// `.nomedia` folders, `Android/media`...) and `ms:` files whose MediaStore
 /// thumbnail fails get one too. Documents and other kinds: null, no channel
 /// call. C2/C3 scans keep passing [photoManagerThumbnail] explicitly.
+///
+/// U2: `saf:` files ask the document provider (else a downsampled decode,
+/// both in Kotlin); `mtp:` files the camera's own thumbnail.
 ThumbGenerator androidThumbnailGenerator({
   ThumbGenerator mediaStore = photoManagerThumbnail,
   FileThumbGenerator? fromFile,
+  SafPlatform? saf,
+  MtpObjectsPlatform? mtp,
 }) {
   final file = fromFile ?? FilesChannel().fileThumbnail;
+  final safChannel = saf ?? SafChannel();
+  final mtpChannel = mtp ?? MtpObjectsChannel();
   return (f, size) async {
+    if (parseSafId(f.id) case final id?) {
+      if (!DiskThumbnailCache.hasThumbnail(f)) return null;
+      return await safChannel.thumbnail(id.treeUri, id.documentId, size);
+    }
+    if (parseMtpId(f.id) case final id?) {
+      if (f.kind != FileKind.image) return null;
+      return await mtpChannel.thumbnail(id.deviceName, id.objectHandle);
+    }
     if (f.id.startsWith('ms:')) {
       try {
         final bytes = await mediaStore(f, size);

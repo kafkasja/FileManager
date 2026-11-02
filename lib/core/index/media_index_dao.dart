@@ -367,6 +367,18 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     return row == null ? null : _toRef(row);
   }
 
+  /// U2: indexed ids of the files in `folderPath`, by name ("Swipe this
+  /// folder" prefers the `ms:` id of an SD photo seen through SAF).
+  Future<Map<String, String>> idsByNameIn(String folderPath) async {
+    final rows = await (selectOnly(mediaIndex)
+          ..addColumns([mediaIndex.id, mediaIndex.name])
+          ..where(mediaIndex.folderPath.equals(folderPath)))
+        .get();
+    return {
+      for (final r in rows) r.read(mediaIndex.name)!: r.read(mediaIndex.id)!,
+    };
+  }
+
   /// Rows for [ids] in the same order; missing ids are skipped.
   Future<List<FileRef>> byIds(List<String> ids) async {
     final found = <String, FileRef>{};

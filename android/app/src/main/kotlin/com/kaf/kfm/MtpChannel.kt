@@ -61,6 +61,7 @@ class MtpChannel(
         stopWatching()
         sink = null
         events.setStreamHandler(null)
+        io.execute { closeAll() }
         io.shutdown()
     }
 
@@ -75,17 +76,122 @@ class MtpChannel(
                 val value: Any? = when (call.method) {
                     "list" -> list()
                     "requestPermission" -> requestPermission(call.argument<String>("deviceName"))
+                    "storages" -> storages(device(call))
+                    "children" -> children(device(call), int(call, "storage"), int(call, "parent"))
+                    "info" -> info(device(call), int(call, "handle"))
+                    "importTo" -> importTo(device(call), int(call, "handle"), call.argument<String>("path")!!)
+                    "delete" -> device(call).deleteObject(int(call, "handle"))
+                    "thumbnail" -> device(call).getThumbnail(int(call, "handle"))
+                    "canDelete" -> canDelete(device(call))
                     else -> {
                         main.post { result.notImplemented() }
                         return@execute
                     }
                 }
                 main.post { result.success(value) }
+            } catch (e: java.io.FileNotFoundException) {
+                main.post { result.error("NOT_FOUND", e.toString(), null) }
+            } catch (e: SecurityException) {
+                main.post { result.error("PERMISSION", e.toString(), null) }
             } catch (e: Exception) {
                 main.post { result.error("IO", e.toString(), null) }
             }
         }
     }
+
+    // ---- U2: read-only browsing ----
+
+    /** Open MtpDevices by device name (closed on detach and dispose). */
+    private val open = HashMap<String, MtpDevice>()
+
+    private fun int(call: MethodCall, key: String): Int =
+        (call.argument<Any>(key) as? Number)?.toInt() ?: throw IllegalArgumentException(key)
+
+    private fun device(call: MethodCall): MtpDevice {
+        val name = call.argument<String>("deviceName") ?: throw IllegalArgumentException("deviceName")
+        open[name]?.let { return it }
+        val manager = usb ?: throw IllegalStateException("no USB")
+        val d = cameras().firstOrNull { it.deviceName == name }
+            ?: throw java.io.FileNotFoundException("camera gone: $name")
+        if (!manager.hasPermission(d)) throw SecurityException("no USB permission")
+        val connection = manager.openDevice(d) ?: throw IllegalStateException("openDevice failed")
+        val mtp = MtpDevice(d)
+        if (!mtp.open(connection)) {
+            connection.close()
+            throw IllegalStateException("MtpDevice.open failed")
+        }
+        open[name] = mtp
+        return mtp
+    }
+
+    private fun closeAll() {
+        for (d in open.values) {
+            try {
+                d.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "close: $e")
+            }
+        }
+        open.clear()
+    }
+
+    private fun storages(d: MtpDevice): List<Map<String, Any?>> =
+        (d.storageIds ?: IntArray(0)).map { id ->
+            val info = d.getStorageInfo(id)
+            mapOf(
+                "id" to id,
+                "description" to info?.description,
+                "free" to info?.freeSpace,
+                "total" to info?.maxCapacity,
+            )
+        }
+
+    private fun objectRow(d: MtpDevice, handle: Int, info: android.mtp.MtpObjectInfo): Map<String, Any?> = mapOf(
+        "handle" to handle,
+        "storage" to info.storageId,
+        "parent" to info.parent,
+        "name" to info.name,
+        "folder" to (info.format == android.mtp.MtpConstants.FORMAT_ASSOCIATION),
+        "size" to info.compressedSizeLong,
+        "modified" to info.dateModified,
+        "created" to info.dateCreated,
+        "width" to info.imagePixWidth,
+        "height" to info.imagePixHeight,
+    )
+
+    /** [parent] -1 = the storage root. */
+    private fun children(d: MtpDevice, storage: Int, parent: Int): List<Map<String, Any?>> {
+        val handles = d.getObjectHandles(storage, 0, parent) ?: return emptyList()
+        return handles.toList().mapNotNull { h -> d.getObjectInfo(h)?.let { objectRow(d, h, it) } }
+    }
+
+    /** The object plus its folder names from the storage root (`path`). */
+    private fun info(d: MtpDevice, handle: Int): Map<String, Any?>? {
+        val info = d.getObjectInfo(handle) ?: return null
+        val names = ArrayList<String>()
+        var parent = info.parent
+        var depth = 0
+        while (parent != 0 && parent != -1 && depth < 32) {
+            val p = d.getObjectInfo(parent) ?: break
+            names.add(0, p.name)
+            parent = p.parent
+            depth++
+        }
+        return objectRow(d, handle, info) + ("path" to names.joinToString("/"))
+    }
+
+    private fun importTo(d: MtpDevice, handle: Int, path: String): Boolean {
+        val ok = d.importFile(handle, path)
+        if (!ok) java.io.File(path).delete()
+        return ok
+    }
+
+    private fun canDelete(d: MtpDevice): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            d.deviceInfo?.isOperationSupported(android.mtp.MtpConstants.OPERATION_DELETE_OBJECT) == true
+        } else {
+            false
+        }
 
     private fun cameras(): List<UsbDevice> =
         usb?.deviceList?.values?.filter {
@@ -98,7 +204,11 @@ class MtpChannel(
             val permitted = manager.hasPermission(d)
             var model: String? = null
             var supported: Boolean? = null
-            if (permitted) {
+            val cached = open[d.deviceName]
+            if (permitted && cached != null) {
+                supported = true
+                model = cached.deviceInfo?.model
+            } else if (permitted) {
                 val mtp = MtpDevice(d)
                 val connection = try {
                     manager.openDevice(d)
@@ -148,7 +258,10 @@ class MtpChannel(
     private fun startWatching() {
         if (receiver != null || usb == null) return
         val r = object : BroadcastReceiver() {
-            override fun onReceive(c: Context, intent: Intent) = emitChanged()
+            override fun onReceive(c: Context, intent: Intent) {
+                if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) io.execute { closeAll() }
+                emitChanged()
+            }
         }
         ContextCompat.registerReceiver(
             context,

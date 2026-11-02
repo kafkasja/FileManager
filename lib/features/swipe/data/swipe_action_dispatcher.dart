@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/rename/data/rename_batch_repository.dart';
 import 'package:kfm/features/session/domain/session.dart';
@@ -7,6 +9,7 @@ import 'package:kfm/features/tags/data/favorites_repository.dart';
 import 'package:kfm/features/tags/data/tag_repository.dart';
 import 'package:kfm/features/tags/domain/tag.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
+import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/previous_state.dart';
 import 'package:meta/meta.dart';
@@ -60,6 +63,13 @@ class SwipeActionDispatcher {
 
   final UndoRepository _undo;
   final DeleteQueue _deletes;
+
+  /// U2: session ids, once per session, on the first delete swipe of a
+  /// camera file (its delete is permanent: the screen warns).
+  Stream<int> get cameraDeleteWarnings => _cameraWarnings.stream;
+  final StreamController<int> _cameraWarnings =
+      StreamController<int>.broadcast();
+  final Set<int> _warnedSessions = {};
   final SwipeFileOps _fileOps;
   final TagRepository _tags;
   final FavoritesRepository _favorites;
@@ -157,8 +167,23 @@ class SwipeActionDispatcher {
     return null;
   }
 
+  /// U2: camera files (`mtp:`) have no trash: their deletes are permanent
+  /// (the swipe screen warned once).
+  static DeleteMode _trashMode(Session session, FileRef file) =>
+      file.id.startsWith('mtp:') ? DeleteMode.permanent : session.deleteMode;
+
   /// Returns the action's seq. Call only when [problemFor] is null.
-  int dispatch(Session session, FileRef file, SwipeAction action) =>
+  int dispatch(Session session, FileRef file, SwipeAction action) {
+    if (file.id.startsWith('mtp:') &&
+        (action.type == SwipeActionType.trash ||
+            action.type == SwipeActionType.moveTo) &&
+        _warnedSessions.add(session.id)) {
+      _cameraWarnings.add(session.id);
+    }
+    return _dispatch(session, file, action);
+  }
+
+  int _dispatch(Session session, FileRef file, SwipeAction action) =>
       switch (action.type) {
         SwipeActionType.keep => _undo.record(
           session.id,
@@ -170,12 +195,12 @@ class SwipeActionDispatcher {
           session.id,
           file,
           action,
-          TrashPreviousState(mode: session.deleteMode.name),
+          TrashPreviousState(mode: _trashMode(session, file).name),
           alsoInTransaction: (actionId) => _deletes.queueInTransaction(
             actionId: actionId,
             sessionId: session.id,
             file: file,
-            mode: session.deleteMode,
+            mode: _trashMode(session, file),
           ),
         ),
         SwipeActionType.addTag => _undo.recordWith(
@@ -192,7 +217,15 @@ class SwipeActionDispatcher {
           applyInTransaction: () => _favorites.addInTransaction(file.id),
         ),
         SwipeActionType.moveTo ||
-        SwipeActionType.copyTo => _fileOps.run(session.id, file, action),
+        SwipeActionType.copyTo => _fileOps.run(
+          session.id,
+          file,
+          action,
+          // U2: cameras have no trash.
+          deleteMode: file.id.startsWith('mtp:')
+              ? DeleteMode.permanent
+              : session.deleteMode,
+        ),
         SwipeActionType.renameBatch => _undo.recordWith(
           session.id,
           file,

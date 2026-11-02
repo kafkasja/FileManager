@@ -13,6 +13,7 @@ import 'package:kfm/features/connect/ui/remembered_devices_screen.dart';
 import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
 import 'package:kfm/features/connect/ui/remote_swipe_screen.dart';
 import 'package:kfm/features/connect/ui/share_screen.dart';
+import 'package:kfm/features/external_storage/ui/place_browser_screen.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
 import 'package:kfm/features/presets/ui/manage_presets_screen.dart';
 import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
@@ -39,6 +40,13 @@ part 'router.g.dart';
 
 enum AppTab { swipe, browse, trash, settings }
 
+/// U2: the place browser at [root] (a volume path or `mtp:<device>`).
+String placeBrowserLocation({required String root, required String title}) =>
+    Uri(
+      path: AppRoutes.browsePlace,
+      queryParameters: {'root': root, 'title': title},
+    ).toString();
+
 abstract final class AppRoutes {
   /// Blank start screen while the first permission check runs.
   static const start = '/';
@@ -51,6 +59,9 @@ abstract final class AppRoutes {
 
   /// B6 "View selected".
   static const browseSelected = '/browse/selected';
+
+  /// U2 place browser (SAF volumes, cameras); see [placeBrowserLocation].
+  static const browsePlace = '/browse/place';
 
   /// B8 search; `extra` is the folder it was opened from (or null).
   static const search = '/browse/search';
@@ -250,6 +261,13 @@ GoRouter router(Ref ref) {
                             const CleanDuplicatesScreen(),
                       ),
                     ],
+                  ),
+                  GoRoute(
+                    path: 'place',
+                    builder: (context, state) => PlaceBrowserScreen(
+                      root: state.uri.queryParameters['root'] ?? '',
+                      title: state.uri.queryParameters['title'] ?? '',
+                    ),
                   ),
                   GoRoute(
                     path: 'storage',

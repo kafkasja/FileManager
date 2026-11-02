@@ -10,6 +10,7 @@ import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart'
     show pairingFailureMessage;
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
+import 'package:kfm/features/folders/ui/local_jobs_section.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -29,7 +30,14 @@ class TransferSection {
 }
 
 @Riverpod(keepAlive: true)
-List<TransferSection> transferSections(Ref ref) => const [];
+List<TransferSection> transferSections(Ref ref) => [
+  // U2: copies and moves between places on this device.
+  TransferSection(
+    id: 'local',
+    label: (context) => context.l10n.transfersLocalSection,
+    builder: (_) => const LocalJobsSection(),
+  ),
+];
 
 /// What a stored error code shows (TASK-N9 messages).
 String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {

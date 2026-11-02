@@ -42,7 +42,8 @@ Request _req(
 Future<Map<String, Object?>> _json(Response r) async =>
     jsonDecode(await r.readAsString()) as Map<String, Object?>;
 
-Middleware _passThrough() => (inner) => inner;
+Middleware _passThrough() =>
+    (inner) => inner;
 
 void main() {
   late PairNonceStore nonces;

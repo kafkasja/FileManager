@@ -87,6 +87,13 @@ class SwipeScreen extends ConsumerWidget {
           );
         }
       })
+      ..listen(cameraDeleteWarningsProvider, (_, next) {
+        if (next is AsyncData) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.externalCameraDeleteWarning)),
+          );
+        }
+      })
       ..listen(deleteQueueErrorsProvider, (_, next) {
         if (next is AsyncData) {
           ScaffoldMessenger.of(context)

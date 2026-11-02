@@ -114,6 +114,7 @@ class PendingFolder {
   /// original folder is recreated. Returns the new path.
   Future<String> restore(String itemId) async {
     final row = await _byId(itemId);
+    _refuseSaf(row);
     final folder = parentOf(row.originalPath);
     final (base, ext) = splitExtension(row.name);
     var target = row.originalPath;
@@ -141,7 +142,9 @@ class PendingFolder {
   /// "Delete forever" (D5).
   Future<void> deleteNow(List<String> itemIds) async {
     for (final id in itemIds) {
-      await _deleteItem(await _byId(id));
+      final row = await _byId(id);
+      _refuseSaf(row);
+      await _deleteItem(row);
     }
   }
 
@@ -154,6 +157,8 @@ class PendingFolder {
     )..where((p) => p.expiresAt.isSmallerOrEqualValue(cutoff))).get();
     var purged = 0;
     for (final row in expired) {
+      // U2: SAF items are purged by SafPendingFolder (needs the channel).
+      if (isSafStored(row.storedPath)) continue;
       if (!await Directory(row.volumeId).exists()) continue;
       await _deleteItem(row);
       purged++;
@@ -174,7 +179,10 @@ class PendingFolder {
   /// files go to `<volume>/Download/Restored/` with a fresh retention. Known
   /// rows are untouched (H2). Returns rows added.
   Future<int> reconcile(List<String> volumeRoots) async {
-    final stored = {for (final r in await all()) r.storedPath};
+    final stored = {
+      for (final r in await all())
+        if (isSafStored(r.storedPath)) _safStoredPath(r) else r.storedPath,
+    };
     var added = 0;
     final days = clampRetentionDays(await _retentionDays());
     for (final root in volumeRoots) {
@@ -221,6 +229,26 @@ class PendingFolder {
       }
     }
     return added;
+  }
+
+  /// U2: rows of `SafPendingFolder` keep the stored file's `saf:` id.
+  static bool isSafStored(String storedPath) => storedPath.startsWith('saf:');
+
+  /// The disk path of a SAF row's stored file (externalstorage document
+  /// ids are `<uuid>:<relative path>`), so [reconcile] doesn't adopt it.
+  static String _safStoredPath(PendingFolderItemRow r) {
+    final doc = r.storedPath.substring(r.storedPath.indexOf('|') + 1);
+    return '${r.volumeId}/${doc.substring(doc.indexOf(':') + 1)}';
+  }
+
+  static void _refuseSaf(PendingFolderItemRow row) {
+    if (isSafStored(row.storedPath)) {
+      throw FileOpException(
+        FileOpFailure.unsupported,
+        'SAF pending item ${row.id}',
+        fileId: row.originalFileId,
+      );
+    }
   }
 
   // ---- helpers ----

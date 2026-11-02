@@ -14911,6 +14911,1491 @@ class TransferFilesCompanion extends UpdateCompanion<TransferFileRow> {
   }
 }
 
+class $LocalJobsTable extends LocalJobs
+    with TableInfo<$LocalJobsTable, LocalJobRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalJobsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalJobMode, String> mode =
+      GeneratedColumn<String>(
+        'mode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalJobMode>($LocalJobsTable.$convertermode);
+  static const VerificationMeta _targetPlaceIdMeta = const VerificationMeta(
+    'targetPlaceId',
+  );
+  @override
+  late final GeneratedColumn<String> targetPlaceId = GeneratedColumn<String>(
+    'target_place_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetFolderMeta = const VerificationMeta(
+    'targetFolder',
+  );
+  @override
+  late final GeneratedColumn<String> targetFolder = GeneratedColumn<String>(
+    'target_folder',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalJobStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalJobStatus>($LocalJobsTable.$converterstatus);
+  @override
+  late final GeneratedColumnWithTypeConverter<CollisionPolicy?, String>
+  collisionPolicy = GeneratedColumn<String>(
+    'collision_policy',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<CollisionPolicy?>($LocalJobsTable.$convertercollisionPolicyn);
+  static const VerificationMeta _deleteModeMeta = const VerificationMeta(
+    'deleteMode',
+  );
+  @override
+  late final GeneratedColumn<String> deleteMode = GeneratedColumn<String>(
+    'delete_mode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _failureReasonMeta = const VerificationMeta(
+    'failureReason',
+  );
+  @override
+  late final GeneratedColumn<String> failureReason = GeneratedColumn<String>(
+    'failure_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMsMeta = const VerificationMeta(
+    'createdAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMs = GeneratedColumn<int>(
+    'created_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMsMeta = const VerificationMeta(
+    'updatedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMs = GeneratedColumn<int>(
+    'updated_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    mode,
+    targetPlaceId,
+    targetFolder,
+    status,
+    collisionPolicy,
+    deleteMode,
+    failureReason,
+    createdAtMs,
+    updatedAtMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_jobs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalJobRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('target_place_id')) {
+      context.handle(
+        _targetPlaceIdMeta,
+        targetPlaceId.isAcceptableOrUnknown(
+          data['target_place_id']!,
+          _targetPlaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetPlaceIdMeta);
+    }
+    if (data.containsKey('target_folder')) {
+      context.handle(
+        _targetFolderMeta,
+        targetFolder.isAcceptableOrUnknown(
+          data['target_folder']!,
+          _targetFolderMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetFolderMeta);
+    }
+    if (data.containsKey('delete_mode')) {
+      context.handle(
+        _deleteModeMeta,
+        deleteMode.isAcceptableOrUnknown(data['delete_mode']!, _deleteModeMeta),
+      );
+    }
+    if (data.containsKey('failure_reason')) {
+      context.handle(
+        _failureReasonMeta,
+        failureReason.isAcceptableOrUnknown(
+          data['failure_reason']!,
+          _failureReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at_ms')) {
+      context.handle(
+        _createdAtMsMeta,
+        createdAtMs.isAcceptableOrUnknown(
+          data['created_at_ms']!,
+          _createdAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMsMeta);
+    }
+    if (data.containsKey('updated_at_ms')) {
+      context.handle(
+        _updatedAtMsMeta,
+        updatedAtMs.isAcceptableOrUnknown(
+          data['updated_at_ms']!,
+          _updatedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalJobRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalJobRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      mode: $LocalJobsTable.$convertermode.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}mode'],
+        )!,
+      ),
+      targetPlaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_place_id'],
+      )!,
+      targetFolder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_folder'],
+      )!,
+      status: $LocalJobsTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      collisionPolicy: $LocalJobsTable.$convertercollisionPolicyn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}collision_policy'],
+        ),
+      ),
+      deleteMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}delete_mode'],
+      ),
+      failureReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failure_reason'],
+      ),
+      createdAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_ms'],
+      )!,
+      updatedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalJobsTable createAlias(String alias) {
+    return $LocalJobsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<LocalJobMode, String, String> $convertermode =
+      const EnumNameConverter<LocalJobMode>(LocalJobMode.values);
+  static JsonTypeConverter2<LocalJobStatus, String, String> $converterstatus =
+      const EnumNameConverter<LocalJobStatus>(LocalJobStatus.values);
+  static JsonTypeConverter2<CollisionPolicy, String, String>
+  $convertercollisionPolicy = const EnumNameConverter<CollisionPolicy>(
+    CollisionPolicy.values,
+  );
+  static JsonTypeConverter2<CollisionPolicy?, String?, String?>
+  $convertercollisionPolicyn = JsonTypeConverter2.asNullable(
+    $convertercollisionPolicy,
+  );
+}
+
+class LocalJobRow extends DataClass implements Insertable<LocalJobRow> {
+  /// `randomHexId()`.
+  final String id;
+  final LocalJobMode mode;
+
+  /// U1 place id of the target (`primary`, a volume uuid).
+  final String targetPlaceId;
+
+  /// Absolute folder path (SAF places too: their volume path).
+  final String targetFolder;
+  final LocalJobStatus status;
+  final CollisionPolicy? collisionPolicy;
+
+  /// Move jobs: the D1 delete mode for this job ('trash' | 'permanent').
+  final String? deleteMode;
+
+  /// Why the job stopped (paused / failed), an engine code.
+  final String? failureReason;
+  final int createdAtMs;
+  final int updatedAtMs;
+  const LocalJobRow({
+    required this.id,
+    required this.mode,
+    required this.targetPlaceId,
+    required this.targetFolder,
+    required this.status,
+    this.collisionPolicy,
+    this.deleteMode,
+    this.failureReason,
+    required this.createdAtMs,
+    required this.updatedAtMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    {
+      map['mode'] = Variable<String>(
+        $LocalJobsTable.$convertermode.toSql(mode),
+      );
+    }
+    map['target_place_id'] = Variable<String>(targetPlaceId);
+    map['target_folder'] = Variable<String>(targetFolder);
+    {
+      map['status'] = Variable<String>(
+        $LocalJobsTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || collisionPolicy != null) {
+      map['collision_policy'] = Variable<String>(
+        $LocalJobsTable.$convertercollisionPolicyn.toSql(collisionPolicy),
+      );
+    }
+    if (!nullToAbsent || deleteMode != null) {
+      map['delete_mode'] = Variable<String>(deleteMode);
+    }
+    if (!nullToAbsent || failureReason != null) {
+      map['failure_reason'] = Variable<String>(failureReason);
+    }
+    map['created_at_ms'] = Variable<int>(createdAtMs);
+    map['updated_at_ms'] = Variable<int>(updatedAtMs);
+    return map;
+  }
+
+  LocalJobsCompanion toCompanion(bool nullToAbsent) {
+    return LocalJobsCompanion(
+      id: Value(id),
+      mode: Value(mode),
+      targetPlaceId: Value(targetPlaceId),
+      targetFolder: Value(targetFolder),
+      status: Value(status),
+      collisionPolicy: collisionPolicy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(collisionPolicy),
+      deleteMode: deleteMode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deleteMode),
+      failureReason: failureReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureReason),
+      createdAtMs: Value(createdAtMs),
+      updatedAtMs: Value(updatedAtMs),
+    );
+  }
+
+  factory LocalJobRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalJobRow(
+      id: serializer.fromJson<String>(json['id']),
+      mode: $LocalJobsTable.$convertermode.fromJson(
+        serializer.fromJson<String>(json['mode']),
+      ),
+      targetPlaceId: serializer.fromJson<String>(json['targetPlaceId']),
+      targetFolder: serializer.fromJson<String>(json['targetFolder']),
+      status: $LocalJobsTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      collisionPolicy: $LocalJobsTable.$convertercollisionPolicyn.fromJson(
+        serializer.fromJson<String?>(json['collisionPolicy']),
+      ),
+      deleteMode: serializer.fromJson<String?>(json['deleteMode']),
+      failureReason: serializer.fromJson<String?>(json['failureReason']),
+      createdAtMs: serializer.fromJson<int>(json['createdAtMs']),
+      updatedAtMs: serializer.fromJson<int>(json['updatedAtMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'mode': serializer.toJson<String>(
+        $LocalJobsTable.$convertermode.toJson(mode),
+      ),
+      'targetPlaceId': serializer.toJson<String>(targetPlaceId),
+      'targetFolder': serializer.toJson<String>(targetFolder),
+      'status': serializer.toJson<String>(
+        $LocalJobsTable.$converterstatus.toJson(status),
+      ),
+      'collisionPolicy': serializer.toJson<String?>(
+        $LocalJobsTable.$convertercollisionPolicyn.toJson(collisionPolicy),
+      ),
+      'deleteMode': serializer.toJson<String?>(deleteMode),
+      'failureReason': serializer.toJson<String?>(failureReason),
+      'createdAtMs': serializer.toJson<int>(createdAtMs),
+      'updatedAtMs': serializer.toJson<int>(updatedAtMs),
+    };
+  }
+
+  LocalJobRow copyWith({
+    String? id,
+    LocalJobMode? mode,
+    String? targetPlaceId,
+    String? targetFolder,
+    LocalJobStatus? status,
+    Value<CollisionPolicy?> collisionPolicy = const Value.absent(),
+    Value<String?> deleteMode = const Value.absent(),
+    Value<String?> failureReason = const Value.absent(),
+    int? createdAtMs,
+    int? updatedAtMs,
+  }) => LocalJobRow(
+    id: id ?? this.id,
+    mode: mode ?? this.mode,
+    targetPlaceId: targetPlaceId ?? this.targetPlaceId,
+    targetFolder: targetFolder ?? this.targetFolder,
+    status: status ?? this.status,
+    collisionPolicy: collisionPolicy.present
+        ? collisionPolicy.value
+        : this.collisionPolicy,
+    deleteMode: deleteMode.present ? deleteMode.value : this.deleteMode,
+    failureReason: failureReason.present
+        ? failureReason.value
+        : this.failureReason,
+    createdAtMs: createdAtMs ?? this.createdAtMs,
+    updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+  );
+  LocalJobRow copyWithCompanion(LocalJobsCompanion data) {
+    return LocalJobRow(
+      id: data.id.present ? data.id.value : this.id,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      targetPlaceId: data.targetPlaceId.present
+          ? data.targetPlaceId.value
+          : this.targetPlaceId,
+      targetFolder: data.targetFolder.present
+          ? data.targetFolder.value
+          : this.targetFolder,
+      status: data.status.present ? data.status.value : this.status,
+      collisionPolicy: data.collisionPolicy.present
+          ? data.collisionPolicy.value
+          : this.collisionPolicy,
+      deleteMode: data.deleteMode.present
+          ? data.deleteMode.value
+          : this.deleteMode,
+      failureReason: data.failureReason.present
+          ? data.failureReason.value
+          : this.failureReason,
+      createdAtMs: data.createdAtMs.present
+          ? data.createdAtMs.value
+          : this.createdAtMs,
+      updatedAtMs: data.updatedAtMs.present
+          ? data.updatedAtMs.value
+          : this.updatedAtMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalJobRow(')
+          ..write('id: $id, ')
+          ..write('mode: $mode, ')
+          ..write('targetPlaceId: $targetPlaceId, ')
+          ..write('targetFolder: $targetFolder, ')
+          ..write('status: $status, ')
+          ..write('collisionPolicy: $collisionPolicy, ')
+          ..write('deleteMode: $deleteMode, ')
+          ..write('failureReason: $failureReason, ')
+          ..write('createdAtMs: $createdAtMs, ')
+          ..write('updatedAtMs: $updatedAtMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    mode,
+    targetPlaceId,
+    targetFolder,
+    status,
+    collisionPolicy,
+    deleteMode,
+    failureReason,
+    createdAtMs,
+    updatedAtMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalJobRow &&
+          other.id == this.id &&
+          other.mode == this.mode &&
+          other.targetPlaceId == this.targetPlaceId &&
+          other.targetFolder == this.targetFolder &&
+          other.status == this.status &&
+          other.collisionPolicy == this.collisionPolicy &&
+          other.deleteMode == this.deleteMode &&
+          other.failureReason == this.failureReason &&
+          other.createdAtMs == this.createdAtMs &&
+          other.updatedAtMs == this.updatedAtMs);
+}
+
+class LocalJobsCompanion extends UpdateCompanion<LocalJobRow> {
+  final Value<String> id;
+  final Value<LocalJobMode> mode;
+  final Value<String> targetPlaceId;
+  final Value<String> targetFolder;
+  final Value<LocalJobStatus> status;
+  final Value<CollisionPolicy?> collisionPolicy;
+  final Value<String?> deleteMode;
+  final Value<String?> failureReason;
+  final Value<int> createdAtMs;
+  final Value<int> updatedAtMs;
+  final Value<int> rowid;
+  const LocalJobsCompanion({
+    this.id = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.targetPlaceId = const Value.absent(),
+    this.targetFolder = const Value.absent(),
+    this.status = const Value.absent(),
+    this.collisionPolicy = const Value.absent(),
+    this.deleteMode = const Value.absent(),
+    this.failureReason = const Value.absent(),
+    this.createdAtMs = const Value.absent(),
+    this.updatedAtMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalJobsCompanion.insert({
+    required String id,
+    required LocalJobMode mode,
+    required String targetPlaceId,
+    required String targetFolder,
+    required LocalJobStatus status,
+    this.collisionPolicy = const Value.absent(),
+    this.deleteMode = const Value.absent(),
+    this.failureReason = const Value.absent(),
+    required int createdAtMs,
+    required int updatedAtMs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       mode = Value(mode),
+       targetPlaceId = Value(targetPlaceId),
+       targetFolder = Value(targetFolder),
+       status = Value(status),
+       createdAtMs = Value(createdAtMs),
+       updatedAtMs = Value(updatedAtMs);
+  static Insertable<LocalJobRow> custom({
+    Expression<String>? id,
+    Expression<String>? mode,
+    Expression<String>? targetPlaceId,
+    Expression<String>? targetFolder,
+    Expression<String>? status,
+    Expression<String>? collisionPolicy,
+    Expression<String>? deleteMode,
+    Expression<String>? failureReason,
+    Expression<int>? createdAtMs,
+    Expression<int>? updatedAtMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mode != null) 'mode': mode,
+      if (targetPlaceId != null) 'target_place_id': targetPlaceId,
+      if (targetFolder != null) 'target_folder': targetFolder,
+      if (status != null) 'status': status,
+      if (collisionPolicy != null) 'collision_policy': collisionPolicy,
+      if (deleteMode != null) 'delete_mode': deleteMode,
+      if (failureReason != null) 'failure_reason': failureReason,
+      if (createdAtMs != null) 'created_at_ms': createdAtMs,
+      if (updatedAtMs != null) 'updated_at_ms': updatedAtMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalJobsCompanion copyWith({
+    Value<String>? id,
+    Value<LocalJobMode>? mode,
+    Value<String>? targetPlaceId,
+    Value<String>? targetFolder,
+    Value<LocalJobStatus>? status,
+    Value<CollisionPolicy?>? collisionPolicy,
+    Value<String?>? deleteMode,
+    Value<String?>? failureReason,
+    Value<int>? createdAtMs,
+    Value<int>? updatedAtMs,
+    Value<int>? rowid,
+  }) {
+    return LocalJobsCompanion(
+      id: id ?? this.id,
+      mode: mode ?? this.mode,
+      targetPlaceId: targetPlaceId ?? this.targetPlaceId,
+      targetFolder: targetFolder ?? this.targetFolder,
+      status: status ?? this.status,
+      collisionPolicy: collisionPolicy ?? this.collisionPolicy,
+      deleteMode: deleteMode ?? this.deleteMode,
+      failureReason: failureReason ?? this.failureReason,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+      updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(
+        $LocalJobsTable.$convertermode.toSql(mode.value),
+      );
+    }
+    if (targetPlaceId.present) {
+      map['target_place_id'] = Variable<String>(targetPlaceId.value);
+    }
+    if (targetFolder.present) {
+      map['target_folder'] = Variable<String>(targetFolder.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $LocalJobsTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (collisionPolicy.present) {
+      map['collision_policy'] = Variable<String>(
+        $LocalJobsTable.$convertercollisionPolicyn.toSql(collisionPolicy.value),
+      );
+    }
+    if (deleteMode.present) {
+      map['delete_mode'] = Variable<String>(deleteMode.value);
+    }
+    if (failureReason.present) {
+      map['failure_reason'] = Variable<String>(failureReason.value);
+    }
+    if (createdAtMs.present) {
+      map['created_at_ms'] = Variable<int>(createdAtMs.value);
+    }
+    if (updatedAtMs.present) {
+      map['updated_at_ms'] = Variable<int>(updatedAtMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalJobsCompanion(')
+          ..write('id: $id, ')
+          ..write('mode: $mode, ')
+          ..write('targetPlaceId: $targetPlaceId, ')
+          ..write('targetFolder: $targetFolder, ')
+          ..write('status: $status, ')
+          ..write('collisionPolicy: $collisionPolicy, ')
+          ..write('deleteMode: $deleteMode, ')
+          ..write('failureReason: $failureReason, ')
+          ..write('createdAtMs: $createdAtMs, ')
+          ..write('updatedAtMs: $updatedAtMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalJobFilesTable extends LocalJobFiles
+    with TableInfo<$LocalJobFilesTable, LocalJobFileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalJobFilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _jobIdMeta = const VerificationMeta('jobId');
+  @override
+  late final GeneratedColumn<String> jobId = GeneratedColumn<String>(
+    'job_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES local_jobs (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourcePlaceIdMeta = const VerificationMeta(
+    'sourcePlaceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourcePlaceId = GeneratedColumn<String>(
+    'source_place_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalNameMeta = const VerificationMeta(
+    'originalName',
+  );
+  @override
+  late final GeneratedColumn<String> originalName = GeneratedColumn<String>(
+    'original_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetNameMeta = const VerificationMeta(
+    'targetName',
+  );
+  @override
+  late final GeneratedColumn<String> targetName = GeneratedColumn<String>(
+    'target_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LocalFileStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LocalFileStatus>($LocalJobFilesTable.$converterstatus);
+  static const VerificationMeta _targetIdMeta = const VerificationMeta(
+    'targetId',
+  );
+  @override
+  late final GeneratedColumn<String> targetId = GeneratedColumn<String>(
+    'target_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
+  @override
+  late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
+    'sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SourceOutcome?, String>
+  sourceOutcome = GeneratedColumn<String>(
+    'source_outcome',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<SourceOutcome?>($LocalJobFilesTable.$convertersourceOutcomen);
+  static const VerificationMeta _sourceModifiedAtMsMeta =
+      const VerificationMeta('sourceModifiedAtMs');
+  @override
+  late final GeneratedColumn<int> sourceModifiedAtMs = GeneratedColumn<int>(
+    'source_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _failureReasonMeta = const VerificationMeta(
+    'failureReason',
+  );
+  @override
+  late final GeneratedColumn<String> failureReason = GeneratedColumn<String>(
+    'failure_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    jobId,
+    position,
+    sourceId,
+    sourcePlaceId,
+    originalName,
+    targetName,
+    sizeBytes,
+    status,
+    targetId,
+    sha256,
+    sourceOutcome,
+    sourceModifiedAtMs,
+    failureReason,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_job_files';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalJobFileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('job_id')) {
+      context.handle(
+        _jobIdMeta,
+        jobId.isAcceptableOrUnknown(data['job_id']!, _jobIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jobIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('source_place_id')) {
+      context.handle(
+        _sourcePlaceIdMeta,
+        sourcePlaceId.isAcceptableOrUnknown(
+          data['source_place_id']!,
+          _sourcePlaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourcePlaceIdMeta);
+    }
+    if (data.containsKey('original_name')) {
+      context.handle(
+        _originalNameMeta,
+        originalName.isAcceptableOrUnknown(
+          data['original_name']!,
+          _originalNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalNameMeta);
+    }
+    if (data.containsKey('target_name')) {
+      context.handle(
+        _targetNameMeta,
+        targetName.isAcceptableOrUnknown(data['target_name']!, _targetNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetNameMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('target_id')) {
+      context.handle(
+        _targetIdMeta,
+        targetId.isAcceptableOrUnknown(data['target_id']!, _targetIdMeta),
+      );
+    }
+    if (data.containsKey('sha256')) {
+      context.handle(
+        _sha256Meta,
+        sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta),
+      );
+    }
+    if (data.containsKey('source_modified_at_ms')) {
+      context.handle(
+        _sourceModifiedAtMsMeta,
+        sourceModifiedAtMs.isAcceptableOrUnknown(
+          data['source_modified_at_ms']!,
+          _sourceModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceModifiedAtMsMeta);
+    }
+    if (data.containsKey('failure_reason')) {
+      context.handle(
+        _failureReasonMeta,
+        failureReason.isAcceptableOrUnknown(
+          data['failure_reason']!,
+          _failureReasonMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {jobId, position};
+  @override
+  LocalJobFileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalJobFileRow(
+      jobId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}job_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      sourcePlaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_place_id'],
+      )!,
+      originalName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_name'],
+      )!,
+      targetName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_name'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      status: $LocalJobFilesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      targetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_id'],
+      ),
+      sha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sha256'],
+      ),
+      sourceOutcome: $LocalJobFilesTable.$convertersourceOutcomen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}source_outcome'],
+        ),
+      ),
+      sourceModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_modified_at_ms'],
+      )!,
+      failureReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failure_reason'],
+      ),
+    );
+  }
+
+  @override
+  $LocalJobFilesTable createAlias(String alias) {
+    return $LocalJobFilesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<LocalFileStatus, String, String> $converterstatus =
+      const EnumNameConverter<LocalFileStatus>(LocalFileStatus.values);
+  static JsonTypeConverter2<SourceOutcome, String, String>
+  $convertersourceOutcome = const EnumNameConverter<SourceOutcome>(
+    SourceOutcome.values,
+  );
+  static JsonTypeConverter2<SourceOutcome?, String?, String?>
+  $convertersourceOutcomen = JsonTypeConverter2.asNullable(
+    $convertersourceOutcome,
+  );
+}
+
+class LocalJobFileRow extends DataClass implements Insertable<LocalJobFileRow> {
+  final String jobId;
+  final int position;
+  final String sourceId;
+  final String sourcePlaceId;
+  final String originalName;
+
+  /// After FAT name sanitising (the job log shows renamed files).
+  final String targetName;
+  final int sizeBytes;
+  final LocalFileStatus status;
+
+  /// The verified copy's `FileRef.id`.
+  final String? targetId;
+  final String? sha256;
+
+  /// N11: what happened to the original of a move.
+  final SourceOutcome? sourceOutcome;
+
+  /// The source's modified time when the copy started.
+  final int sourceModifiedAtMs;
+
+  /// An engine code or a `FileOpFailure` name.
+  final String? failureReason;
+  const LocalJobFileRow({
+    required this.jobId,
+    required this.position,
+    required this.sourceId,
+    required this.sourcePlaceId,
+    required this.originalName,
+    required this.targetName,
+    required this.sizeBytes,
+    required this.status,
+    this.targetId,
+    this.sha256,
+    this.sourceOutcome,
+    required this.sourceModifiedAtMs,
+    this.failureReason,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['job_id'] = Variable<String>(jobId);
+    map['position'] = Variable<int>(position);
+    map['source_id'] = Variable<String>(sourceId);
+    map['source_place_id'] = Variable<String>(sourcePlaceId);
+    map['original_name'] = Variable<String>(originalName);
+    map['target_name'] = Variable<String>(targetName);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    {
+      map['status'] = Variable<String>(
+        $LocalJobFilesTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || targetId != null) {
+      map['target_id'] = Variable<String>(targetId);
+    }
+    if (!nullToAbsent || sha256 != null) {
+      map['sha256'] = Variable<String>(sha256);
+    }
+    if (!nullToAbsent || sourceOutcome != null) {
+      map['source_outcome'] = Variable<String>(
+        $LocalJobFilesTable.$convertersourceOutcomen.toSql(sourceOutcome),
+      );
+    }
+    map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs);
+    if (!nullToAbsent || failureReason != null) {
+      map['failure_reason'] = Variable<String>(failureReason);
+    }
+    return map;
+  }
+
+  LocalJobFilesCompanion toCompanion(bool nullToAbsent) {
+    return LocalJobFilesCompanion(
+      jobId: Value(jobId),
+      position: Value(position),
+      sourceId: Value(sourceId),
+      sourcePlaceId: Value(sourcePlaceId),
+      originalName: Value(originalName),
+      targetName: Value(targetName),
+      sizeBytes: Value(sizeBytes),
+      status: Value(status),
+      targetId: targetId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetId),
+      sha256: sha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sha256),
+      sourceOutcome: sourceOutcome == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceOutcome),
+      sourceModifiedAtMs: Value(sourceModifiedAtMs),
+      failureReason: failureReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureReason),
+    );
+  }
+
+  factory LocalJobFileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalJobFileRow(
+      jobId: serializer.fromJson<String>(json['jobId']),
+      position: serializer.fromJson<int>(json['position']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      sourcePlaceId: serializer.fromJson<String>(json['sourcePlaceId']),
+      originalName: serializer.fromJson<String>(json['originalName']),
+      targetName: serializer.fromJson<String>(json['targetName']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      status: $LocalJobFilesTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      targetId: serializer.fromJson<String?>(json['targetId']),
+      sha256: serializer.fromJson<String?>(json['sha256']),
+      sourceOutcome: $LocalJobFilesTable.$convertersourceOutcomen.fromJson(
+        serializer.fromJson<String?>(json['sourceOutcome']),
+      ),
+      sourceModifiedAtMs: serializer.fromJson<int>(json['sourceModifiedAtMs']),
+      failureReason: serializer.fromJson<String?>(json['failureReason']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'jobId': serializer.toJson<String>(jobId),
+      'position': serializer.toJson<int>(position),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'sourcePlaceId': serializer.toJson<String>(sourcePlaceId),
+      'originalName': serializer.toJson<String>(originalName),
+      'targetName': serializer.toJson<String>(targetName),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'status': serializer.toJson<String>(
+        $LocalJobFilesTable.$converterstatus.toJson(status),
+      ),
+      'targetId': serializer.toJson<String?>(targetId),
+      'sha256': serializer.toJson<String?>(sha256),
+      'sourceOutcome': serializer.toJson<String?>(
+        $LocalJobFilesTable.$convertersourceOutcomen.toJson(sourceOutcome),
+      ),
+      'sourceModifiedAtMs': serializer.toJson<int>(sourceModifiedAtMs),
+      'failureReason': serializer.toJson<String?>(failureReason),
+    };
+  }
+
+  LocalJobFileRow copyWith({
+    String? jobId,
+    int? position,
+    String? sourceId,
+    String? sourcePlaceId,
+    String? originalName,
+    String? targetName,
+    int? sizeBytes,
+    LocalFileStatus? status,
+    Value<String?> targetId = const Value.absent(),
+    Value<String?> sha256 = const Value.absent(),
+    Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+    int? sourceModifiedAtMs,
+    Value<String?> failureReason = const Value.absent(),
+  }) => LocalJobFileRow(
+    jobId: jobId ?? this.jobId,
+    position: position ?? this.position,
+    sourceId: sourceId ?? this.sourceId,
+    sourcePlaceId: sourcePlaceId ?? this.sourcePlaceId,
+    originalName: originalName ?? this.originalName,
+    targetName: targetName ?? this.targetName,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    status: status ?? this.status,
+    targetId: targetId.present ? targetId.value : this.targetId,
+    sha256: sha256.present ? sha256.value : this.sha256,
+    sourceOutcome: sourceOutcome.present
+        ? sourceOutcome.value
+        : this.sourceOutcome,
+    sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+    failureReason: failureReason.present
+        ? failureReason.value
+        : this.failureReason,
+  );
+  LocalJobFileRow copyWithCompanion(LocalJobFilesCompanion data) {
+    return LocalJobFileRow(
+      jobId: data.jobId.present ? data.jobId.value : this.jobId,
+      position: data.position.present ? data.position.value : this.position,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      sourcePlaceId: data.sourcePlaceId.present
+          ? data.sourcePlaceId.value
+          : this.sourcePlaceId,
+      originalName: data.originalName.present
+          ? data.originalName.value
+          : this.originalName,
+      targetName: data.targetName.present
+          ? data.targetName.value
+          : this.targetName,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      status: data.status.present ? data.status.value : this.status,
+      targetId: data.targetId.present ? data.targetId.value : this.targetId,
+      sha256: data.sha256.present ? data.sha256.value : this.sha256,
+      sourceOutcome: data.sourceOutcome.present
+          ? data.sourceOutcome.value
+          : this.sourceOutcome,
+      sourceModifiedAtMs: data.sourceModifiedAtMs.present
+          ? data.sourceModifiedAtMs.value
+          : this.sourceModifiedAtMs,
+      failureReason: data.failureReason.present
+          ? data.failureReason.value
+          : this.failureReason,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalJobFileRow(')
+          ..write('jobId: $jobId, ')
+          ..write('position: $position, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('sourcePlaceId: $sourcePlaceId, ')
+          ..write('originalName: $originalName, ')
+          ..write('targetName: $targetName, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('status: $status, ')
+          ..write('targetId: $targetId, ')
+          ..write('sha256: $sha256, ')
+          ..write('sourceOutcome: $sourceOutcome, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('failureReason: $failureReason')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    jobId,
+    position,
+    sourceId,
+    sourcePlaceId,
+    originalName,
+    targetName,
+    sizeBytes,
+    status,
+    targetId,
+    sha256,
+    sourceOutcome,
+    sourceModifiedAtMs,
+    failureReason,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalJobFileRow &&
+          other.jobId == this.jobId &&
+          other.position == this.position &&
+          other.sourceId == this.sourceId &&
+          other.sourcePlaceId == this.sourcePlaceId &&
+          other.originalName == this.originalName &&
+          other.targetName == this.targetName &&
+          other.sizeBytes == this.sizeBytes &&
+          other.status == this.status &&
+          other.targetId == this.targetId &&
+          other.sha256 == this.sha256 &&
+          other.sourceOutcome == this.sourceOutcome &&
+          other.sourceModifiedAtMs == this.sourceModifiedAtMs &&
+          other.failureReason == this.failureReason);
+}
+
+class LocalJobFilesCompanion extends UpdateCompanion<LocalJobFileRow> {
+  final Value<String> jobId;
+  final Value<int> position;
+  final Value<String> sourceId;
+  final Value<String> sourcePlaceId;
+  final Value<String> originalName;
+  final Value<String> targetName;
+  final Value<int> sizeBytes;
+  final Value<LocalFileStatus> status;
+  final Value<String?> targetId;
+  final Value<String?> sha256;
+  final Value<SourceOutcome?> sourceOutcome;
+  final Value<int> sourceModifiedAtMs;
+  final Value<String?> failureReason;
+  final Value<int> rowid;
+  const LocalJobFilesCompanion({
+    this.jobId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.sourcePlaceId = const Value.absent(),
+    this.originalName = const Value.absent(),
+    this.targetName = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.targetId = const Value.absent(),
+    this.sha256 = const Value.absent(),
+    this.sourceOutcome = const Value.absent(),
+    this.sourceModifiedAtMs = const Value.absent(),
+    this.failureReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalJobFilesCompanion.insert({
+    required String jobId,
+    required int position,
+    required String sourceId,
+    required String sourcePlaceId,
+    required String originalName,
+    required String targetName,
+    required int sizeBytes,
+    required LocalFileStatus status,
+    this.targetId = const Value.absent(),
+    this.sha256 = const Value.absent(),
+    this.sourceOutcome = const Value.absent(),
+    required int sourceModifiedAtMs,
+    this.failureReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : jobId = Value(jobId),
+       position = Value(position),
+       sourceId = Value(sourceId),
+       sourcePlaceId = Value(sourcePlaceId),
+       originalName = Value(originalName),
+       targetName = Value(targetName),
+       sizeBytes = Value(sizeBytes),
+       status = Value(status),
+       sourceModifiedAtMs = Value(sourceModifiedAtMs);
+  static Insertable<LocalJobFileRow> custom({
+    Expression<String>? jobId,
+    Expression<int>? position,
+    Expression<String>? sourceId,
+    Expression<String>? sourcePlaceId,
+    Expression<String>? originalName,
+    Expression<String>? targetName,
+    Expression<int>? sizeBytes,
+    Expression<String>? status,
+    Expression<String>? targetId,
+    Expression<String>? sha256,
+    Expression<String>? sourceOutcome,
+    Expression<int>? sourceModifiedAtMs,
+    Expression<String>? failureReason,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (jobId != null) 'job_id': jobId,
+      if (position != null) 'position': position,
+      if (sourceId != null) 'source_id': sourceId,
+      if (sourcePlaceId != null) 'source_place_id': sourcePlaceId,
+      if (originalName != null) 'original_name': originalName,
+      if (targetName != null) 'target_name': targetName,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (status != null) 'status': status,
+      if (targetId != null) 'target_id': targetId,
+      if (sha256 != null) 'sha256': sha256,
+      if (sourceOutcome != null) 'source_outcome': sourceOutcome,
+      if (sourceModifiedAtMs != null)
+        'source_modified_at_ms': sourceModifiedAtMs,
+      if (failureReason != null) 'failure_reason': failureReason,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalJobFilesCompanion copyWith({
+    Value<String>? jobId,
+    Value<int>? position,
+    Value<String>? sourceId,
+    Value<String>? sourcePlaceId,
+    Value<String>? originalName,
+    Value<String>? targetName,
+    Value<int>? sizeBytes,
+    Value<LocalFileStatus>? status,
+    Value<String?>? targetId,
+    Value<String?>? sha256,
+    Value<SourceOutcome?>? sourceOutcome,
+    Value<int>? sourceModifiedAtMs,
+    Value<String?>? failureReason,
+    Value<int>? rowid,
+  }) {
+    return LocalJobFilesCompanion(
+      jobId: jobId ?? this.jobId,
+      position: position ?? this.position,
+      sourceId: sourceId ?? this.sourceId,
+      sourcePlaceId: sourcePlaceId ?? this.sourcePlaceId,
+      originalName: originalName ?? this.originalName,
+      targetName: targetName ?? this.targetName,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      status: status ?? this.status,
+      targetId: targetId ?? this.targetId,
+      sha256: sha256 ?? this.sha256,
+      sourceOutcome: sourceOutcome ?? this.sourceOutcome,
+      sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+      failureReason: failureReason ?? this.failureReason,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (jobId.present) {
+      map['job_id'] = Variable<String>(jobId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (sourcePlaceId.present) {
+      map['source_place_id'] = Variable<String>(sourcePlaceId.value);
+    }
+    if (originalName.present) {
+      map['original_name'] = Variable<String>(originalName.value);
+    }
+    if (targetName.present) {
+      map['target_name'] = Variable<String>(targetName.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $LocalJobFilesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (targetId.present) {
+      map['target_id'] = Variable<String>(targetId.value);
+    }
+    if (sha256.present) {
+      map['sha256'] = Variable<String>(sha256.value);
+    }
+    if (sourceOutcome.present) {
+      map['source_outcome'] = Variable<String>(
+        $LocalJobFilesTable.$convertersourceOutcomen.toSql(sourceOutcome.value),
+      );
+    }
+    if (sourceModifiedAtMs.present) {
+      map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs.value);
+    }
+    if (failureReason.present) {
+      map['failure_reason'] = Variable<String>(failureReason.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalJobFilesCompanion(')
+          ..write('jobId: $jobId, ')
+          ..write('position: $position, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('sourcePlaceId: $sourcePlaceId, ')
+          ..write('originalName: $originalName, ')
+          ..write('targetName: $targetName, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('status: $status, ')
+          ..write('targetId: $targetId, ')
+          ..write('sha256: $sha256, ')
+          ..write('sourceOutcome: $sourceOutcome, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('failureReason: $failureReason, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -14954,6 +16439,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $KnownDevicesTable knownDevices = $KnownDevicesTable(this);
   late final $TransfersTable transfers = $TransfersTable(this);
   late final $TransferFilesTable transferFiles = $TransferFilesTable(this);
+  late final $LocalJobsTable localJobs = $LocalJobsTable(this);
+  late final $LocalJobFilesTable localJobFiles = $LocalJobFilesTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -15066,6 +16553,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'transfer_files_job_status',
     'CREATE INDEX transfer_files_job_status ON transfer_files (transfer_id, status)',
   );
+  late final Index ljfStatus = Index(
+    'ljf_status',
+    'CREATE INDEX ljf_status ON local_job_files (job_id, status)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -15100,6 +16591,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     knownDevices,
     transfers,
     transferFiles,
+    localJobs,
+    localJobFiles,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -15128,6 +16621,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     aiLabelsLabel,
     transfersStatus,
     transferFilesJobStatus,
+    ljfStatus,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -15221,6 +16715,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('transfer_files', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'local_jobs',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('local_job_files', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -25534,6 +27035,908 @@ typedef $$TransferFilesTableProcessedTableManager =
       TransferFileRow,
       PrefetchHooks Function({bool transferId})
     >;
+typedef $$LocalJobsTableCreateCompanionBuilder = LocalJobsCompanion Function({
+  required String id,
+  required LocalJobMode mode,
+  required String targetPlaceId,
+  required String targetFolder,
+  required LocalJobStatus status,
+  Value<CollisionPolicy?> collisionPolicy,
+  Value<String?> deleteMode,
+  Value<String?> failureReason,
+  required int createdAtMs,
+  required int updatedAtMs,
+  Value<int> rowid,
+});
+typedef $$LocalJobsTableUpdateCompanionBuilder = LocalJobsCompanion Function({
+  Value<String> id,
+  Value<LocalJobMode> mode,
+  Value<String> targetPlaceId,
+  Value<String> targetFolder,
+  Value<LocalJobStatus> status,
+  Value<CollisionPolicy?> collisionPolicy,
+  Value<String?> deleteMode,
+  Value<String?> failureReason,
+  Value<int> createdAtMs,
+  Value<int> updatedAtMs,
+  Value<int> rowid,
+});
+
+final class $$LocalJobsTableReferences
+    extends BaseReferences<_$AppDatabase, $LocalJobsTable, LocalJobRow> {
+  $$LocalJobsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$LocalJobFilesTable, List<LocalJobFileRow>>
+  _localJobFilesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.localJobFiles,
+    aliasName: 'local_jobs__id__local_job_files__job_id',
+  );
+
+  $$LocalJobFilesTableProcessedTableManager get localJobFilesRefs {
+    final manager = $$LocalJobFilesTableTableManager(
+      $_db,
+      $_db.localJobFiles,
+    ).filter((f) => f.jobId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_localJobFilesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$LocalJobsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalJobsTable> {
+  $$LocalJobsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalJobMode, LocalJobMode, String> get mode =>
+      $composableBuilder(
+        column: $table.mode,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get targetPlaceId => $composableBuilder(
+    column: $table.targetPlaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetFolder => $composableBuilder(
+    column: $table.targetFolder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalJobStatus, LocalJobStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<CollisionPolicy?, CollisionPolicy, String>
+  get collisionPolicy => $composableBuilder(
+    column: $table.collisionPolicy,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get deleteMode => $composableBuilder(
+    column: $table.deleteMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get failureReason => $composableBuilder(
+    column: $table.failureReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMs => $composableBuilder(
+    column: $table.createdAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMs => $composableBuilder(
+    column: $table.updatedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> localJobFilesRefs(
+    Expression<bool> Function($$LocalJobFilesTableFilterComposer f) f,
+  ) {
+    final $$LocalJobFilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.localJobFiles,
+      getReferencedColumn: (t) => t.jobId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LocalJobFilesTableFilterComposer(
+            $db: $db,
+            $table: $db.localJobFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$LocalJobsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalJobsTable> {
+  $$LocalJobsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetPlaceId => $composableBuilder(
+    column: $table.targetPlaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetFolder => $composableBuilder(
+    column: $table.targetFolder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get collisionPolicy => $composableBuilder(
+    column: $table.collisionPolicy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deleteMode => $composableBuilder(
+    column: $table.deleteMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get failureReason => $composableBuilder(
+    column: $table.failureReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMs => $composableBuilder(
+    column: $table.createdAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMs => $composableBuilder(
+    column: $table.updatedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalJobsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalJobsTable> {
+  $$LocalJobsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalJobMode, String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<String> get targetPlaceId => $composableBuilder(
+    column: $table.targetPlaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get targetFolder => $composableBuilder(
+    column: $table.targetFolder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<LocalJobStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<CollisionPolicy?, String>
+  get collisionPolicy => $composableBuilder(
+    column: $table.collisionPolicy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get deleteMode => $composableBuilder(
+    column: $table.deleteMode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get failureReason => $composableBuilder(
+    column: $table.failureReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtMs => $composableBuilder(
+    column: $table.createdAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMs => $composableBuilder(
+    column: $table.updatedAtMs,
+    builder: (column) => column,
+  );
+
+  Expression<T> localJobFilesRefs<T extends Object>(
+    Expression<T> Function($$LocalJobFilesTableAnnotationComposer a) f,
+  ) {
+    final $$LocalJobFilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.localJobFiles,
+      getReferencedColumn: (t) => t.jobId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LocalJobFilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.localJobFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$LocalJobsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalJobsTable,
+          LocalJobRow,
+          $$LocalJobsTableFilterComposer,
+          $$LocalJobsTableOrderingComposer,
+          $$LocalJobsTableAnnotationComposer,
+          $$LocalJobsTableCreateCompanionBuilder,
+          $$LocalJobsTableUpdateCompanionBuilder,
+          (LocalJobRow, $$LocalJobsTableReferences),
+          LocalJobRow,
+          PrefetchHooks Function({bool localJobFilesRefs})
+        > {
+  $$LocalJobsTableTableManager(_$AppDatabase db, $LocalJobsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalJobsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalJobsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalJobsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<LocalJobMode> mode = const Value.absent(),
+                Value<String> targetPlaceId = const Value.absent(),
+                Value<String> targetFolder = const Value.absent(),
+                Value<LocalJobStatus> status = const Value.absent(),
+                Value<CollisionPolicy?> collisionPolicy = const Value.absent(),
+                Value<String?> deleteMode = const Value.absent(),
+                Value<String?> failureReason = const Value.absent(),
+                Value<int> createdAtMs = const Value.absent(),
+                Value<int> updatedAtMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalJobsCompanion(
+                id: id,
+                mode: mode,
+                targetPlaceId: targetPlaceId,
+                targetFolder: targetFolder,
+                status: status,
+                collisionPolicy: collisionPolicy,
+                deleteMode: deleteMode,
+                failureReason: failureReason,
+                createdAtMs: createdAtMs,
+                updatedAtMs: updatedAtMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required LocalJobMode mode,
+                required String targetPlaceId,
+                required String targetFolder,
+                required LocalJobStatus status,
+                Value<CollisionPolicy?> collisionPolicy = const Value.absent(),
+                Value<String?> deleteMode = const Value.absent(),
+                Value<String?> failureReason = const Value.absent(),
+                required int createdAtMs,
+                required int updatedAtMs,
+                Value<int> rowid = const Value.absent(),
+              }) => LocalJobsCompanion.insert(
+                id: id,
+                mode: mode,
+                targetPlaceId: targetPlaceId,
+                targetFolder: targetFolder,
+                status: status,
+                collisionPolicy: collisionPolicy,
+                deleteMode: deleteMode,
+                failureReason: failureReason,
+                createdAtMs: createdAtMs,
+                updatedAtMs: updatedAtMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LocalJobsTable, LocalJobRow>(table),
+                  $$LocalJobsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({localJobFilesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (localJobFilesRefs) db.localJobFiles,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (localJobFilesRefs)
+                    await $_getPrefetchedDataByColumns<
+                      LocalJobRow,
+                      $LocalJobsTable,
+                      LocalJobFileRow,
+                      $LocalJobFilesTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$LocalJobsTableReferences
+                          ._localJobFilesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$LocalJobsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).localJobFilesRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'job_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LocalJobsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalJobsTable,
+      LocalJobRow,
+      $$LocalJobsTableFilterComposer,
+      $$LocalJobsTableOrderingComposer,
+      $$LocalJobsTableAnnotationComposer,
+      $$LocalJobsTableCreateCompanionBuilder,
+      $$LocalJobsTableUpdateCompanionBuilder,
+      (LocalJobRow, $$LocalJobsTableReferences),
+      LocalJobRow,
+      PrefetchHooks Function({bool localJobFilesRefs})
+    >;
+typedef $$LocalJobFilesTableCreateCompanionBuilder =
+    LocalJobFilesCompanion Function({
+      required String jobId,
+      required int position,
+      required String sourceId,
+      required String sourcePlaceId,
+      required String originalName,
+      required String targetName,
+      required int sizeBytes,
+      required LocalFileStatus status,
+      Value<String?> targetId,
+      Value<String?> sha256,
+      Value<SourceOutcome?> sourceOutcome,
+      required int sourceModifiedAtMs,
+      Value<String?> failureReason,
+      Value<int> rowid,
+    });
+typedef $$LocalJobFilesTableUpdateCompanionBuilder =
+    LocalJobFilesCompanion Function({
+      Value<String> jobId,
+      Value<int> position,
+      Value<String> sourceId,
+      Value<String> sourcePlaceId,
+      Value<String> originalName,
+      Value<String> targetName,
+      Value<int> sizeBytes,
+      Value<LocalFileStatus> status,
+      Value<String?> targetId,
+      Value<String?> sha256,
+      Value<SourceOutcome?> sourceOutcome,
+      Value<int> sourceModifiedAtMs,
+      Value<String?> failureReason,
+      Value<int> rowid,
+    });
+
+final class $$LocalJobFilesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $LocalJobFilesTable, LocalJobFileRow> {
+  $$LocalJobFilesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $LocalJobsTable _jobIdTable(_$AppDatabase db) =>
+      db.localJobs.createAlias('local_job_files__job_id__local_jobs__id');
+
+  $$LocalJobsTableProcessedTableManager get jobId {
+    final $_column = $_itemColumn<String>('job_id')!;
+
+    final manager = $$LocalJobsTableTableManager(
+      $_db,
+      $_db.localJobs,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_jobIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LocalJobFilesTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalJobFilesTable> {
+  $$LocalJobFilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourcePlaceId => $composableBuilder(
+    column: $table.sourcePlaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalName => $composableBuilder(
+    column: $table.originalName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetName => $composableBuilder(
+    column: $table.targetName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LocalFileStatus, LocalFileStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get targetId => $composableBuilder(
+    column: $table.targetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SourceOutcome?, SourceOutcome, String>
+  get sourceOutcome => $composableBuilder(
+    column: $table.sourceOutcome,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get failureReason => $composableBuilder(
+    column: $table.failureReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$LocalJobsTableFilterComposer get jobId {
+    final $$LocalJobsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.localJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LocalJobsTableFilterComposer(
+            $db: $db,
+            $table: $db.localJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LocalJobFilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalJobFilesTable> {
+  $$LocalJobFilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourcePlaceId => $composableBuilder(
+    column: $table.sourcePlaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalName => $composableBuilder(
+    column: $table.originalName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetName => $composableBuilder(
+    column: $table.targetName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetId => $composableBuilder(
+    column: $table.targetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceOutcome => $composableBuilder(
+    column: $table.sourceOutcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get failureReason => $composableBuilder(
+    column: $table.failureReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$LocalJobsTableOrderingComposer get jobId {
+    final $$LocalJobsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.localJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LocalJobsTableOrderingComposer(
+            $db: $db,
+            $table: $db.localJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LocalJobFilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalJobFilesTable> {
+  $$LocalJobFilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get sourcePlaceId => $composableBuilder(
+    column: $table.sourcePlaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalName => $composableBuilder(
+    column: $table.originalName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get targetName => $composableBuilder(
+    column: $table.targetName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LocalFileStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get targetId =>
+      $composableBuilder(column: $table.targetId, builder: (column) => column);
+
+  GeneratedColumn<String> get sha256 =>
+      $composableBuilder(column: $table.sha256, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SourceOutcome?, String> get sourceOutcome =>
+      $composableBuilder(
+        column: $table.sourceOutcome,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get failureReason => $composableBuilder(
+    column: $table.failureReason,
+    builder: (column) => column,
+  );
+
+  $$LocalJobsTableAnnotationComposer get jobId {
+    final $$LocalJobsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.localJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LocalJobsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.localJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LocalJobFilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalJobFilesTable,
+          LocalJobFileRow,
+          $$LocalJobFilesTableFilterComposer,
+          $$LocalJobFilesTableOrderingComposer,
+          $$LocalJobFilesTableAnnotationComposer,
+          $$LocalJobFilesTableCreateCompanionBuilder,
+          $$LocalJobFilesTableUpdateCompanionBuilder,
+          (LocalJobFileRow, $$LocalJobFilesTableReferences),
+          LocalJobFileRow,
+          PrefetchHooks Function({bool jobId})
+        > {
+  $$LocalJobFilesTableTableManager(_$AppDatabase db, $LocalJobFilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalJobFilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalJobFilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalJobFilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> jobId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
+                Value<String> sourcePlaceId = const Value.absent(),
+                Value<String> originalName = const Value.absent(),
+                Value<String> targetName = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<LocalFileStatus> status = const Value.absent(),
+                Value<String?> targetId = const Value.absent(),
+                Value<String?> sha256 = const Value.absent(),
+                Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+                Value<int> sourceModifiedAtMs = const Value.absent(),
+                Value<String?> failureReason = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalJobFilesCompanion(
+                jobId: jobId,
+                position: position,
+                sourceId: sourceId,
+                sourcePlaceId: sourcePlaceId,
+                originalName: originalName,
+                targetName: targetName,
+                sizeBytes: sizeBytes,
+                status: status,
+                targetId: targetId,
+                sha256: sha256,
+                sourceOutcome: sourceOutcome,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                failureReason: failureReason,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String jobId,
+                required int position,
+                required String sourceId,
+                required String sourcePlaceId,
+                required String originalName,
+                required String targetName,
+                required int sizeBytes,
+                required LocalFileStatus status,
+                Value<String?> targetId = const Value.absent(),
+                Value<String?> sha256 = const Value.absent(),
+                Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+                required int sourceModifiedAtMs,
+                Value<String?> failureReason = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalJobFilesCompanion.insert(
+                jobId: jobId,
+                position: position,
+                sourceId: sourceId,
+                sourcePlaceId: sourcePlaceId,
+                originalName: originalName,
+                targetName: targetName,
+                sizeBytes: sizeBytes,
+                status: status,
+                targetId: targetId,
+                sha256: sha256,
+                sourceOutcome: sourceOutcome,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                failureReason: failureReason,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LocalJobFilesTable, LocalJobFileRow>(table),
+                  $$LocalJobFilesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({jobId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (jobId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.jobId,
+                        referencedTable: $$LocalJobFilesTableReferences
+                            ._jobIdTable(db),
+                        referencedColumn: $$LocalJobFilesTableReferences
+                            ._jobIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LocalJobFilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalJobFilesTable,
+      LocalJobFileRow,
+      $$LocalJobFilesTableFilterComposer,
+      $$LocalJobFilesTableOrderingComposer,
+      $$LocalJobFilesTableAnnotationComposer,
+      $$LocalJobFilesTableCreateCompanionBuilder,
+      $$LocalJobFilesTableUpdateCompanionBuilder,
+      (LocalJobFileRow, $$LocalJobFilesTableReferences),
+      LocalJobFileRow,
+      PrefetchHooks Function({bool jobId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -25595,4 +27998,8 @@ class $AppDatabaseManager {
       $$TransfersTableTableManager(_db, _db.transfers);
   $$TransferFilesTableTableManager get transferFiles =>
       $$TransferFilesTableTableManager(_db, _db.transferFiles);
+  $$LocalJobsTableTableManager get localJobs =>
+      $$LocalJobsTableTableManager(_db, _db.localJobs);
+  $$LocalJobFilesTableTableManager get localJobFiles =>
+      $$LocalJobFilesTableTableManager(_db, _db.localJobFiles);
 }

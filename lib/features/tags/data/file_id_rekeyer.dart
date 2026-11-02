@@ -29,6 +29,28 @@ class FileIdRekeyer {
     );
   }
 
+  /// U2: a swipe move to another place keeps the original until its
+  /// queued delete commits (re-keying would move that delete to the
+  /// copy), so tags and favorites are copied to the copy instead.
+  Future<void> copyLabels(String fromId, String toId) {
+    if (fromId == toId) return Future.value();
+    return _queue.enqueue(
+      null,
+      () => _db.transaction(() async {
+        await _db.customStatement(
+          'INSERT OR IGNORE INTO file_tags (file_id, tag_id, added_at) '
+          'SELECT ?, tag_id, added_at FROM file_tags WHERE file_id = ?',
+          [toId, fromId],
+        );
+        await _db.customStatement(
+          'INSERT OR IGNORE INTO favorites (file_id, added_at) '
+          'SELECT ?, added_at FROM favorites WHERE file_id = ?',
+          [toId, fromId],
+        );
+      }),
+    );
+  }
+
   Future<void> rekey(String oldId, String newId, {int? newModifiedMs}) {
     if (oldId == newId) return Future.value();
     return _queue.enqueue(

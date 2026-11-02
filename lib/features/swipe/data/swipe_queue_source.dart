@@ -1,3 +1,4 @@
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/index/index_query.dart';
@@ -128,7 +129,12 @@ class ListQueueSource implements SwipeQueueSource {
         var file = found[id];
         if (file == null && stats < _statLimit) {
           stats++;
-          file = await _files.stat(id);
+          try {
+            file = await _files.stat(id);
+          } on FileOpException catch (e) {
+            // U2: a removed SD card / USB drive: treated as gone here.
+            if (e.failure != FileOpFailure.unavailable) rethrow;
+          }
         }
         if (file == null) {
           gone.add(id);

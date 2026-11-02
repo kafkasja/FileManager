@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
@@ -103,7 +104,14 @@ class SwipeSourceResolver {
       if (kinds.containsKey(id)) continue;
       if (lookups >= maxStatLookups) break;
       lookups++;
-      final f = await _files.stat(id);
+      final FileRef? f;
+      try {
+        f = await _files.stat(id);
+      } on FileOpException catch (e) {
+        // U2: a removed SD card / USB drive: its files count as missing.
+        if (e.failure != FileOpFailure.unavailable) rethrow;
+        continue;
+      }
       if (f != null) kinds[id] = f.kind;
     }
 

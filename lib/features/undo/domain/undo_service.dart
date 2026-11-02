@@ -140,6 +140,38 @@ class UndoService {
     return outcomes;
   }
 
+  /// U2: queued delete → dropped, the copy goes; committed to the trash →
+  /// the original is restored, then the copy goes; deleted permanently →
+  /// the copy is safely moved back (copy → verify → delete the copy).
+  Future<UndoOutcome> _undoCrossPlaceMove(
+    SessionAction a,
+    CrossPlaceMovePreviousState previous,
+    FileSource source,
+  ) async {
+    FileRef back;
+    if (a.status == ActionStatus.applied) {
+      await _deletes.unqueue(a.id);
+      back = previous.source;
+    } else if (previous.mode == 'trash' && previous.trashedItem != null) {
+      back = await source.restore(TrashedItem.fromJson(previous.trashedItem!));
+      await _indexer.addFiles([back]);
+    } else {
+      final copy = await source.stat(previous.copy.id);
+      if (copy == null) {
+        await _repo.markUndone(a.id);
+        return PermanentlyDeleted(a);
+      }
+      back = await source.copy(copy, previous.source.folderPath);
+      await _indexer.addFiles([back]);
+    }
+    final copy = await source.stat(previous.copy.id);
+    // KFM's own copy: deleted without asking.
+    if (copy != null) await source.deletePermanentlyBatch([copy]);
+    await _index.deleteIds([previous.copy.id]);
+    await _repo.markUndone(a.id);
+    return Undone(a, file: back);
+  }
+
   Future<UndoOutcome> _undo(SessionAction a) async {
     final remote = sourceIdOfFile(a.fileId) != kLocalSourceId;
     try {
@@ -172,6 +204,13 @@ class UndoService {
             await _repo.markUndone(a.id);
             return Undone(a, restoredFromTrash: true);
           }
+        case SwipeActionType.moveTo
+            when a.previous is CrossPlaceMovePreviousState:
+          return await _undoCrossPlaceMove(
+            a,
+            a.previous as CrossPlaceMovePreviousState,
+            source,
+          );
         case SwipeActionType.moveTo:
           final previous = a.previous as MovePreviousState;
           final current = await source.stat(a.fileId);

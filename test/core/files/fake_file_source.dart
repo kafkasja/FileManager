@@ -106,6 +106,12 @@ class FakeFileSource implements FileSource {
 
   Future<void> dispose() => _idChanges.close();
 
+  /// U2: ops this fake refuses ([supports] false), e.g. a read-only camera.
+  final Set<FileOp> unsupportedOps = {};
+
+  @override
+  bool supports(FileOp op, FileRef f) => !unsupportedOps.contains(op);
+
   @override
   Stream<FileIdChange> get idChanges => _idChanges.stream;
 

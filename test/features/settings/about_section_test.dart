@@ -45,9 +45,7 @@ Future<void> _pump(
       child: const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: SingleChildScrollView(child: AboutSection()),
-        ),
+        home: Scaffold(body: SingleChildScrollView(child: AboutSection())),
       ),
     ),
   );

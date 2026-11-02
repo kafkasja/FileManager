@@ -118,6 +118,9 @@ class _RemoteFake implements FileSource {
   Future<List<TrashedItem>> listTrashed() async => const [];
 
   @override
+  bool supports(FileOp op, FileRef f) => true;
+
+  @override
   Stream<FileIdChange> get idChanges => const Stream.empty();
 
   @override

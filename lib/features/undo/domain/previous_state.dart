@@ -1,3 +1,4 @@
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:meta/meta.dart';
 
@@ -19,6 +20,8 @@ sealed class PreviousState {
           mode: j['mode'] as String? ?? 'trash',
           trashedItem: (j['trashedItem'] as Map?)?.cast<String, Object?>(),
         ),
+        SwipeActionType.moveTo when j['kind'] == CrossPlaceMovePreviousState.kind =>
+          CrossPlaceMovePreviousState.fromJson(j),
         SwipeActionType.moveTo => MovePreviousState(
           folderPath: j['folderPath']! as String,
           fileIdBefore: j['fileIdBefore']! as String,
@@ -87,6 +90,50 @@ final class MovePreviousState extends PreviousState {
   Map<String, Object?> toJson() => {
     'folderPath': folderPath,
     'fileIdBefore': fileIdBefore,
+  };
+}
+
+/// U2: a swipe move to another place (SD card, USB drive): the copy is
+/// verified, the original's delete is queued in D2's `pending_deletes`
+/// like a trash swipe (so the last-10 rule holds). D2's commit adds [mode]
+/// and [trashedItem] (`UndoRepository.markCommitted` merges them in).
+final class CrossPlaceMovePreviousState extends PreviousState {
+  const new({
+    required this.source,
+    required this.copy,
+    required this.mode,
+    this.trashedItem,
+  });
+
+  factory fromJson(Map<String, Object?> j) => CrossPlaceMovePreviousState(
+    source: FileRef.fromJson((j['source']! as Map).cast<String, Object?>()),
+    copy: FileRef.fromJson((j['copy']! as Map).cast<String, Object?>()),
+    mode: j['mode'] as String? ?? 'trash',
+    trashedItem: (j['trashedItem'] as Map?)?.cast<String, Object?>(),
+  );
+
+  static const kind = 'crossPlaceMove';
+
+  /// The original as it was swiped.
+  final FileRef source;
+
+  /// The verified copy at the target.
+  final FileRef copy;
+
+  /// 'trash' | 'permanent': the queued delete's mode (after the commit:
+  /// what was done).
+  final String mode;
+
+  /// Filled by D2 at commit (trash mode).
+  final Map<String, Object?>? trashedItem;
+
+  @override
+  Map<String, Object?> toJson() => {
+    'kind': kind,
+    'source': source.toJson(),
+    'copy': copy.toJson(),
+    'mode': mode,
+    if (trashedItem != null) 'trashedItem': trashedItem,
   };
 }
 

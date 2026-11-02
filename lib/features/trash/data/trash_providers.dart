@@ -102,6 +102,22 @@ Future<int> startupMaintenance(Ref ref) async {
     // stop it).
     await ref.read(backgroundSchedulerProvider)?.ensureDailyPurge();
   }
+  // U2: expired items in SAF volumes' folders (needs the channel, so not
+  // in the H2 worker). Volumes not mounted or granted now are skipped.
+  final saf = ref.read(safPendingFolderProvider);
+  if (saf != null) {
+    try {
+      await ref.read(placesProvider.future);
+      purged += await saf.purgeExpired();
+    } on Object catch (e, st) {
+      developer.log(
+        'SAF purge failed',
+        name: 'kfm.trash',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
   // P8: notice files that left the trash (expired, emptied, restored).
   await ref.read(trashLedgerProvider).reconcileNow();
   return purged;

@@ -162,6 +162,13 @@ void fileSourceContract(
       },
     );
 
+    test('supports the basic ops on its own files (U2)', () async {
+      final f = await h.addFile('${h.root}/a.pdf', [1]);
+      for (final op in [FileOp.copy, FileOp.move, FileOp.rename]) {
+        expect(s.supports(op, f), isTrue, reason: op.name);
+      }
+    });
+
     test('requestWriteAccess for nothing is granted', () async {
       expect(await s.requestWriteAccess(const []), isTrue);
     });
