@@ -60,6 +60,8 @@ class FilesChannel(
     private val thumbIo = Executors.newFixedThreadPool(2)
     /** B10: file details sheet lookups; never queued behind moves or EXIF batches. */
     private val detailsIo = Executors.newSingleThreadExecutor()
+    /** X2: copies of originals for location removal; big videos never stall [io]. */
+    private val privacyIo = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private val context: Context get() = activity.applicationContext
     /** The Dart call waiting for the one system dialog that can be open (TASK-H1). */
@@ -106,6 +108,7 @@ class FilesChannel(
         exifIo.shutdown()
         thumbIo.shutdown()
         detailsIo.shutdown()
+        privacyIo.shutdown()
     }
 
     /** Forwarded from MainActivity.onActivityResult. Returns true if handled. */
@@ -174,6 +177,25 @@ class FilesChannel(
                 }
                 return
             }
+            "copyOriginal" -> {
+                privacyIo.execute {
+                    try {
+                        val value = copyOriginal(
+                            call.argument<String>("contentUri"),
+                            call.stringArg("path"),
+                            call.stringArg("outPath"),
+                        )
+                        main.post { result.success(value) }
+                    } catch (e: FilesError) {
+                        main.post { result.error(e.code, e.message, null) }
+                    } catch (e: SecurityException) {
+                        main.post { result.error("PERMISSION_DENIED", e.toString(), null) }
+                    } catch (e: Exception) {
+                        main.post { result.error("IO", e.toString(), null) }
+                    }
+                }
+                return
+            }
             "readExif", "readExifPaths" -> {
                 exifIo.execute {
                     try {
@@ -224,6 +246,9 @@ class FilesChannel(
                         call.stringArg("path"),
                         call.stringArg("mime"),
                         call.argument<String>("subject"),
+                    )
+                    "shareFiles" -> shareFiles(
+                        call.argument<List<Map<String, Any?>>>("items").orEmpty(),
                     )
                     "canManageMedia" -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                         MediaStore.canManageMedia(context)
@@ -1280,11 +1305,103 @@ class FilesChannel(
         }
     }
 
+    // ---- remove location info (TASK-X2) ----
+
+    /**
+     * Copies the file's bytes to [outPath] for location removal (done in Dart). A MediaStore
+     * item ([contentUri]) is read through the resolver; with ACCESS_MEDIA_LOCATION on API 29+
+     * the original is opened (`setRequireOriginal`), otherwise Android may already have
+     * redacted its location. Other files are read from [path]. Returns
+     * `{original: bool}` (true = the location was readable, so the copy has it).
+     */
+    private fun copyOriginal(contentUri: String?, path: String, outPath: String): Map<String, Any?> {
+        val out = File(outPath)
+        out.parentFile?.mkdirs()
+        val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        val input = if (contentUri != null) {
+            var uri = Uri.parse(contentUri)
+            if (granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                uri = MediaStore.setRequireOriginal(uri)
+            }
+            try {
+                context.contentResolver.openInputStream(uri)
+            } catch (e: java.io.FileNotFoundException) {
+                null
+            } ?: throw FilesError("NOT_FOUND", "no stream for $contentUri")
+        } else {
+            val file = File(path)
+            if (!file.isFile) throw FilesError("NOT_FOUND", "no file at $path")
+            file.inputStream()
+        }
+        try {
+            input.use { src -> out.outputStream().use { dst -> src.copyTo(dst, 256 * 1024) } }
+        } catch (e: Exception) {
+            out.delete()
+            throw e
+        }
+        return mapOf("original" to (granted || contentUri == null))
+    }
+
+    /**
+     * Android share sheet (ACTION_SEND / ACTION_SEND_MULTIPLE) for [items]
+     * (`{contentUri?, path?, mime?}`): MediaStore items by their URI, files (stripped copies
+     * in the cache, shared storage) through the FileProvider. False when no app can receive.
+     */
+    private fun shareFiles(items: List<Map<String, Any?>>): Boolean {
+        if (items.isEmpty()) return false
+        val uris = ArrayList<Uri>(items.size)
+        val mimes = mutableListOf<String>()
+        for (item in items) {
+            val contentUri = item["contentUri"] as String?
+            val path = item["path"] as String?
+            val uri = when {
+                contentUri != null -> Uri.parse(contentUri)
+                path != null -> FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(path))
+                else -> throw FilesError("BAD_ARGS", "shareFiles: no uri or path")
+            }
+            uris.add(uri)
+            mimes.add(
+                (item["mime"] as String?)
+                    ?: path?.let { MimeTypeMap.getSingleton().getMimeTypeFromExtension(File(it).extension.lowercase()) }
+                    ?: ANY_MIME,
+            )
+        }
+        val send = if (uris.size == 1) {
+            Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, uris[0])
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+        }
+        send.type = commonMime(mimes)
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val clip = ClipData.newRawUri("", uris[0])
+        for (i in 1 until uris.size) clip.addItem(ClipData.Item(uris[i]))
+        send.clipData = clip
+        val chooser = Intent.createChooser(send, null)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        return try {
+            context.startActivity(chooser)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    /** One MIME when all match, `image/` + wildcard for mixed images, else [ANY_MIME]. */
+    private fun commonMime(mimes: List<String>): String {
+        val distinct = mimes.distinct()
+        if (distinct.size == 1) return distinct[0]
+        val tops = distinct.map { it.substringBefore('/') }.distinct()
+        return if (tops.size == 1 && tops[0] != "*") "${tops[0]}/*" else ANY_MIME
+    }
+
     private class FilesError(val code: String, message: String) : Exception(message)
 
     companion object {
         private const val TAG = "kfm.files"
         private const val CONSENT_REQUEST = 4101
+        private const val ANY_MIME = "*/*"
         // Column names exist in the files table on every supported API level.
         private const val COL_DATE_TAKEN = "datetaken"
         private const val COL_WIDTH = "width"

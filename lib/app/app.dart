@@ -11,6 +11,7 @@ import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/privacy/data/privacy_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/similar/data/similar_scan_job.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
@@ -73,6 +74,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(errorLogDbBridgeProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).
       ..watch(startupMaintenanceProvider)
+      // X2: delete stripped copies (shares, uploads) of earlier runs.
+      ..watch(privacyStartupCleanupProvider)
       // N6: forget temporary remembered devices after 7 days.
       ..watch(knownDevicesPurgeProvider)
       // N9: Wi-Fi transfers follow the connection as long as the app runs.

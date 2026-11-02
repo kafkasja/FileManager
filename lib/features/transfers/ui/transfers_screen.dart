@@ -52,6 +52,7 @@ String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {
     TransferErrors.sourceChanged => l10n.transferSourceChanged,
     TransferErrors.verificationFailed => l10n.transferVerifyFailed,
     TransferErrors.alreadyMoved => l10n.transferAlreadyMoved,
+    TransferErrors.locationNotRemoved => l10n.privacyTransferNotRemoved,
     _ => l10n.transferFailedGeneric,
   };
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/details/ui/selection_summary_sheet.dart';
 import 'package:kfm/features/folders/ui/folder_selection_actions.dart';
+import 'package:kfm/features/privacy/ui/share_flow.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/swipe/ui/swipe_these.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
@@ -49,8 +50,8 @@ class SelectionAction {
 }
 
 /// Sorted by [SelectionAction.order] (the bar sorts too). B4: move,
-/// delete, copy, duplicate; B5: compress; B9: favorites and tags; B10:
-/// details.
+/// delete, copy, duplicate; B5: compress; B9: favorites and tags; X2:
+/// share; B10: details.
 @Riverpod(keepAlive: true)
 List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
   <SelectionAction>[
@@ -62,6 +63,8 @@ List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
     sendToDeviceSelectionAction,
     // N11: move to the connected device (verified, then deleted here).
     moveToDeviceSelectionAction,
+    // X2: Android share sheet (optionally without location).
+    shareSelectionAction,
     detailsSelectionAction,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );

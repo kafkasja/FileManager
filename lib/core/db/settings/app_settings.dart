@@ -312,6 +312,13 @@ abstract final class AppSettings {
     'aiLabels.cardDismissed',
     defaultValue: false,
   );
+
+  /// X2. Remove location from photos and videos sent to another device
+  /// and the default of Share's "Remove location" switch.
+  static final SettingKey<bool> privacyStripLocation = SettingKey.boolean(
+    'privacy.stripLocation',
+    defaultValue: false,
+  );
 }
 
 /// B4: the action of a drag & drop onto a folder.

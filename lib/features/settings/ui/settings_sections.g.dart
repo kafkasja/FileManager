@@ -61,4 +61,4 @@ final class SettingsSectionsProvider
   }
 }
 
-String _$settingsSectionsHash() => r'dcc235564e88cf12f7199090e288638b5c94f4b0';
+String _$settingsSectionsHash() => r'613e48d7297cdc4393f1d3c7be3cfca850491bed';
