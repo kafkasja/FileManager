@@ -192,6 +192,9 @@ class TransferJob {
   String? get offerId => offerIdOfRoot(targetRootId);
   bool get isOffer => offerId != null;
 
+  /// N12b: a download of an offer the other device made: its id.
+  String? get inboxOfferId => offerIdOfInboxRoot(targetRootId);
+
   /// N12: waiting for the other device to accept.
   bool get awaitingAccept =>
       isPaused && pauseReason == TransferPauseReason.awaitingAccept;

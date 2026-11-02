@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:kfm/core/files/file_names.dart';
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
@@ -44,9 +46,9 @@ abstract interface class OfferGrants {
   /// The sender dropped the upload (its file may be claimed again).
   Future<void> released(String uploadId);
 
-  /// N12b: whether [clientFingerprint] may READ [canonicalPath] (an exact
-  /// file of an accepted offer this device made to it).
-  Future<bool> offeredTo(String clientFingerprint, String canonicalPath);
+  /// N12b: whether [clientFingerprint] may READ the file [fileId] (exactly
+  /// a file of an accepted offer this device made to it).
+  Future<bool> isOfferedFile(String clientFingerprint, String fileId);
 }
 
 /// No offers (tests and the N4 guard without N12).
@@ -75,10 +77,8 @@ class NoOfferGrants implements OfferGrants {
   Future<void> released(String uploadId) async {}
 
   @override
-  Future<bool> offeredTo(
-    String clientFingerprint,
-    String canonicalPath,
-  ) async => false;
+  Future<bool> isOfferedFile(String clientFingerprint, String fileId) async =>
+      false;
 }
 
 /// Reads the grants only when a request needs them (building the routes
@@ -115,8 +115,8 @@ class LazyOfferGrants implements OfferGrants {
   Future<void> released(String uploadId) => _get().released(uploadId);
 
   @override
-  Future<bool> offeredTo(String clientFingerprint, String canonicalPath) =>
-      _get().offeredTo(clientFingerprint, canonicalPath);
+  Future<bool> isOfferedFile(String clientFingerprint, String fileId) =>
+      _get().isOfferedFile(clientFingerprint, fileId);
 }
 
 /// The receiver picked an excluded location for received files.
@@ -187,6 +187,9 @@ class OfferService implements OfferGrants {
     OfferLimiter? limiter,
     DateTime Function()? clock,
     this._serverFingerprint,
+    this._prepareCopy,
+    this._ownName,
+    this._staging,
   }) : _clock = clock ?? DateTime.now,
        limiter = limiter ?? OfferLimiter(clock: clock);
 
@@ -205,6 +208,21 @@ class OfferService implements OfferGrants {
 
   /// This device's key (for the 4-word phrase of a prompt).
   final Future<String> Function()? _serverFingerprint;
+
+  /// N12b: a location-free copy of a file in `<staging>/offer-<id>/` when X2
+  /// "Remove location" applies to it; null = offer the original.
+  final Future<({String path, int sizeBytes})?> Function(
+    FileRef f,
+    String offerId,
+    int seq,
+  )?
+  _prepareCopy;
+
+  /// N12b: this device's name (the client's prompt).
+  final Future<String> Function()? _ownName;
+
+  /// N12b: where staged copies live (`offer-<id>/`).
+  final Future<Directory> Function()? _staging;
 
   final Map<String, ShareOffer> _open = {};
   final Map<String, Timer> _timers = {};
@@ -246,6 +264,7 @@ class OfferService implements OfferGrants {
         _cache(o);
         if (o.status == OfferStatus.pending) _schedule(o);
       }
+      await _sweepStaged();
     } on Object catch (e, st) {
       developer.log(
         'offers not loaded',
@@ -479,7 +498,12 @@ class OfferService implements OfferGrants {
     if (o == null) return;
     if (o.status == OfferStatus.pending) {
       _timers.remove(offerId)?.cancel();
-      await _end(o, OfferStatus.declined, reason: OfferDeclineReason.user);
+      if (o.direction == OfferDirection.outgoing) {
+        // N12b: the sharing device takes its own offer back.
+        await _end(o, OfferStatus.cancelled);
+      } else {
+        await _end(o, OfferStatus.declined, reason: OfferDeclineReason.user);
+      }
       return;
     }
     final anyDone = o.files.any((f) => f.status == OfferFileStatus.done);
@@ -549,12 +573,47 @@ class OfferService implements OfferGrants {
         }
       }
     }
+    if (o.direction == OfferDirection.outgoing) {
+      // N12b: the client's inbox changed; staged copies go.
+      _bumpInbox(o.peerFingerprint);
+      await _deleteStaged(o.id);
+    }
     await _repo.save(ended);
     for (final f in unfinished) {
       await _repo.saveFile(o.id, f.copyWith(status: OfferFileStatus.cancelled));
     }
     if (notify) await _publishPrompts();
     return ended;
+  }
+
+  Future<void> _deleteStaged(String offerId) async {
+    final staging = _staging;
+    if (staging == null) return;
+    try {
+      final dir = Directory('${(await staging()).path}/offer-$offerId');
+      if (await dir.exists()) await dir.delete(recursive: true);
+    } on Object catch (e) {
+      developer.log('staged copies not deleted: $e', name: 'kfm.connect');
+    }
+  }
+
+  /// Start: staged copies of offers that are no longer open go.
+  Future<void> _sweepStaged() async {
+    final staging = _staging;
+    if (staging == null) return;
+    try {
+      final dir = await staging();
+      if (!await dir.exists()) return;
+      await for (final e in dir.list()) {
+        final name = e.uri.pathSegments.where((x) => x.isNotEmpty).last;
+        if (e is! Directory || !name.startsWith('offer-')) continue;
+        if (!_open.containsKey(name.substring('offer-'.length))) {
+          await e.delete(recursive: true);
+        }
+      }
+    } on Object catch (e) {
+      developer.log('staged copies not swept: $e', name: 'kfm.connect');
+    }
   }
 
   void _schedule(ShareOffer o) {
@@ -745,11 +804,199 @@ class OfferService implements OfferGrants {
     await _repo.saveFile(o.id, back);
   }
 
-  @override
-  Future<bool> offeredTo(
+  // ---- N12b: offers this device makes to a connected client ----
+
+  /// The N12b "Send to…" on a sharing device: offers [files] to the
+  /// connected client [clientFingerprint]. With X2 "Remove location" on,
+  /// photos and videos are prepared into `<staging>/offer-<id>/` first
+  /// (`prepareCopy`); the offer lists the prepared sizes and grants reads
+  /// of exactly those paths. Returns the offer.
+  Future<ShareOffer> offerToClient(
     String clientFingerprint,
-    String canonicalPath,
-  ) async => false;
+    String clientName,
+    List<FileRef> files,
+  ) async {
+    await start();
+    final id = randomHexId();
+    final now = _clock();
+    final out = <ShareOfferFile>[];
+    for (final (i, f) in files.indexed) {
+      final staged = await _prepareCopy?.call(f, id, i);
+      if (staged != null) {
+        out.add(
+          ShareOfferFile(
+            seq: i,
+            name: f.name,
+            sizeBytes: staged.sizeBytes,
+            mimeType: f.mimeType,
+            localFileId: 'path:${staged.path}',
+            canonicalPath: staged.path,
+            sourceModifiedAtMs: f.modifiedAt.millisecondsSinceEpoch,
+          ),
+        );
+        continue;
+      }
+      out.add(
+        ShareOfferFile(
+          seq: i,
+          name: f.name,
+          sizeBytes: f.sizeBytes,
+          mimeType: f.mimeType,
+          localFileId: f.id,
+          sourceModifiedAtMs: f.modifiedAt.millisecondsSinceEpoch,
+        ),
+      );
+    }
+    final known = await _devices.byFingerprint(clientFingerprint);
+    final offer = ShareOffer(
+      id: id,
+      direction: OfferDirection.outgoing,
+      peerFingerprint: clientFingerprint,
+      peerName: known?.name ?? clientName,
+      status: OfferStatus.pending,
+      createdAt: now,
+      expiresAt: now.add(kOfferDecisionTimeout),
+      files: out,
+    );
+    await _repo.insert(offer);
+    _cache(offer);
+    _schedule(offer);
+    _bumpInbox(clientFingerprint);
+    return offer;
+  }
+
+  final Map<String, int> _inboxVersion = {};
+
+  /// Changes whenever [clientFingerprint]'s inbox changes (heartbeat).
+  String inboxTokenFor(String clientFingerprint) =>
+      '${_inboxVersion[clientFingerprint] ?? 0}';
+
+  void _bumpInbox(String fp) =>
+      _inboxVersion[fp] = (_inboxVersion[fp] ?? 0) + 1;
+
+  /// `GET /v1/inbox`: pending offers made to [clientFingerprint].
+  Future<List<OfferDto>> inboxFor(String clientFingerprint) async {
+    await start();
+    final out = <OfferDto>[];
+    for (final o in _open.values.toList()) {
+      if (o.direction != OfferDirection.outgoing ||
+          o.peerFingerprint != clientFingerprint) {
+        continue;
+      }
+      final cur = await _due(o);
+      if (cur.status != OfferStatus.pending) continue;
+      final dto = toDto(cur);
+      out.add(
+        OfferDto(
+          id: dto.id,
+          status: dto.status,
+          expiresInSeconds: dto.expiresInSeconds,
+          senderName: await _ownName?.call() ?? '',
+          files: [
+            for (final f in cur.files)
+              OfferFileDto(
+                name: f.name,
+                size: f.sizeBytes,
+                mime: f.mimeType,
+                id: f.localFileId,
+                modifiedAtMs: f.sourceModifiedAtMs,
+              ),
+          ],
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// The client's answer to an offer made to it. False (404) for another
+  /// client's or an ended offer.
+  Future<bool> decideOutgoing(
+    String clientFingerprint,
+    String offerId, {
+    required bool accept,
+  }) async {
+    await start();
+    final current = _open[offerId];
+    if (current == null ||
+        current.direction != OfferDirection.outgoing ||
+        current.peerFingerprint != clientFingerprint) {
+      return false;
+    }
+    final o = await _due(current);
+    if (o.status != OfferStatus.pending) return false;
+    _timers.remove(offerId)?.cancel();
+    if (!accept) {
+      await _end(o, OfferStatus.declined, reason: OfferDeclineReason.user);
+      _bumpInbox(clientFingerprint);
+      return true;
+    }
+    final now = _clock();
+    final accepted = o.copyWith(
+      status: OfferStatus.accepted,
+      decidedAt: now,
+      expiresAt: now.add(kOfferGrantIdle),
+    );
+    _cache(accepted);
+    await _repo.save(accepted);
+    _bumpInbox(clientFingerprint);
+    return true;
+  }
+
+  /// `POST /v1/inbox/<id>/finished`: the grant ends; staged copies go.
+  Future<bool> finishedOutgoing(
+    String clientFingerprint,
+    String offerId,
+    InboxFinishedDto report,
+  ) async {
+    await start();
+    final o = _open[offerId];
+    if (o == null ||
+        o.direction != OfferDirection.outgoing ||
+        o.peerFingerprint != clientFingerprint) {
+      return false;
+    }
+    final next = o.copyWith(
+      files: [
+        for (final f in o.files)
+          if (report.done.contains(f.seq))
+            f.copyWith(status: OfferFileStatus.done)
+          else if (report.failed.contains(f.seq))
+            f.copyWith(status: OfferFileStatus.failed)
+          else
+            f,
+      ],
+    );
+    _cache(next);
+    for (final f in next.files) {
+      if (f.ended) await _repo.saveFile(o.id, f);
+    }
+    await _end(
+      next,
+      next.files.any((f) => f.status == OfferFileStatus.done)
+          ? OfferStatus.done
+          : OfferStatus.failed,
+    );
+    return true;
+  }
+
+  /// N12b: whether [fileId] is exactly a file of an accepted offer made to
+  /// [clientFingerprint] (read only).
+  @override
+  Future<bool> isOfferedFile(String clientFingerprint, String fileId) async {
+    await start();
+    for (final o in _open.values) {
+      if (o.direction != OfferDirection.outgoing ||
+          o.status != OfferStatus.accepted ||
+          o.peerFingerprint != clientFingerprint) {
+        continue;
+      }
+      if (!_clock().isBefore(o.expiresAt)) continue;
+      for (final f in o.files) {
+        if (f.localFileId == fileId && !f.ended) return true;
+      }
+    }
+    return false;
+  }
 
   /// The wire view of [o].
   OfferDto toDto(ShareOffer o) {

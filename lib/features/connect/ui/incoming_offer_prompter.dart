@@ -7,16 +7,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/core/files/file_kind_resolver.dart';
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/share_background.dart';
+import 'package:kfm/features/connect/domain/fingerprint_words.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
+import 'package:kfm/features/connect/domain/offer_protocol.dart';
+import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/connect/ui/offer_dialog.dart';
+import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
+import 'package:kfm/features/transfers/data/offer_client.dart';
+import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
+
+/// N12b: the remote file a client downloads for an offered [f] (null
+/// without the server's file id).
+FileRef? offeredRemoteFile(String peerFingerprint, OfferFileDto f) {
+  final id = f.id;
+  if (id == null) return null;
+  return FileRef(
+    id: remoteFileId(peerFingerprint, id),
+    uri: '',
+    name: f.name,
+    mimeType: f.mime,
+    kind: kindFor(f.mime, f.name),
+    sizeBytes: f.size,
+    modifiedAt: DateTime.fromMillisecondsSinceEpoch(
+      f.modifiedAtMs ?? 0,
+      isUtc: true,
+    ),
+    folderPath: '',
+    origin: FileOrigin.remote,
+  );
+}
 
 /// Opens [folder] in Browse's folder layout (N12 "Received … · Open").
 Future<void> openReceivedFolder(
@@ -55,6 +86,12 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
 
   /// The offer whose dialog is open.
   String? _dialogFor;
+
+  /// N12b: the inbox offer (from the device we're connected to) whose
+  /// dialog is open; inbox offers already answered or auto-accepted.
+  String? _inboxDialogFor;
+  final Set<String> _handledInbox = {};
+  ProviderSubscription<List<OfferDto>>? _inboxSub;
   final Set<String> _notified = {};
 
   /// Send jobs last seen waiting for an answer.
@@ -73,6 +110,10 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
       transferJobsProvider,
       (_, next) => _onJobs(next.value ?? const []),
     );
+    _inboxSub = ref.listenManual(
+      remoteInboxProvider,
+      (_, next) => _onInbox(next),
+    );
     // The current values after the first frame (l10n and the navigator
     // aren't ready inside initState).
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,6 +128,7 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     WidgetsBinding.instance.removeObserver(this);
     _promptsSub?.close();
     _jobsSub?.close();
+    _inboxSub?.close();
     unawaited(_eventsSub?.cancel());
     super.dispose();
   }
@@ -124,7 +166,9 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
       if (_notified.add(next.offer.id)) unawaited(_notify(next));
       return;
     }
-    if (_dialogFor == null) unawaited(_show(next));
+    if (_dialogFor == null && _inboxDialogFor == null) {
+      unawaited(_show(next));
+    }
   }
 
   Future<void> _notify(OfferPrompt p) async {
@@ -192,8 +236,126 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
         if (mounted) _snack(context.l10n.offerFolderExcluded);
       }
     }
-    // The next one in the queue, if any.
-    if (mounted) _onPrompts(ref.read(offerPromptsProvider).value ?? const []);
+    _next();
+  }
+
+  /// The next prompt in either queue, if any.
+  void _next() {
+    if (!mounted) return;
+    _onPrompts(ref.read(offerPromptsProvider).value ?? const []);
+    _onInbox(ref.read(remoteInboxProvider));
+  }
+
+  // ---- N12b: offers the device we're connected to makes to us ----
+
+  void _onInbox(List<OfferDto> offers) {
+    if (!mounted) return;
+    final open = _inboxDialogFor;
+    if (open != null && !offers.any((o) => o.id == open)) {
+      // Taken back or expired over there.
+      _inboxDialogFor = null;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+    final c = ref.read(remoteConnectionControllerProvider);
+    if (c is! RemoteConnected || !_foreground) return;
+    if (_dialogFor != null || _inboxDialogFor != null) return;
+    final next = offers
+        .where(
+          (o) =>
+              o.status == OfferWireStatus.pending &&
+              !_handledInbox.contains(o.id),
+        )
+        .firstOrNull;
+    if (next != null) unawaited(_showInbox(next, c));
+  }
+
+  Future<void> _showInbox(OfferDto o, RemoteConnected c) async {
+    _handledInbox.add(o.id);
+    _inboxDialogFor = o.id;
+    final l10n = context.l10n;
+    final fp = c.peerFingerprint;
+    final name = o.senderName?.isNotEmpty ?? false ? o.senderName! : c.peerName;
+    final folder = defaultDownloadFolder(ref.read(downloadsRootProvider), name);
+    final devices = ref.read(knownDevicesRepositoryProvider);
+    final known = await devices.byFingerprint(fp);
+    if (!mounted) return;
+    OfferAnswer? answer;
+    if (known != null && !known.isTemporary && known.autoAcceptFiles) {
+      // Trusted: no prompt.
+      answer = (
+        accept: true,
+        folder: folder,
+        remember: true,
+        alwaysAccept: true,
+      );
+    } else {
+      unawaited(HapticFeedback.mediumImpact().catchError((Object _) {}));
+      final me = await ref.read(deviceIdentityProvider.future);
+      if (!mounted) return;
+      answer = await showDialog<OfferAnswer>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => OfferDialog(
+          data: OfferDialogData(
+            offerId: o.id,
+            senderName: name,
+            platform: known?.platform ?? '',
+            words: fingerprintWords(fp, me.fingerprint),
+            names: [for (final f in o.files) f.name],
+            totalBytes: o.files.fold(0, (a, f) => a + f.size),
+            defaultFolder: folder,
+            deadline: DateTime.now().add(
+              Duration(seconds: o.expiresInSeconds ?? 120),
+            ),
+            showRemember: known == null || known.isTemporary,
+          ),
+          pickFolder: showFolderPicker,
+        ),
+      );
+    }
+    if (_inboxDialogFor == o.id) _inboxDialogFor = null;
+    if (!mounted) return;
+    final http = ref.read(remoteConnectionControllerProvider.notifier).http;
+    if (answer != null && http != null) {
+      ref.read(remoteInboxProvider.notifier).remove(o.id);
+      try {
+        final client = OfferClient(http);
+        if (!answer.accept) {
+          await client.decline(o.id);
+        } else {
+          await client.accept(o.id);
+          if (answer.remember || answer.alwaysAccept) {
+            await devices.saveAfterPairing(
+              PairedPeer(
+                fingerprint: fp,
+                peerDeviceId: known?.peerDeviceId ?? '',
+                name: name,
+                platform: known?.platform ?? '',
+                canShareToUs: true,
+              ),
+              temporary: false,
+            );
+            if (answer.alwaysAccept) {
+              await devices.setAutoAcceptFiles(fp, enabled: true);
+            }
+          }
+          await ref
+              .read(transferEngineProvider)
+              .enqueueDownload(
+                [for (final f in o.files) ?offeredRemoteFile(fp, f)],
+                peerFingerprint: fp,
+                peerName: name,
+                localFolder: answer.folder,
+                inboxOfferId: o.id,
+              );
+          if (mounted) _snack(l10n.offerReceiving(o.files.length, name));
+        }
+      } on Object catch (e) {
+        developer.log('offer answer failed: $e', name: 'kfm.connect');
+        if (mounted) _snack(l10n.transferLostConnection(name));
+      }
+    }
+    _next();
   }
 
   void _onEvent(OfferEvent e) {

@@ -332,14 +332,23 @@ class FoldersResponseDto {
 /// A 204 / empty body (older server) decodes to a null token.
 @immutable
 class SessionDto {
-  const new({this.changeToken});
+  const new({this.changeToken, this.inboxToken});
 
-  factory fromJson(Map<String, Object?> j) =>
-      SessionDto(changeToken: _strOrNull(j, 'changeToken'));
+  factory fromJson(Map<String, Object?> j) => SessionDto(
+    changeToken: _strOrNull(j, 'changeToken'),
+    inboxToken: _strOrNull(j, 'inboxToken'),
+  );
 
   final String? changeToken;
 
-  Map<String, Object?> toJson() => {'changeToken': ?changeToken};
+  /// N12b: changes whenever the server's offers to the caller change
+  /// (then the client reads `GET /v1/inbox`). Null from older versions.
+  final String? inboxToken;
+
+  Map<String, Object?> toJson() => {
+    'changeToken': ?changeToken,
+    'inboxToken': ?inboxToken,
+  };
 }
 
 /// Body of move and copy: the target folder as root + relative path.

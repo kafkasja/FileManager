@@ -278,11 +278,14 @@ class TransferEngine {
     required String peerName,
     required String localFolder,
     TransferMode mode = TransferMode.copy,
+    String? inboxOfferId,
   }) async {
     final deviceId = await deviceIdFor(peerFingerprint, peerName);
     final id = await _repo.createJob(
       deviceId: deviceId,
       direction: TransferDirection.download,
+      // N12b: a download of files the other device offered us.
+      targetRootId: inboxOfferId == null ? null : inboxRootId(inboxOfferId),
       targetPath: localFolder,
       files: [for (final f in remoteFiles) _newFile(f)],
       mode: mode,
@@ -467,6 +470,33 @@ class TransferEngine {
       await _offerJobEnded(job.deviceFingerprint);
     } on Object catch (e) {
       developer.log('offer job end failed: $e', name: 'kfm.transfers');
+    }
+  }
+
+  /// N12b: a download of an offer ended: the other device hears which
+  /// files arrived (best effort; its grant ends after 7 idle days anyway).
+  Future<void> _maybeReportInbox(String jobId) async {
+    try {
+      final job = await _repo.dao.job(jobId);
+      final offerId = job?.inboxOfferId;
+      if (job == null || offerId == null || !job.allFilesEnded) return;
+      final http = _http(job.deviceFingerprint);
+      if (http == null) return;
+      await OfferClient(http).finished(
+        offerId,
+        InboxFinishedDto(
+          done: [
+            for (final f in job.files)
+              if (f.status == TransferFileStatus.done) f.seq,
+          ],
+          failed: [
+            for (final f in job.files)
+              if (f.status != TransferFileStatus.done) f.seq,
+          ],
+        ),
+      );
+    } on Object catch (e) {
+      developer.log('offer end not reported: $e', name: 'kfm.transfers');
     }
   }
 
@@ -664,6 +694,9 @@ class TransferEngine {
               pump();
               if (q.job.isMove) unawaited(_maybeFinalize(q.job.id));
               if (q.job.isOffer) unawaited(_maybeEndOffer(q.job.id));
+              if (q.job.inboxOfferId != null) {
+                unawaited(_maybeReportInbox(q.job.id));
+              }
             }),
           );
         }

@@ -19,6 +19,7 @@ import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/known_pair_limiter.dart';
 import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
+import 'package:kfm/features/connect/data/offer_copy.dart';
 import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
@@ -26,6 +27,7 @@ import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/remote_trash_service.dart';
 import 'package:kfm/features/connect/data/routes/file_routes.dart';
+import 'package:kfm/features/connect/data/routes/inbox_routes.dart';
 import 'package:kfm/features/connect/data/routes/offer_routes.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/routes/roots_routes.dart';
@@ -46,6 +48,8 @@ import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_offer.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart'
+    show transferPreprocessorProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connect_providers.g.dart';
@@ -208,6 +212,22 @@ OfferService offerService(Ref ref) {
     serverFingerprint: () async =>
         (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
             .fingerprint,
+    ownName: () async =>
+        (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
+            .displayName,
+    staging: transferStagingDir,
+    prepareCopy: (f, offerId, seq) => prepareOfferCopy(
+      f,
+      dir: () async =>
+          Directory('${(await transferStagingDir()).path}/offer-$offerId'),
+      seq: seq,
+      enabled: () => ref
+          .read(settingsRepositoryProvider)
+          .read(AppSettings.privacyStripLocation),
+      prepare: (f) => ref
+          .read(transferPreprocessorProvider)
+          .prepare(f, ref.read(fileSourceProvider)),
+    ),
   );
   ref.onDispose(service.dispose);
   return service;
@@ -398,6 +418,8 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
     ...sessionRoutes(
       ref.watch(clientSessionStoreProvider),
       changeToken: (fp) => ref.read(shareChangeTrackerProvider).tokenFor(fp),
+      // N12b: offers this device makes to that client.
+      inboxToken: (fp) => ref.read(offerServiceProvider).inboxTokenFor(fp),
     ),
     ...fileRoutes(
       FileRoutesEnv(
@@ -430,6 +452,8 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
     ),
     // N12: send-files offers (push).
     ...offerRoutes(() => ref.read(offerServiceProvider)),
+    // N12b: offers to connected clients.
+    ...inboxRoutes(() => ref.read(offerServiceProvider)),
     // N6: remembered devices reconnect without a QR.
     knownPairRoute(
       nonces: ref.watch(pairNonceStoreProvider),

@@ -234,6 +234,25 @@ class AllowListGuard {
         root: root,
       );
     }
+    // N12b: exactly a file this device offered to the caller and the
+    // caller accepted: readable (only), wherever it lives (a staged
+    // location-free copy sits in app storage).
+    if (target case FileIdTarget(:final id) when !write) {
+      if (await grants.isOfferedFile(clientFingerprint, id)) {
+        final offered = await paths.resolveFileId(id, source());
+        return ResolvedTarget(
+          target: target,
+          canonicalPath: offered.canonicalPath,
+          root: SharedRoot(
+            id: 'offered',
+            path: offered.canonicalPath,
+            label: '',
+            readOnly: true,
+          ),
+          file: offered,
+        );
+      }
+    }
     switch (target) {
       case FileIdTarget(:final id):
         file = await paths.resolveFileId(

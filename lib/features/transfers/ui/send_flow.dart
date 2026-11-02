@@ -61,6 +61,14 @@ final class _ToConnected extends _SendTarget {
   final String name;
 }
 
+/// N12b: a client connected to this (sharing) device.
+final class _ToClient extends _SendTarget {
+  const new(this.fingerprint, this.name);
+
+  final String fingerprint;
+  final String name;
+}
+
 final class _ToRemembered extends _SendTarget {
   const new(this.device);
 
@@ -121,6 +129,8 @@ Future<void> startSend(
   switch (target) {
     case _ToConnected(:final fingerprint, :final name):
       await confirmAndSend(context, ref, files, fingerprint, name);
+    case _ToClient(:final fingerprint, :final name):
+      await _offerToClient(context, ref, files, fingerprint, name);
     case _ToRemembered(:final device):
       if (connectedFp == device.fingerprint) {
         await confirmAndSend(
@@ -319,6 +329,47 @@ Future<void> confirmAndSend(
   _snack(context, l10n.sendWaiting(name), showTransfers: true);
 }
 
+/// N12b: offers [files] to the client [fingerprint] connected to this
+/// sharing device; it prompts within a heartbeat and downloads them.
+Future<void> _offerToClient(
+  BuildContext context,
+  WidgetRef ref,
+  List<FileRef> files,
+  String fingerprint,
+  String name,
+) async {
+  final l10n = context.l10n;
+  final size = formatBytes(files.fold(0, (a, f) => a + f.sizeBytes));
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.sendConfirmTitle(files.length, size, name)),
+      content: Text(l10n.sendConfirmHint(name)),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          key: const ValueKey('send-confirm'),
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(l10n.sendAction),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await ref
+        .read(offerServiceProvider)
+        .offerToClient(fingerprint, name, files);
+    if (context.mounted) _snack(context, l10n.sendWaiting(name));
+  } on Object {
+    // X2 couldn't remove location from a file: nothing was offered.
+    if (context.mounted) _snack(context, l10n.privacyTransferNotRemoved);
+  }
+}
+
 /// "Send to…": Connected / Remembered (online dot from mDNS) / Nearby,
 /// then Scan QR code / Enter code.
 class _SendDeviceSheet extends ConsumerWidget {
@@ -339,6 +390,13 @@ class _SendDeviceSheet extends ConsumerWidget {
     ];
     final nearby =
         ref.watch(nearbyDevicesProvider).value ?? const <NearbyDevice>[];
+    // N12b: clients connected to this device while it shares.
+    final clients = [
+      for (final s
+          in ref.watch(connectedClientsProvider).value ??
+              const <ClientSession>[])
+        if (!s.sendOnly) s,
+    ];
     final online = {for (final n in nearby) ?n.fingerprintHint};
     final strangers = [
       for (final n in nearby)
@@ -375,6 +433,19 @@ class _SendDeviceSheet extends ConsumerWidget {
                   _ToConnected(connected.peerFingerprint, connected.peerName),
                 ),
               ),
+            ],
+            if (clients.isNotEmpty) ...[
+              header(l10n.sendSheetConnectedToYou),
+              for (final s in clients)
+                ListTile(
+                  key: ValueKey('send-client-${s.clientFingerprint}'),
+                  leading: const Icon(Icons.phonelink),
+                  title: Text(s.clientName),
+                  onTap: () => Navigator.pop(
+                    context,
+                    _ToClient(s.clientFingerprint, s.clientName),
+                  ),
+                ),
             ],
             if (remembered.isNotEmpty) ...[
               header(l10n.sendSheetRemembered),

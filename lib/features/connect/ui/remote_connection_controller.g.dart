@@ -184,6 +184,72 @@ abstract class _$RemoteChangeToken extends $Notifier<String?> {
   }
 }
 
+/// TASK-N12b: pending offers the connected (sharing) device makes to us,
+/// read when the heartbeat's `inboxToken` changes. Empty while not
+/// connected.
+
+@ProviderFor(RemoteInbox)
+final remoteInboxProvider = RemoteInboxProvider._();
+
+/// TASK-N12b: pending offers the connected (sharing) device makes to us,
+/// read when the heartbeat's `inboxToken` changes. Empty while not
+/// connected.
+final class RemoteInboxProvider
+    extends $NotifierProvider<RemoteInbox, List<OfferDto>> {
+  /// TASK-N12b: pending offers the connected (sharing) device makes to us,
+  /// read when the heartbeat's `inboxToken` changes. Empty while not
+  /// connected.
+  RemoteInboxProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'remoteInboxProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$remoteInboxHash();
+
+  @$internal
+  @override
+  RemoteInbox create() => RemoteInbox();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<OfferDto> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<OfferDto>>(value),
+    );
+  }
+}
+
+String _$remoteInboxHash() => r'35f0885b856f0482191673ef82e866189d576a8b';
+
+/// TASK-N12b: pending offers the connected (sharing) device makes to us,
+/// read when the heartbeat's `inboxToken` changes. Empty while not
+/// connected.
+
+abstract class _$RemoteInbox extends $Notifier<List<OfferDto>> {
+  List<OfferDto> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<OfferDto>, List<OfferDto>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<OfferDto>, List<OfferDto>>,
+              List<OfferDto>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// The connection of this device to a sharing device (TASK-N5). Owns the
 /// pinned client after pairing, so it outlives the Connect screen; N7's
 /// remote browsing uses [http]. A 5 s `GET /v1/session` heartbeat runs in
@@ -238,7 +304,7 @@ final class RemoteConnectionControllerProvider
 }
 
 String _$remoteConnectionControllerHash() =>
-    r'06554ee441bf245a36c4956c510f267166157c65';
+    r'548abf53c30ddde6e7473403e01697ff4154d429';
 
 /// The connection of this device to a sharing device (TASK-N5). Owns the
 /// pinned client after pairing, so it outlives the Connect screen; N7's

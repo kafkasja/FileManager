@@ -657,7 +657,7 @@ final class AllowListGuardProvider
   }
 }
 
-String _$allowListGuardHash() => r'e7c6fae4837e511367212eb70a230effce810d45';
+String _$allowListGuardHash() => r'ff9b5c89d55b73841c56fdeb4037cbaf57821f1f';
 
 /// Send-files offers (TASK-N12).
 
@@ -800,7 +800,7 @@ final class OfferServiceProvider
   }
 }
 
-String _$offerServiceHash() => r'f827eca5aa460389693248c2f72db2301bda69cf';
+String _$offerServiceHash() => r'e45f229d4b8af44130a62048099d69ec9969b9ea';
 
 /// Every offer this device's server holds, newest first (Transfers
 /// Received / Offered cards).
@@ -1626,7 +1626,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'da5698bb0bac3b187cf39f98d52dbba42f3ed8a9';
+String _$shareServerRoutesHash() => r'd0dda99a56c437ababe177241593e908af44da9c';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

@@ -416,6 +416,32 @@ void main() {
   )).id;
 
   group('downloads', () {
+    test('N12b: a download of an offer reports which files arrived', () async {
+      http.contents['ms:0'] = [1, 2, 3];
+      final offerId = 'c' * 32;
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0'), _remote('ms:gone')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        inboxOfferId: offerId,
+      );
+      http.failContent['ms:gone'] = ApiErrorCode.notFound;
+      final job = await until(id, (j) => j.isFinished);
+      expect(job.inboxOfferId, offerId);
+      for (var i = 0; i < 100; i++) {
+        if (http.calls.any((c) => c.path.endsWith('/finished'))) break;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      final report = http.calls.singleWhere(
+        (c) => c.path == ApiRoutes.inboxFinished(offerId),
+      );
+      expect(report.body, {
+        'done': [0],
+        'failed': [1],
+      });
+    });
+
     test('2 at a time, seq order; all land in the folder; no partials '
         'left', () async {
       for (var i = 0; i < 4; i++) {
