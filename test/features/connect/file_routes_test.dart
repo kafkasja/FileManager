@@ -80,6 +80,9 @@ class _FakeThumbs implements ThumbnailCache {
   void cancel(String fileId) {}
 
   @override
+  void cancelWhere(bool Function(FileRef f) test) {}
+
+  @override
   Future<void> clear() async {}
 
   @override

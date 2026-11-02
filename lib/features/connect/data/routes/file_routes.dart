@@ -266,7 +266,8 @@ Response _fileOpError(FileOpException e) => apiError(switch (e.failure) {
   FileOpFailure.targetExists => ApiErrorCode.conflict,
   FileOpFailure.unsupported ||
   FileOpFailure.ioError ||
-  FileOpFailure.unavailable => ApiErrorCode.internal,
+  FileOpFailure.unavailable ||
+  FileOpFailure.volumeEjecting => ApiErrorCode.internal,
 });
 
 String _failureWire(FileOpFailure f) => switch (f) {

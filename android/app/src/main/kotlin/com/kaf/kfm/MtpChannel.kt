@@ -83,6 +83,7 @@ class MtpChannel(
                     "delete" -> device(call).deleteObject(int(call, "handle"))
                     "thumbnail" -> device(call).getThumbnail(int(call, "handle"))
                     "canDelete" -> canDelete(device(call))
+                    "close" -> close(call.argument<String>("deviceName"))
                     else -> {
                         main.post { result.notImplemented() }
                         return@execute
@@ -122,6 +123,17 @@ class MtpChannel(
         }
         open[name] = mtp
         return mtp
+    }
+
+    /** U3 Eject: closes the camera's MtpDevice (and its USB connection). True if it was open. */
+    private fun close(deviceName: String?): Boolean {
+        val d = open.remove(deviceName ?: return false) ?: return false
+        try {
+            d.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "close: $e")
+        }
+        return true
     }
 
     private fun closeAll() {

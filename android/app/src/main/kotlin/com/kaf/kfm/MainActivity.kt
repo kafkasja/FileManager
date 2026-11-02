@@ -17,7 +17,7 @@ class MainActivity : FlutterActivity() {
         filesChannel = FilesChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         geocoderChannel = GeocoderChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
         shareServiceChannel = ShareServiceChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
-        volumesChannel = VolumesChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+        volumesChannel = VolumesChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger, this)
         mtpChannel = MtpChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
         safChannel = SafChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
     }

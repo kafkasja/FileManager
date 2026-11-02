@@ -282,6 +282,7 @@ String _folderFailure(AppLocalizations l, FileOpException e, String name) =>
       FileOpFailure.permissionDenied ||
       FileOpFailure.unsupported => l.fileOpNeedsAllFiles,
       FileOpFailure.notFound => l.fileOpNotFound(name),
+      FileOpFailure.volumeEjecting => l.ejectRefused,
       _ => l.fileOpFailedGeneric(name),
     };
 

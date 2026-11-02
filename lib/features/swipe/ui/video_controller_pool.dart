@@ -129,6 +129,7 @@ class VideoControllerPool {
 
   /// Insertion order = least recently obtained first.
   final Map<String, Future<VideoHandle>> _handles = {};
+  final Map<String, FileRef> _files = {};
 
   int get aliveCount => _handles.length;
 
@@ -142,6 +143,7 @@ class VideoControllerPool {
     }
     final created = _create(file);
     _handles[file.id] = created;
+    _files[file.id] = file;
     _evictBeyond();
     return created;
   }
@@ -156,6 +158,7 @@ class VideoControllerPool {
     } on Object {
       // The caller holds this same future and sees the error.
       _handles.remove(file.id)?.ignore();
+      _files.remove(file.id);
       await handle.dispose();
       rethrow;
     }
@@ -165,6 +168,7 @@ class VideoControllerPool {
     while (_handles.length > maxAlive) {
       final oldest = _handles.keys.first;
       final handle = _handles.remove(oldest)!;
+      _files.remove(oldest);
       unawaited(
         handle.then<void>(
           (h) => h.dispose(),
@@ -185,9 +189,17 @@ class VideoControllerPool {
     }
   }
 
-  Future<void> disposeAll() async {
-    final all = _handles.values.toList();
-    _handles.clear();
+  Future<void> disposeAll() => disposeWhere((_) => true);
+
+  /// U3: disposes the players of files matching [test] (a volume is being
+  /// ejected: no open handle may stay on it).
+  Future<void> disposeWhere(bool Function(FileRef f) test) async {
+    final ids = [
+      for (final e in _files.entries)
+        if (test(e.value)) e.key,
+    ];
+    final all = [for (final id in ids) ?_handles.remove(id)];
+    ids.forEach(_files.remove);
     for (final h in all) {
       try {
         await (await h).dispose();

@@ -9,6 +9,7 @@ import 'package:kfm/core/files/cross_place_ops.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/files/place_guard.dart';
 import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/folders/data/fat_names.dart';
 import 'package:kfm/features/folders/data/local_jobs_dao.dart';
@@ -80,7 +81,9 @@ class LocalJobRunner {
     Random? random,
     @visibleForTesting this.fat32MaxBytes = kFat32MaxFileBytes,
     bool Function(String folder)? stagesInTarget,
-  }) : _stagesInTarget = stagesInTarget ?? ((_) => false),
+    PlacesGuard? track,
+  }) : _track = track ?? unguardedAll,
+       _stagesInTarget = stagesInTarget ?? ((_) => false),
        _isFat32 = isFat32 ?? isFat32Volume,
        _isRemovable = isRemovable ?? ((id) => id != 'primary'),
        _random = random ?? Random.secure();
@@ -98,6 +101,10 @@ class LocalJobRunner {
   final bool Function(String placeId) _isRemovable;
   final DateTime Function() _clock;
   final Random _random;
+
+  /// U3: each file's copy and the originals' delete count as work on their
+  /// places (Eject waits; refused while a place is ejecting).
+  final PlacesGuard _track;
 
   /// Targets whose imports are written under [localJobTempName] first
   /// (SAF: the document exists while its bytes are still streaming).
@@ -242,6 +249,39 @@ class LocalJobRunner {
     await _markCancelled(id);
   }
 
+  /// U3: running or queued jobs that read from or write to [placeId].
+  Future<List<String>> activeJobsOn(String placeId) async {
+    final out = <String>[];
+    final jobs = await _dao.jobsWith({
+      LocalJobStatus.running,
+      LocalJobStatus.queued,
+    });
+    for (final job in jobs) {
+      if (job.targetPlaceId == placeId ||
+          (await _dao.files(job.id)).any(
+            (f) =>
+                f.sourcePlaceId == placeId &&
+                (f.status == LocalFileStatus.queued ||
+                    f.status == LocalFileStatus.copying ||
+                    f.status == LocalFileStatus.verifying),
+          )) {
+        out.add(job.id);
+      }
+    }
+    return out;
+  }
+
+  /// U3 "Pause & eject": pauses every job on [placeId]. A running job
+  /// stops after its current file (which completes and is verified, so no
+  /// partial file stays); everything else stays queued and resumable.
+  Future<int> pauseWhere(String placeId) async {
+    final ids = await activeJobsOn(placeId);
+    for (final id in ids) {
+      await pause(id);
+    }
+    return ids.length;
+  }
+
   /// Places changed (U1): paused jobs whose places are all back resume.
   Future<void> onPlacesChanged() async {
     for (final job in await _dao.jobsWith({LocalJobStatus.paused})) {
@@ -268,7 +308,11 @@ class LocalJobRunner {
     final job = await _dao.job(id);
     if (job == null || job.mode != LocalJobMode.move) return;
     final view = LocalJobView(job, await _dao.files(id));
-    await _finalize(job, view.originalsLeft);
+    final rows = view.originalsLeft;
+    await _track({
+      job.targetPlaceId,
+      for (final r in rows) r.sourcePlaceId,
+    }, () => _finalize(job, rows));
   }
 
   void _kick() {
@@ -326,7 +370,23 @@ class LocalJobRunner {
         await _pauseUnmounted(job.id);
         return;
       }
-      final stop = await _copyOne(job, row, policy, written);
+      final bool stop;
+      try {
+        stop = await _track({
+          job.targetPlaceId,
+          row.sourcePlaceId,
+        }, () => _copyOne(job, row, policy, written));
+      } on FileOpException catch (e) {
+        if (e.failure != FileOpFailure.volumeEjecting) rethrow;
+        // U3: a place is being ejected: stop here, resumable.
+        await _dao.setJob(
+          job.id,
+          LocalJobStatus.paused,
+          failureReason: LocalJobErrors.user,
+          nowMs: _now,
+        );
+        return;
+      }
       if (stop) return;
     }
     if (_stopRequests.remove(job.id) == LocalJobStatus.cancelled) {
@@ -335,11 +395,20 @@ class LocalJobRunner {
     }
     var latest = await _dao.files(job.id);
     if (job.mode == LocalJobMode.move) {
-      await _finalize(job, [
+      final rows = [
         for (final f in latest)
           if (f.status == LocalFileStatus.verified && f.sourceOutcome == null)
             f,
-      ]);
+      ];
+      try {
+        await _track({
+          job.targetPlaceId,
+          for (final r in rows) r.sourcePlaceId,
+        }, () => _finalize(job, rows));
+      } on FileOpException catch (e) {
+        // U3: ejecting: the originals stay ("Delete originals" later).
+        if (e.failure != FileOpFailure.volumeEjecting) rethrow;
+      }
       latest = await _dao.files(job.id);
     }
     final failed = latest.any((f) => f.status == LocalFileStatus.failed);

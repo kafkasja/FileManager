@@ -1,5 +1,6 @@
 package com.kaf.kfm
 
+import android.app.Activity
 import android.app.usage.StorageStatsManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,6 +15,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.StatFs
 import android.os.storage.StorageManager
+import android.provider.Settings
 import android.os.storage.StorageVolume
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -40,6 +42,8 @@ import java.util.concurrent.Executors
 class VolumesChannel(
     private val context: Context,
     messenger: BinaryMessenger,
+    /** U3: opens the system storage screen (null = start it as a new task). */
+    private val activity: Activity? = null,
 ) : MethodChannel.MethodCallHandler {
     private val channel = MethodChannel(messenger, "com.kaf.kfm/volumes")
     private val events = EventChannel(messenger, "com.kaf.kfm/volumes/events")
@@ -77,6 +81,14 @@ class VolumesChannel(
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        if (call.method == "openStorageSettings") {
+            try {
+                result.success(openStorageSettings())
+            } catch (e: Exception) {
+                result.error("IO", e.toString(), null)
+            }
+            return
+        }
         io.execute {
             try {
                 val value: Any? = when (call.method) {
@@ -94,6 +106,30 @@ class VolumesChannel(
                 main.post { result.error("IO", e.toString(), null) }
             }
         }
+    }
+
+    // ---- U3: safe eject ----
+
+    /**
+     * Apps can't unmount volumes, so Eject hands off to the system storage screen:
+     * ACTION_INTERNAL_STORAGE_SETTINGS (the volume list) if it resolves, else
+     * ACTION_MEMORY_CARD_SETTINGS, else the Settings app. Returns the action opened.
+     */
+    private fun openStorageSettings(): String {
+        val pm = context.packageManager
+        val action = listOf(
+            Settings.ACTION_INTERNAL_STORAGE_SETTINGS,
+            Settings.ACTION_MEMORY_CARD_SETTINGS,
+            Settings.ACTION_SETTINGS,
+        ).firstOrNull { Intent(it).resolveActivity(pm) != null } ?: Settings.ACTION_SETTINGS
+        val intent = Intent(action)
+        val starter = activity
+        if (starter != null) {
+            starter.startActivity(intent)
+        } else {
+            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+        return action
     }
 
     // ---- list ----

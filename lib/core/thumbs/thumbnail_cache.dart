@@ -34,6 +34,10 @@ abstract interface class ThumbnailCache {
   /// Drops a waiting request (scrolled away). Running ones finish.
   void cancel(String fileId);
 
+  /// U3: drops every waiting request whose file matches [test] (a volume
+  /// is being ejected). Running ones finish.
+  void cancelWhere(bool Function(FileRef f) test);
+
   Future<void> clear();
 
   Future<int> diskSizeBytes();
@@ -183,8 +187,11 @@ class DiskThumbnailCache implements ThumbnailCache {
   }
 
   @override
-  void cancel(String fileId) {
-    final cancelled = _waiting.where((r) => r.file.id == fileId).toList();
+  void cancel(String fileId) => cancelWhere((f) => f.id == fileId);
+
+  @override
+  void cancelWhere(bool Function(FileRef f) test) {
+    final cancelled = _waiting.where((r) => test(r.file)).toList();
     for (final r in cancelled) {
       _waiting.remove(r);
       _inFlight.remove(r.key);

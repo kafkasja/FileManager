@@ -10,6 +10,7 @@ import 'package:kfm/core/files/cross_place_ops.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/mtp/mtp_file_source.dart';
 import 'package:kfm/core/files/pending_folder.dart';
+import 'package:kfm/core/files/place_guard.dart';
 import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/files/saf/saf_channel.dart';
 import 'package:kfm/core/files/saf/saf_file_source.dart';
@@ -18,6 +19,8 @@ import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/external_storage/data/tracked_file_source.dart';
+import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/external_storage/domain/storage_place.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -33,20 +36,23 @@ PendingFolder? pendingFolder(Ref ref) {
   return createAndroidPendingFolder(
     ref.watch(appDatabaseProvider),
     ref.watch(settingsRepositoryProvider),
+    guard: ref.watch(volumeActivityTrackerProvider.notifier).run,
   );
 }
 
 /// Shared by the provider and the H2 background worker.
 PendingFolder createAndroidPendingFolder(
   AppDatabase db,
-  SettingsRepository settings,
-) {
+  SettingsRepository settings, {
+  PlaceGuard? guard,
+}) {
   final root = RegExp(r'^/storage/(emulated/\d+|[^/]+)');
   return PendingFolder(
     db: db,
     volumeRootOf: (path) =>
         root.firstMatch(path)?.group(0) ?? androidPrimaryRoot,
     retentionDays: () => settings.read(AppSettings.pendingFolderRetentionDays),
+    guard: guard,
   );
 }
 
@@ -80,11 +86,13 @@ SafPendingFolder? safPendingFolder(Ref ref) {
     channel: SafChannel(),
     locator: ref.watch(safLocatorProvider),
     retentionDays: () => settings.read(AppSettings.pendingFolderRetentionDays),
+    guard: ref.watch(volumeActivityTrackerProvider.notifier).run,
   );
 }
 
 /// Every place KFM can reach: device storage, SAF volumes and cameras
-/// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+/// behind one [RoutingFileSource] (TASK-U2), wrapped in U3's
+/// [TrackedFileSource]. Tests override this with
 /// `FakeFileSource`.
 @Riverpod(keepAlive: true)
 FileSource fileSource(Ref ref) {
@@ -118,7 +126,11 @@ FileSource fileSource(Ref ref) {
       await saf.dispose();
       await android.dispose();
     });
-    return source;
+    // U3: every call touching a removable place is counted for Eject.
+    return TrackedFileSource(
+      inner: source,
+      tracker: ref.watch(volumeActivityTrackerProvider.notifier),
+    );
   }
   throw UnsupportedError(
     'FileSource not implemented for ${Platform.operatingSystem} yet (PL1/PL2)',

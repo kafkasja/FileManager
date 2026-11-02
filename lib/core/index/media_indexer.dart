@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/core/files/file_names.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
@@ -486,6 +487,10 @@ class MediaIndexer {
     final next = _tail.then((_) async {
       try {
         await job();
+      } on FileOpException catch (e, st) {
+        // U3: the user is ejecting that volume: the scan stops, not fails.
+        if (e.failure == FileOpFailure.volumeEjecting) return;
+        _emit(IndexFailed(e, st));
       } on Object catch (e, st) {
         _emit(IndexFailed(e, st));
       }

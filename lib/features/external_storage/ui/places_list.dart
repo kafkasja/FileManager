@@ -10,7 +10,9 @@ import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/external_storage/domain/storage_place.dart';
+import 'package:kfm/features/external_storage/ui/eject_flow.dart';
 import 'package:kfm/features/external_storage/ui/place_labels.dart';
 import 'package:kfm/features/external_storage/ui/saf_grant_flow.dart';
 
@@ -23,6 +25,7 @@ class PlacesList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
+    final activity = ref.watch(volumeActivityTrackerProvider);
     return switch (ref.watch(placesProvider)) {
       AsyncValue(:final value?) => () {
         final shown = [
@@ -54,7 +57,19 @@ class PlacesList extends ConsumerWidget {
                   final s? => Text(s, maxLines: 2),
                   null => null,
                 },
-                onTap: () => unawaited(openPlace(context, ref, p)),
+                trailing: p.isRemovable && !p.needsPermission
+                    ? IconButton(
+                        key: ValueKey('eject-${p.id}'),
+                        icon: const Icon(Icons.eject),
+                        tooltip: l10n.ejectAction,
+                        onPressed: activity.isEjecting(p.id)
+                            ? null
+                            : () => unawaited(ejectPlace(context, ref, p)),
+                      )
+                    : null,
+                onTap: activity.isEjecting(p.id)
+                    ? null
+                    : () => unawaited(openPlace(context, ref, p)),
               ),
           ],
         );

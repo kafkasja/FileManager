@@ -46,6 +46,18 @@ String placeIdOf(FileRef f, {SafLocator? saf}) => switch (f.id) {
   _ => placeIdOfPath(f.folderPath),
 };
 
+/// A [FileSource] that wraps another one (U3's tracking decorator).
+abstract interface class FileSourceDecorator {
+  FileSource get inner;
+}
+
+/// The [RoutingFileSource] behind [fs] (through decorators), if any.
+RoutingFileSource? routingOf(FileSource fs) => switch (fs) {
+  final RoutingFileSource r => r,
+  final FileSourceDecorator d => routingOf(d.inner),
+  _ => null,
+};
+
 /// The one `fileSourceProvider` (TASK-U2): routes every call to the
 /// source that owns the id (`ms:`/`path:` → Android, `saf:` → SAF, `mtp:`
 /// → camera) or the target folder (a path under a SAF-granted root →

@@ -112,6 +112,10 @@ abstract interface class VolumesPlatform {
 
   /// Broadcast; the native callback/receiver runs while listened.
   Stream<VolumeEvent> events();
+
+  /// U3: opens the system storage screen (where the user taps Eject).
+  /// Returns the settings action that opened.
+  Future<String?> openStorageSettings();
 }
 
 /// Typed wrapper around `com.kaf.kfm/volumes` (+ `/events`).
@@ -134,6 +138,10 @@ class VolumesChannel implements VolumesPlatform {
         const [];
     return rows.map(VolumeInfo.fromRow).toList(growable: false);
   }
+
+  @override
+  Future<String?> openStorageSettings() =>
+      _channel.invokeMethod<String>('openStorageSettings');
 
   @override
   Future<int> sdkInt() async =>

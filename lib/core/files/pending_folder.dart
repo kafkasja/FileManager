@@ -9,6 +9,8 @@ import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/io_errors.dart';
+import 'package:kfm/core/files/place_guard.dart';
+import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/utils/random_id.dart';
 
 /// Retention in days is clamped to this range (corrupt values → default).
@@ -33,10 +35,12 @@ class PendingFolder {
     required this._volumeRootOf,
     required this._retentionDays,
     this._clock = DateTime.now,
+    PlaceGuard? guard,
     Random? random,
     @visibleForTesting
     Future<void> Function(String from, String to)? renameOverride,
-  }) : _random = random ?? Random.secure(),
+  }) : _guard = guard ?? unguarded,
+       _random = random ?? Random.secure(),
        _rename = renameOverride ?? _renameFile;
 
   static const folderName = '.KFMTrash';
@@ -46,6 +50,9 @@ class PendingFolder {
   static const _exdev = 18;
 
   final AppDatabase _db;
+
+  /// U3: counts work on a removable volume (refused while ejecting).
+  final PlaceGuard _guard;
   final String Function(String path) _volumeRootOf;
   final Future<int> Function() _retentionDays;
   final DateTime Function() _clock;
@@ -61,7 +68,10 @@ class PendingFolder {
   /// stays put. `pendingFolderUnavailable` (H2) when the folder can't be
   /// created there or the rename crosses mounts; `permissionDenied` when the
   /// file itself can't be moved.
-  Future<PendingFolderItemRow> moveIn(FileRef f) async {
+  Future<PendingFolderItemRow> moveIn(FileRef f) =>
+      _guard(placeIdOfPath(f.path), () => _moveIn(f));
+
+  Future<PendingFolderItemRow> _moveIn(FileRef f) async {
     final root = _volumeRootOf(f.path);
     final folder = folderFor(root);
     final id = _newId();
@@ -114,6 +124,11 @@ class PendingFolder {
   /// original folder is recreated. Returns the new path.
   Future<String> restore(String itemId) async {
     final row = await _byId(itemId);
+    return await _guard(placeIdOfPath(row.volumeId), () => _restore(itemId));
+  }
+
+  Future<String> _restore(String itemId) async {
+    final row = await _byId(itemId);
     _refuseSaf(row);
     final folder = parentOf(row.originalPath);
     final (base, ext) = splitExtension(row.name);
@@ -160,7 +175,13 @@ class PendingFolder {
       // U2: SAF items are purged by SafPendingFolder (needs the channel).
       if (isSafStored(row.storedPath)) continue;
       if (!await Directory(row.volumeId).exists()) continue;
-      await _deleteItem(row);
+      try {
+        await _guard(placeIdOfPath(row.volumeId), () => _deleteItem(row));
+      } on FileOpException catch (e) {
+        // Ejecting: kept for the next purge.
+        if (e.failure == FileOpFailure.volumeEjecting) continue;
+        rethrow;
+      }
       purged++;
     }
     return purged;

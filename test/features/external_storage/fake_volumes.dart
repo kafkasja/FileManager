@@ -55,6 +55,14 @@ class FakeVolumes implements VolumesPlatform {
   @override
   Stream<VolumeEvent> events() => _events.stream;
 
+  int settingsOpened = 0;
+
+  @override
+  Future<String?> openStorageSettings() async {
+    settingsOpened++;
+    return 'android.settings.INTERNAL_STORAGE_SETTINGS';
+  }
+
   void emit(VolumeEvent e) => _events.add(e);
 
   Future<void> close() => _events.close();
@@ -78,6 +86,14 @@ class FakeMtp implements MtpPlatform {
   Stream<void> changes() => _changes.stream;
 
   void changed() => _changes.add(null);
+
+  final List<String> closed = [];
+
+  @override
+  Future<bool> close(String deviceName) async {
+    closed.add(deviceName);
+    return true;
+  }
 }
 
 class FakeSafTrees implements SafTreePlatform {
