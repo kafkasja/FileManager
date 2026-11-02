@@ -209,6 +209,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
+          persist: false,
           content: Text(text),
           action: change == null
               ? null

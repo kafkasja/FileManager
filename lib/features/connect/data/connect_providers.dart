@@ -397,6 +397,10 @@ ShareServer shareServer(Ref ref) {
       // N9: chunks have their own limit (kTransferChunkBytes).
       sizeLimitExempt: isUploadChunkRequest,
     ),
+    preferredPort: () =>
+        ref.read(settingsRepositoryProvider).read(AppSettings.sharePort),
+    savePort: (port) =>
+        ref.read(settingsRepositoryProvider).write(AppSettings.sharePort, port),
   );
   ref.onDispose(server.stop);
   return server;

@@ -6489,6 +6489,12 @@ abstract class AppLocalizations {
   /// **'Not sharing right now'**
   String get rememberedOffline;
 
+  /// No description provided for @rememberedConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get rememberedConnected;
+
   /// No description provided for @rememberedConnectsToUs.
   ///
   /// In en, this message translates to:

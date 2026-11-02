@@ -290,6 +290,7 @@ class SwipeScreen extends ConsumerWidget {
         ..clearSnackBars()
         ..showSnackBar(
           SnackBar(
+            persist: false,
             content: Text(l10n.pendingUnavailableAfterDone(unavailable)),
             action: SnackBarAction(
               label: l10n.pendingUnavailableOptions,
@@ -461,6 +462,7 @@ class _DeckState extends ConsumerState<_Deck> {
       _unavailableSnack?.close();
       _unavailableSnack = ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          persist: false,
           content: Text(l10n.pendingUnavailableSnack(now)),
           action: SnackBarAction(
             label: l10n.pendingUnavailableOptions,

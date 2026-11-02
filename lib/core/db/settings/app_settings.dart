@@ -99,6 +99,11 @@ abstract final class AppSettings {
     '',
   );
 
+  /// N6 follow-up: the port "Share this device" used last (0 = none yet).
+  /// Reused when free, so remembered devices can reconnect to their saved
+  /// address even where mDNS is blocked.
+  static final SettingKey<int> sharePort = SettingKey.integer('sharePort', 0);
+
   /// F5. Generation of the last committed full scan.
   static final SettingKey<int> indexGeneration = SettingKey.integer(
     'indexGeneration',

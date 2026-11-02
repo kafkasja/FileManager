@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
+import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/fingerprint_words.dart';
@@ -55,7 +57,10 @@ void main() {
   final fpB = 'bb' * 32;
   final fpC = 'cc' * 32;
 
-  Future<TestApp> pump(WidgetTester tester) async {
+  Future<TestApp> pump(
+    WidgetTester tester, {
+    List<Override> extra = const [],
+  }) async {
     identity = _FakeIdentity();
     discovery = FakeDiscovery();
     final app = await pumpApp(
@@ -64,6 +69,7 @@ void main() {
         secretStoreProvider.overrideWithValue(InMemorySecretStore()),
         deviceIdentityRepositoryProvider.overrideWithValue(identity),
         shareDiscoveryProvider.overrideWithValue(discovery),
+        ...extra,
       ],
     );
     final repo = app.container.read(knownDevicesRepositoryProvider);
@@ -155,6 +161,20 @@ void main() {
     ]);
     await _settle(tester);
     expect(find.text('Sharing now'), findsOneWidget);
+    expect(find.byIcon(Icons.circle), findsOneWidget);
+  });
+
+  testWidgets('a device we are connected to shows "Connected" and Browse, '
+      'even when mDNS never sees it', (tester) async {
+    await pump(
+      tester,
+      extra: [remotePeerConnectedProvider(fpA).overrideWithValue(true)],
+    );
+    await openList(tester);
+    expect(find.text('Connected'), findsOneWidget);
+    expect(find.text('Not sharing right now'), findsNothing);
+    expect(find.text('Browse Kaf PC'), findsOneWidget);
+    expect(find.text('Reconnect'), findsNothing);
     expect(find.byIcon(Icons.circle), findsOneWidget);
   });
 

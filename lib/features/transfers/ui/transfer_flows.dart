@@ -32,6 +32,7 @@ void _snack(BuildContext context, String text, {bool showTransfers = false}) {
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
+        persist: false,
         content: Text(text),
         action: showTransfers
             ? SnackBarAction(

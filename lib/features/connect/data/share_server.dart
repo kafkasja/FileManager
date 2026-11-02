@@ -196,8 +196,15 @@ class ShareServer {
     this._pipeline, {
     Future<List<LocalAddress>> Function()? addresses,
     InternetAddress? bindAddress,
+    this._preferredPort,
+    this._savePort,
   }) : _addresses = addresses ?? localShareAddresses,
        _bindAddress = bindAddress ?? InternetAddress.anyIPv4;
+
+  /// The last port used (N6 follow-up): remembered devices reconnect to
+  /// their saved `ip:port`, which only works if the port stays the same.
+  final Future<int?> Function()? _preferredPort;
+  final Future<void> Function(int port)? _savePort;
 
   final DeviceIdentityRepository _identity;
   final PipelineFactory _pipeline;
@@ -211,7 +218,8 @@ class ShareServer {
 
   bool get isRunning => _server != null;
 
-  /// Starts on a random free port. Returns the error state when there's no
+  /// Starts on the last used port when it's free, otherwise on a random
+  /// free port (remembered for next time). Returns the error state when there's no
   /// Wi-Fi or hotspot (nothing listens then). Throws on bind/TLS failures.
   Future<ShareServerState> start() async {
     if (_server != null) return _running;
@@ -226,7 +234,7 @@ class ShareServer {
         error: NoLocalNetworkException(),
       );
     }
-    final server = await HttpServer.bindSecure(_bindAddress, 0, ctx);
+    final server = await _bind(ctx);
     server
       ..idleTimeout = const Duration(seconds: 30)
       ..serverHeader = null;
@@ -238,6 +246,31 @@ class ShareServer {
       port: server.port,
       fingerprint: id.fingerprint,
     );
+  }
+
+  Future<HttpServer> _bind(SecurityContext ctx) async {
+    int? preferred;
+    try {
+      preferred = await _preferredPort?.call();
+    } on Object {
+      preferred = null; // a settings read failure only costs the reuse
+    }
+    if (preferred != null && preferred > 0 && preferred < 65536) {
+      try {
+        return await HttpServer.bindSecure(_bindAddress, preferred, ctx);
+      } on SocketException {
+        // Taken by another app: fall through to a random port.
+      }
+    }
+    final server = await HttpServer.bindSecure(_bindAddress, 0, ctx);
+    if (server.port != preferred) {
+      try {
+        await _savePort?.call(server.port);
+      } on Object {
+        // Not fatal: sharing works; the next run picks a new port again.
+      }
+    }
+    return server;
   }
 
   /// Closes the port and drops open connections immediately.

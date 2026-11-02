@@ -135,49 +135,52 @@ void main() {
     expect(client.seenFingerprint, info.fingerprint);
   });
 
-  test('first contact: a later connection with another cert is rejected', () async {
-    final client = PinnedClient.firstContact(base);
-    addTearDown(client.close);
-    await client.getJson(ApiRoutes.info, decode: ServerInfoDto.fromJson);
-    final port = base.port;
-    await server.stop();
-
-    // Another device takes over the same address and port.
-    final other = generateIdentityMaterial();
-    final ctx = SecurityContext()
-      ..useCertificateChainBytes(utf8.encode(other.certPem))
-      ..usePrivateKeyBytes(utf8.encode(other.privateKeyPem));
-    final impostor = await HttpServer.bindSecure(
-      InternetAddress.loopbackIPv4,
-      port,
-      ctx,
-    );
-    addTearDown(() => impostor.close(force: true));
-    var reached = 0;
-    impostor.listen((r) async {
-      reached++;
-      await r.response.close();
-    });
-    // The first call may hit the dead keep-alive connection (network error).
-    try {
+  test(
+    'first contact: a later connection with another cert is rejected',
+    () async {
+      final client = PinnedClient.firstContact(base);
+      addTearDown(client.close);
       await client.getJson(ApiRoutes.info, decode: ServerInfoDto.fromJson);
-    } on RemoteUnavailableException {
-      // expected either way
-    }
+      final port = base.port;
+      await server.stop();
 
-    await expectLater(
-      client.getJson(ApiRoutes.info, decode: ServerInfoDto.fromJson),
-      throwsA(
-        isA<RemoteUnavailableException>().having(
-          (e) => e.reason,
-          'reason',
-          RemoteUnavailableReason.pinMismatch,
+      // Another device takes over the same address and port.
+      final other = generateIdentityMaterial();
+      final ctx = SecurityContext()
+        ..useCertificateChainBytes(utf8.encode(other.certPem))
+        ..usePrivateKeyBytes(utf8.encode(other.privateKeyPem));
+      final impostor = await HttpServer.bindSecure(
+        InternetAddress.loopbackIPv4,
+        port,
+        ctx,
+      );
+      addTearDown(() => impostor.close(force: true));
+      var reached = 0;
+      impostor.listen((r) async {
+        reached++;
+        await r.response.close();
+      });
+      // The first call may hit the dead keep-alive connection (network error).
+      try {
+        await client.getJson(ApiRoutes.info, decode: ServerInfoDto.fromJson);
+      } on RemoteUnavailableException {
+        // expected either way
+      }
+
+      await expectLater(
+        client.getJson(ApiRoutes.info, decode: ServerInfoDto.fromJson),
+        throwsA(
+          isA<RemoteUnavailableException>().having(
+            (e) => e.reason,
+            'reason',
+            RemoteUnavailableReason.pinMismatch,
+          ),
         ),
-      ),
-    );
-    expect(reached, 0);
-    expect(client.seenFingerprint, fingerprint);
-  });
+      );
+      expect(reached, 0);
+      expect(client.seenFingerprint, fingerprint);
+    },
+  );
 
   test('promote keeps the base and pins the seen fingerprint', () async {
     final first = PinnedClient.firstContact(base);
@@ -234,7 +237,8 @@ void main() {
 
     final offline = ShareServer(
       identity,
-      (_) => (_) => Response.ok(''),
+      (_) =>
+          (_) => Response.ok(''),
       addresses: () async => const [],
       bindAddress: InternetAddress.loopbackIPv4,
     );
@@ -242,5 +246,36 @@ void main() {
     expect(state.status, ShareServerStatus.error);
     expect(state.error, isA<NoLocalNetworkException>());
     expect(offline.isRunning, isFalse);
+  });
+
+  test('N6 follow-up: a restart reuses the saved port; a taken port falls '
+      'back to a new one, which is saved', () async {
+    await server.stop();
+    int? saved;
+    ShareServer withPort() => ShareServer(
+      identity,
+      (_) =>
+          (_) => Response.ok(''),
+      addresses: () async => _loopback,
+      bindAddress: InternetAddress.loopbackIPv4,
+      preferredPort: () async => saved,
+      savePort: (p) async => saved = p,
+    );
+    final first = withPort();
+    final a = await first.start();
+    expect(saved, a.port);
+    await first.stop();
+
+    final second = withPort();
+    final b = await second.start();
+    expect(b.port, a.port);
+
+    // The port is busy now (second still runs): a third server moves on.
+    final third = withPort();
+    final c = await third.start();
+    expect(c.port, isNot(a.port));
+    expect(saved, c.port);
+    await third.stop();
+    await second.stop();
   });
 }

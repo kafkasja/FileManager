@@ -4607,6 +4607,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rememberedOffline => 'Not sharing right now';
 
   @override
+  String get rememberedConnected => 'Connected';
+
+  @override
   String get rememberedConnectsToUs => 'Connects to this device';
 
   @override

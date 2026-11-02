@@ -9,6 +9,7 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
+import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/domain/fingerprint_words.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
@@ -175,7 +176,12 @@ class _DeviceCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final spacing = context.tokens.spacing;
     final d = device;
-    final status = d.canShareToUs
+    // A live connection beats the mDNS hint (mDNS is blocked on some
+    // networks, and the emulator never sees it).
+    final connected = ref.watch(remotePeerConnectedProvider(d.fingerprint));
+    final status = connected
+        ? l10n.rememberedConnected
+        : d.canShareToUs
         ? (online ? l10n.rememberedOnline : l10n.rememberedOffline)
         : l10n.rememberedConnectsToUs;
     return Card(
@@ -204,12 +210,13 @@ class _DeviceCard extends ConsumerWidget {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (d.canShareToUs && online)
+                  if (connected || (d.canShareToUs && online))
                     Icon(
                       Icons.circle,
                       size: 12,
                       color: theme.colorScheme.primary,
-                      semanticLabel: l10n.rememberedOnline,
+                      // The subtitle already says "Connected".
+                      semanticLabel: connected ? null : l10n.rememberedOnline,
                     ),
                   IconButton(
                     key: ValueKey('remembered-remove-${d.fingerprint}'),
@@ -234,7 +241,17 @@ class _DeviceCard extends ConsumerWidget {
               padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
               child: Align(
                 alignment: AlignmentDirectional.centerEnd,
-                child: d.canShareToUs
+                child: connected
+                    ? FilledButton.tonal(
+                        key: ValueKey('remembered-browse-${d.fingerprint}'),
+                        onPressed: () => unawaited(
+                          context.push(
+                            AppRoutes.connectBrowseFor(d.fingerprint),
+                          ),
+                        ),
+                        child: Text(l10n.remoteBrowseAction(d.name)),
+                      )
+                    : d.canShareToUs
                     ? FilledButton(
                         key: ValueKey('remembered-reconnect-${d.fingerprint}'),
                         onPressed: () => _reconnect(context, ref),

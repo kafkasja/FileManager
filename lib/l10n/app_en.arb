@@ -3080,6 +3080,7 @@
   "rememberedLoadFailed": "Couldn’t load remembered devices",
   "rememberedOnline": "Sharing now",
   "rememberedOffline": "Not sharing right now",
+  "rememberedConnected": "Connected",
   "rememberedConnectsToUs": "Connects to this device",
   "rememberedStatusWords": "{status} · {words}",
   "@rememberedStatusWords": {
