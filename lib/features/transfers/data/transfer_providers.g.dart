@@ -214,6 +214,58 @@ final class DownloadsRootProvider
 
 String _$downloadsRootHash() => r'293e3e8949ac1942965decfeafa047f6fa842907';
 
+/// Deletes the originals of verified moves on this device (TASK-N11; U2
+/// and X3 reuse it): under the history lock, deleted files leave the
+/// index afterwards.
+
+@ProviderFor(verifiedMove)
+final verifiedMoveProvider = VerifiedMoveProvider._();
+
+/// Deletes the originals of verified moves on this device (TASK-N11; U2
+/// and X3 reuse it): under the history lock, deleted files leave the
+/// index afterwards.
+
+final class VerifiedMoveProvider
+    extends $FunctionalProvider<VerifiedMove, VerifiedMove, VerifiedMove>
+    with $Provider<VerifiedMove> {
+  /// Deletes the originals of verified moves on this device (TASK-N11; U2
+  /// and X3 reuse it): under the history lock, deleted files leave the
+  /// index afterwards.
+  VerifiedMoveProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'verifiedMoveProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$verifiedMoveHash();
+
+  @$internal
+  @override
+  $ProviderElement<VerifiedMove> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  VerifiedMove create(Ref ref) {
+    return verifiedMove(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VerifiedMove value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VerifiedMove>(value),
+    );
+  }
+}
+
+String _$verifiedMoveHash() => r'79abe7e1c0d4a23a5069e71efc0a898a6369f9fd';
+
 /// The Wi-Fi transfer engine (TASK-N9). The app watches it once, so it
 /// lives (and follows the connection) as long as the app.
 
@@ -261,7 +313,7 @@ final class TransferEngineProvider
   }
 }
 
-String _$transferEngineHash() => r'55a4599cc350f383e4ed566eaa405f8b42e53123';
+String _$transferEngineHash() => r'630fd9fc880a9a66d8dc63a1e5c9750b3dcac2d9';
 
 /// Every job, newest first (Transfers page).
 

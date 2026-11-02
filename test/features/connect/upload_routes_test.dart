@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
@@ -436,5 +437,104 @@ void main() {
       expect(r.statusCode, 507);
       expect(part(_id).lengthSync(), 0);
     });
+  });
+
+  group('N11 verify', () {
+    final good = sha256.convert([1, 2, 3, 4, 5]).toString();
+
+    Future<void> sendAll() async {
+      await call('POST', ApiRoutes.uploads, json: create());
+      await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=0',
+        bytes: [1, 2, 3, 4, 5],
+      );
+    }
+
+    test('complete {sha256} checks the part and the published file and '
+        'answers the final hash; a repeat gets the same answer', () async {
+      await sendAll();
+      var r = await call(
+        'POST',
+        ApiRoutes.uploadComplete(_id),
+        json: CompleteUploadDto(sha256: good).toJson(),
+      );
+      expect(r.statusCode, 200);
+      final done = UploadCompletedDto.fromJson(await body(r));
+      expect(done.sha256, good);
+      expect(await files.stat(done.finalId), isNotNull);
+      // The answer was lost: status says everything is there, a repeated
+      // complete returns the same file (no second copy).
+      r = await call('GET', ApiRoutes.upload(_id));
+      expect(r.statusCode, 200);
+      expect(UploadStatusDto.fromJson(await body(r)).received, 5);
+      r = await call(
+        'POST',
+        ApiRoutes.uploadComplete(_id),
+        json: CompleteUploadDto(sha256: good).toJson(),
+      );
+      expect(UploadCompletedDto.fromJson(await body(r)).finalId, done.finalId);
+      expect(
+        files.files.where((f) => f.folderPath.endsWith('DCIM')),
+        hasLength(1),
+      );
+      // Not for another client.
+      r = await call('GET', ApiRoutes.upload(_id), as: other);
+      expect(r.statusCode, 404);
+    });
+
+    test('a wrong hash: 409 verification_failed, nothing published, the '
+        'partial is gone', () async {
+      await sendAll();
+      final r = await call(
+        'POST',
+        ApiRoutes.uploadComplete(_id),
+        json: CompleteUploadDto(sha256: 'f' * 64).toJson(),
+      );
+      expect(r.statusCode, 409);
+      expect(await code(r), 'verification_failed');
+      expect(await files.statPath('$_root/DCIM/a.jpg'), isNull);
+      expect(await part(_id).exists(), isFalse);
+    });
+
+    test(
+      'the published file reads back different: it is deleted, 409',
+      () async {
+        handler = buildSharePipeline(
+          served: [LocalAddress(InternetAddress('192.168.1.23'), 24, 'wlan0')],
+          authenticate: authenticate(sessions),
+          sizeLimitExempt: isUploadChunkRequest,
+          routes: uploadRoutes(
+            UploadRoutesEnv(
+              guard: AllowListGuard(
+                scopeOf: scopes.scopeOf,
+                source: () => files,
+                paths: fakeGuard(
+                  existing: {_root, '$_root/DCIM', '$_root/Download'},
+                ),
+              ),
+              sessions: sessions,
+              uploads: uploads,
+              source: () => files,
+              addToIndex: (f) async => indexed.add(f),
+              stagingFreeBytes: () async => null,
+              hashFile: (f, s) async => 'e' * 64,
+            ),
+          ),
+        );
+        await sendAll();
+        final r = await call(
+          'POST',
+          ApiRoutes.uploadComplete(_id),
+          json: CompleteUploadDto(sha256: good).toJson(),
+        );
+        expect(r.statusCode, 409);
+        expect(await files.statPath('$_root/DCIM/a.jpg'), isNull);
+        expect(
+          files.calls.where((c) => c.startsWith('deletePermanentlyBatch')),
+          hasLength(1),
+        );
+      },
+    );
   });
 }

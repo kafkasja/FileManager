@@ -10,10 +10,13 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
+import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
+import 'package:kfm/features/transfers/data/verified_move_impl.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
+import 'package:kfm/features/transfers/domain/verified_move.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'transfer_providers.g.dart';
@@ -44,6 +47,23 @@ String downloadsRoot(Ref ref) {
   return '$home/Downloads'.replaceAll(r'\', '/');
 }
 
+/// Deletes the originals of verified moves on this device (TASK-N11; U2
+/// and X3 reuse it): under the history lock, deleted files leave the
+/// index afterwards.
+@Riverpod(keepAlive: true)
+VerifiedMove verifiedMove(Ref ref) => LocalVerifiedMove(
+  source: ref.watch(fileSourceProvider),
+  lock: ref.watch(historyLockProvider),
+  removeFromIndex: (ids) async {
+    // Waits for indexer jobs queued before it (an empty addFiles is a
+    // barrier), so an earlier upsert can't bring the rows back (B4).
+    await ref.read(mediaIndexerProvider).addFiles(const []);
+    await ref
+        .read(dbWriteQueueProvider)
+        .enqueue(null, () => ref.read(mediaIndexDaoProvider).deleteIds(ids));
+  },
+);
+
 /// The Wi-Fi transfer engine (TASK-N9). The app watches it once, so it
 /// lives (and follows the connection) as long as the app.
 @Riverpod(keepAlive: true)
@@ -63,6 +83,7 @@ TransferEngine transferEngine(Ref ref) {
     onUnauthorized: controller.reportUnauthorized,
     reconnect: (fp) => ref.read(knownDeviceConnectorProvider).reconnect(fp),
     isForeground: _inForeground,
+    verifiedMove: ref.watch(verifiedMoveProvider),
   );
   ref
     ..listen(remoteConnectionControllerProvider, (_, next) {

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:kfm/core/background/file_hasher.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -26,7 +28,11 @@ class UploadRoutesEnv {
     required this.source,
     required this.addToIndex,
     required this.stagingFreeBytes,
+    this.hashPath = _hashPath,
+    this.hashFile = hashFileRef,
   });
+
+  static Future<String> _hashPath(String path) => hashFileInIsolate(path);
 
   final AllowListGuard guard;
   final ClientSessionStore sessions;
@@ -38,6 +44,12 @@ class UploadRoutesEnv {
 
   /// Free bytes where partials are written; null = unknown.
   final Future<int?> Function() stagingFreeBytes;
+
+  /// N11: SHA-256 of a partial (worker isolate).
+  final Future<String> Function(String path) hashPath;
+
+  /// N11: SHA-256 of the imported file, read back through the source.
+  final Future<String> Function(FileRef f, FileSource source) hashFile;
 }
 
 /// Whether [request] is a chunk upload (its own body limit instead of the
@@ -57,13 +69,18 @@ final RegExp _chunkPath = RegExp(r'^/v1/uploads/[^/]+/chunk$');
 List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
   final g = env.guard;
 
-  /// The caller's own upload [id], or a 404 rejection.
-  Future<UploadState> own(GuardInput i) async {
+  /// The caller's own upload [id], or a 404 rejection. [orCompleted]:
+  /// a remembered completion counts too (N11: status and a repeated
+  /// complete after a lost answer).
+  Future<UploadState> own(GuardInput i, {bool orCompleted = false}) async {
     final session = sessionOf(i.request);
     final id = routeParam(i.request, 'id');
-    final u = session == null
+    var u = session == null
         ? null
         : await env.uploads.lookup(id, session.clientFingerprint);
+    if (u == null && orCompleted && session != null) {
+      u = env.uploads.lookupCompleted(id, session.clientFingerprint)?.state;
+    }
     if (u == null) {
       throw const GuardRejection(ApiErrorCode.notFound, 'upload');
     }
@@ -106,7 +123,7 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
         (r) => _complete(env, r),
         write: true,
         extract: (i) async {
-          final u = await own(i);
+          final u = await own(i, orCompleted: true);
           return [RootPathTarget(u.rootId, u.path, write: true)];
         },
       ),
@@ -119,7 +136,7 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
         // Where to resume: readable while the root is read-only too.
         write: false,
         extract: (i) async {
-          final u = await own(i);
+          final u = await own(i, orCompleted: true);
           return [RootPathTarget(u.rootId, u.path)];
         },
       ),
@@ -159,9 +176,15 @@ Response _statusOk(UploadState u, {int status = 200}) => Response(
 /// N10: where to resume (a chunk still being written isn't counted).
 Future<Response> _status(UploadRoutesEnv env, Request r) async {
   final u = await _upload(env, r);
-  if (u == null) return apiError(ApiErrorCode.notFound);
-  return _statusOk(u);
+  if (u != null) return _statusOk(u);
+  // N11: already published; the client goes straight to complete.
+  final done = _completedOf(env, r);
+  if (done == null) return apiError(ApiErrorCode.notFound);
+  return _statusOk(done.state..received = done.state.size);
 }
+
+CompletedUpload? _completedOf(UploadRoutesEnv env, Request r) => env.uploads
+    .lookupCompleted(routeParam(r, 'id'), _session(r).clientFingerprint);
 
 Future<Response> _create(UploadRoutesEnv env, Request r) async {
   final target = guardedTargetsOf(r).single;
@@ -350,12 +373,42 @@ Future<int> _receive(
   return done.future;
 }
 
+/// N9 complete; N11 verifies it when the client sends its `sha256`: the
+/// partial is hashed before anything is published (mismatch → partial
+/// deleted, 409 `verification_failed`), and the published file is read
+/// back and hashed again (mismatch → that copy is deleted, 409). The
+/// answer carries the final hash.
 Future<Response> _complete(UploadRoutesEnv env, Request r) async {
   final target = guardedTargetsOf(r).single;
   final u = await _upload(env, r);
-  if (u == null) return apiError(ApiErrorCode.notFound);
+  if (u == null) {
+    final done = _completedOf(env, r);
+    if (done == null) return apiError(ApiErrorCode.notFound);
+    return jsonOk(
+      UploadCompletedDto(finalId: done.finalId, sha256: done.sha256).toJson(),
+    );
+  }
   if (u.writing != null) return apiError(ApiErrorCode.busy);
   if (u.received != u.size) return apiError(ApiErrorCode.conflict);
+  final raw = await r.readAsString();
+  final decoded = raw.isEmpty ? null : jsonDecode(raw);
+  final body = CompleteUploadDto.fromJson(
+    decoded is Map<String, Object?> ? decoded : const {},
+  );
+  final expected = body.sha256;
+  if (expected != null) {
+    final String partHash;
+    try {
+      partHash = await env.hashPath(u.part.path);
+    } on Object {
+      await env.uploads.remove(u.uploadId);
+      return apiError(ApiErrorCode.internal);
+    }
+    if (partHash != expected) {
+      await env.uploads.remove(u.uploadId);
+      return apiError(ApiErrorCode.verificationFailed);
+    }
+  }
   final FileRef out;
   try {
     out = await env.source().importFile(
@@ -375,9 +428,34 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
       _ => ApiErrorCode.internal,
     });
   }
-  await env.uploads.completed(u.uploadId);
+  String? finalHash;
+  if (expected != null) {
+    // Never trust the stream: read the published file back.
+    try {
+      finalHash = await env.hashFile(out, env.source());
+    } on Object {
+      finalHash = null;
+    }
+    if (finalHash != expected) {
+      await env.uploads.remove(u.uploadId);
+      await _deleteBadCopy(env, out);
+      return apiError(ApiErrorCode.verificationFailed);
+    }
+  }
+  await env.uploads.completed(u.uploadId, finalId: out.id, sha256: finalHash);
   unawaited(env.addToIndex([out]));
-  return jsonOk(UploadCompletedDto(finalId: out.id).toJson());
+  return jsonOk(
+    UploadCompletedDto(finalId: out.id, sha256: finalHash).toJson(),
+  );
+}
+
+/// A published copy that didn't verify (KFM created it): best effort.
+Future<void> _deleteBadCopy(UploadRoutesEnv env, FileRef out) async {
+  try {
+    await env.source().deletePermanentlyBatch([out]);
+  } on Object catch (e) {
+    developer.log('unverified copy not deleted: $e', name: 'kfm.uploads');
+  }
 }
 
 Future<Response> _delete(UploadRoutesEnv env, Request r) async {

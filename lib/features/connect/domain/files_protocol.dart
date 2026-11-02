@@ -373,34 +373,78 @@ class RenameRequestDto {
   Map<String, Object?> toJson() => {'newName': newName};
 }
 
-/// Why the client asks to trash (N7: user / swipe; N11 adds verifiedMove).
-enum TrashReason { user, swipe }
+/// Why the client asks to trash (N7: user / swipe; N11: verifiedMove).
+enum TrashReason { user, swipe, verifiedMove }
 
-/// `POST /v1/files/trash`: at most [kMaxTrashIds] ids.
+/// `POST /v1/files/trash`: at most [kMaxTrashIds] ids. N11
+/// `verifiedMove`: [sha256ById] and [sizeById] hold what the client
+/// received for every id; the sharing device trashes only files whose
+/// on-disk hash and length still match.
 @immutable
 class TrashRequestDto {
-  const new({required this.ids, this.reason = TrashReason.user});
+  const new({
+    required this.ids,
+    this.reason = TrashReason.user,
+    this.sha256ById = const {},
+    this.sizeById = const {},
+  });
 
   factory fromJson(Map<String, Object?> j) {
     final ids = j['ids'];
     if (ids is! List<Object?> || ids.length > kMaxTrashIds) {
       throw const FormatException('ids');
     }
+    final list = [
+      for (final i in ids)
+        if (i is String) i else throw const FormatException('id'),
+    ];
+    final reason = _enum(TrashReason.values, _strOrNull(j, 'reason') ?? 'user');
+    final sha = <String, String>{};
+    final size = <String, int>{};
+    if (reason == TrashReason.verifiedMove) {
+      final rawSha = j['sha256ById'];
+      final rawSize = j['sizeById'];
+      if (rawSha is! Map<String, Object?> || rawSize is! Map<String, Object?>) {
+        throw const FormatException('verifiedMove needs hashes and sizes');
+      }
+      for (final id in list) {
+        final h = rawSha[id];
+        final n = rawSize[id];
+        if (h is! String || !_sha256Hex.hasMatch(h) || n is! int || n < 0) {
+          throw const FormatException('verifiedMove hash or size');
+        }
+        sha[id] = h;
+        size[id] = n;
+      }
+    }
     return TrashRequestDto(
-      ids: [
-        for (final i in ids)
-          if (i is String) i else throw const FormatException('id'),
-      ],
-      reason: _enum(TrashReason.values, _strOrNull(j, 'reason') ?? 'user'),
+      ids: list,
+      reason: reason,
+      sha256ById: sha,
+      sizeById: size,
     );
   }
 
   static const int kMaxTrashIds = 500;
+  static final RegExp _sha256Hex = RegExp(r'^[0-9a-f]{64}$');
 
   final List<String> ids;
   final TrashReason reason;
 
-  Map<String, Object?> toJson() => {'ids': ids, 'reason': reason.name};
+  /// N11 `verifiedMove` only.
+  final Map<String, String> sha256ById;
+
+  /// N11 `verifiedMove` only.
+  final Map<String, int> sizeById;
+
+  Map<String, Object?> toJson() => {
+    'ids': ids,
+    'reason': reason.name,
+    if (reason == TrashReason.verifiedMove) ...{
+      'sha256ById': sha256ById,
+      'sizeById': sizeById,
+    },
+  };
 }
 
 /// One trashed file in a [TrashResponseDto].

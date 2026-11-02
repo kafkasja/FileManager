@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -13,17 +14,21 @@ import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/domain/files_protocol.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:kfm/features/transfers/data/resumable_downloader.dart';
 import 'package:kfm/features/transfers/data/swipe_sends.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
+import 'package:kfm/features/transfers/data/verified_move_impl.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
+import 'package:kfm/features/transfers/domain/verified_move.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 import '../../core/files/fake_file_source.dart';
@@ -226,6 +231,11 @@ class _UploadServer {
   void Function(int putIndex, _Call call)? beforePut;
   int puts = 0;
 
+  /// N11: complete answers the hash of what arrived (like a verifying
+  /// server); [mismatches] completes answer 409 `verification_failed`.
+  bool verify = false;
+  int mismatches = 0;
+
   Map<String, Object?> handle(_Call c) {
     final parts = c.path.split('/');
     if (c.method == 'GET' && c.path == ApiRoutes.session) return const {};
@@ -266,7 +276,18 @@ class _UploadServer {
     }
     if (c.method == 'POST' && c.path.endsWith('/complete')) {
       completes.add(c.body! as Map<String, Object?>);
-      return {'finalId': 'ms:$id'};
+      if (mismatches > 0) {
+        mismatches--;
+        uploads.remove(id);
+        throw RemoteApiException(
+          409,
+          ApiErrorDto(ApiErrorCode.verificationFailed.wire, ''),
+        );
+      }
+      return {
+        'finalId': 'ms:$id',
+        if (verify) 'sha256': sha256.convert(uploads[id]!).toString(),
+      };
     }
     return const {};
   }
@@ -301,6 +322,7 @@ void main() {
   TransferEngine newEngine({
     TransferPreprocessor preprocessor = const IdentityPreprocessor(),
     int chunkBytes = 4,
+    VerifiedMove? verifiedMove,
   }) => TransferEngine(
     repo: repo,
     devices: devices,
@@ -314,6 +336,13 @@ void main() {
       await onReconnect?.call(fp);
     },
     probe: (_) async => probeOk,
+    verifiedMove:
+        verifiedMove ??
+        LocalVerifiedMove(
+          source: local,
+          lock: SerialLock(),
+          removeFromIndex: (ids) async {},
+        ),
     chunkBytes: chunkBytes,
     liveInterval: const Duration(milliseconds: 20),
     persistInterval: Duration.zero,
@@ -1158,6 +1187,419 @@ void main() {
     );
   });
 
+  group('N11 safe move', () {
+    String shaOf(List<int> b) => sha256.convert(b).toString();
+
+    Iterable<_Call> trashCalls() =>
+        http.calls.where((c) => c.path == ApiRoutes.filesTrash);
+
+    /// The other device: sender hashes of its contents; trash answers
+    /// [trash] (default: everything trashed).
+    void serveMoves({
+      FutureOr<Map<String, Object?>> Function(TrashRequestDto body)? trash,
+    }) {
+      http.json = (c) {
+        if (c.path.endsWith('/sha256')) {
+          final serverId = Uri.decodeComponent(c.path.split('/')[3]);
+          return {'sha256': shaOf(http.contents[serverId]!)};
+        }
+        if (c.path == ApiRoutes.filesTrash) {
+          final body = TrashRequestDto.fromJson(
+            c.body! as Map<String, Object?>,
+          );
+          return trash?.call(body) ??
+              {
+                'trashed': [
+                  for (final id in body.ids)
+                    {
+                      'id': id,
+                      'trashId': 't-$id',
+                      'location': 'systemTrash',
+                      'trashedAtMs': 1,
+                    },
+                ],
+              };
+        }
+        return const {};
+      };
+    }
+
+    bool settled(TransferJob j) =>
+        j.allFilesEnded &&
+        j.files.every(
+          (f) => f.status != TransferFileStatus.done || f.sourceOutcome != null,
+        );
+
+    test('download-move: verified copies land; one verifiedMove trash with '
+        'hashes and received sizes; originals trashed there', () async {
+      http
+        ..contents['ms:0'] = [1, 2, 3]
+        ..contents['ms:1'] = [4, 5, 6, 7];
+      serveMoves();
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0'), _remote('ms:1', size: 4)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      final job = await until(id, settled);
+      expect(job.mode, TransferMode.move);
+      expect(job.deleteMode, isNull);
+      expect(local.bytesOf('path:$_dl/ms0.jpg'), [1, 2, 3]);
+      expect(local.bytesOf('path:$_dl/ms1.jpg'), [4, 5, 6, 7]);
+      expect(trashCalls(), hasLength(1));
+      final body = TrashRequestDto.fromJson(
+        trashCalls().single.body! as Map<String, Object?>,
+      );
+      expect(body.reason, TrashReason.verifiedMove);
+      expect(body.ids, ['ms:0', 'ms:1']);
+      expect(body.sizeById, {'ms:0': 3, 'ms:1': 4});
+      expect(body.sha256ById['ms:1'], shaOf([4, 5, 6, 7]));
+      for (final f in job.files) {
+        expect(f.sourceOutcome, SourceOutcome.trashed);
+        expect(f.receiverSha256, f.senderSha256);
+      }
+      expect(parts(), isEmpty);
+    });
+
+    test('a copy never asks to trash anything', () async {
+      http.contents['ms:0'] = [1, 2, 3];
+      serveMoves();
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.done);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(trashCalls(), isEmpty);
+      expect(job.files.single.receiverSha256, isNull);
+    });
+
+    test('corruption: retried once from 0, then "verification failed"; '
+        'nothing is trashed, no copy or part is left', () async {
+      addTearDown(() => ResumableDownloader.corruptBeforeVerify = null);
+      ResumableDownloader.corruptBeforeVerify = (path) async =>
+          File(path).writeAsBytesSync(const [9, 9, 9]);
+      http.contents['ms:0'] = [1, 2, 3];
+      serveMoves();
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.failed);
+      expect(job.files.single.error, TransferErrors.verificationFailed);
+      expect(contentCalls(), hasLength(2));
+      expect(trashCalls(), isEmpty);
+      expect(await local.statPath('$_dl/ms0.jpg'), isNull);
+      expect(parts(), isEmpty);
+    });
+
+    test('one corrupted try: the retry verifies and the original is '
+        'trashed', () async {
+      var corruptions = 1;
+      addTearDown(() => ResumableDownloader.corruptBeforeVerify = null);
+      ResumableDownloader.corruptBeforeVerify = (path) async {
+        if (corruptions-- > 0) File(path).writeAsBytesSync(const [9]);
+      };
+      http.contents['ms:0'] = [1, 2, 3];
+      serveMoves();
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      final job = await until(id, settled);
+      expect(job.files.single.sourceOutcome, SourceOutcome.trashed);
+      expect(contentCalls(), hasLength(2));
+    });
+
+    test('the link drops before the check: paused with the whole part; '
+        'after the reconnect only the check runs, then the trash', () async {
+      http.contents['ms:0'] = [1, 2, 3];
+      var down = true;
+      serveMoves();
+      final serve = http.json!;
+      http.json = (c) {
+        if (down && c.path.endsWith('/sha256')) {
+          throw const SocketException('gone');
+        }
+        return serve(c);
+      };
+      probeOk = false;
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      var job = await until(
+        id,
+        (j) =>
+            j.status == TransferStatus.paused &&
+            j.files.single.status == TransferFileStatus.queued,
+      );
+      expect(job.pauseReason, TransferPauseReason.waitingForDevice);
+      expect(job.files.single.bytesDone, 3);
+      expect(parts(), hasLength(1));
+      expect(trashCalls(), isEmpty);
+      down = false;
+      probeOk = true;
+      engine
+        ..onConnection(null)
+        ..onConnection(_fp);
+      job = await until(id, settled);
+      expect(contentCalls(), hasLength(1));
+      expect(job.files.single.sourceOutcome, SourceOutcome.trashed);
+    });
+
+    test('the other device refuses a changed original: B keeps its copy, '
+        '"kept (changed)"', () async {
+      http.contents['ms:0'] = [1, 2, 3];
+      serveMoves(
+        trash: (b) => {
+          'trashed': <Object?>[],
+          'failed': {'ms:0': 'verification_failed'},
+        },
+      );
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      final job = await until(id, settled);
+      expect(job.files.single.sourceOutcome, SourceOutcome.keptChanged);
+      expect(local.bytesOf('path:$_dl/ms0.jpg'), [1, 2, 3]);
+    });
+
+    test("the trash request can't reach the device: pending; sent again on "
+        'the next connection', () async {
+      http.contents['ms:0'] = [1, 2, 3];
+      var reachable = false;
+      serveMoves();
+      final serve = http.json!;
+      http.json = (c) {
+        if (!reachable && c.path == ApiRoutes.filesTrash) {
+          throw const SocketException('gone');
+        }
+        return serve(c);
+      };
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      await until(id, (j) => j.status == TransferStatus.done);
+      await until(id, (j) => trashCalls().isNotEmpty);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      var job = (await repo.dao.job(id))!;
+      expect(job.files.single.originalPending, isTrue);
+      reachable = true;
+      engine
+        ..onConnection(null)
+        ..onConnection(_fp);
+      job = await until(id, settled);
+      expect(job.files.single.sourceOutcome, SourceOutcome.trashed);
+    });
+
+    test('a second move of a moved file: "already moved"', () async {
+      http.failContent['ms:0'] = ApiErrorCode.notFound;
+      serveMoves();
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      final job = await until(id, (j) => j.allFilesEnded);
+      expect(job.files.single.status, TransferFileStatus.skipped);
+      expect(job.files.single.error, TransferErrors.alreadyMoved);
+      expect(trashCalls(), isEmpty);
+    });
+
+    test('cancel after a file verified: its original is kept '
+        '(cancelled)', () async {
+      http
+        ..contents['ms:0'] = [1, 2, 3]
+        ..held['ms:1'] = _Held(3);
+      serveMoves();
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0'), _remote('ms:1')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+        mode: TransferMode.move,
+      );
+      await until(id, (j) => j.files.first.receiverSha256 != null);
+      await engine.cancelJob(id);
+      final job = await until(id, (j) => j.allFilesEnded);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(
+        (await repo.dao.job(id))!.files.first.sourceOutcome,
+        SourceOutcome.keptCancelled,
+      );
+      expect(job.files.last.status, TransferFileStatus.cancelled);
+      expect(trashCalls(), isEmpty);
+    });
+
+    group('upload-move', () {
+      late _UploadServer server;
+
+      setUp(() {
+        server = _UploadServer()..verify = true;
+        http.json = server.handle;
+      });
+
+      test('verified on the other device; one trashBatch here with the '
+          "job's delete mode", () async {
+        final a = local.addFile('/storage/emulated/0/DCIM/a.jpg');
+        final b = local.addFile(
+          '/storage/emulated/0/DCIM/b.jpg',
+          bytes: const [4, 5],
+        );
+        final id = await engine.enqueueUpload(
+          [a, b],
+          peerFingerprint: _fp,
+          peerName: 'PC',
+          rootId: 'cam',
+          path: '',
+          mode: TransferMode.move,
+        );
+        final job = await until(id, settled);
+        expect(job.deleteMode, DeleteMode.trash);
+        expect(local.calls.where((c) => c.startsWith('trashBatch')), [
+          'trashBatch ${a.id},${b.id}',
+        ]);
+        expect(job.files.map((f) => f.sourceOutcome), [
+          SourceOutcome.trashed,
+          SourceOutcome.trashed,
+        ]);
+        expect(await local.stat(a.id), isNull);
+        expect(local.trash, hasLength(2));
+      });
+
+      test(
+        'permanent (snapshotted on the job): one deletePermanentlyBatch',
+        () async {
+          final a = local.addFile('/storage/emulated/0/DCIM/a.jpg');
+          final id = await engine.enqueueUpload(
+            [a],
+            peerFingerprint: _fp,
+            peerName: 'PC',
+            rootId: 'cam',
+            path: '',
+            mode: TransferMode.move,
+            deleteMode: DeleteMode.permanent,
+          );
+          final job = await until(id, settled);
+          expect(job.deleteMode, DeleteMode.permanent);
+          expect(local.calls, contains('deletePermanentlyBatch ${a.id}'));
+          expect(
+            job.files.single.sourceOutcome,
+            SourceOutcome.deletedPermanently,
+          );
+          expect(local.trash, isEmpty);
+        },
+      );
+
+      test('two mismatches: "verification failed", the original is '
+          'untouched', () async {
+        server.mismatches = 2;
+        final a = local.addFile('/storage/emulated/0/DCIM/a.jpg');
+        final id = await engine.enqueueUpload(
+          [a],
+          peerFingerprint: _fp,
+          peerName: 'PC',
+          rootId: 'cam',
+          path: '',
+          mode: TransferMode.move,
+        );
+        final job = await until(id, (j) => j.status == TransferStatus.failed);
+        expect(job.files.single.error, TransferErrors.verificationFailed);
+        expect(job.files.single.sourceOutcome, isNull);
+        expect(server.completes, hasLength(2));
+        expect(
+          http.calls.where((c) => c.path == ApiRoutes.uploads),
+          hasLength(2),
+        );
+        expect(await local.stat(a.id), isNotNull);
+        expect(
+          local.calls.where(
+            (c) => c.startsWith('trash') || c.startsWith('delete'),
+          ),
+          isEmpty,
+        );
+      });
+
+      test('a declined dialog keeps every original; "Delete originals" asks '
+          'again', () async {
+        final a = local.addFile('/storage/emulated/0/DCIM/a.jpg');
+        local.declineDeletes = true;
+        final id = await engine.enqueueUpload(
+          [a],
+          peerFingerprint: _fp,
+          peerName: 'PC',
+          rootId: 'cam',
+          path: '',
+          mode: TransferMode.move,
+        );
+        var job = await until(id, settled);
+        expect(job.files.single.sourceOutcome, SourceOutcome.keptDeclined);
+        expect(await local.stat(a.id), isNotNull);
+        local.declineDeletes = false;
+        await engine.deleteOriginals(id);
+        job = await until(
+          id,
+          (j) => j.files.single.sourceOutcome == SourceOutcome.trashed,
+        );
+        expect(await local.stat(a.id), isNull);
+      });
+
+      test('a crash between verify and delete: after the restart nothing '
+          'is deleted by itself; "Delete originals" does it', () async {
+        final never = Completer<FinalizeResult>();
+        await engine.dispose();
+        engine = newEngine(verifiedMove: _NeverMove(never.future));
+        await engine.start();
+        engine.onConnection(_fp);
+        final a = local.addFile('/storage/emulated/0/DCIM/a.jpg');
+        final id = await engine.enqueueUpload(
+          [a],
+          peerFingerprint: _fp,
+          peerName: 'PC',
+          rootId: 'cam',
+          path: '',
+          mode: TransferMode.move,
+        );
+        await until(id, (j) => j.status == TransferStatus.done);
+        await engine.dispose();
+        engine = newEngine();
+        await engine.start();
+        engine.onConnection(_fp);
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        var job = (await repo.dao.job(id))!;
+        expect(job.files.single.originalPending, isTrue);
+        expect(await local.stat(a.id), isNotNull);
+        await engine.deleteOriginals(id);
+        job = await until(id, settled);
+        expect(job.files.single.sourceOutcome, SourceOutcome.trashed);
+      });
+    });
+  });
+
   test('sender hash of a download comes from the other device', () async {
     final sha = sha256.convert(utf8.encode('x')).toString();
     http
@@ -1186,4 +1628,17 @@ class _Stripper implements TransferPreprocessor {
     read: (start, end) => Stream.value([7, 7].sublist(start, end)),
     cleanup: () async => onCleanup(),
   );
+}
+
+/// A [VerifiedMove] that never finishes (the app dies mid-delete).
+class _NeverMove implements VerifiedMove {
+  new(this.result);
+
+  final Future<FinalizeResult> result;
+
+  @override
+  Future<FinalizeResult> deleteOriginals(
+    List<VerifiedOriginal> originals, {
+    required DeleteMode mode,
+  }) => result;
 }

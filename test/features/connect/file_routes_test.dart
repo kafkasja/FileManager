@@ -723,6 +723,70 @@ void main() {
     });
   });
 
+  group('N11 verifiedMove trash', () {
+    String shaOf(List<int> b) => crypto.sha256.convert(b).toString();
+
+    test('only files whose on-disk hash and length match are trashed; a '
+        'changed one is refused per id and stays', () async {
+      const p0 = 'path:$_root/DCIM/p0.jpg';
+      const p1 = 'path:$_root/DCIM/p1.jpg';
+      final r = await call(
+        'POST',
+        ApiRoutes.filesTrash,
+        body: TrashRequestDto(
+          ids: const [p0, p1],
+          reason: TrashReason.verifiedMove,
+          sha256ById: {
+            p0: shaOf(List.generate(10, (b) => b)),
+            // p1 has 11 bytes: this hash is of something else.
+            p1: shaOf(const [1, 2, 3]),
+          },
+          sizeById: const {p0: 10, p1: 11},
+        ).toJson(),
+      );
+      expect(r.statusCode, 200);
+      final res = TrashResponseDto.fromJson(await json(r));
+      expect(res.trashed.map((t) => t.id), [p0]);
+      expect(res.failed, {p1: 'verification_failed'});
+      expect(await files.stat(p1), isNotNull);
+      expect(await files.stat(p0), isNull);
+      expect(files.calls, contains('trashBatch $p0'));
+    });
+
+    test('a size that differs is refused before hashing; nothing is '
+        'trashed when nothing matches', () async {
+      const p0 = 'path:$_root/DCIM/p0.jpg';
+      final r = await call(
+        'POST',
+        ApiRoutes.filesTrash,
+        body: TrashRequestDto(
+          ids: const [p0],
+          reason: TrashReason.verifiedMove,
+          sha256ById: {p0: shaOf(List.generate(10, (b) => b))},
+          sizeById: const {p0: 9},
+        ).toJson(),
+      );
+      final res = TrashResponseDto.fromJson(await json(r));
+      expect(res.trashed, isEmpty);
+      expect(res.failed, {p0: 'verification_failed'});
+      expect(files.calls.where((c) => c.startsWith('trash')), isEmpty);
+      expect(notices, isEmpty);
+    });
+
+    test('verifiedMove without hashes is refused by the guard', () async {
+      final r = await call(
+        'POST',
+        ApiRoutes.filesTrash,
+        body: {
+          'ids': ['path:$_root/DCIM/p0.jpg'],
+          'reason': 'verifiedMove',
+        },
+      );
+      expect(r.statusCode, 403);
+      expect(files.calls.where((c) => c.startsWith('trash')), isEmpty);
+    });
+  });
+
   test('every file route is guarded', () {
     final routes = fileRoutes(
       FileRoutesEnv(

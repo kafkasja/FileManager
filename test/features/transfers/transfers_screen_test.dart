@@ -1,10 +1,13 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/core/db/app_database.dart' show TransferFilesCompanion;
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
+import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 import '../../helpers/pump_app.dart';
 
@@ -105,6 +108,78 @@ void main() {
       findsOneWidget,
     );
     // Let the engine's recovery tick find nothing waiting.
+    await tester.pump(const Duration(seconds: 6));
+  });
+
+  testWidgets('N11: a move job shows where each original went and offers '
+      '"Delete originals" for kept ones', (tester) async {
+    final app = await pumpApp(tester);
+    final repo = app.container.read(transfersRepositoryProvider);
+    late String jobId;
+    await tester.runAsync(() async {
+      final d = await app.container
+          .read(knownDevicesRepositoryProvider)
+          .saveAfterPairing(
+            PairedPeer(
+              fingerprint: _fp,
+              peerDeviceId: 'p',
+              name: 'PC',
+              platform: 'windows',
+            ),
+            temporary: false,
+          );
+      jobId = await repo.createJob(
+        deviceId: d.id,
+        direction: TransferDirection.upload,
+        targetRootId: 'cam',
+        targetPath: '',
+        mode: TransferMode.move,
+        deleteMode: DeleteMode.trash,
+        files: [
+          for (final n in ['a.jpg', 'b.jpg', 'c.jpg'])
+            (
+              sourceFileId: 'path:/x/$n',
+              name: n,
+              sizeBytes: 10,
+              sourceModifiedAtMs: 0,
+            ),
+        ],
+      );
+      final job = (await repo.dao.job(jobId))!;
+      final outcomes = [SourceOutcome.trashed, SourceOutcome.keptDeclined];
+      for (final (i, f) in job.files.indexed) {
+        await repo.setFile(
+          f.id,
+          jobId,
+          TransferFilesCompanion(
+            status: Value(
+              i < 2 ? TransferFileStatus.done : TransferFileStatus.failed,
+            ),
+            error: Value(i < 2 ? null : TransferErrors.verificationFailed),
+            receiverSha256: Value(i < 2 ? 'a' * 64 : null),
+            sourceOutcome: Value(i < 2 ? outcomes[i] : null),
+          ),
+        );
+      }
+    });
+
+    app.container.read(routerProvider).go(AppRoutes.transfers);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Uploads'));
+    await tester.pumpAndSettle();
+    expect(find.text('Moving to PC'), findsOneWidget);
+    expect(
+      find.byKey(ValueKey('transfer-delete-originals-$jobId')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Moving to PC'));
+    await tester.pumpAndSettle();
+    expect(find.text('Verified · original moved to trash'), findsOneWidget);
+    expect(
+      find.text('Verified · original kept (you declined)'),
+      findsOneWidget,
+    );
+    expect(find.text('Verification failed. Original kept.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 6));
   });
 }

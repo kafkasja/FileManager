@@ -16,6 +16,7 @@ import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:kfm/features/transfers/data/transfer_run.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
+import 'package:kfm/features/transfers/domain/verified_move.dart';
 
 /// Re-syncs with the server's offset in a row before a chunk counts as a
 /// failed try.
@@ -68,8 +69,13 @@ class ChunkedUploader {
             developer.log('upload not deleted: $e', name: 'kfm.transfers'),
       );
 
-  /// Returns the new file's id on the other device.
-  Future<String> run(TransferRun run, RemoteHttp http) async {
+  /// Returns the new file's id on the other device and, for a move job,
+  /// the SHA-256 the other device read back from it (equal to ours: N11
+  /// verified; a mismatch throws `verification_failed`).
+  Future<({String finalId, String? receiverSha256})> run(
+    TransferRun run,
+    RemoteHttp http,
+  ) async {
     final f = run.file;
     final job = run.job;
     final rootId = job.targetRootId;
@@ -171,6 +177,15 @@ class ChunkedUploader {
         throw const TransferFailure(TransferErrors.sourceChanged);
       }
       if (run.stopped) throw const TransferStopped();
+      final move = job.mode == TransferMode.move;
+      if (move) {
+        await _save(
+          f.id,
+          const TransferFilesCompanion(
+            status: Value(TransferFileStatus.verifying),
+          ),
+        );
+      }
       final sha = await _hash(prepared);
       await _save(f.id, TransferFilesCompanion(senderSha256: Value(sha)));
       if (run.stopped) throw const TransferStopped();
@@ -181,7 +196,19 @@ class ChunkedUploader {
         // Publishing a large file on the other device takes a while.
         timeout: const Duration(minutes: 5),
       );
-      return done.finalId;
+      if (!move) return (finalId: done.finalId, receiverSha256: null);
+      // The other device hashed the part and the published file; an older
+      // peer that doesn't answer a hash proves nothing.
+      final check = compareCopy(
+        sourceSha256: sha,
+        sourceSize: size,
+        copySha256: done.sha256,
+        copySize: size,
+      );
+      if (check is! Verified) {
+        throw const TransferFailure(TransferErrors.verificationFailed);
+      }
+      return (finalId: done.finalId, receiverSha256: check.sha256);
     } finally {
       try {
         await prepared.cleanup();

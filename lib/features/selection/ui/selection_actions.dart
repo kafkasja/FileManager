@@ -60,6 +60,8 @@ List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
     swipeSelectionAction,
     // N9: upload to the connected device.
     sendToDeviceSelectionAction,
+    // N11: move to the connected device (verified, then deleted here).
+    moveToDeviceSelectionAction,
     detailsSelectionAction,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );

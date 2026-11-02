@@ -92,6 +92,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
+    // N11's "Move to device" made the More sheet longer.
+    await tester.ensureVisible(find.text('Clear all'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Clear all'));
     await tester.pumpAndSettle();
     expect(state().isEmpty, isTrue);

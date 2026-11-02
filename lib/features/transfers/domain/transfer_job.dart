@@ -1,8 +1,10 @@
 import 'package:kfm/core/db/tables/transfers_table.dart';
+import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:meta/meta.dart';
 
 export 'package:kfm/core/db/tables/transfers_table.dart'
     show
+        SourceOutcome,
         TransferDirection,
         TransferFileStatus,
         TransferMode,
@@ -29,6 +31,13 @@ abstract final class TransferErrors {
 
   /// N10: the local file was edited mid-upload (it starts over).
   static const sourceChanged = 'source_changed';
+
+  /// N11: the copy didn't match its source (wire code too). Set on the
+  /// first mismatch (the file starts over once); a second one fails it.
+  static const verificationFailed = 'verification_failed';
+
+  /// N11: a move whose source is already gone (moved before).
+  static const alreadyMoved = 'already_moved';
 }
 
 /// One file of a [TransferJob] (immutable snapshot of its row).
@@ -51,6 +60,9 @@ class TransferFile {
     this.etag,
     this.nextRetryAt,
     this.senderSha256,
+    this.receiverSha256,
+    this.sourceOutcome,
+    this.sourceError,
   });
 
   final int id;
@@ -77,6 +89,32 @@ class TransferFile {
 
   /// N10/N11: the sending side's SHA-256.
   final String? senderSha256;
+
+  /// N11: the receiving side's SHA-256 of the final file. Set only for a
+  /// verified copy of a move job: its original may be deleted.
+  final String? receiverSha256;
+
+  /// N11: what happened to the original (null = not deleted yet).
+  final SourceOutcome? sourceOutcome;
+
+  /// N11: why the original was kept (`keptFailed`).
+  final String? sourceError;
+
+  /// N11: a verified copy whose original is still to be deleted (pending,
+  /// or kept for a reason "Delete originals" may retry).
+  bool get originalDeletable =>
+      status == TransferFileStatus.done &&
+      receiverSha256 != null &&
+      switch (sourceOutcome) {
+        null ||
+        SourceOutcome.keptDeclined ||
+        SourceOutcome.keptFailed ||
+        SourceOutcome.keptCancelled => true,
+        _ => false,
+      };
+
+  /// N11: deletable and nothing tried yet.
+  bool get originalPending => originalDeletable && sourceOutcome == null;
 
   /// Queued again after a failure, waiting for its next try (N10).
   bool get isRetrying =>
@@ -109,6 +147,7 @@ class TransferJob {
     this.targetRootId,
     this.swipeSessionId,
     this.pauseReason,
+    this.deleteMode,
     this.deviceTemporary = false,
   });
 
@@ -125,6 +164,15 @@ class TransferJob {
 
   /// Set while [status] is `paused` (N10).
   final TransferPauseReason? pauseReason;
+
+  /// N11: upload-moves snapshot the delete mode at creation; null for
+  /// copies and download-moves (the other device's trash).
+  final DeleteMode? deleteMode;
+
+  bool get isMove => mode == TransferMode.move;
+
+  /// N11: no file is waiting or running any more.
+  bool get allFilesEnded => files.every((f) => f.isFinished);
 
   /// The device was connected without "Remember" (no reconnect without a
   /// code).
@@ -174,13 +222,20 @@ TransferStatus jobStatusOf(Iterable<TransferFileStatus> files) {
 /// published by the engine at most every 250 ms.
 @immutable
 class TransferLive {
-  const new({this.bytes = const {}, this.bytesPerSecond = const {}});
+  const new({
+    this.bytes = const {},
+    this.bytesPerSecond = const {},
+    this.finalizing = const {},
+  });
 
   /// By transfer file id.
   final Map<int, int> bytes;
 
   /// By job id.
   final Map<String, double> bytesPerSecond;
+
+  /// N11: move jobs whose originals are being deleted.
+  final Set<String> finalizing;
 
   static const empty = TransferLive();
 
@@ -190,7 +245,9 @@ class TransferLive {
     (s, f) =>
         s +
         switch (f.status) {
-          TransferFileStatus.done => f.sizeBytes,
+          // N11: every byte is there; only the check is left.
+          TransferFileStatus.done ||
+          TransferFileStatus.verifying => f.sizeBytes,
           TransferFileStatus.running => bytes[f.id] ?? f.bytesDone,
           // A paused or retrying file keeps what it already has (N10).
           TransferFileStatus.queued => f.bytesDone,

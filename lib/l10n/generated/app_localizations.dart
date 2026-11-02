@@ -6945,6 +6945,174 @@ abstract class AppLocalizations {
   /// **'The file changed while it was sent'**
   String get transferSourceChanged;
 
+  /// No description provided for @transferModeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get transferModeCopy;
+
+  /// No description provided for @transferModeMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get transferModeMove;
+
+  /// No description provided for @transferMoveDownloadNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Each file is checked after it arrives; only then does its original go to the trash on {device}.'**
+  String transferMoveDownloadNote(String device);
+
+  /// No description provided for @transferMoveToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to device'**
+  String get transferMoveToDevice;
+
+  /// No description provided for @transferMoveFromDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving from {device}'**
+  String transferMoveFromDevice(String device);
+
+  /// No description provided for @transferMoveToDeviceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving to {device}'**
+  String transferMoveToDeviceTitle(String device);
+
+  /// No description provided for @transferMoveQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moving 1 file to {device}} other{Moving {count} files to {device}}}'**
+  String transferMoveQueued(int count, String device);
+
+  /// No description provided for @transferMoveDownloadQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moving 1 file from {device}} other{Moving {count} files from {device}}}'**
+  String transferMoveDownloadQueued(int count, String device);
+
+  /// No description provided for @transferVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying…'**
+  String get transferVerifying;
+
+  /// No description provided for @transferVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get transferVerified;
+
+  /// No description provided for @transferVerifyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed. Original kept.'**
+  String get transferVerifyFailed;
+
+  /// No description provided for @transferAlreadyMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Already moved'**
+  String get transferAlreadyMoved;
+
+  /// No description provided for @transferOriginalPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original not deleted yet'**
+  String get transferOriginalPending;
+
+  /// No description provided for @transferOriginalTrashed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original moved to trash'**
+  String get transferOriginalTrashed;
+
+  /// No description provided for @transferOriginalTrashedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original moved to trash on {device}'**
+  String transferOriginalTrashedOn(String device);
+
+  /// No description provided for @transferOriginalDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original deleted'**
+  String get transferOriginalDeleted;
+
+  /// No description provided for @transferOriginalGone.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original was already gone'**
+  String get transferOriginalGone;
+
+  /// No description provided for @transferOriginalKeptDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original kept (you declined)'**
+  String get transferOriginalKeptDeclined;
+
+  /// No description provided for @transferOriginalKeptDeclinedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original kept (declined on {device})'**
+  String transferOriginalKeptDeclinedOn(String device);
+
+  /// No description provided for @transferOriginalKeptCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original kept (cancelled)'**
+  String get transferOriginalKeptCancelled;
+
+  /// No description provided for @transferOriginalKeptChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Original kept (changed)'**
+  String get transferOriginalKeptChanged;
+
+  /// No description provided for @transferOriginalKeptFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified · original kept (couldn’t delete it)'**
+  String get transferOriginalKeptFailed;
+
+  /// No description provided for @transferDeleteOriginals.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete originals'**
+  String get transferDeleteOriginals;
+
+  /// No description provided for @transferDeletingOriginals.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting originals…'**
+  String get transferDeletingOriginals;
+
+  /// No description provided for @permanentMoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete originals permanently?'**
+  String get permanentMoveTitle;
+
+  /// No description provided for @permanentMoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Your delete setting is “Delete permanently”: the original is deleted for good once its copy is verified.} other{Your delete setting is “Delete permanently”: the {count} originals are deleted for good once their copies are verified.}}'**
+  String permanentMoveBody(int count);
+
+  /// No description provided for @permanentMoveUseTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Use trash instead'**
+  String get permanentMoveUseTrash;
+
+  /// No description provided for @permanentMoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get permanentMoveConfirm;
+
   /// No description provided for @transferDownloadAction.
   ///
   /// In en, this message translates to:

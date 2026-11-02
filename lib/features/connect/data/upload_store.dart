@@ -74,6 +74,18 @@ class UploadState {
   };
 }
 
+/// Completions remembered for a repeated `complete` (N11).
+const int kRememberedCompletions = 200;
+
+/// A finished upload's answer (N11), kept in memory.
+class CompletedUpload {
+  const new({required this.state, required this.finalId, this.sha256});
+
+  final UploadState state;
+  final String finalId;
+  final String? sha256;
+}
+
 /// Uploads in progress (TASK-N9/N10). Partials live in the app's private
 /// staging folder, never inside a shared folder, and are only published by
 /// `FileSource.importFile` once complete. The `.json` next to each partial
@@ -88,6 +100,7 @@ class UploadStore {
   final Future<Directory> Function() _staging;
   final DateTime Function() _clock;
   final Map<String, UploadState> _uploads = {};
+  final Map<String, CompletedUpload> _done = {};
   Future<void>? _loaded;
 
   /// Loads the partials on disk once (and deletes broken or stale ones).
@@ -161,12 +174,41 @@ class UploadStore {
     await _delete(u.meta);
   }
 
-  /// Forgets the upload after a successful import (the partial was moved).
-  Future<void> completed(String uploadId) => remove(uploadId);
+  /// Forgets the upload after a successful import (the partial was moved)
+  /// and remembers the answer (N11): the owner's repeated `complete` after
+  /// a lost answer gets the same result instead of a 404 (which would send
+  /// the file again). In memory only, the last [kRememberedCompletions].
+  Future<void> completed(
+    String uploadId, {
+    String? finalId,
+    String? sha256,
+  }) async {
+    final u = _uploads[uploadId];
+    if (u != null && finalId != null) {
+      _done
+        ..remove(uploadId)
+        ..[uploadId] = CompletedUpload(
+          state: u,
+          finalId: finalId,
+          sha256: sha256,
+        );
+      while (_done.length > kRememberedCompletions) {
+        _done.remove(_done.keys.first);
+      }
+    }
+    await remove(uploadId);
+  }
+
+  /// [uploadId]'s remembered completion if [fingerprint] owns it.
+  CompletedUpload? lookupCompleted(String uploadId, String fingerprint) {
+    final d = _done[uploadId];
+    return d != null && d.state.ownerFingerprint == fingerprint ? d : null;
+  }
 
   /// Every partial of [fingerprint] (N6: that device was removed here).
   Future<void> removeOwner(String fingerprint) async {
     await _ensureLoaded();
+    _done.removeWhere((_, d) => d.state.ownerFingerprint == fingerprint);
     for (final u in _uploads.values.toList()) {
       if (u.ownerFingerprint == fingerprint) await remove(u.uploadId);
     }
@@ -184,6 +226,7 @@ class UploadStore {
   /// reset of this device's identity).
   Future<void> clear() async {
     await _ensureLoaded();
+    _done.clear();
     for (final id in _uploads.keys.toList()) {
       await remove(id);
     }

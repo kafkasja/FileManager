@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
@@ -19,6 +22,9 @@ import 'package:kfm/features/selection/ui/selection_actions.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
+import 'package:kfm/features/transfers/domain/transfer_job.dart';
+import 'package:kfm/features/transfers/ui/permanent_move_confirm.dart';
+import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 void _snack(BuildContext context, String text, {bool showTransfers = false}) {
   final router = GoRouter.of(context);
@@ -39,7 +45,8 @@ void _snack(BuildContext context, String text, {bool showTransfers = false}) {
 
 /// N9: remote browse selection → "Download": confirms the folder
 /// (`Download/<device>` by default, "Change folder" picks another), then
-/// queues one job.
+/// queues one job. N11: Copy (default) or Move; a move trashes each
+/// original on the other device once its copy is verified.
 Future<void> startDownload(
   BuildContext context,
   WidgetRef ref, {
@@ -53,26 +60,48 @@ Future<void> startDownload(
     ref.read(downloadsRootProvider),
     peerName,
   );
+  var mode = TransferMode.copy;
   final choice = await showDialog<String>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text(l10n.transferDownloadTitle(files.length)),
-      content: Text(l10n.transferDownloadTo(folder)),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(l10n.transferDownloadTitle(files.length)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.transferDownloadTo(folder)),
+            SizedBox(height: context.tokens.spacing),
+            _ModeChoice(mode: mode, onChanged: (m) => setState(() => mode = m)),
+            if (mode == TransferMode.move) ...[
+              SizedBox(height: context.tokens.spacing),
+              Text(
+                l10n.transferMoveDownloadNote(peerName),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ],
         ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, ''),
-          child: Text(l10n.transferChangeFolder),
-        ),
-        FilledButton(
-          key: const ValueKey('transfer-download-confirm'),
-          onPressed: () => Navigator.pop(context, folder),
-          child: Text(l10n.transferDownloadAction),
-        ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ''),
+            child: Text(l10n.transferChangeFolder),
+          ),
+          FilledButton(
+            key: const ValueKey('transfer-download-confirm'),
+            onPressed: () => Navigator.pop(context, folder),
+            child: Text(
+              mode == TransferMode.move
+                  ? l10n.transferModeMove
+                  : l10n.transferDownloadAction,
+            ),
+          ),
+        ],
+      ),
     ),
   );
   if (choice == null || !context.mounted) return;
@@ -85,22 +114,59 @@ Future<void> startDownload(
         peerFingerprint: peerFingerprint,
         peerName: peerName,
         localFolder: target,
+        mode: mode,
       );
   if (!context.mounted) return;
   _snack(
     context,
-    l10n.transferDownloadQueued(files.length, peerName),
+    mode == TransferMode.move
+        ? l10n.transferMoveDownloadQueued(files.length, peerName)
+        : l10n.transferDownloadQueued(files.length, peerName),
     showTransfers: true,
   );
 }
 
+/// N11: Copy · Move.
+class _ModeChoice extends StatelessWidget {
+  const new({required this.mode, required this.onChanged});
+
+  final TransferMode mode;
+  final ValueChanged<TransferMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return SegmentedButton<TransferMode>(
+      key: const ValueKey('transfer-mode'),
+      segments: [
+        ButtonSegment(
+          value: TransferMode.copy,
+          label: Text(l10n.transferModeCopy),
+          icon: const Icon(Icons.copy_outlined),
+        ),
+        ButtonSegment(
+          value: TransferMode.move,
+          label: Text(l10n.transferModeMove),
+          icon: const Icon(Icons.drive_file_move_outlined),
+        ),
+      ],
+      selected: {mode},
+      onSelectionChanged: (s) => onChanged(s.first),
+    );
+  }
+}
+
 /// N9: local selection → "Send to device": the connected device, a folder
-/// in one of its writable roots, then one upload job.
+/// in one of its writable roots, then one upload job. N11 [mode] move
+/// ("Move to device"): once each copy is verified the originals here
+/// follow the delete setting, snapshotted for the job (permanent asks
+/// first).
 Future<void> startUpload(
   BuildContext context,
   WidgetRef ref,
-  List<FileRef> files,
-) async {
+  List<FileRef> files, {
+  TransferMode mode = TransferMode.copy,
+}) async {
   if (files.isEmpty) return;
   final l10n = context.l10n;
   final connection = ref.read(remoteConnectionControllerProvider);
@@ -128,6 +194,19 @@ Future<void> startUpload(
     note: Platform.isAndroid ? l10n.transferNoLocation : null,
   );
   if (folder == null || !context.mounted) return;
+  DeleteMode? deleteMode;
+  if (mode == TransferMode.move) {
+    // Read straight from the settings: awaiting the unwatched
+    // `deleteModeSettingProvider` hangs in Riverpod 3 (B4).
+    deleteMode = DeleteMode.parse(
+      await ref.read(settingsRepositoryProvider).read(AppSettings.deleteMode),
+    );
+    if (!context.mounted) return;
+    if (deleteMode == DeleteMode.permanent) {
+      deleteMode = await confirmPermanentMove(context, count: files.length);
+      if (deleteMode == null || !context.mounted) return;
+    }
+  }
   final target = splitRemoteFolder(folder);
   await ref
       .read(transferEngineProvider)
@@ -137,11 +216,15 @@ Future<void> startUpload(
         peerName: name,
         rootId: target.rootId,
         path: target.path,
+        mode: mode,
+        deleteMode: deleteMode,
       );
   if (!context.mounted) return;
   _snack(
     context,
-    l10n.transferUploadQueued(files.length, name),
+    mode == TransferMode.move
+        ? l10n.transferMoveQueued(files.length, name)
+        : l10n.transferUploadQueued(files.length, name),
     showTransfers: true,
   );
 }
@@ -156,6 +239,20 @@ final SelectionAction sendToDeviceSelectionAction = SelectionAction(
     final files = await ref.read(mediaIndexDaoProvider).byIds(ids);
     if (!context.mounted) return;
     await startUpload(context, ref, files);
+  },
+);
+
+/// B6 selection bar: "Move to device" (N11): like "Send to device", then
+/// the originals here follow the delete setting once verified.
+final SelectionAction moveToDeviceSelectionAction = SelectionAction(
+  id: 'n11.move',
+  order: 7,
+  label: (c) => c.l10n.transferMoveToDevice,
+  icon: Icons.drive_file_move_outlined,
+  run: (context, ref, ids) async {
+    final files = await ref.read(mediaIndexDaoProvider).byIds(ids);
+    if (!context.mounted) return;
+    await startUpload(context, ref, files, mode: TransferMode.move);
   },
 );
 

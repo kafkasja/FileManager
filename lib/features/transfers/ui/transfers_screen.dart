@@ -50,7 +50,36 @@ String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {
     'notFound' => l10n.transferSourceGone,
     TransferErrors.incomplete || 'cancelled' => l10n.transferIncomplete,
     TransferErrors.sourceChanged => l10n.transferSourceChanged,
+    TransferErrors.verificationFailed => l10n.transferVerifyFailed,
+    TransferErrors.alreadyMoved => l10n.transferAlreadyMoved,
     _ => l10n.transferFailedGeneric,
+  };
+}
+
+/// N11: a move job's file line once its copy is verified: where the
+/// original went (on [job]'s device for a download-move).
+String transferOutcomeText(
+  AppLocalizations l10n,
+  TransferJob job,
+  TransferFile f,
+) {
+  final remote = job.direction == TransferDirection.download;
+  final device = job.deviceName;
+  return switch (f.sourceOutcome) {
+    null => l10n.transferOriginalPending,
+    SourceOutcome.trashed =>
+      remote
+          ? l10n.transferOriginalTrashedOn(device)
+          : l10n.transferOriginalTrashed,
+    SourceOutcome.deletedPermanently => l10n.transferOriginalDeleted,
+    SourceOutcome.alreadyGone => l10n.transferOriginalGone,
+    SourceOutcome.keptDeclined =>
+      remote
+          ? l10n.transferOriginalKeptDeclinedOn(device)
+          : l10n.transferOriginalKeptDeclined,
+    SourceOutcome.keptCancelled => l10n.transferOriginalKeptCancelled,
+    SourceOutcome.keptChanged => l10n.transferOriginalKeptChanged,
+    SourceOutcome.keptFailed => l10n.transferOriginalKeptFailed,
   };
 }
 
@@ -194,8 +223,17 @@ class _JobCard extends ConsumerWidget {
       TransferStatus.cancelled => l10n.transferStatusCancelled,
     };
     final speed = live.bytesPerSecond[job.id] ?? 0;
+    final finalizing = live.finalizing.contains(job.id);
+    // N11: originals that "Delete originals" may (re)try.
+    final deletable =
+        job.isMove &&
+        job.allFilesEnded &&
+        !finalizing &&
+        job.files.any((f) => f.originalDeletable) &&
+        (!download || connected);
+    final shown = finalizing ? l10n.transferDeletingOriginals : status;
     final lines = <String>[
-      '${l10n.transferFiles(job.files.length)} · $status',
+      '${l10n.transferFiles(job.files.length)} · $shown',
       l10n.transferProgress(
         formatBytes(done, locale: locale),
         formatBytes(total, locale: locale),
@@ -222,11 +260,12 @@ class _JobCard extends ConsumerWidget {
         leading: Icon(
           download ? Icons.download_outlined : Icons.upload_outlined,
         ),
-        title: Text(
-          download
-              ? l10n.transferFromDevice(job.deviceName)
-              : l10n.transferToDevice(job.deviceName),
-        ),
+        title: Text(switch ((download, job.isMove)) {
+          (true, false) => l10n.transferFromDevice(job.deviceName),
+          (true, true) => l10n.transferMoveFromDevice(job.deviceName),
+          (false, false) => l10n.transferToDevice(job.deviceName),
+          (false, true) => l10n.transferMoveToDeviceTitle(job.deviceName),
+        }),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -272,6 +311,12 @@ class _JobCard extends ConsumerWidget {
                     key: ValueKey('transfer-retry-${job.id}'),
                     onPressed: () => unawaited(engine.retry(job.id)),
                     child: Text(l10n.transferRetry),
+                  ),
+                if (deletable)
+                  TextButton(
+                    key: ValueKey('transfer-delete-originals-${job.id}'),
+                    onPressed: () => unawaited(engine.deleteOriginals(job.id)),
+                    child: Text(l10n.transferDeleteOriginals),
                   ),
               ],
             ),
@@ -322,17 +367,29 @@ class _FileRow extends ConsumerWidget {
     final engine = ref.read(transferEngineProvider);
     final f = file;
     final subtitle = switch (f.status) {
+      // N11: a move's whole copy waiting to be checked (the link dropped).
+      TransferFileStatus.queued
+          when job.isMove && f.sizeBytes > 0 && f.bytesDone >= f.sizeBytes =>
+        l10n.transferVerifying,
       TransferFileStatus.queued when f.isRetrying => l10n.transferRetrying,
+      TransferFileStatus.queued
+          when f.error == TransferErrors.verificationFailed =>
+        l10n.transferVerifyFailed,
       TransferFileStatus.queued when f.bytesDone > 0 => l10n.transferProgress(
         formatBytes(f.bytesDone, locale: locale),
         formatBytes(f.sizeBytes, locale: locale),
       ),
       TransferFileStatus.queued => l10n.transferStatusQueued,
-      TransferFileStatus.running ||
-      TransferFileStatus.verifying => l10n.transferProgress(
+      TransferFileStatus.verifying => l10n.transferVerifying,
+      TransferFileStatus.running => l10n.transferProgress(
         formatBytes(live.bytes[f.id] ?? f.bytesDone, locale: locale),
         formatBytes(f.sizeBytes, locale: locale),
       ),
+      TransferFileStatus.done when f.receiverSha256 != null =>
+        transferOutcomeText(l10n, job, f),
+      TransferFileStatus.done when job.isMove => l10n.transferVerified,
+      TransferFileStatus.skipped when f.error == TransferErrors.alreadyMoved =>
+        l10n.transferAlreadyMoved,
       TransferFileStatus.done ||
       TransferFileStatus.skipped => l10n.transferStatusDone,
       TransferFileStatus.failed => transferErrorText(l10n, f.error, job),

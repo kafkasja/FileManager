@@ -4933,6 +4933,128 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transferSourceChanged => 'The file changed while it was sent';
 
   @override
+  String get transferModeCopy => 'Copy';
+
+  @override
+  String get transferModeMove => 'Move';
+
+  @override
+  String transferMoveDownloadNote(String device) {
+    return 'Each file is checked after it arrives; only then does its original go to the trash on $device.';
+  }
+
+  @override
+  String get transferMoveToDevice => 'Move to device';
+
+  @override
+  String transferMoveFromDevice(String device) {
+    return 'Moving from $device';
+  }
+
+  @override
+  String transferMoveToDeviceTitle(String device) {
+    return 'Moving to $device';
+  }
+
+  @override
+  String transferMoveQueued(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moving $count files to $device',
+      one: 'Moving 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferMoveDownloadQueued(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moving $count files from $device',
+      one: 'Moving 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transferVerifying => 'Verifying…';
+
+  @override
+  String get transferVerified => 'Verified';
+
+  @override
+  String get transferVerifyFailed => 'Verification failed. Original kept.';
+
+  @override
+  String get transferAlreadyMoved => 'Already moved';
+
+  @override
+  String get transferOriginalPending => 'Verified · original not deleted yet';
+
+  @override
+  String get transferOriginalTrashed => 'Verified · original moved to trash';
+
+  @override
+  String transferOriginalTrashedOn(String device) {
+    return 'Verified · original moved to trash on $device';
+  }
+
+  @override
+  String get transferOriginalDeleted => 'Verified · original deleted';
+
+  @override
+  String get transferOriginalGone => 'Verified · original was already gone';
+
+  @override
+  String get transferOriginalKeptDeclined =>
+      'Verified · original kept (you declined)';
+
+  @override
+  String transferOriginalKeptDeclinedOn(String device) {
+    return 'Verified · original kept (declined on $device)';
+  }
+
+  @override
+  String get transferOriginalKeptCancelled =>
+      'Verified · original kept (cancelled)';
+
+  @override
+  String get transferOriginalKeptChanged => 'Original kept (changed)';
+
+  @override
+  String get transferOriginalKeptFailed =>
+      'Verified · original kept (couldn’t delete it)';
+
+  @override
+  String get transferDeleteOriginals => 'Delete originals';
+
+  @override
+  String get transferDeletingOriginals => 'Deleting originals…';
+
+  @override
+  String get permanentMoveTitle => 'Delete originals permanently?';
+
+  @override
+  String permanentMoveBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Your delete setting is “Delete permanently”: the $count originals are deleted for good once their copies are verified.',
+      one: 'Your delete setting is “Delete permanently”: the original is deleted for good once its copy is verified.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get permanentMoveUseTrash => 'Use trash instead';
+
+  @override
+  String get permanentMoveConfirm => 'Delete permanently';
+
+  @override
   String get transferDownloadAction => 'Download';
 
   @override

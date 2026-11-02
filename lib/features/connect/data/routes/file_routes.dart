@@ -722,10 +722,37 @@ Handler _writeAccessRoute(FileRoutesEnv env) => env.guard.guarded(
 
 Handler _trashRoute(FileRoutesEnv env) => env.guard.guarded(
   (r) async {
-    final files = [for (final t in guardedTargetsOf(r)) t.file!.ref];
-    final TrashResult result;
+    final targets = guardedTargetsOf(r);
+    var files = [for (final t in targets) t.file!.ref];
+    final refused = <String, String>{};
+    final body = TrashRequestDto.fromJson(
+      jsonDecode(await r.readAsString()) as Map<String, Object?>,
+    );
+    if (body.reason == TrashReason.verifiedMove) {
+      // N11: only files whose bytes are still what the client verified.
+      final keep = <FileRef>[];
+      for (final t in targets) {
+        final id = (t.target as FileIdTarget).id;
+        final f = t.file!.ref;
+        final check = await _verifyOriginal(
+          env,
+          f,
+          sha256: body.sha256ById[id] ?? body.sha256ById[f.id],
+          size: body.sizeById[id] ?? body.sizeById[f.id],
+        );
+        if (check == null) {
+          keep.add(f);
+        } else {
+          refused[f.id] = check;
+        }
+      }
+      files = keep;
+    }
+    TrashResult result;
     try {
-      result = await env.trash().trash(files, caller: _caller(r));
+      result = files.isEmpty
+          ? const TrashResult(trashed: [], failed: {})
+          : await env.trash().trash(files, caller: _caller(r));
     } on Object catch (e) {
       if (_serviceError(e) case final response?) return response;
       rethrow;
@@ -743,6 +770,7 @@ Handler _trashRoute(FileRoutesEnv env) => env.guard.guarded(
             ),
         ],
         failed: {
+          ...refused,
           for (final MapEntry(:key, :value) in result.failed.entries)
             key: _failureWire(value.failure),
         },
@@ -759,3 +787,32 @@ Handler _trashRoute(FileRoutesEnv env) => env.guard.guarded(
     ];
   },
 );
+
+/// N11 `verifiedMove`: null when [f]'s on-disk length and SHA-256 (hashed
+/// in a worker isolate) equal what the client received; otherwise the
+/// wire code it gets back for that id (`verification_failed`, or
+/// `not_found` when the file can't be read any more).
+Future<String?> _verifyOriginal(
+  FileRoutesEnv env,
+  FileRef f, {
+  required String? sha256,
+  required int? size,
+}) async {
+  if (sha256 == null || size == null) {
+    return ApiErrorCode.verificationFailed.wire;
+  }
+  try {
+    final length = await env.diskLength(f) ?? f.sizeBytes;
+    if (length != size) return ApiErrorCode.verificationFailed.wire;
+    final hex = await env.hashFile(f, env.source());
+    return hex == sha256 ? null : ApiErrorCode.verificationFailed.wire;
+  } on FileSystemException {
+    return ApiErrorCode.notFound.wire;
+  } on FileOpException {
+    return ApiErrorCode.notFound.wire;
+  } on Object {
+    // A hash worker that failed: nothing is trashed, the client may ask
+    // again.
+    return ApiErrorCode.internal.wire;
+  }
+}

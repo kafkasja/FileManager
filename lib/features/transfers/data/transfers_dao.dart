@@ -5,6 +5,7 @@ import 'package:kfm/core/db/tables/known_devices_table.dart';
 import 'package:kfm/core/db/tables/transfers_table.dart';
 import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
+import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 part 'transfers_dao.g.dart';
 
@@ -96,6 +97,7 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     status: t.status,
     swipeSessionId: t.swipeSessionId,
     pauseReason: t.pauseReason,
+    deleteMode: t.deleteMode == null ? null : DeleteMode.parse(t.deleteMode),
     deviceTemporary: d.isTemporary,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
@@ -175,6 +177,8 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     required DateTime now,
     String? targetRootId,
     int? swipeSessionId,
+    TransferMode mode = TransferMode.copy,
+    DeleteMode? deleteMode,
   }) => transaction(() async {
     final id = randomHexId();
     await into(transfers).insert(
@@ -182,7 +186,8 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
         id: id,
         deviceId: deviceId,
         direction: direction,
-        mode: TransferMode.copy,
+        mode: mode,
+        deleteMode: Value(deleteMode?.name),
         targetRootId: Value(targetRootId),
         targetPath: targetPath,
         status: files.isEmpty ? TransferStatus.done : TransferStatus.queued,
@@ -494,6 +499,38 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     await refreshJob(jobId, now);
   }
 
+  /// N11: writes what happened to each original ([outcomes] by transfer
+  /// file id) in one go.
+  Future<void> setOutcomes(
+    Map<int, ({SourceOutcome outcome, String? error})> outcomes,
+  ) async {
+    for (final MapEntry(:key, :value) in outcomes.entries) {
+      await updateFile(
+        key,
+        TransferFilesCompanion(
+          sourceOutcome: Value(value.outcome),
+          sourceError: Value(value.error),
+        ),
+      );
+    }
+  }
+
+  /// N11: verified files of [jobId] whose original wasn't deleted yet →
+  /// `keptCancelled` (the move job was cancelled).
+  Future<void> keepPendingOriginals(String jobId) =>
+      (update(transferFiles)..where(
+            (f) =>
+                f.transferId.equals(jobId) &
+                f.status.equalsValue(TransferFileStatus.done) &
+                f.receiverSha256.isNotNull() &
+                f.sourceOutcome.isNull(),
+          ))
+          .write(
+            const TransferFilesCompanion(
+              sourceOutcome: Value(SourceOutcome.keptCancelled),
+            ),
+          );
+
   /// Files waiting for a backoff retry (N10).
   Future<bool> hasRetryWaits() async {
     final row =
@@ -600,6 +637,9 @@ TransferFile transferFileFromRow(TransferFileRow r) => TransferFile(
   etag: r.etag,
   nextRetryAt: r.nextRetryAt,
   senderSha256: r.senderSha256,
+  receiverSha256: r.receiverSha256,
+  sourceOutcome: r.sourceOutcome,
+  sourceError: r.sourceError,
 );
 
 /// Transfers for the UI isolate (TASK-N9): reads go to the DAO, every
@@ -623,6 +663,8 @@ class TransfersRepository {
     required String targetPath,
     required List<NewTransferFile> files,
     String? targetRootId,
+    TransferMode mode = TransferMode.copy,
+    DeleteMode? deleteMode,
   }) async {
     late String id;
     await _queue.enqueue(null, () async {
@@ -633,6 +675,8 @@ class TransfersRepository {
         targetRootId: targetRootId,
         files: files,
         now: _clock(),
+        mode: mode,
+        deleteMode: deleteMode,
       );
     });
     return id;
@@ -651,6 +695,18 @@ class TransfersRepository {
   /// a restarted source's size).
   Future<void> saveFile(int id, TransferFilesCompanion row) =>
       _queue.enqueue(null, () => dao.updateFile(id, row));
+
+  /// N11: see [TransfersDao.setOutcomes]; one transaction.
+  Future<void> setOutcomes(
+    Map<int, ({SourceOutcome outcome, String? error})> outcomes,
+  ) => _queue.enqueue(
+    null,
+    () => dao.transaction(() => dao.setOutcomes(outcomes)),
+  );
+
+  /// N11: see [TransfersDao.keepPendingOriginals].
+  Future<void> keepPendingOriginals(String jobId) =>
+      _queue.enqueue(null, () => dao.keepPendingOriginals(jobId));
 
   Future<void> pauseJob(String jobId, TransferPauseReason reason) =>
       _queue.enqueue(null, () => dao.pauseJob(jobId, reason, _clock()));

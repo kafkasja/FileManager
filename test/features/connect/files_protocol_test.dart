@@ -114,6 +114,31 @@ void main() {
     );
   });
 
+  test('N11 verifiedMove trash request carries a hash and a size per id', () {
+    final sha = 'c' * 64;
+    final dto = TrashRequestDto.fromJson(
+      TrashRequestDto(
+        ids: const ['a'],
+        reason: TrashReason.verifiedMove,
+        sha256ById: {'a': sha},
+        sizeById: const {'a': 7},
+      ).toJson(),
+    );
+    expect(dto.reason, TrashReason.verifiedMove);
+    expect(dto.sha256ById, {'a': sha});
+    expect(dto.sizeById, {'a': 7});
+    expect(
+      () => TrashRequestDto.fromJson({
+        'ids': const ['a', 'b'],
+        'reason': 'verifiedMove',
+        'sha256ById': {'a': sha},
+        'sizeById': const {'a': 7},
+      }),
+      throwsFormatException,
+    );
+    expect(const TrashRequestDto(ids: ['a']).toJson().keys, ['ids', 'reason']);
+  });
+
   test('trash request caps ids; response round-trips', () {
     expect(
       TrashRequestDto.fromJson(const {

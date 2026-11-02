@@ -226,6 +226,9 @@ class FakeFileSource implements FileSource {
   @override
   Future<TrashResult> trashBatch(List<FileRef> files) async {
     calls.add('trashBatch ${files.map((f) => f.id).join(',')}');
+    if (declineDeletes) {
+      return const TrashResult(trashed: [], failed: {}, userCancelled: true);
+    }
     final trashed = <TrashedItem>[];
     final failed = <String, FileOpException>{};
     for (final f in files) {
@@ -261,6 +264,9 @@ class FakeFileSource implements FileSource {
   @override
   Future<void> deletePermanentlyBatch(List<FileRef> files) async {
     calls.add('deletePermanentlyBatch ${files.map((f) => f.id).join(',')}');
+    if (declineDeletes) {
+      throw const FileOpException(FileOpFailure.userCancelled, 'declined');
+    }
     for (final f in files) {
       _files.remove(f.id);
       _bytes.remove(f.id);
@@ -299,6 +305,10 @@ class FakeFileSource implements FileSource {
 
   /// When true, restoreBatch/deleteFromTrash act like a declined dialog.
   bool declineDialogs = false;
+
+  /// N11: the system dialog of [trashBatch] / [deletePermanentlyBatch] is
+  /// declined.
+  bool declineDeletes = false;
 
   @override
   Future<RestoreResult> restoreBatch(List<TrashedItem> items) async {

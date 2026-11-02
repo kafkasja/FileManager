@@ -16,13 +16,17 @@ import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:kfm/features/transfers/data/chunked_uploader.dart';
 import 'package:kfm/features/transfers/data/resumable_downloader.dart';
 import 'package:kfm/features/transfers/data/transfer_run.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
+import 'package:kfm/features/transfers/data/verified_move_impl.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
+import 'package:kfm/features/transfers/domain/verified_move.dart';
+import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 /// `<downloads>/<safe device name>`: where downloads from [peerName] go by
 /// default (TASK-N9). The peer's name never escapes one folder segment.
@@ -86,6 +90,7 @@ class TransferEngine {
     required Future<void> Function(List<FileRef> files) addToIndex,
     this._onUnauthorized,
     this._reconnect,
+    this._verifiedMove,
     bool Function()? isForeground,
     Future<bool> Function(RemoteHttp http)? probe,
     Future<String> Function(PreparedSource p) hash = hashPrepared,
@@ -127,6 +132,9 @@ class TransferEngine {
 
   /// `KnownDeviceConnector.reconnect` (N6): returns once connected.
   final Future<void> Function(String peerFingerprint)? _reconnect;
+
+  /// N11: deletes the originals of verified upload-moves (this device's).
+  final VerifiedMove? _verifiedMove;
   final bool Function() _isForeground;
   final Future<bool> Function(RemoteHttp http) _probe;
   late final ResumableDownloader _downloader;
@@ -142,6 +150,10 @@ class TransferEngine {
   final Duration reconnectCap;
 
   final Map<int, TransferRun> _running = {};
+
+  /// N11: move jobs whose originals are being deleted right now.
+  final Set<String> _finalizing = {};
+  final Set<String> _finalizeAgain = {};
   final StreamController<TransferLive> _live = StreamController.broadcast();
   final Set<Timer> _retryTimers = {};
   TransferLive _current = TransferLive.empty;
@@ -205,6 +217,7 @@ class TransferEngine {
     if (peerFingerprint != null) {
       _recoveryFailures = 0;
       unawaited(_resumeWaiting(peerFingerprint));
+      unawaited(_finalizeRemotePending(peerFingerprint));
     }
     _recoveryTimer?.cancel();
     _recoveryTimer = null;
@@ -230,12 +243,14 @@ class TransferEngine {
   }
 
   /// One job downloading [remoteFiles] of [peerFingerprint] into
-  /// [localFolder].
+  /// [localFolder]. N11 [mode] move: each file is verified, then the
+  /// other device trashes its original (its own dialog; never permanent).
   Future<String> enqueueDownload(
     List<FileRef> remoteFiles, {
     required String peerFingerprint,
     required String peerName,
     required String localFolder,
+    TransferMode mode = TransferMode.copy,
   }) async {
     final deviceId = await deviceIdFor(peerFingerprint, peerName);
     final id = await _repo.createJob(
@@ -243,19 +258,24 @@ class TransferEngine {
       direction: TransferDirection.download,
       targetPath: localFolder,
       files: [for (final f in remoteFiles) _newFile(f)],
+      mode: mode,
     );
     pump();
     return id;
   }
 
   /// One job uploading local [files] to [peerFingerprint]'s root [rootId],
-  /// folder [path].
+  /// folder [path]. N11 [mode] move: each file is verified by the other
+  /// device, then the originals here follow [deleteMode] (snapshotted for
+  /// this job; trash when null).
   Future<String> enqueueUpload(
     List<FileRef> files, {
     required String peerFingerprint,
     required String peerName,
     required String rootId,
     required String path,
+    TransferMode mode = TransferMode.copy,
+    DeleteMode? deleteMode,
   }) async {
     final deviceId = await deviceIdFor(peerFingerprint, peerName);
     final id = await _repo.createJob(
@@ -264,6 +284,10 @@ class TransferEngine {
       targetRootId: rootId,
       targetPath: path,
       files: [for (final f in files) _newFile(f)],
+      mode: mode,
+      deleteMode: mode == TransferMode.move
+          ? deleteMode ?? DeleteMode.trash
+          : null,
     );
     pump();
     return id;
@@ -278,12 +302,19 @@ class TransferEngine {
 
   /// Cancel: queued files end at once, running ones are aborted; every
   /// partial of the job is deleted on both sides. Finished files stay.
+  /// N11: verified files of a move job keep their originals
+  /// (`keptCancelled`; a delete already showing its dialog can't be
+  /// stopped).
   Future<void> cancelJob(String jobId) async {
     final job = await _repo.dao.job(jobId);
+    final move = job?.isMove ?? false;
+    if (move) await _repo.keepPendingOriginals(jobId);
     await _repo.cancelQueued(jobId);
     for (final r in _running.values.toList()) {
       if (r.job.id == jobId) await r.cancel();
     }
+    // A file that finished verifying while it was cancelled.
+    if (move) await _repo.keepPendingOriginals(jobId);
     if (job != null) {
       for (final f in job.files) {
         if (!_running.containsKey(f.id) &&
@@ -370,6 +401,15 @@ class TransferEngine {
     return n;
   }
 
+  /// N11 "Delete originals": deletes the originals of [jobId]'s verified
+  /// files that are still there (pending, declined, failed or cancelled
+  /// before), in one batch.
+  Future<void> deleteOriginals(String jobId) =>
+      _maybeFinalize(jobId, retryKept: true);
+
+  /// N11: move jobs whose originals are being deleted.
+  Set<String> get finalizing => Set.unmodifiable(_finalizing);
+
   /// Starts queued files of the connected device up to [maxRunning].
   void pump() {
     if (_disposed) return;
@@ -404,6 +444,7 @@ class TransferEngine {
               _running.remove(q.file.id);
               _publish();
               pump();
+              if (q.job.isMove) unawaited(_maybeFinalize(q.job.id));
             }),
           );
         }
@@ -445,9 +486,20 @@ class TransferEngine {
       final http =
           _http(job.deviceFingerprint) ??
           (throw const TransferFailure(TransferErrors.unavailable));
-      final target = job.direction == TransferDirection.download
-          ? await _downloader.run(run, http)
-          : await _uploader.run(run, http);
+      final (
+        :target,
+        :receiverSha256,
+      ) = job.direction == TransferDirection.download
+          ? await _downloader
+                .run(run, http)
+                .then((r) => (target: r.id, receiverSha256: r.receiverSha256))
+          : await _uploader
+                .run(run, http)
+                .then(
+                  (r) => (target: r.finalId, receiverSha256: r.receiverSha256),
+                );
+      // N11: `done` + the receiver hash are durable before any original
+      // is touched.
       await _repo.setFile(
         f.id,
         job.id,
@@ -455,6 +507,8 @@ class TransferEngine {
           status: const Value(TransferFileStatus.done),
           bytesDone: Value(run.confirmed),
           targetFileId: Value(target),
+          receiverSha256: Value(receiverSha256),
+          error: const Value(null),
           attempts: const Value(0),
         ),
       );
@@ -483,6 +537,32 @@ class TransferEngine {
       return;
     }
     final code = _codeOf(e);
+    if (code == TransferErrors.verificationFailed) {
+      await _verificationFailed(run);
+      return;
+    }
+    // N11: the source of a move is gone: it was moved before.
+    // (A lost upload answer the other device forgot is a 404 too: not
+    // "moved", so only a download's 404 or an upload's missing source.)
+    final download = job.direction == TransferDirection.download;
+    if (job.isMove &&
+        (download
+            ? code == ApiErrorCode.notFound.wire
+            : code == TransferErrors.sourceGone)) {
+      await _repo.setFile(
+        f.id,
+        job.id,
+        const TransferFilesCompanion(
+          status: Value(TransferFileStatus.skipped),
+          error: Value(TransferErrors.alreadyMoved),
+          bytesDone: Value(0),
+          attempts: Value(0),
+          nextRetryAt: Value(null),
+        ),
+      );
+      await _discardPartials(job, f, uploadId: run.uploadId);
+      return;
+    }
     final outcome = await _classify(run, e);
     switch (outcome) {
       case _Outcome.connection:
@@ -522,6 +602,172 @@ class TransferEngine {
         }
         await _fail(run, code);
         await _discardPartials(job, f, uploadId: run.uploadId);
+    }
+  }
+
+  /// N11: the copy didn't match. The bad copy is already gone (the other
+  /// device dropped the upload; the downloader removed the part or its
+  /// published copy); the file starts over from 0 once, a second mismatch
+  /// fails it. The original is never touched.
+  Future<void> _verificationFailed(TransferRun run) async {
+    final f = run.file;
+    final job = run.job;
+    await _discardPartials(job, f, uploadId: run.uploadId);
+    final again = f.error == TransferErrors.verificationFailed;
+    await _repo.setFile(
+      f.id,
+      job.id,
+      TransferFilesCompanion(
+        status: Value(
+          again ? TransferFileStatus.failed : TransferFileStatus.queued,
+        ),
+        error: const Value(TransferErrors.verificationFailed),
+        bytesDone: const Value(0),
+        uploadId: const Value(null),
+        etag: const Value(null),
+        senderSha256: const Value(null),
+        receiverSha256: const Value(null),
+        attempts: const Value(0),
+        nextRetryAt: const Value(null),
+      ),
+    );
+  }
+
+  // ---- N11: originals of move jobs ----
+
+  /// When every file of the move job [jobId] ended, deletes the originals
+  /// of its verified files in one batch: upload-moves here through
+  /// [VerifiedMove] (the job's delete mode), download-moves on the other
+  /// device through N7's `verifiedMove` trash. Without a connection the
+  /// remote originals stay pending (sent again on the next connection).
+  /// A job with a cancelled file keeps them (`keptCancelled`) unless
+  /// [retryKept] ("Delete originals").
+  Future<void> _maybeFinalize(String jobId, {bool retryKept = false}) async {
+    if (_disposed) return;
+    if (_finalizing.contains(jobId)) {
+      // Checked again once the running call ends (its view may be older).
+      if (!retryKept) _finalizeAgain.add(jobId);
+      return;
+    }
+    _finalizing.add(jobId);
+    var published = false;
+    try {
+      final job = await _repo.dao.job(jobId);
+      if (job == null || !job.isMove || !job.allFilesEnded) return;
+      if (!retryKept &&
+          job.files.any((f) => f.status == TransferFileStatus.cancelled)) {
+        await _repo.keepPendingOriginals(jobId);
+        return;
+      }
+      final files = [
+        for (final f in job.files)
+          if (retryKept ? f.originalDeletable : f.originalPending) f,
+      ];
+      if (files.isEmpty) return;
+      _publish();
+      published = true;
+      final result = job.direction == TransferDirection.upload
+          ? await _deleteLocalOriginals(job, files)
+          : await _deleteRemoteOriginals(job, files);
+      if (result == null) return;
+      await _repo.setOutcomes({
+        for (final f in files)
+          if (result.outcomes[_originalKey(job, f)] case final o?)
+            f.id: (outcome: o, error: result.errors[_originalKey(job, f)]),
+      });
+    } on Object catch (e, st) {
+      developer.log(
+        'originals not deleted',
+        name: 'kfm.transfers',
+        error: e,
+        stackTrace: st,
+      );
+    } finally {
+      _finalizing.remove(jobId);
+      if (published) _publish();
+      if (_finalizeAgain.remove(jobId)) unawaited(_maybeFinalize(jobId));
+    }
+  }
+
+  /// The key [FinalizeResult.outcomes] uses for [f]'s original.
+  static String _originalKey(TransferJob job, TransferFile f) =>
+      job.direction == TransferDirection.download
+      ? parseRemoteFileId(f.sourceFileId).serverId
+      : f.sourceFileId;
+
+  Future<FinalizeResult> _deleteLocalOriginals(
+    TransferJob job,
+    List<TransferFile> files,
+  ) async {
+    final mover = _verifiedMove;
+    if (mover == null) {
+      return FinalizeResult(
+        outcomes: {
+          for (final f in files) f.sourceFileId: SourceOutcome.keptFailed,
+        },
+      );
+    }
+    return await mover.deleteOriginals([
+      for (final f in files)
+        VerifiedOriginal(
+          original: FileRef(
+            id: f.sourceFileId,
+            uri: '',
+            name: f.name,
+            kind: FileKind.other,
+            sizeBytes: f.sizeBytes,
+            modifiedAt: DateTime.fromMillisecondsSinceEpoch(
+              f.sourceModifiedAtMs,
+            ),
+            folderPath: '',
+            origin: FileOrigin.local,
+          ),
+          proof: Verified(sha256: f.receiverSha256!, sizeBytes: f.sizeBytes),
+          modifiedAtMsAtCopy: f.sourceModifiedAtMs,
+        ),
+    ], mode: job.deleteMode ?? DeleteMode.trash);
+  }
+
+  /// Null when the other device can't be reached (the originals stay
+  /// pending).
+  Future<FinalizeResult?> _deleteRemoteOriginals(
+    TransferJob job,
+    List<TransferFile> files,
+  ) async {
+    final http = _http(job.deviceFingerprint);
+    if (http == null) return null;
+    try {
+      return await trashRemoteOriginals(http, [
+        for (final f in files)
+          (
+            serverId: parseRemoteFileId(f.sourceFileId).serverId,
+            sha256: f.receiverSha256!,
+            sizeBytes: f.bytesDone,
+          ),
+      ]);
+    } on RemoteApiException catch (e) {
+      if (e.code == ApiErrorCode.unauthorized) _onUnauthorized?.call();
+      return null;
+    } on Object catch (e) {
+      developer.log('remote originals pending: $e', name: 'kfm.transfers');
+      return null;
+    }
+  }
+
+  /// Download-moves of [fp] whose originals wait for that device.
+  Future<void> _finalizeRemotePending(String fp) async {
+    try {
+      for (final j in await _repo.dao.jobs()) {
+        if (j.deviceFingerprint == fp &&
+            j.isMove &&
+            j.direction == TransferDirection.download &&
+            j.allFilesEnded &&
+            j.files.any((f) => f.originalPending)) {
+          await _maybeFinalize(j.id);
+        }
+      }
+    } on Object catch (e) {
+      developer.log('pending originals not sent: $e', name: 'kfm.transfers');
     }
   }
 
@@ -804,6 +1050,7 @@ class TransferEngine {
     _current = TransferLive(
       bytes: {for (final r in _running.values) r.file.id: r.bytes},
       bytesPerSecond: speeds,
+      finalizing: Set.unmodifiable(_finalizing),
     );
     _live.add(_current);
     if (_running.isEmpty) {
