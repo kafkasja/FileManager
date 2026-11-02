@@ -7136,6 +7136,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System colors'**
   String get accentSystem;
+
+  /// L4/L5 Settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get settingsAccessibility;
+
+  /// L4 switch: mirror the bottom controls for left-handed use.
+  ///
+  /// In en, this message translates to:
+  /// **'Left-handed'**
+  String get leftHandedTitle;
+
+  /// L4 switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves Undo and bottom buttons to the other side. Swipe directions don\'t change.'**
+  String get leftHandedSubtitle;
+
+  /// L5 picker title.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get textSizeLabel;
+
+  /// L5 text size: follow the system font size only.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get textSizeSystem;
+
+  /// L5 text size: 1.3x the system font size.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get textSizeLarge;
+
+  /// L5 text size: 1.6x the system font size.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra large'**
+  String get textSizeExtraLarge;
+
+  /// L5 live preview line under the text size picker, shown at the chosen size.
+  ///
+  /// In en, this message translates to:
+  /// **'This is how text will look.'**
+  String get textSizePreview;
 }
 
 class _AppLocalizationsDelegate

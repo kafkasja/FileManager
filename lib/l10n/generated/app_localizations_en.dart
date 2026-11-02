@@ -5074,4 +5074,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accentSystem => 'System colors';
+
+  @override
+  String get settingsAccessibility => 'Accessibility';
+
+  @override
+  String get leftHandedTitle => 'Left-handed';
+
+  @override
+  String get leftHandedSubtitle =>
+      'Moves Undo and bottom buttons to the other side. Swipe directions don\'t change.';
+
+  @override
+  String get textSizeLabel => 'Text size';
+
+  @override
+  String get textSizeSystem => 'System';
+
+  @override
+  String get textSizeLarge => 'Large';
+
+  @override
+  String get textSizeExtraLarge => 'Extra large';
+
+  @override
+  String get textSizePreview => 'This is how text will look.';
 }

@@ -1,3 +1,4 @@
+import 'package:kfm/app/layout/app_text_size.dart';
 import 'package:kfm/app/theme/app_accent.dart';
 import 'package:kfm/core/db/settings/setting_key.dart';
 import 'package:kfm/core/files/file_query.dart';
@@ -15,6 +16,21 @@ abstract final class AppSettings {
     'theme.accent',
     AppAccent.blue,
     AppAccent.values,
+  );
+
+  /// L4. Mirrors the thumb-side bottom controls (Undo etc.); swipe
+  /// directions never change.
+  static final SettingKey<bool> leftHanded = SettingKey.boolean(
+    'a11y.leftHanded',
+    defaultValue: false,
+  );
+
+  /// L5. Text size on top of the system font size; unknown values read as
+  /// System.
+  static final SettingKey<AppTextSize> textSize = SettingKey.enumeration(
+    'a11y.textSize',
+    AppTextSize.system,
+    AppTextSize.values,
   );
 
   /// F6. '' = follow the system language.

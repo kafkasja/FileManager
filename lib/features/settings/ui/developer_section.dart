@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
@@ -20,7 +21,7 @@ class DeveloperSection extends ConsumerWidget {
     final count = ref.watch(_indexCountProvider).value ?? 0;
     return Column(
       children: [
-        ListTile(
+        AdaptiveListTile(
           leading: const Icon(Icons.storage_outlined),
           title: Text(l10n.devIndexedFiles(count)),
           trailing: TextButton(

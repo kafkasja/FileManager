@@ -43,7 +43,7 @@ void main() {
   ) async {
     final app = await pumpApp(tester);
     await _openSettings(tester);
-    await tester.tap(find.text('System').last);
+    await tester.tap(find.byType(DropdownButton<String>));
     await tester.pumpAndSettle();
     expect(find.text('English'), findsWidgets);
     await tester.tap(find.text('English').last);
@@ -64,8 +64,9 @@ void main() {
       for (final s in app.container.read(settingsSectionsProvider)) s.order,
     ];
     expect(orders, [...orders]..sort());
-    expect(orders.take(14), [
+    expect(orders.take(15), [
       100,
+      150,
       200,
       250,
       260,

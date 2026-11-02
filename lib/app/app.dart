@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/text_scale.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_theme.dart';
 import 'package:kfm/app/theme/theme_providers.dart';
@@ -86,6 +87,8 @@ class _AppState extends ConsumerState<App> {
       systemSeed: ref.watch(systemAccentSeedProvider).value,
     );
     final mono = accent == AppAccent.mono;
+    // L5: System leaves the platform scaler untouched.
+    final textSize = ref.watch(textSizeProvider).value ?? AppTextSize.system;
     return MaterialApp.router(
       routerConfig: ref.watch(routerProvider),
       onGenerateTitle: (context) => context.l10n.appTitle,
@@ -95,6 +98,8 @@ class _AppState extends ConsumerState<App> {
       locale: ref.watch(appLocaleProvider).value,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
+      builder: (context, child) =>
+          applyTextScale(context, child ?? const SizedBox.shrink(), textSize),
     );
   }
 }

@@ -3245,5 +3245,21 @@
   "accentMono": "Mono",
   "@accentMono": {"description": "L1 color theme name: grayscale, no accent color."},
   "accentSystem": "System colors",
-  "@accentSystem": {"description": "L1 color theme that follows the wallpaper colors (Android 12+ only)."}
+  "@accentSystem": {"description": "L1 color theme that follows the wallpaper colors (Android 12+ only)."},
+  "settingsAccessibility": "Accessibility",
+  "@settingsAccessibility": {"description": "L4/L5 Settings section title."},
+  "leftHandedTitle": "Left-handed",
+  "@leftHandedTitle": {"description": "L4 switch: mirror the bottom controls for left-handed use."},
+  "leftHandedSubtitle": "Moves Undo and bottom buttons to the other side. Swipe directions don't change.",
+  "@leftHandedSubtitle": {"description": "L4 switch subtitle."},
+  "textSizeLabel": "Text size",
+  "@textSizeLabel": {"description": "L5 picker title."},
+  "textSizeSystem": "System",
+  "@textSizeSystem": {"description": "L5 text size: follow the system font size only."},
+  "textSizeLarge": "Large",
+  "@textSizeLarge": {"description": "L5 text size: 1.3x the system font size."},
+  "textSizeExtraLarge": "Extra large",
+  "@textSizeExtraLarge": {"description": "L5 text size: 1.6x the system font size."},
+  "textSizePreview": "This is how text will look.",
+  "@textSizePreview": {"description": "L5 live preview line under the text size picker, shown at the chosen size."}
 }

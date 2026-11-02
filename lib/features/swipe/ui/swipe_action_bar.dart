@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/swipe/data/swipe_action_dispatcher.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
@@ -87,25 +88,32 @@ class _SwipeActionBarState extends ConsumerState<SwipeActionBar> {
     if (!enabled || actions.isEmpty) return const SizedBox.shrink();
     final tags = ref.watch(tagsByIdProvider).value ?? const {};
     final spacing = context.tokens.spacing;
-    return SizedBox(
-      height: 64,
-      child: ListView.separated(
+    final handed = handednessOf(ref);
+    final buttons = <Widget>[
+      for (final (i, action) in actions.indexed) ...[
+        if (i > 0) SizedBox(width: spacing),
+        _ActionBarButton(
+          action: action,
+          deleteMode: widget.deleteMode,
+          tags: tags,
+          problem: _problem(action, tags),
+          onPressed: () => _tap(action, tags),
+        ),
+      ],
+    ];
+    // L5: grows with big text (min 64), scrolls instead of overflowing.
+    // L4: the first action sits at the physical left (right-handed) or
+    // physical right (left-handed), whatever the text direction.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 64),
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        reverse: reverseHorizontalFor(handed, Directionality.of(context)),
         padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
-        itemCount: actions.length,
-        separatorBuilder: (_, _) => SizedBox(width: spacing),
-        itemBuilder: (context, i) {
-          final action = actions[i];
-          return Center(
-            child: _ActionBarButton(
-              action: action,
-              deleteMode: widget.deleteMode,
-              tags: tags,
-              problem: _problem(action, tags),
-              onPressed: () => _tap(action, tags),
-            ),
-          );
-        },
+        child: Row(
+          textDirection: TextDirection.ltr,
+          children: mirroredFor(handed, buttons),
+        ),
       ),
     );
   }
@@ -173,6 +181,8 @@ class _ActionBarButton extends StatelessWidget {
             deleteMode: deleteMode,
             tags: tags,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

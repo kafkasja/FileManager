@@ -6,6 +6,7 @@ import 'package:kfm/features/connect/ui/connect_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
 import 'package:kfm/features/search/ui/search_settings_section.dart';
 import 'package:kfm/features/settings/ui/about_section.dart';
+import 'package:kfm/features/settings/ui/accessibility_section.dart';
 import 'package:kfm/features/settings/ui/appearance_section.dart';
 import 'package:kfm/features/settings/ui/developer_section.dart';
 import 'package:kfm/features/settings/ui/permissions_section.dart';
@@ -29,6 +30,11 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 100,
       titleBuilder: (c) => c.l10n.settingsAppearance,
       builder: (_) => const AppearanceSection(),
+    ),
+    SettingsSection(
+      order: 150,
+      titleBuilder: (c) => c.l10n.settingsAccessibility,
+      builder: (_) => const AccessibilitySection(),
     ),
     SettingsSection(
       order: 200,
