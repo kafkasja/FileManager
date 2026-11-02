@@ -313,6 +313,32 @@ class FilesChannel {
       (await _invoke<bool>('openAppDetails', {'package': packageName})) ??
       false;
 
+  /// X5: package info of an `.apk`: a plain file by [path], or a
+  /// `content://` [uri] through a cache copy ([sizeBytes] for the free-space
+  /// check). Errors: `INVALID_APK`, `NO_SPACE`, `NOT_FOUND`, `IO`.
+  Future<MediaRow> inspectApk({String? path, String? uri, int sizeBytes = 0}) =>
+      _invokeRow('inspectApk', {'path': path, 'uri': uri, 'size': sizeBytes});
+
+  /// X5: whether KFM may open the system installer (API 24–25: always).
+  Future<bool> canInstallPackages() async =>
+      (await _invoke<bool>('canInstallPackages')) ?? false;
+
+  /// X5: the system "Install unknown apps" page for KFM.
+  Future<bool> openInstallPermissionSettings() async =>
+      (await _invoke<bool>('openInstallPermissionSettings')) ?? false;
+
+  /// X5: hands [path] (from [inspectApk]) to Android's installer.
+  Future<bool> installApk(String path) async =>
+      (await _invoke<bool>('installApk', {'path': path})) ?? false;
+
+  /// X5: deletes an [inspectApk] cache copy.
+  Future<bool> discardApkCopy(String path) async =>
+      (await _invoke<bool>('discardApkCopy', {'path': path})) ?? false;
+
+  /// X7: opens an `https` page in the browser. False when no app can.
+  Future<bool> openUrl(Uri url) async =>
+      (await _invoke<bool>('openUrl', {'url': url.toString()})) ?? false;
+
   Future<T?> _invoke<T>(String method, [Map<String, Object?>? args]) async {
     try {
       return await _channel.invokeMethod<T>(method, args);

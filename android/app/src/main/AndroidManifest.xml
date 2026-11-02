@@ -39,6 +39,9 @@
     <!-- N2: QR scanning only while "Scan QR" is open (asked on tap). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- X5: hand an .apk the user tapped to Android's installer (the user
+         confirms there; KFM never installs silently). Asked on first Install. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- U1: USB sticks and cameras (host mode); optional. No permission needed. -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
 

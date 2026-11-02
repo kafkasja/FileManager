@@ -6376,4 +6376,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupUndoFailed(String error) {
     return 'Couldn\'t undo the import: $error';
   }
+
+  @override
+  String get apkInstall => 'Install';
+
+  @override
+  String get apkNewApp => 'New app';
+
+  @override
+  String apkUpdateFromTo(String from, String to) {
+    return 'Update from $from to $to';
+  }
+
+  @override
+  String get apkSameVersion => 'This version is already installed';
+
+  @override
+  String apkDowngrade(String installed) {
+    return 'Older than the installed version ($installed)';
+  }
+
+  @override
+  String get apkUnknownInstalled =>
+      'Android will show whether this is a new app or an update';
+
+  @override
+  String get apkSignerMismatch =>
+      'Signed by a different developer. Android will refuse this update. Uninstall the old app first (its data is lost).';
+
+  @override
+  String get apkSignerUnknown =>
+      'Updates must be signed by the same developer.';
+
+  @override
+  String get apkTrustNote => 'Only install apps from sources you trust.';
+
+  @override
+  String get apkInvalid => 'This file isn\'t a valid app package.';
+
+  @override
+  String get apkNoSpace => 'Not enough space to inspect this file.';
+
+  @override
+  String apkReadFailed(String error) {
+    return 'Couldn\'t read this file: $error';
+  }
+
+  @override
+  String apkInstallFailed(String error) {
+    return 'Couldn\'t start the installer: $error';
+  }
+
+  @override
+  String get apkNoInstaller => 'No app on this device can install packages.';
+
+  @override
+  String get apkPermissionWhy =>
+      'To install apps, Android asks you to allow KFM in \"Install unknown apps\". KFM never installs anything without Android\'s own confirmation.';
+
+  @override
+  String get apkOpenSettings => 'Open settings';
+
+  @override
+  String get apkPermissionDenied => 'Permission not granted.';
+
+  @override
+  String apkPackageLine(String package, String version) {
+    return '$package · version $version';
+  }
 }

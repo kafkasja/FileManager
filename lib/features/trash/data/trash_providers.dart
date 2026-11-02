@@ -8,6 +8,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/apk_install/data/apk_cache.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -58,6 +59,17 @@ Stream<List<UnavailableDelete>> folderUnavailable(Ref ref) {
 /// Once per app run, after storage access is granted. The order matters.
 @Riverpod(keepAlive: true)
 Future<int> startupMaintenance(Ref ref) async {
+  // X5: APK copies left by a kill (needs no storage access).
+  try {
+    await ref.read(apkCacheProvider).cleanUp();
+  } on Object catch (e, st) {
+    developer.log(
+      'APK cache clean-up failed',
+      name: 'kfm.trash',
+      error: e,
+      stackTrace: st,
+    );
+  }
   final access = await ref.watch(storageAccessControllerProvider.future);
   if (!access.canUseSwipe) return 0;
   // 0. B4: a copy cut off by a kill leaves a hidden temp file: remove it.
