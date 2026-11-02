@@ -6201,6 +6201,42 @@ abstract class AppLocalizations {
   /// **'Sharing stops when you leave this screen.'**
   String get shareKeepOpenDesktop;
 
+  /// No description provided for @shareKeepsRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing keeps running when you leave the app. Stop it here or from the notification.'**
+  String get shareKeepsRunning;
+
+  /// No description provided for @shareNotificationChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Device sharing'**
+  String get shareNotificationChannel;
+
+  /// No description provided for @shareNotificationWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing this device'**
+  String get shareNotificationWaiting;
+
+  /// No description provided for @shareNotificationWith.
+  ///
+  /// In en, this message translates to:
+  /// **'{others, plural, =0{Sharing with {name}} other{Sharing with {name} and {others} more}}'**
+  String shareNotificationWith(String name, int others);
+
+  /// No description provided for @shareNotificationText.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices on the same Wi-Fi can connect. Tap to open KFM.'**
+  String get shareNotificationText;
+
+  /// No description provided for @shareNotificationStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get shareNotificationStop;
+
   /// No description provided for @remoteNotConnected.
   ///
   /// In en, this message translates to:

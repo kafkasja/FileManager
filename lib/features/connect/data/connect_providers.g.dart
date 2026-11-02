@@ -944,20 +944,23 @@ final class CameraAccessProvider
 
 String _$cameraAccessHash() => r'e2a5b19d99a79e0546291460a0c93d9c5312f0a4';
 
-/// Whether going to the background stops sharing (N5): phones yes; on
-/// desktop the share screen stays usable behind other windows.
+/// Whether going to the background stops sharing (N5) when there's no
+/// [shareBackground] service (iOS, or Android when the system refuses it).
+/// On desktop the share screen stays usable behind other windows.
 
 @ProviderFor(lifecycleStopsSharing)
 final lifecycleStopsSharingProvider = LifecycleStopsSharingProvider._();
 
-/// Whether going to the background stops sharing (N5): phones yes; on
-/// desktop the share screen stays usable behind other windows.
+/// Whether going to the background stops sharing (N5) when there's no
+/// [shareBackground] service (iOS, or Android when the system refuses it).
+/// On desktop the share screen stays usable behind other windows.
 
 final class LifecycleStopsSharingProvider
     extends $FunctionalProvider<bool, bool, bool>
     with $Provider<bool> {
-  /// Whether going to the background stops sharing (N5): phones yes; on
-  /// desktop the share screen stays usable behind other windows.
+  /// Whether going to the background stops sharing (N5) when there's no
+  /// [shareBackground] service (iOS, or Android when the system refuses it).
+  /// On desktop the share screen stays usable behind other windows.
   LifecycleStopsSharingProvider._()
     : super(
         from: null,
@@ -993,6 +996,56 @@ final class LifecycleStopsSharingProvider
 
 String _$lifecycleStopsSharingHash() =>
     r'87d7f3f8e8c4fa810e7f992a77d7f7f83fe44a81';
+
+/// N5b: Android keeps sharing running in the background behind an ongoing
+/// notification.
+
+@ProviderFor(shareBackground)
+final shareBackgroundProvider = ShareBackgroundProvider._();
+
+/// N5b: Android keeps sharing running in the background behind an ongoing
+/// notification.
+
+final class ShareBackgroundProvider
+    extends
+        $FunctionalProvider<ShareBackground, ShareBackground, ShareBackground>
+    with $Provider<ShareBackground> {
+  /// N5b: Android keeps sharing running in the background behind an ongoing
+  /// notification.
+  ShareBackgroundProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shareBackgroundProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$shareBackgroundHash();
+
+  @$internal
+  @override
+  $ProviderElement<ShareBackground> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ShareBackground create(Ref ref) {
+    return shareBackground(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ShareBackground value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ShareBackground>(value),
+    );
+  }
+}
+
+String _$shareBackgroundHash() => r'c0008e5ecd2927299514fe5d0f32a08f91cfe81e';
 
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 

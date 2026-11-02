@@ -22,8 +22,9 @@ import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-/// "Share this device" (TASK-N1). Sharing runs only while this screen is
-/// open: it starts in `initState` and stops in `dispose`. The QR area is
+/// "Share this device" (TASK-N1). Sharing starts in `initState` and stops
+/// in `dispose`; on Android it keeps running while KFM is in the background
+/// (N5b notification). The QR area is
 /// filled by N2. The screen stays on while open.
 class ShareScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -301,9 +302,11 @@ class _Running extends ConsumerWidget {
         ],
         SizedBox(height: spacing * 2),
         Text(
-          ref.watch(lifecycleStopsSharingProvider)
-              ? l10n.shareKeepOpen
-              : l10n.shareKeepOpenDesktop,
+          switch (state.keepAlive) {
+            ShareKeepAlive.background => l10n.shareKeepsRunning,
+            ShareKeepAlive.whileAppOpen => l10n.shareKeepOpen,
+            ShareKeepAlive.whileOnScreen => l10n.shareKeepOpenDesktop,
+          },
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

@@ -1,8 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <!-- Storage (TASK-F3 declares, TASK-F4 requests). API <= 32 -->
-    <!-- Merged in by workmanager; KFM never posts notifications (H2). -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove" />
+    <!-- N5b: only the ongoing "Sharing with … · Stop" notification (asked
+         when sharing starts, API 33+). No other notifications. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- N5b: sharing keeps running in the background (foreground service of
+         type connectedDevice; prerequisite: CHANGE_WIFI_MULTICAST_STATE below)
+         and keeps CPU + Wi-Fi up while it runs. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"
         tools:ignore="ScopedStorage" />
@@ -70,6 +77,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- N5b background sharing. -->
+        <service
+            android:name=".ShareService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
         <!-- B1 "Open with" for plain files; X5 reuses it. -->
         <provider
             android:name="androidx.core.content.FileProvider"

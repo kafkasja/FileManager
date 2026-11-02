@@ -4348,6 +4348,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sharing stops when you leave this screen.';
 
   @override
+  String get shareKeepsRunning =>
+      'Sharing keeps running when you leave the app. Stop it here or from the notification.';
+
+  @override
+  String get shareNotificationChannel => 'Device sharing';
+
+  @override
+  String get shareNotificationWaiting => 'Sharing this device';
+
+  @override
+  String shareNotificationWith(String name, int others) {
+    String _temp0 = intl.Intl.pluralLogic(
+      others,
+      locale: localeName,
+      other: 'Sharing with $name and $others more',
+      zero: 'Sharing with $name',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareNotificationText =>
+      'Devices on the same Wi-Fi can connect. Tap to open KFM.';
+
+  @override
+  String get shareNotificationStop => 'Stop';
+
+  @override
   String get remoteNotConnected => 'The other device isn’t connected';
 
   @override

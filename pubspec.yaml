@@ -58,3 +58,14 @@ flutter:
     - assets/search/ # B8: search term files terms_<lang>.json (L2 adds more)
     - assets/ai/ # C3: label map, raw label lists, model manifest (no .tflite)
     - assets/details/ # B10: 'What is this?' table + known app names
+
+# Windows (tests + PL1 desktop) use the OS's Microsoft-signed winsqlite3.dll:
+# Smart App Control blocks the unsigned prebuilt sqlite3.dll (2026-11-02).
+# Android/iOS keep the bundled SQLite.
+hooks:
+  user_defines:
+    sqlite3:
+      source:
+        windows: system
+        default: sqlite3
+      name_windows: winsqlite3

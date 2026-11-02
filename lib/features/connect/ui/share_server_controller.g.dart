@@ -9,20 +9,29 @@ part of 'share_server_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
-/// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
+/// [startSharing] when opened and [stopSharing] on dispose. N5b: on
+/// Android sharing keeps running in the background behind an ongoing
+/// notification ([ShareBackground]); without it (iOS, or the system refused
+/// the service) N5's app-lifecycle stop applies. Errors land in
+/// [ShareServerState.error] (rule 8).
 
 @ProviderFor(ShareServerController)
 final shareServerControllerProvider = ShareServerControllerProvider._();
 
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
-/// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
+/// [startSharing] when opened and [stopSharing] on dispose. N5b: on
+/// Android sharing keeps running in the background behind an ongoing
+/// notification ([ShareBackground]); without it (iOS, or the system refused
+/// the service) N5's app-lifecycle stop applies. Errors land in
+/// [ShareServerState.error] (rule 8).
 final class ShareServerControllerProvider
     extends $NotifierProvider<ShareServerController, ShareServerState> {
   /// Starts and stops "Share this device" (TASK-N1). The share screen calls
-  /// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-  /// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
+  /// [startSharing] when opened and [stopSharing] on dispose. N5b: on
+  /// Android sharing keeps running in the background behind an ongoing
+  /// notification ([ShareBackground]); without it (iOS, or the system refused
+  /// the service) N5's app-lifecycle stop applies. Errors land in
+  /// [ShareServerState.error] (rule 8).
   ShareServerControllerProvider._()
     : super(
         from: null,
@@ -51,11 +60,14 @@ final class ShareServerControllerProvider
 }
 
 String _$shareServerControllerHash() =>
-    r'0373e8f5416e2e5313e2fce2c2410cb982b3951a';
+    r'a458de06791b6126f67859aecbfbaf205502ec5f';
 
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
-/// [startSharing] when opened and [stopSharing] on dispose; N5 adds the
-/// app-lifecycle stop here (phones only). Errors land in [ShareServerState.error] (rule 8).
+/// [startSharing] when opened and [stopSharing] on dispose. N5b: on
+/// Android sharing keeps running in the background behind an ongoing
+/// notification ([ShareBackground]); without it (iOS, or the system refused
+/// the service) N5's app-lifecycle stop applies. Errors land in
+/// [ShareServerState.error] (rule 8).
 
 abstract class _$ShareServerController extends $Notifier<ShareServerState> {
   ShareServerState build();

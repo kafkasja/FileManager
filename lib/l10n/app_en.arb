@@ -2864,6 +2864,18 @@
     }
   },
   "shareKeepOpenDesktop": "Sharing stops when you leave this screen.",
+  "shareKeepsRunning": "Sharing keeps running when you leave the app. Stop it here or from the notification.",
+  "shareNotificationChannel": "Device sharing",
+  "shareNotificationWaiting": "Sharing this device",
+  "shareNotificationWith": "{others, plural, =0{Sharing with {name}} other{Sharing with {name} and {others} more}}",
+  "@shareNotificationWith": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "others": {"type": "int"}
+    }
+  },
+  "shareNotificationText": "Devices on the same Wi-Fi can connect. Tap to open KFM.",
+  "shareNotificationStop": "Stop",
   "remoteNotConnected": "The other device isn’t connected",
   "remoteBrowseAction": "Browse {device}",
   "@remoteBrowseAction": {

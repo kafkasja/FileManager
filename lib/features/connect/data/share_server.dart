@@ -18,6 +18,7 @@ class ShareServerState {
     this.fingerprint,
     this.error,
     this.discoveryError,
+    this.keepAlive = ShareKeepAlive.whileOnScreen,
   });
 
   final ShareServerStatus status;
@@ -33,6 +34,9 @@ class ShareServerState {
   /// mDNS advertising failed (N2); QR and manual address still work.
   final Object? discoveryError;
 
+  /// What ends sharing besides Stop (N5b).
+  final ShareKeepAlive keepAlive;
+
   ShareServerState withDiscoveryError(Object? e) => ShareServerState(
     status: status,
     addresses: addresses,
@@ -40,9 +44,33 @@ class ShareServerState {
     fingerprint: fingerprint,
     error: error,
     discoveryError: e,
+    keepAlive: keepAlive,
+  );
+
+  ShareServerState withKeepAlive(ShareKeepAlive k) => ShareServerState(
+    status: status,
+    addresses: addresses,
+    port: port,
+    fingerprint: fingerprint,
+    error: error,
+    discoveryError: discoveryError,
+    keepAlive: k,
   );
 
   static const stopped = ShareServerState(status: ShareServerStatus.stopped);
+}
+
+/// How long sharing lasts while running (N5b).
+enum ShareKeepAlive {
+  /// Until the share screen closes (desktop: behind other windows too).
+  whileOnScreen,
+
+  /// Until the share screen closes or the app goes to the background
+  /// (iOS; Android when the foreground service couldn't start).
+  whileAppOpen,
+
+  /// Also in the background, behind the ongoing notification (Android).
+  background,
 }
 
 /// No Wi-Fi or hotspot address to share on.

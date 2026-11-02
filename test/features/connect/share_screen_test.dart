@@ -10,6 +10,7 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
+import 'package:kfm/features/connect/data/share_background.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
@@ -107,13 +108,39 @@ class _FakeIdentity implements DeviceIdentityRepository {
   Future<DeviceIdentity> reset() => loadOrCreate();
 }
 
+class _FakeBackground implements ShareBackground {
+  final List<ShareNotificationTexts> shown = [];
+  int stops = 0;
+  bool refuse = false;
+  final StreamController<void> requests = StreamController.broadcast();
+
+  @override
+  bool get supported => true;
+
+  @override
+  Future<void> show(ShareNotificationTexts texts) async {
+    if (refuse) throw StateError('ForegroundServiceStartNotAllowed');
+    shown.add(texts);
+  }
+
+  @override
+  Future<void> stop() async => stops++;
+
+  @override
+  Stream<void> get stopRequests => requests.stream;
+}
+
 void main() {
   late _FakeAwake awake;
   late _FakeServer server;
   late FakeDiscovery discovery;
   var now = DateTime(2026, 11);
 
-  Future<TestApp> pump(WidgetTester tester, {bool stopsInBackground = false}) {
+  Future<TestApp> pump(
+    WidgetTester tester, {
+    bool stopsInBackground = false,
+    ShareBackground background = const NoShareBackground(),
+  }) {
     awake = _FakeAwake();
     final identity = _FakeIdentity();
     server = _FakeServer(identity);
@@ -128,6 +155,7 @@ void main() {
         shareDiscoveryProvider.overrideWithValue(discovery),
         sharedFolderFsProvider.overrideWithValue(_FakeFolderFs()),
         lifecycleStopsSharingProvider.overrideWithValue(stopsInBackground),
+        shareBackgroundProvider.overrideWithValue(background),
         pathGuardProvider.overrideWithValue(
           PathGuard(resolver: (p) async => p),
         ),
@@ -502,6 +530,99 @@ void main() {
     expect(server.isRunning, isTrue);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('N5b: Android keeps sharing in the background behind a '
+      'notification naming the connected devices; its Stop ends sharing', (
+    tester,
+  ) async {
+    final bg = _FakeBackground();
+    final app = await pump(tester, stopsInBackground: true, background: bg);
+    await openShare(tester);
+    expect(bg.shown.single.title, 'Sharing this device');
+    expect(bg.shown.single.stop, 'Stop');
+    final hint = find.text(
+      'Sharing keeps running when you leave the app. Stop it here or from '
+      'the notification.',
+    );
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(hint, findsOneWidget);
+
+    final sessions = app.container.read(clientSessionStoreProvider)
+      ..issue(
+        clientFingerprint: 'cd' * 32,
+        clientDeviceId: 'dev-b',
+        clientName: 'Phone B',
+      );
+    await tester.pumpAndSettle();
+    expect(bg.shown.last.title, 'Sharing with Phone B');
+    sessions.issue(
+      clientFingerprint: 'ef' * 32,
+      clientDeviceId: 'dev-c',
+      clientName: 'PC',
+    );
+    await tester.pumpAndSettle();
+    expect(bg.shown.last.title, 'Sharing with Phone B and 1 more');
+
+    tester.binding
+      ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.hidden)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    expect(server.isRunning, isTrue);
+
+    bg.requests.add(null);
+    await tester.pump();
+    tester.binding
+      ..handleAppLifecycleStateChanged(AppLifecycleState.hidden)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(server.isRunning, isFalse);
+    expect(bg.stops, 1);
+    expect(sessions.sessions, isEmpty);
+    expect(find.text('Sharing stopped'), findsOneWidget);
+  });
+
+  testWidgets('N5b: leaving the share screen stops the service', (
+    tester,
+  ) async {
+    final bg = _FakeBackground();
+    await pump(tester, stopsInBackground: true, background: bg);
+    await openShare(tester);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(server.stops, 1);
+    expect(bg.stops, 1);
+  });
+
+  testWidgets('N5b: when the system refuses the service, going to the '
+      'background stops sharing (N5 rule)', (tester) async {
+    final bg = _FakeBackground()..refuse = true;
+    await pump(tester, stopsInBackground: true, background: bg);
+    await openShare(tester);
+    expect(server.isRunning, isTrue);
+    final hint = find.text(
+      'Sharing stops when you leave this screen or the app.',
+    );
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    tester.binding
+      ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pumpAndSettle();
+    expect(server.isRunning, isFalse);
+    tester.binding
+      ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+      ..handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
   });
 
