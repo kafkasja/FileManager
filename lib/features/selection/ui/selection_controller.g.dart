@@ -10,22 +10,25 @@ part of 'selection_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// The one global selection (TASK-B6), used by Browse, collections and
 /// search. State changes at once; writes follow through the write queue.
-/// Nothing here removes a file except [remove] (Edit mode), [clearAll] and
-/// pruning files that left the index.
+/// Nothing here removes a file except [remove] (Edit mode), [clearAll],
+/// [dropAll] (files a move job moved away) and pruning files that left the
+/// index.
 
 @ProviderFor(SelectionController)
 final selectionControllerProvider = SelectionControllerProvider._();
 
 /// The one global selection (TASK-B6), used by Browse, collections and
 /// search. State changes at once; writes follow through the write queue.
-/// Nothing here removes a file except [remove] (Edit mode), [clearAll] and
-/// pruning files that left the index.
+/// Nothing here removes a file except [remove] (Edit mode), [clearAll],
+/// [dropAll] (files a move job moved away) and pruning files that left the
+/// index.
 final class SelectionControllerProvider
     extends $AsyncNotifierProvider<SelectionController, SelectionState> {
   /// The one global selection (TASK-B6), used by Browse, collections and
   /// search. State changes at once; writes follow through the write queue.
-  /// Nothing here removes a file except [remove] (Edit mode), [clearAll] and
-  /// pruning files that left the index.
+  /// Nothing here removes a file except [remove] (Edit mode), [clearAll],
+  /// [dropAll] (files a move job moved away) and pruning files that left the
+  /// index.
   SelectionControllerProvider._()
     : super(
         from: null,
@@ -46,12 +49,13 @@ final class SelectionControllerProvider
 }
 
 String _$selectionControllerHash() =>
-    r'e5efbbafa25ed16f5ce78541c18ad7a3fe26df25';
+    r'925b2de0c5dcc308327fa6c041010870575f0932';
 
 /// The one global selection (TASK-B6), used by Browse, collections and
 /// search. State changes at once; writes follow through the write queue.
-/// Nothing here removes a file except [remove] (Edit mode), [clearAll] and
-/// pruning files that left the index.
+/// Nothing here removes a file except [remove] (Edit mode), [clearAll],
+/// [dropAll] (files a move job moved away) and pruning files that left the
+/// index.
 
 abstract class _$SelectionController extends $AsyncNotifier<SelectionState> {
   FutureOr<SelectionState> build();

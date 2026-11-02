@@ -432,6 +432,20 @@ void main() {
         expect((trash.arguments as Map)['value'], isTrue);
       });
 
+      test('X1: a shared-in copy is removed directly, never trashed', () async {
+        create(api(34));
+        const path = '/data/user/0/com.kaf.kfm/files/shared_in/1/a.jpg';
+        final copy = _ref(9).copyWith(
+          id: 'path:$path',
+          uri: path,
+          folderPath: '/data/user/0/com.kaf.kfm/files/shared_in/1',
+        );
+        final result = await source.trashBatch([_ref(7), copy]);
+        expect(result.trashed.map((t) => t.trashId), ['ms:7']);
+        expect(result.removed, {'path:$path'});
+        expect(result.failed, isEmpty);
+      });
+
       test('declined dialog → userCancelled, nothing trashed', () async {
         create(api(34, allow: false));
         final result = await source.trashBatch([_ref(7)]);

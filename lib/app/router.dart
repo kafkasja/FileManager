@@ -21,6 +21,7 @@ import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
 import 'package:kfm/features/search/ui/search_screen.dart';
 import 'package:kfm/features/selection/ui/selected_files_screen.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
+import 'package:kfm/features/share_in/ui/shared_files_screen.dart';
 import 'package:kfm/features/similar/ui/clean_duplicates_screen.dart';
 import 'package:kfm/features/similar/ui/similar_screen.dart';
 import 'package:kfm/features/smart_groups/ui/group_detail_screen.dart';
@@ -115,6 +116,9 @@ abstract final class AppRoutes {
   /// N9: Wi-Fi transfers (Downloads · Uploads).
   static const transfers = '/transfers';
 
+  /// X1: files shared into KFM from another app (pushed over the shell).
+  static const shared = '/shared';
+
   /// N8: swipe the connected device `:fp`'s folder (its session).
   static const connectSwipe = '/connect/swipe/:fp';
   static String connectSwipeFor(String peerFingerprint) =>
@@ -189,6 +193,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: AppRoutes.transfers,
         builder: (context, state) => const TransfersScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.shared,
+        builder: (context, state) => const SharedFilesScreen(),
       ),
       GoRoute(
         path: AppRoutes.connect,

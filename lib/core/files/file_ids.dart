@@ -90,3 +90,10 @@ MtpId? parseMtpId(String id) {
   if (storage == null || handle == null) return null;
   return MtpId(parts[0], storage, handle);
 }
+
+final _sharedInCopy = RegExp(r'^/data/(user/\d+|data)/[^/]+/files/shared_in/');
+
+/// X1: a file KFM copied from another app's share (app-private storage,
+/// `<filesDir>/shared_in/<receivedAtMs>/…`). Such copies count as being on
+/// the primary place and are deleted directly, never trashed.
+bool isSharedInCopyPath(String path) => _sharedInCopy.hasMatch(path);

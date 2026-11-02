@@ -15,8 +15,11 @@ final _volumeRoot = RegExp(r'^/storage/(emulated/\d+|[^/]+)');
 
 /// The U1 place id of the volume root holding [path]: `primary` for
 /// `/storage/emulated/N`, the volume uuid for `/storage/<uuid>`; the root
-/// itself for anything else (tests, other platforms).
+/// itself for anything else (tests, other platforms). X1 shared-in copies
+/// count as `primary`.
 String placeIdOfPath(String path) {
+  // X1: shared-in copies live in app-private internal storage.
+  if (isSharedInCopyPath(path)) return 'primary';
   final m = _volumeRoot.firstMatch(path);
   if (m == null) return path.split('/').take(2).join('/');
   final v = m.group(1)!;
@@ -173,6 +176,7 @@ class RoutingFileSource implements FileSource {
   Future<TrashResult> trashBatch(List<FileRef> files) async {
     final trashed = <TrashedItem>[];
     final failed = <String, FileOpException>{};
+    final removed = <String>{};
     var cancelled = false;
     for (final MapEntry(key: s, value: part) in _split(
       files,
@@ -181,11 +185,13 @@ class RoutingFileSource implements FileSource {
       final r = await s.trashBatch(part);
       trashed.addAll(r.trashed);
       failed.addAll(r.failed);
+      removed.addAll(r.removed);
       cancelled = cancelled || r.userCancelled;
     }
     return TrashResult(
       trashed: trashed,
       failed: failed,
+      removed: removed,
       userCancelled: cancelled,
     );
   }

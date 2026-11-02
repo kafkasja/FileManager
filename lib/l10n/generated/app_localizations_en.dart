@@ -6096,4 +6096,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transfersEmptyReceived => 'Files other devices send you show here';
+
+  @override
+  String shareInTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shared files',
+      one: '1 shared file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareInSwipe => 'Swipe through them';
+
+  @override
+  String get shareInMoveTo => 'Move to…';
+
+  @override
+  String get shareInCopyTo => 'Copy to…';
+
+  @override
+  String get shareInSendToDevice => 'Send to…';
+
+  @override
+  String shareInCopiedSubtitle(String size) {
+    return '$size · Copied from another app';
+  }
+
+  @override
+  String get shareInCopyDeleteNote =>
+      'Files copied from another app are removed from KFM when you delete them. The original stays in that app.';
+
+  @override
+  String get shareInOnlyFiles => 'Only files can be shared into KFM';
+
+  @override
+  String get shareInPreparing => 'Getting the shared files…';
+
+  @override
+  String shareInCopying(String done, String total) {
+    return 'Copying $done of $total';
+  }
+
+  @override
+  String get shareInCancel => 'Cancel';
+
+  @override
+  String shareInFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files couldn\'t be read',
+      one: '1 file couldn\'t be read',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareInFailedAll =>
+      'The shared files couldn\'t be read. Try sharing them again.';
+
+  @override
+  String get shareInNoSpace => 'Not enough free space to copy the shared files';
+
+  @override
+  String get shareInEmpty => 'No shared files left here';
+
+  @override
+  String get shareInDone => 'Done';
 }

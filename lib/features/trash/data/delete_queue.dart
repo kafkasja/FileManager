@@ -534,7 +534,9 @@ class DeleteQueue {
             await _markCommitted(row, item);
             committed++;
             bytes += row.sizeBytes;
-          } else if (error?.failure == FileOpFailure.notFound) {
+          } else if (result.removed.contains(file.id) ||
+              error?.failure == FileOpFailure.notFound) {
+            // X1: a shared-in copy deleted directly (nothing to restore).
             await _markCommitted(row, null);
             committed++;
             bytes += row.sizeBytes;

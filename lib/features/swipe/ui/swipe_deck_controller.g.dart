@@ -380,7 +380,7 @@ final class SwipeDeckControllerProvider
 }
 
 String _$swipeDeckControllerHash() =>
-    r'1baf0cef6c06e4884edeab63fb77704914871b7c';
+    r'654f62603b93010e831d44d73becd2f3048d959f';
 
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.

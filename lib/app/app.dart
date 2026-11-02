@@ -14,6 +14,7 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/external_storage/data/places_watcher.dart';
 import 'package:kfm/features/privacy/data/privacy_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/share_in/data/share_in_service.dart';
 import 'package:kfm/features/similar/data/similar_scan_job.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
@@ -79,6 +80,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(startupMaintenanceProvider)
       // X2: delete stripped copies (shares, uploads) of earlier runs.
       ..watch(privacyStartupCleanupProvider)
+      // X1: delete shared-in copies older than 7 days.
+      ..watch(shareInCleanupProvider)
       // N6: forget temporary remembered devices after 7 days.
       ..watch(knownDevicesPurgeProvider)
       // N9: Wi-Fi transfers follow the connection as long as the app runs.

@@ -75,6 +75,7 @@ class TrashResult {
   const new({
     required this.trashed,
     required this.failed,
+    this.removed = const {},
     this.userCancelled = false,
   });
 
@@ -82,6 +83,10 @@ class TrashResult {
 
   /// Keyed by FileRef.id.
   final Map<String, FileOpException> failed;
+
+  /// FileRef.ids deleted directly instead of trashed (X1 shared-in copies:
+  /// KFM's own copy, nothing to restore). No [TrashedItem] for these.
+  final Set<String> removed;
 
   /// The user declined the single system confirmation dialog for the batch.
   final bool userCancelled;

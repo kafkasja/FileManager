@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/android/fs_walker.dart';
 import 'package:kfm/core/files/android/media_mapper.dart';
+import 'package:kfm/core/files/file_ids.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
@@ -420,7 +421,18 @@ class AndroidFileSource implements FileSource {
       return _emitIfChanged(f, _mediaRef(row));
     }
     final moved = await _movePath(f, '$target/$name');
-    return _emitIfChanged(f, moved);
+    return _emitIfChanged(f, await _registerSharedInCopy(f, moved));
+  }
+
+  /// X1: a shared-in copy moved/copied onto shared storage becomes a
+  /// MediaStore item (`ms:` ref) right away, so the index doesn't hold a
+  /// `path:` row next to the scanner's `ms:` row.
+  Future<FileRef> _registerSharedInCopy(FileRef from, FileRef to) async {
+    if (!isSharedInCopyPath(from.path) || isSharedInCopyPath(to.path)) {
+      return to;
+    }
+    final refs = await registerCreated([to.path]);
+    return refs.isEmpty ? to : refs.single;
   }
 
   @override
@@ -435,7 +447,10 @@ class AndroidFileSource implements FileSource {
       );
       return _mediaRef(row);
     }
-    return await _copyPath(f, '$target/$name');
+    return await _registerSharedInCopy(
+      f,
+      await _copyPath(f, '$target/$name'),
+    );
   }
 
   @override
@@ -494,7 +509,19 @@ class AndroidFileSource implements FileSource {
     final failed = <String, FileOpException>{};
     final media = <FileRef>[];
     final scanOld = <String>[];
+    final removed = <String>{};
     for (final f in files) {
+      if (!_isMs(f) && isSharedInCopyPath(f.path)) {
+        // X1: KFM's own copy of a shared file: deleted, never trashed.
+        try {
+          final file = File(f.path);
+          if (await file.exists()) await file.delete();
+          removed.add(f.id);
+        } on FileSystemException catch (e) {
+          failed[f.id] = fileOpExceptionFromIo(e, f.path, fileId: f.id);
+        }
+        continue;
+      }
       if (_isMs(f) && sdk >= 30) {
         media.add(f);
         continue;
@@ -535,6 +562,7 @@ class AndroidFileSource implements FileSource {
         return TrashResult(
           trashed: trashed,
           failed: failed,
+          removed: removed,
           userCancelled: true,
         );
       }
@@ -550,7 +578,7 @@ class AndroidFileSource implements FileSource {
           ),
       ]);
     }
-    return TrashResult(trashed: trashed, failed: failed);
+    return TrashResult(trashed: trashed, failed: failed, removed: removed);
   }
 
   /// Media: one system dialog per ≤500 files (API 30+). Other files: dart:io.

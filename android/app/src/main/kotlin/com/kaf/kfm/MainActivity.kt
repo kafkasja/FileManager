@@ -1,6 +1,7 @@
 package com.kaf.kfm
 
 import android.content.Intent
+import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -11,6 +12,7 @@ class MainActivity : FlutterActivity() {
     private var volumesChannel: VolumesChannel? = null
     private var mtpChannel: MtpChannel? = null
     private var safChannel: SafChannel? = null
+    private var shareInChannel: ShareInChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -20,6 +22,21 @@ class MainActivity : FlutterActivity() {
         volumesChannel = VolumesChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger, this)
         mtpChannel = MtpChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
         safChannel = SafChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+        shareInChannel = ShareInChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+    }
+
+    /** X1: a share that started KFM. Not on a recreation or a Recents relaunch. */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val fromHistory = ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
+        if (savedInstanceState == null && !fromHistory) takeShare(intent)
+    }
+
+    /** X1: hands a share to [ShareInChannel] once, then forgets it. */
+    private fun takeShare(intent: Intent?) {
+        if (shareInChannel?.handle(intent) == true) {
+            setIntent(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER))
+        }
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
@@ -35,13 +52,16 @@ class MainActivity : FlutterActivity() {
         mtpChannel = null
         safChannel?.dispose()
         safChannel = null
+        shareInChannel?.dispose()
+        shareInChannel = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
-    /** U1: a camera attached while KFM runs (singleTop; X1's singleTask too). */
+    /** U1: a camera attached while KFM runs; X1: a share while KFM runs (singleTask). */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         mtpChannel?.onNewIntent(intent)
+        takeShare(intent)
     }
 
     @Deprecated("Needed for MediaStore consent dialogs and the SAF tree picker")

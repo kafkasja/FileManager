@@ -8534,6 +8534,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files other devices send you show here'**
   String get transfersEmptyReceived;
+
+  /// No description provided for @shareInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 shared file} other{{count} shared files}}'**
+  String shareInTitle(int count);
+
+  /// No description provided for @shareInSwipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe through them'**
+  String get shareInSwipe;
+
+  /// No description provided for @shareInMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get shareInMoveTo;
+
+  /// No description provided for @shareInCopyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to…'**
+  String get shareInCopyTo;
+
+  /// No description provided for @shareInSendToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to…'**
+  String get shareInSendToDevice;
+
+  /// No description provided for @shareInCopiedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} · Copied from another app'**
+  String shareInCopiedSubtitle(String size);
+
+  /// No description provided for @shareInCopyDeleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Files copied from another app are removed from KFM when you delete them. The original stays in that app.'**
+  String get shareInCopyDeleteNote;
+
+  /// No description provided for @shareInOnlyFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Only files can be shared into KFM'**
+  String get shareInOnlyFiles;
+
+  /// No description provided for @shareInPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting the shared files…'**
+  String get shareInPreparing;
+
+  /// No description provided for @shareInCopying.
+  ///
+  /// In en, this message translates to:
+  /// **'Copying {done} of {total}'**
+  String shareInCopying(String done, String total);
+
+  /// No description provided for @shareInCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get shareInCancel;
+
+  /// No description provided for @shareInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn\'t be read} other{{count} files couldn\'t be read}}'**
+  String shareInFailed(int count);
+
+  /// No description provided for @shareInFailedAll.
+  ///
+  /// In en, this message translates to:
+  /// **'The shared files couldn\'t be read. Try sharing them again.'**
+  String get shareInFailedAll;
+
+  /// No description provided for @shareInNoSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free space to copy the shared files'**
+  String get shareInNoSpace;
+
+  /// No description provided for @shareInEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared files left here'**
+  String get shareInEmpty;
+
+  /// No description provided for @shareInDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get shareInDone;
 }
 
 class _AppLocalizationsDelegate

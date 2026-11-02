@@ -454,7 +454,8 @@ class FileOperationRunner {
         _result(
           f,
           trashed: item,
-          error: item != null
+          // X1: a shared-in copy deleted directly counts as done.
+          error: item != null || res.removed.contains(f.id)
               ? null
               : res.failed[f.id] ??
                     FileOpException(

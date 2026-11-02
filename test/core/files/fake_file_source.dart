@@ -85,6 +85,12 @@ class FakeFileSource implements FileSource {
     }
   }
 
+  /// Stores [ref] under its own id (X1: `ms:` ids of shared media).
+  void putRef(FileRef ref, {List<int> bytes = const [1]}) {
+    _files[ref.id] = ref;
+    _bytes[ref.id] = List.unmodifiable(bytes);
+  }
+
   /// Simulates another app deleting a file.
   void removeExternally(String id) {
     _files.remove(id);
