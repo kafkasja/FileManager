@@ -6392,6 +6392,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Without All files access, other devices see only photos, videos and audio.'**
   String get shareMediaOnlyHint;
+
+  /// No description provided for @rememberThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember this device'**
+  String get rememberThisDevice;
+
+  /// No description provided for @acceptAlwaysAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow this device'**
+  String get acceptAlwaysAllow;
+
+  /// No description provided for @acceptAlwaysAllowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Next time it connects without asking'**
+  String get acceptAlwaysAllowHint;
+
+  /// No description provided for @shareAutoAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} connected'**
+  String shareAutoAccepted(String name);
+
+  /// No description provided for @shareRememberedFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing {count, plural, =1{1 folder} other{{count} folders}}'**
+  String shareRememberedFolders(int count);
+
+  /// No description provided for @shareFoldersMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Some shared folders no longer exist'**
+  String get shareFoldersMissing;
+
+  /// No description provided for @shareFoldersChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get shareFoldersChange;
+
+  /// No description provided for @connectErrorKeyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has changed. Scan the QR code again.'**
+  String connectErrorKeyChanged(String name);
+
+  /// No description provided for @connectErrorNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed. Scan the QR code again.'**
+  String get connectErrorNotAllowed;
+
+  /// No description provided for @connectErrorOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t reach {name}. Open “Share this device” on {name}.'**
+  String connectErrorOffline(String name);
+
+  /// No description provided for @rememberedDevicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remembered devices'**
+  String get rememberedDevicesTitle;
+
+  /// No description provided for @rememberedDevicesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect without scanning, or forget a device'**
+  String get rememberedDevicesHint;
+
+  /// No description provided for @rememberedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No remembered devices yet. Devices you pair with “Remember this device” on show up here.'**
+  String get rememberedEmpty;
+
+  /// No description provided for @rememberedLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load remembered devices'**
+  String get rememberedLoadFailed;
+
+  /// No description provided for @rememberedOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing now'**
+  String get rememberedOnline;
+
+  /// No description provided for @rememberedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sharing right now'**
+  String get rememberedOffline;
+
+  /// No description provided for @rememberedConnectsToUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Connects to this device'**
+  String get rememberedConnectsToUs;
+
+  /// No description provided for @rememberedStatusWords.
+  ///
+  /// In en, this message translates to:
+  /// **'{status} · {words}'**
+  String rememberedStatusWords(String status, String words);
+
+  /// No description provided for @rememberedReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get rememberedReconnect;
+
+  /// No description provided for @rememberedShareFromHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Share from this device'**
+  String get rememberedShareFromHere;
+
+  /// No description provided for @rememberedAlwaysAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow'**
+  String get rememberedAlwaysAllow;
+
+  /// No description provided for @rememberedAlwaysAllowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When it connects to this device, don’t ask'**
+  String get rememberedAlwaysAllowHint;
+
+  /// No description provided for @rememberedRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get rememberedRemove;
+
+  /// No description provided for @rememberedRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String rememberedRemoveTitle(String name);
+
+  /// No description provided for @rememberedRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It is disconnected now and must scan the QR code to connect again. A lost or stolen remembered device still needs this device to be sharing and someone to tap Accept; removing it makes even that impossible.'**
+  String get rememberedRemoveBody;
+
+  /// No description provided for @rememberedRemoveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove all'**
+  String get rememberedRemoveAll;
+
+  /// No description provided for @rememberedRemoveAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove all remembered devices?'**
+  String get rememberedRemoveAllTitle;
+
+  /// No description provided for @rememberedRemoveAllBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every device must scan the QR code again to connect.'**
+  String get rememberedRemoveAllBody;
+
+  /// No description provided for @rememberedRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t remove the device. Try again.'**
+  String get rememberedRemoveFailed;
+
+  /// No description provided for @resetIdentityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset this device’s identity'**
+  String get resetIdentityTitle;
+
+  /// No description provided for @resetIdentityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget all devices and make every device scan again'**
+  String get resetIdentityHint;
+
+  /// No description provided for @resetIdentityConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset this device’s identity?'**
+  String get resetIdentityConfirmTitle;
+
+  /// No description provided for @resetIdentityConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing stops, this device gets a new key and every remembered device is forgotten. Other devices must scan the QR code again. Use this if a device may be compromised or before giving this one away.'**
+  String get resetIdentityConfirmBody;
+
+  /// No description provided for @resetIdentityConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetIdentityConfirm;
+
+  /// No description provided for @resetIdentityDone.
+  ///
+  /// In en, this message translates to:
+  /// **'New identity created. Other devices must scan again.'**
+  String get resetIdentityDone;
+
+  /// No description provided for @resetIdentityFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reset the identity. Try again.'**
+  String get resetIdentityFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -12254,6 +12254,724 @@ class AiLabelStatusCompanion extends UpdateCompanion<AiLabelStatusRow> {
   }
 }
 
+class $KnownDevicesTable extends KnownDevices
+    with TableInfo<$KnownDevicesTable, KnownDeviceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KnownDevicesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _peerDeviceIdMeta = const VerificationMeta(
+    'peerDeviceId',
+  );
+  @override
+  late final GeneratedColumn<String> peerDeviceId = GeneratedColumn<String>(
+    'peer_device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _platformMeta = const VerificationMeta(
+    'platform',
+  );
+  @override
+  late final GeneratedColumn<String> platform = GeneratedColumn<String>(
+    'platform',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _publicKeyFingerprintMeta =
+      const VerificationMeta('publicKeyFingerprint');
+  @override
+  late final GeneratedColumn<String> publicKeyFingerprint =
+      GeneratedColumn<String>(
+        'public_key_fingerprint',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+        defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+      );
+  static const VerificationMeta _lastSeenAtMsMeta = const VerificationMeta(
+    'lastSeenAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> lastSeenAtMs = GeneratedColumn<int>(
+    'last_seen_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastAddressesMeta = const VerificationMeta(
+    'lastAddresses',
+  );
+  @override
+  late final GeneratedColumn<String> lastAddresses = GeneratedColumn<String>(
+    'last_addresses',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _allowedRootsJsonMeta = const VerificationMeta(
+    'allowedRootsJson',
+  );
+  @override
+  late final GeneratedColumn<String> allowedRootsJson = GeneratedColumn<String>(
+    'allowed_roots_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _canShareToUsMeta = const VerificationMeta(
+    'canShareToUs',
+  );
+  @override
+  late final GeneratedColumn<bool> canShareToUs = GeneratedColumn<bool>(
+    'can_share_to_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("can_share_to_us" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isTemporaryMeta = const VerificationMeta(
+    'isTemporary',
+  );
+  @override
+  late final GeneratedColumn<bool> isTemporary = GeneratedColumn<bool>(
+    'is_temporary',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_temporary" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _autoAcceptMeta = const VerificationMeta(
+    'autoAccept',
+  );
+  @override
+  late final GeneratedColumn<bool> autoAccept = GeneratedColumn<bool>(
+    'auto_accept',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_accept" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    peerDeviceId,
+    name,
+    platform,
+    publicKeyFingerprint,
+    lastSeenAtMs,
+    lastAddresses,
+    allowedRootsJson,
+    canShareToUs,
+    isTemporary,
+    autoAccept,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'known_devices';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KnownDeviceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('peer_device_id')) {
+      context.handle(
+        _peerDeviceIdMeta,
+        peerDeviceId.isAcceptableOrUnknown(
+          data['peer_device_id']!,
+          _peerDeviceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_peerDeviceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('platform')) {
+      context.handle(
+        _platformMeta,
+        platform.isAcceptableOrUnknown(data['platform']!, _platformMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_platformMeta);
+    }
+    if (data.containsKey('public_key_fingerprint')) {
+      context.handle(
+        _publicKeyFingerprintMeta,
+        publicKeyFingerprint.isAcceptableOrUnknown(
+          data['public_key_fingerprint']!,
+          _publicKeyFingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_publicKeyFingerprintMeta);
+    }
+    if (data.containsKey('last_seen_at_ms')) {
+      context.handle(
+        _lastSeenAtMsMeta,
+        lastSeenAtMs.isAcceptableOrUnknown(
+          data['last_seen_at_ms']!,
+          _lastSeenAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lastSeenAtMsMeta);
+    }
+    if (data.containsKey('last_addresses')) {
+      context.handle(
+        _lastAddressesMeta,
+        lastAddresses.isAcceptableOrUnknown(
+          data['last_addresses']!,
+          _lastAddressesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('allowed_roots_json')) {
+      context.handle(
+        _allowedRootsJsonMeta,
+        allowedRootsJson.isAcceptableOrUnknown(
+          data['allowed_roots_json']!,
+          _allowedRootsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('can_share_to_us')) {
+      context.handle(
+        _canShareToUsMeta,
+        canShareToUs.isAcceptableOrUnknown(
+          data['can_share_to_us']!,
+          _canShareToUsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_temporary')) {
+      context.handle(
+        _isTemporaryMeta,
+        isTemporary.isAcceptableOrUnknown(
+          data['is_temporary']!,
+          _isTemporaryMeta,
+        ),
+      );
+    }
+    if (data.containsKey('auto_accept')) {
+      context.handle(
+        _autoAcceptMeta,
+        autoAccept.isAcceptableOrUnknown(data['auto_accept']!, _autoAcceptMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  KnownDeviceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KnownDeviceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      peerDeviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}peer_device_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      platform: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}platform'],
+      )!,
+      publicKeyFingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}public_key_fingerprint'],
+      )!,
+      lastSeenAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_seen_at_ms'],
+      )!,
+      lastAddresses: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_addresses'],
+      )!,
+      allowedRootsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allowed_roots_json'],
+      )!,
+      canShareToUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}can_share_to_us'],
+      )!,
+      isTemporary: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_temporary'],
+      )!,
+      autoAccept: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_accept'],
+      )!,
+    );
+  }
+
+  @override
+  $KnownDevicesTable createAlias(String alias) {
+    return $KnownDevicesTable(attachedDatabase, alias);
+  }
+}
+
+class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
+  /// Local random 128-bit hex (`randomHexId`), never the peer's id.
+  final String id;
+
+  /// The peer's self-asserted deviceId; informational only.
+  final String peerDeviceId;
+  final String name;
+
+  /// android | windows | ios; '' when unknown.
+  final String platform;
+
+  /// Identity: 64 lowercase hex.
+  final String publicKeyFingerprint;
+
+  /// Epoch ms.
+  final int lastSeenAtMs;
+
+  /// JSON `["ip:port", ...]` (max 3, newest first): where the peer was our
+  /// server.
+  final String lastAddresses;
+
+  /// JSON `[{path, label, readOnly}]`: what THIS device shares with that
+  /// peer. Local only; root ids are recomputed on load.
+  final String allowedRootsJson;
+
+  /// The peer has been our server at least once.
+  final bool canShareToUs;
+
+  /// Kept only for resuming transfers (N9/N10); hidden from the list.
+  final bool isTemporary;
+
+  /// "Always allow": a verified `/v1/pair/known` from this peer is accepted
+  /// without the accept prompt (sharing side only).
+  final bool autoAccept;
+  const KnownDeviceRow({
+    required this.id,
+    required this.peerDeviceId,
+    required this.name,
+    required this.platform,
+    required this.publicKeyFingerprint,
+    required this.lastSeenAtMs,
+    required this.lastAddresses,
+    required this.allowedRootsJson,
+    required this.canShareToUs,
+    required this.isTemporary,
+    required this.autoAccept,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['peer_device_id'] = Variable<String>(peerDeviceId);
+    map['name'] = Variable<String>(name);
+    map['platform'] = Variable<String>(platform);
+    map['public_key_fingerprint'] = Variable<String>(publicKeyFingerprint);
+    map['last_seen_at_ms'] = Variable<int>(lastSeenAtMs);
+    map['last_addresses'] = Variable<String>(lastAddresses);
+    map['allowed_roots_json'] = Variable<String>(allowedRootsJson);
+    map['can_share_to_us'] = Variable<bool>(canShareToUs);
+    map['is_temporary'] = Variable<bool>(isTemporary);
+    map['auto_accept'] = Variable<bool>(autoAccept);
+    return map;
+  }
+
+  KnownDevicesCompanion toCompanion(bool nullToAbsent) {
+    return KnownDevicesCompanion(
+      id: Value(id),
+      peerDeviceId: Value(peerDeviceId),
+      name: Value(name),
+      platform: Value(platform),
+      publicKeyFingerprint: Value(publicKeyFingerprint),
+      lastSeenAtMs: Value(lastSeenAtMs),
+      lastAddresses: Value(lastAddresses),
+      allowedRootsJson: Value(allowedRootsJson),
+      canShareToUs: Value(canShareToUs),
+      isTemporary: Value(isTemporary),
+      autoAccept: Value(autoAccept),
+    );
+  }
+
+  factory KnownDeviceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KnownDeviceRow(
+      id: serializer.fromJson<String>(json['id']),
+      peerDeviceId: serializer.fromJson<String>(json['peerDeviceId']),
+      name: serializer.fromJson<String>(json['name']),
+      platform: serializer.fromJson<String>(json['platform']),
+      publicKeyFingerprint: serializer.fromJson<String>(
+        json['publicKeyFingerprint'],
+      ),
+      lastSeenAtMs: serializer.fromJson<int>(json['lastSeenAtMs']),
+      lastAddresses: serializer.fromJson<String>(json['lastAddresses']),
+      allowedRootsJson: serializer.fromJson<String>(json['allowedRootsJson']),
+      canShareToUs: serializer.fromJson<bool>(json['canShareToUs']),
+      isTemporary: serializer.fromJson<bool>(json['isTemporary']),
+      autoAccept: serializer.fromJson<bool>(json['autoAccept']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'peerDeviceId': serializer.toJson<String>(peerDeviceId),
+      'name': serializer.toJson<String>(name),
+      'platform': serializer.toJson<String>(platform),
+      'publicKeyFingerprint': serializer.toJson<String>(publicKeyFingerprint),
+      'lastSeenAtMs': serializer.toJson<int>(lastSeenAtMs),
+      'lastAddresses': serializer.toJson<String>(lastAddresses),
+      'allowedRootsJson': serializer.toJson<String>(allowedRootsJson),
+      'canShareToUs': serializer.toJson<bool>(canShareToUs),
+      'isTemporary': serializer.toJson<bool>(isTemporary),
+      'autoAccept': serializer.toJson<bool>(autoAccept),
+    };
+  }
+
+  KnownDeviceRow copyWith({
+    String? id,
+    String? peerDeviceId,
+    String? name,
+    String? platform,
+    String? publicKeyFingerprint,
+    int? lastSeenAtMs,
+    String? lastAddresses,
+    String? allowedRootsJson,
+    bool? canShareToUs,
+    bool? isTemporary,
+    bool? autoAccept,
+  }) => KnownDeviceRow(
+    id: id ?? this.id,
+    peerDeviceId: peerDeviceId ?? this.peerDeviceId,
+    name: name ?? this.name,
+    platform: platform ?? this.platform,
+    publicKeyFingerprint: publicKeyFingerprint ?? this.publicKeyFingerprint,
+    lastSeenAtMs: lastSeenAtMs ?? this.lastSeenAtMs,
+    lastAddresses: lastAddresses ?? this.lastAddresses,
+    allowedRootsJson: allowedRootsJson ?? this.allowedRootsJson,
+    canShareToUs: canShareToUs ?? this.canShareToUs,
+    isTemporary: isTemporary ?? this.isTemporary,
+    autoAccept: autoAccept ?? this.autoAccept,
+  );
+  KnownDeviceRow copyWithCompanion(KnownDevicesCompanion data) {
+    return KnownDeviceRow(
+      id: data.id.present ? data.id.value : this.id,
+      peerDeviceId: data.peerDeviceId.present
+          ? data.peerDeviceId.value
+          : this.peerDeviceId,
+      name: data.name.present ? data.name.value : this.name,
+      platform: data.platform.present ? data.platform.value : this.platform,
+      publicKeyFingerprint: data.publicKeyFingerprint.present
+          ? data.publicKeyFingerprint.value
+          : this.publicKeyFingerprint,
+      lastSeenAtMs: data.lastSeenAtMs.present
+          ? data.lastSeenAtMs.value
+          : this.lastSeenAtMs,
+      lastAddresses: data.lastAddresses.present
+          ? data.lastAddresses.value
+          : this.lastAddresses,
+      allowedRootsJson: data.allowedRootsJson.present
+          ? data.allowedRootsJson.value
+          : this.allowedRootsJson,
+      canShareToUs: data.canShareToUs.present
+          ? data.canShareToUs.value
+          : this.canShareToUs,
+      isTemporary: data.isTemporary.present
+          ? data.isTemporary.value
+          : this.isTemporary,
+      autoAccept: data.autoAccept.present
+          ? data.autoAccept.value
+          : this.autoAccept,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnownDeviceRow(')
+          ..write('id: $id, ')
+          ..write('peerDeviceId: $peerDeviceId, ')
+          ..write('name: $name, ')
+          ..write('platform: $platform, ')
+          ..write('publicKeyFingerprint: $publicKeyFingerprint, ')
+          ..write('lastSeenAtMs: $lastSeenAtMs, ')
+          ..write('lastAddresses: $lastAddresses, ')
+          ..write('allowedRootsJson: $allowedRootsJson, ')
+          ..write('canShareToUs: $canShareToUs, ')
+          ..write('isTemporary: $isTemporary, ')
+          ..write('autoAccept: $autoAccept')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    peerDeviceId,
+    name,
+    platform,
+    publicKeyFingerprint,
+    lastSeenAtMs,
+    lastAddresses,
+    allowedRootsJson,
+    canShareToUs,
+    isTemporary,
+    autoAccept,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KnownDeviceRow &&
+          other.id == this.id &&
+          other.peerDeviceId == this.peerDeviceId &&
+          other.name == this.name &&
+          other.platform == this.platform &&
+          other.publicKeyFingerprint == this.publicKeyFingerprint &&
+          other.lastSeenAtMs == this.lastSeenAtMs &&
+          other.lastAddresses == this.lastAddresses &&
+          other.allowedRootsJson == this.allowedRootsJson &&
+          other.canShareToUs == this.canShareToUs &&
+          other.isTemporary == this.isTemporary &&
+          other.autoAccept == this.autoAccept);
+}
+
+class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
+  final Value<String> id;
+  final Value<String> peerDeviceId;
+  final Value<String> name;
+  final Value<String> platform;
+  final Value<String> publicKeyFingerprint;
+  final Value<int> lastSeenAtMs;
+  final Value<String> lastAddresses;
+  final Value<String> allowedRootsJson;
+  final Value<bool> canShareToUs;
+  final Value<bool> isTemporary;
+  final Value<bool> autoAccept;
+  final Value<int> rowid;
+  const KnownDevicesCompanion({
+    this.id = const Value.absent(),
+    this.peerDeviceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.platform = const Value.absent(),
+    this.publicKeyFingerprint = const Value.absent(),
+    this.lastSeenAtMs = const Value.absent(),
+    this.lastAddresses = const Value.absent(),
+    this.allowedRootsJson = const Value.absent(),
+    this.canShareToUs = const Value.absent(),
+    this.isTemporary = const Value.absent(),
+    this.autoAccept = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KnownDevicesCompanion.insert({
+    required String id,
+    required String peerDeviceId,
+    required String name,
+    required String platform,
+    required String publicKeyFingerprint,
+    required int lastSeenAtMs,
+    this.lastAddresses = const Value.absent(),
+    this.allowedRootsJson = const Value.absent(),
+    this.canShareToUs = const Value.absent(),
+    this.isTemporary = const Value.absent(),
+    this.autoAccept = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       peerDeviceId = Value(peerDeviceId),
+       name = Value(name),
+       platform = Value(platform),
+       publicKeyFingerprint = Value(publicKeyFingerprint),
+       lastSeenAtMs = Value(lastSeenAtMs);
+  static Insertable<KnownDeviceRow> custom({
+    Expression<String>? id,
+    Expression<String>? peerDeviceId,
+    Expression<String>? name,
+    Expression<String>? platform,
+    Expression<String>? publicKeyFingerprint,
+    Expression<int>? lastSeenAtMs,
+    Expression<String>? lastAddresses,
+    Expression<String>? allowedRootsJson,
+    Expression<bool>? canShareToUs,
+    Expression<bool>? isTemporary,
+    Expression<bool>? autoAccept,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (peerDeviceId != null) 'peer_device_id': peerDeviceId,
+      if (name != null) 'name': name,
+      if (platform != null) 'platform': platform,
+      if (publicKeyFingerprint != null)
+        'public_key_fingerprint': publicKeyFingerprint,
+      if (lastSeenAtMs != null) 'last_seen_at_ms': lastSeenAtMs,
+      if (lastAddresses != null) 'last_addresses': lastAddresses,
+      if (allowedRootsJson != null) 'allowed_roots_json': allowedRootsJson,
+      if (canShareToUs != null) 'can_share_to_us': canShareToUs,
+      if (isTemporary != null) 'is_temporary': isTemporary,
+      if (autoAccept != null) 'auto_accept': autoAccept,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KnownDevicesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? peerDeviceId,
+    Value<String>? name,
+    Value<String>? platform,
+    Value<String>? publicKeyFingerprint,
+    Value<int>? lastSeenAtMs,
+    Value<String>? lastAddresses,
+    Value<String>? allowedRootsJson,
+    Value<bool>? canShareToUs,
+    Value<bool>? isTemporary,
+    Value<bool>? autoAccept,
+    Value<int>? rowid,
+  }) {
+    return KnownDevicesCompanion(
+      id: id ?? this.id,
+      peerDeviceId: peerDeviceId ?? this.peerDeviceId,
+      name: name ?? this.name,
+      platform: platform ?? this.platform,
+      publicKeyFingerprint: publicKeyFingerprint ?? this.publicKeyFingerprint,
+      lastSeenAtMs: lastSeenAtMs ?? this.lastSeenAtMs,
+      lastAddresses: lastAddresses ?? this.lastAddresses,
+      allowedRootsJson: allowedRootsJson ?? this.allowedRootsJson,
+      canShareToUs: canShareToUs ?? this.canShareToUs,
+      isTemporary: isTemporary ?? this.isTemporary,
+      autoAccept: autoAccept ?? this.autoAccept,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (peerDeviceId.present) {
+      map['peer_device_id'] = Variable<String>(peerDeviceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (platform.present) {
+      map['platform'] = Variable<String>(platform.value);
+    }
+    if (publicKeyFingerprint.present) {
+      map['public_key_fingerprint'] = Variable<String>(
+        publicKeyFingerprint.value,
+      );
+    }
+    if (lastSeenAtMs.present) {
+      map['last_seen_at_ms'] = Variable<int>(lastSeenAtMs.value);
+    }
+    if (lastAddresses.present) {
+      map['last_addresses'] = Variable<String>(lastAddresses.value);
+    }
+    if (allowedRootsJson.present) {
+      map['allowed_roots_json'] = Variable<String>(allowedRootsJson.value);
+    }
+    if (canShareToUs.present) {
+      map['can_share_to_us'] = Variable<bool>(canShareToUs.value);
+    }
+    if (isTemporary.present) {
+      map['is_temporary'] = Variable<bool>(isTemporary.value);
+    }
+    if (autoAccept.present) {
+      map['auto_accept'] = Variable<bool>(autoAccept.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnownDevicesCompanion(')
+          ..write('id: $id, ')
+          ..write('peerDeviceId: $peerDeviceId, ')
+          ..write('name: $name, ')
+          ..write('platform: $platform, ')
+          ..write('publicKeyFingerprint: $publicKeyFingerprint, ')
+          ..write('lastSeenAtMs: $lastSeenAtMs, ')
+          ..write('lastAddresses: $lastAddresses, ')
+          ..write('allowedRootsJson: $allowedRootsJson, ')
+          ..write('canShareToUs: $canShareToUs, ')
+          ..write('isTemporary: $isTemporary, ')
+          ..write('autoAccept: $autoAccept, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -12294,6 +13012,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $AiLabelsTable aiLabels = $AiLabelsTable(this);
   late final $AiLabelStatusTable aiLabelStatus = $AiLabelStatusTable(this);
+  late final $KnownDevicesTable knownDevices = $KnownDevicesTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -12429,6 +13148,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     smartGroupItems,
     aiLabels,
     aiLabelStatus,
+    knownDevices,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -21047,6 +21767,345 @@ typedef $$AiLabelStatusTableProcessedTableManager =
       AiLabelStatusRow,
       PrefetchHooks Function()
     >;
+typedef $$KnownDevicesTableCreateCompanionBuilder =
+    KnownDevicesCompanion Function({
+      required String id,
+      required String peerDeviceId,
+      required String name,
+      required String platform,
+      required String publicKeyFingerprint,
+      required int lastSeenAtMs,
+      Value<String> lastAddresses,
+      Value<String> allowedRootsJson,
+      Value<bool> canShareToUs,
+      Value<bool> isTemporary,
+      Value<bool> autoAccept,
+      Value<int> rowid,
+    });
+typedef $$KnownDevicesTableUpdateCompanionBuilder =
+    KnownDevicesCompanion Function({
+      Value<String> id,
+      Value<String> peerDeviceId,
+      Value<String> name,
+      Value<String> platform,
+      Value<String> publicKeyFingerprint,
+      Value<int> lastSeenAtMs,
+      Value<String> lastAddresses,
+      Value<String> allowedRootsJson,
+      Value<bool> canShareToUs,
+      Value<bool> isTemporary,
+      Value<bool> autoAccept,
+      Value<int> rowid,
+    });
+
+class $$KnownDevicesTableFilterComposer
+    extends Composer<_$AppDatabase, $KnownDevicesTable> {
+  $$KnownDevicesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get peerDeviceId => $composableBuilder(
+    column: $table.peerDeviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publicKeyFingerprint => $composableBuilder(
+    column: $table.publicKeyFingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastSeenAtMs => $composableBuilder(
+    column: $table.lastSeenAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastAddresses => $composableBuilder(
+    column: $table.lastAddresses,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allowedRootsJson => $composableBuilder(
+    column: $table.allowedRootsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get canShareToUs => $composableBuilder(
+    column: $table.canShareToUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isTemporary => $composableBuilder(
+    column: $table.isTemporary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoAccept => $composableBuilder(
+    column: $table.autoAccept,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$KnownDevicesTableOrderingComposer
+    extends Composer<_$AppDatabase, $KnownDevicesTable> {
+  $$KnownDevicesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get peerDeviceId => $composableBuilder(
+    column: $table.peerDeviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get publicKeyFingerprint => $composableBuilder(
+    column: $table.publicKeyFingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastSeenAtMs => $composableBuilder(
+    column: $table.lastSeenAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastAddresses => $composableBuilder(
+    column: $table.lastAddresses,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allowedRootsJson => $composableBuilder(
+    column: $table.allowedRootsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get canShareToUs => $composableBuilder(
+    column: $table.canShareToUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isTemporary => $composableBuilder(
+    column: $table.isTemporary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get autoAccept => $composableBuilder(
+    column: $table.autoAccept,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$KnownDevicesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KnownDevicesTable> {
+  $$KnownDevicesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get peerDeviceId => $composableBuilder(
+    column: $table.peerDeviceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get platform =>
+      $composableBuilder(column: $table.platform, builder: (column) => column);
+
+  GeneratedColumn<String> get publicKeyFingerprint => $composableBuilder(
+    column: $table.publicKeyFingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastSeenAtMs => $composableBuilder(
+    column: $table.lastSeenAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastAddresses => $composableBuilder(
+    column: $table.lastAddresses,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get allowedRootsJson => $composableBuilder(
+    column: $table.allowedRootsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get canShareToUs => $composableBuilder(
+    column: $table.canShareToUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isTemporary => $composableBuilder(
+    column: $table.isTemporary,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get autoAccept => $composableBuilder(
+    column: $table.autoAccept,
+    builder: (column) => column,
+  );
+}
+
+class $$KnownDevicesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KnownDevicesTable,
+          KnownDeviceRow,
+          $$KnownDevicesTableFilterComposer,
+          $$KnownDevicesTableOrderingComposer,
+          $$KnownDevicesTableAnnotationComposer,
+          $$KnownDevicesTableCreateCompanionBuilder,
+          $$KnownDevicesTableUpdateCompanionBuilder,
+          (
+            KnownDeviceRow,
+            BaseReferences<_$AppDatabase, $KnownDevicesTable, KnownDeviceRow>,
+          ),
+          KnownDeviceRow,
+          PrefetchHooks Function()
+        > {
+  $$KnownDevicesTableTableManager(_$AppDatabase db, $KnownDevicesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KnownDevicesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KnownDevicesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$KnownDevicesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> peerDeviceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> platform = const Value.absent(),
+                Value<String> publicKeyFingerprint = const Value.absent(),
+                Value<int> lastSeenAtMs = const Value.absent(),
+                Value<String> lastAddresses = const Value.absent(),
+                Value<String> allowedRootsJson = const Value.absent(),
+                Value<bool> canShareToUs = const Value.absent(),
+                Value<bool> isTemporary = const Value.absent(),
+                Value<bool> autoAccept = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KnownDevicesCompanion(
+                id: id,
+                peerDeviceId: peerDeviceId,
+                name: name,
+                platform: platform,
+                publicKeyFingerprint: publicKeyFingerprint,
+                lastSeenAtMs: lastSeenAtMs,
+                lastAddresses: lastAddresses,
+                allowedRootsJson: allowedRootsJson,
+                canShareToUs: canShareToUs,
+                isTemporary: isTemporary,
+                autoAccept: autoAccept,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String peerDeviceId,
+                required String name,
+                required String platform,
+                required String publicKeyFingerprint,
+                required int lastSeenAtMs,
+                Value<String> lastAddresses = const Value.absent(),
+                Value<String> allowedRootsJson = const Value.absent(),
+                Value<bool> canShareToUs = const Value.absent(),
+                Value<bool> isTemporary = const Value.absent(),
+                Value<bool> autoAccept = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KnownDevicesCompanion.insert(
+                id: id,
+                peerDeviceId: peerDeviceId,
+                name: name,
+                platform: platform,
+                publicKeyFingerprint: publicKeyFingerprint,
+                lastSeenAtMs: lastSeenAtMs,
+                lastAddresses: lastAddresses,
+                allowedRootsJson: allowedRootsJson,
+                canShareToUs: canShareToUs,
+                isTemporary: isTemporary,
+                autoAccept: autoAccept,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$KnownDevicesTable, KnownDeviceRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $KnownDevicesTable,
+                    KnownDeviceRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$KnownDevicesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KnownDevicesTable,
+      KnownDeviceRow,
+      $$KnownDevicesTableFilterComposer,
+      $$KnownDevicesTableOrderingComposer,
+      $$KnownDevicesTableAnnotationComposer,
+      $$KnownDevicesTableCreateCompanionBuilder,
+      $$KnownDevicesTableUpdateCompanionBuilder,
+      (
+        KnownDeviceRow,
+        BaseReferences<_$AppDatabase, $KnownDevicesTable, KnownDeviceRow>,
+      ),
+      KnownDeviceRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -21102,4 +22161,6 @@ class $AppDatabaseManager {
       $$AiLabelsTableTableManager(_db, _db.aiLabels);
   $$AiLabelStatusTableTableManager get aiLabelStatus =>
       $$AiLabelStatusTableTableManager(_db, _db.aiLabelStatus);
+  $$KnownDevicesTableTableManager get knownDevices =>
+      $$KnownDevicesTableTableManager(_db, _db.knownDevices);
 }

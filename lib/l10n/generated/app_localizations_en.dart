@@ -4541,4 +4541,138 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareMediaOnlyHint =>
       'Without All files access, other devices see only photos, videos and audio.';
+
+  @override
+  String get rememberThisDevice => 'Remember this device';
+
+  @override
+  String get acceptAlwaysAllow => 'Always allow this device';
+
+  @override
+  String get acceptAlwaysAllowHint => 'Next time it connects without asking';
+
+  @override
+  String shareAutoAccepted(String name) {
+    return '$name connected';
+  }
+
+  @override
+  String shareRememberedFolders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders',
+      one: '1 folder',
+    );
+    return 'Sharing $_temp0';
+  }
+
+  @override
+  String get shareFoldersMissing => 'Some shared folders no longer exist';
+
+  @override
+  String get shareFoldersChange => 'Change';
+
+  @override
+  String connectErrorKeyChanged(String name) {
+    return '$name has changed. Scan the QR code again.';
+  }
+
+  @override
+  String get connectErrorNotAllowed => 'Not allowed. Scan the QR code again.';
+
+  @override
+  String connectErrorOffline(String name) {
+    return 'Can’t reach $name. Open “Share this device” on $name.';
+  }
+
+  @override
+  String get rememberedDevicesTitle => 'Remembered devices';
+
+  @override
+  String get rememberedDevicesHint =>
+      'Reconnect without scanning, or forget a device';
+
+  @override
+  String get rememberedEmpty =>
+      'No remembered devices yet. Devices you pair with “Remember this device” on show up here.';
+
+  @override
+  String get rememberedLoadFailed => 'Couldn’t load remembered devices';
+
+  @override
+  String get rememberedOnline => 'Sharing now';
+
+  @override
+  String get rememberedOffline => 'Not sharing right now';
+
+  @override
+  String get rememberedConnectsToUs => 'Connects to this device';
+
+  @override
+  String rememberedStatusWords(String status, String words) {
+    return '$status · $words';
+  }
+
+  @override
+  String get rememberedReconnect => 'Reconnect';
+
+  @override
+  String get rememberedShareFromHere => 'Share from this device';
+
+  @override
+  String get rememberedAlwaysAllow => 'Always allow';
+
+  @override
+  String get rememberedAlwaysAllowHint =>
+      'When it connects to this device, don’t ask';
+
+  @override
+  String get rememberedRemove => 'Remove';
+
+  @override
+  String rememberedRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get rememberedRemoveBody =>
+      'It is disconnected now and must scan the QR code to connect again. A lost or stolen remembered device still needs this device to be sharing and someone to tap Accept; removing it makes even that impossible.';
+
+  @override
+  String get rememberedRemoveAll => 'Remove all';
+
+  @override
+  String get rememberedRemoveAllTitle => 'Remove all remembered devices?';
+
+  @override
+  String get rememberedRemoveAllBody =>
+      'Every device must scan the QR code again to connect.';
+
+  @override
+  String get rememberedRemoveFailed => 'Couldn’t remove the device. Try again.';
+
+  @override
+  String get resetIdentityTitle => 'Reset this device’s identity';
+
+  @override
+  String get resetIdentityHint =>
+      'Forget all devices and make every device scan again';
+
+  @override
+  String get resetIdentityConfirmTitle => 'Reset this device’s identity?';
+
+  @override
+  String get resetIdentityConfirmBody =>
+      'Sharing stops, this device gets a new key and every remembered device is forgotten. Other devices must scan the QR code again. Use this if a device may be compromised or before giving this one away.';
+
+  @override
+  String get resetIdentityConfirm => 'Reset';
+
+  @override
+  String get resetIdentityDone =>
+      'New identity created. Other devices must scan again.';
+
+  @override
+  String get resetIdentityFailed => 'Couldn’t reset the identity. Try again.';
 }

@@ -60,7 +60,7 @@ final class ShareServerControllerProvider
 }
 
 String _$shareServerControllerHash() =>
-    r'a458de06791b6126f67859aecbfbaf205502ec5f';
+    r'73c54208c2f694afa8c8a676c23efb27b17714da';
 
 /// Starts and stops "Share this device" (TASK-N1). The share screen calls
 /// [startSharing] when opened and [stopSharing] on dispose. N5b: on

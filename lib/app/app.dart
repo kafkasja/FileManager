@@ -8,6 +8,7 @@ import 'package:kfm/core/background/in_app_jobs.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
+import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/similar/data/similar_scan_job.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
@@ -65,6 +66,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(fileIdRekeyerProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).
       ..watch(startupMaintenanceProvider)
+      // N6: forget temporary remembered devices after 7 days.
+      ..watch(knownDevicesPurgeProvider)
       // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
       // the set stays loaded without rebuilding the app on each change.
       ..listen(favoriteIdsProvider, (_, _) {});

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
@@ -123,6 +124,16 @@ class _SharedFoldersPickerState extends ConsumerState<SharedFoldersPicker> {
       setState(() {
         _allFiles = access.canSeeAllFiles;
         _quick = quick;
+        // N6: stored folders may have been seeded after initState.
+        if (_picks.isEmpty) {
+          for (final r
+              in ref
+                  .read(shareScopeStoreProvider)
+                  .scopeOf(widget.clientFingerprint)
+                  .roots) {
+            _picks[r.path] = _Pick(r.label, readOnly: r.readOnly);
+          }
+        }
       });
     } on Object catch (e) {
       if (mounted) setState(() => _error = e);
@@ -194,6 +205,12 @@ class _SharedFoldersPickerState extends ConsumerState<SharedFoldersPicker> {
       ref
           .read(shareScopeStoreProvider)
           .set(widget.clientFingerprint, ShareScope(roots));
+      // N6: a remembered device keeps these folders for next time (no-op
+      // for others). A failure shows through the write queue's errors.
+      ref
+          .read(knownDevicesRepositoryProvider)
+          .setAllowedRoots(widget.clientFingerprint, roots)
+          .fireAndForget();
       if (mounted) Navigator.of(context).pop();
     } on Object catch (e) {
       if (mounted) {

@@ -3035,5 +3035,86 @@
       }
     }
   },
-  "shareMediaOnlyHint": "Without All files access, other devices see only photos, videos and audio."
+  "shareMediaOnlyHint": "Without All files access, other devices see only photos, videos and audio.",
+  "rememberThisDevice": "Remember this device",
+  "acceptAlwaysAllow": "Always allow this device",
+  "acceptAlwaysAllowHint": "Next time it connects without asking",
+  "shareAutoAccepted": "{name} connected",
+  "@shareAutoAccepted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareRememberedFolders": "Sharing {count, plural, =1{1 folder} other{{count} folders}}",
+  "@shareRememberedFolders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareFoldersMissing": "Some shared folders no longer exist",
+  "shareFoldersChange": "Change",
+  "connectErrorKeyChanged": "{name} has changed. Scan the QR code again.",
+  "@connectErrorKeyChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectErrorNotAllowed": "Not allowed. Scan the QR code again.",
+  "connectErrorOffline": "Can’t reach {name}. Open “Share this device” on {name}.",
+  "@connectErrorOffline": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rememberedDevicesTitle": "Remembered devices",
+  "rememberedDevicesHint": "Reconnect without scanning, or forget a device",
+  "rememberedEmpty": "No remembered devices yet. Devices you pair with “Remember this device” on show up here.",
+  "rememberedLoadFailed": "Couldn’t load remembered devices",
+  "rememberedOnline": "Sharing now",
+  "rememberedOffline": "Not sharing right now",
+  "rememberedConnectsToUs": "Connects to this device",
+  "rememberedStatusWords": "{status} · {words}",
+  "@rememberedStatusWords": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "words": {
+        "type": "String"
+      }
+    }
+  },
+  "rememberedReconnect": "Reconnect",
+  "rememberedShareFromHere": "Share from this device",
+  "rememberedAlwaysAllow": "Always allow",
+  "rememberedAlwaysAllowHint": "When it connects to this device, don’t ask",
+  "rememberedRemove": "Remove",
+  "rememberedRemoveTitle": "Remove {name}?",
+  "@rememberedRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rememberedRemoveBody": "It is disconnected now and must scan the QR code to connect again. A lost or stolen remembered device still needs this device to be sharing and someone to tap Accept; removing it makes even that impossible.",
+  "rememberedRemoveAll": "Remove all",
+  "rememberedRemoveAllTitle": "Remove all remembered devices?",
+  "rememberedRemoveAllBody": "Every device must scan the QR code again to connect.",
+  "rememberedRemoveFailed": "Couldn’t remove the device. Try again.",
+  "resetIdentityTitle": "Reset this device’s identity",
+  "resetIdentityHint": "Forget all devices and make every device scan again",
+  "resetIdentityConfirmTitle": "Reset this device’s identity?",
+  "resetIdentityConfirmBody": "Sharing stops, this device gets a new key and every remembered device is forgotten. Other devices must scan the QR code again. Use this if a device may be compromised or before giving this one away.",
+  "resetIdentityConfirm": "Reset",
+  "resetIdentityDone": "New identity created. Other devices must scan again.",
+  "resetIdentityFailed": "Couldn’t reset the identity. Try again."
 }

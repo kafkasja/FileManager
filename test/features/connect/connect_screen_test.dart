@@ -4,12 +4,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
@@ -68,7 +70,21 @@ class _FakePairingClient extends PairingClient {
 
   final List<({Uri base, ShortCode code, String? fp})> codeCalls = [];
   final List<PairingOffer> qrCalls = [];
+  final List<({String fp, List<ShareAddress> candidates})> knownCalls = [];
   Completer<PairingSuccess> next = Completer();
+
+  @override
+  Future<PairingSuccess> pairKnown({
+    required String fingerprint,
+    required String name,
+    required List<ShareAddress> candidates,
+    PairingWaiting? onWaiting,
+    PairingCancel? cancel,
+  }) {
+    knownCalls.add((fp: fingerprint, candidates: candidates));
+    onWaiting?.call(name, const ['acorn', 'zebra', 'tulip', 'river']);
+    return next.future;
+  }
 
   @override
   Future<PairingSuccess> pairWithCode({
@@ -239,10 +255,7 @@ void main() {
     );
     await _settle(tester);
     expect(find.text('Connected to Phone A'), findsOneWidget);
-    expect(
-      find.text('Phone A hasn’t shared any folders yet'),
-      findsOneWidget,
-    );
+    expect(find.text('Phone A hasn’t shared any folders yet'), findsOneWidget);
 
     // N5: a 5 s heartbeat (GET /v1/session) with the token; while no
     // roots are shared each beat also re-reads them.
@@ -362,6 +375,175 @@ void main() {
       expect(container.read(connectControllerProvider), isA<ConnectChoose>());
     },
   );
+
+  PairingSuccess success(FakeRemoteHttp http) => PairingSuccess(
+    http: http,
+    accepted: const PairAcceptedDto(
+      token: 't',
+      serverDeviceId: 'srv-a',
+      roots: [],
+    ),
+    peerName: 'Phone A',
+    peerFingerprint: 'ab' * 32,
+  );
+
+  Future<void> codeToWaiting(WidgetTester tester) async {
+    await tester.tap(find.text('Type a code'));
+    await _settle(tester);
+    discovery.nearby.add([
+      NearbyDevice(
+        name: 'Phone A',
+        address: const (host: '192.168.1.23', port: 4433),
+        fingerprintHint: 'ab' * 32,
+      ),
+    ]);
+    await _settle(tester);
+    await tester.tap(find.text('Phone A'));
+    await _settle(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('connect-code-field')),
+      'ABCD0119',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('connect-code-submit')));
+    await _settle(tester);
+  }
+
+  testWidgets('N6: "Remember this device" (on by default) on the waiting '
+      'screen saves the peer after accept; Reconnect from Remembered '
+      'devices pairs without a code', (tester) async {
+    final app = await pump(tester);
+    await openConnect(tester);
+    await codeToWaiting(tester);
+    final box = find.byKey(const ValueKey('connect-remember'));
+    expect(find.text('Remember this device'), findsOneWidget);
+    expect(tester.widget<CheckboxListTile>(box).value, isTrue);
+
+    final http = FakeRemoteHttp(base: Uri.parse('https://192.168.1.23:4433'))
+      ..on(
+        'GET',
+        ApiRoutes.info,
+        (_) => const ServerInfoDto(
+          deviceId: 'srv-a',
+          name: 'Phone A',
+          platform: 'android',
+          fingerprint: 'abab',
+          protocolVersion: kProtocolVersion,
+        ).toJson(),
+      )
+      ..on('GET', ApiRoutes.session, (_) => const {});
+    pairing.next.complete(success(http));
+    await _settle(tester);
+    expect(find.text('Connected to Phone A'), findsOneWidget);
+    await tester.runAsync(
+      () => app.container.read(dbWriteQueueProvider).flush(),
+    );
+    final row = (await tester.runAsync(
+      () => app.db.select(app.db.knownDevices).getSingle(),
+    ))!;
+    expect(row.publicKeyFingerprint, 'ab' * 32);
+    expect(row.peerDeviceId, 'srv-a');
+    expect(row.platform, 'android');
+    expect(row.canShareToUs, isTrue);
+    expect(row.lastAddresses, '["192.168.1.23:4433"]');
+
+    // Disconnect, then reconnect from the list: no code.
+    await tester.tap(find.text('Disconnect'));
+    await _settle(tester);
+    await tester.tap(find.text('Remembered devices'));
+    await _settle(tester);
+    expect(find.text('Phone A'), findsOneWidget);
+    expect(find.text('Not sharing right now'), findsOneWidget);
+    pairing.next = Completer();
+    await tester.tap(find.text('Reconnect'));
+    await _settle(tester);
+    expect(pairing.knownCalls.single.fp, 'ab' * 32);
+    expect(pairing.knownCalls.single.candidates, [
+      (host: '192.168.1.23', port: 4433),
+    ]);
+    // Back on the Connect screen, waiting; no remember box (already).
+    expect(find.text('Waiting for Phone A to accept…'), findsOneWidget);
+    expect(find.byKey(const ValueKey('connect-remember')), findsNothing);
+    final again = FakeRemoteHttp(base: Uri.parse('https://192.168.1.23:4433'))
+      ..on('GET', ApiRoutes.session, (_) => const {});
+    pairing.next.complete(success(again));
+    await _settle(tester);
+    expect(find.text('Connected to Phone A'), findsOneWidget);
+    await tester.tap(find.text('Disconnect'));
+    await _settle(tester);
+  });
+
+  testWidgets('N6: unchecking "Remember this device" saves nothing', (
+    tester,
+  ) async {
+    final app = await pump(tester);
+    await openConnect(tester);
+    await codeToWaiting(tester);
+    await tester.tap(find.byKey(const ValueKey('connect-remember')));
+    await _settle(tester);
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.byKey(const ValueKey('connect-remember')),
+          )
+          .value,
+      isFalse,
+    );
+    pairing.next.complete(
+      success(FakeRemoteHttp()..on('GET', ApiRoutes.session, (_) => const {})),
+    );
+    await _settle(tester);
+    expect(find.text('Connected to Phone A'), findsOneWidget);
+    await tester.runAsync(
+      () => app.container.read(dbWriteQueueProvider).flush(),
+    );
+    final rows = await tester.runAsync(
+      () => app.db.select(app.db.knownDevices).get(),
+    );
+    expect(rows, isEmpty);
+    await tester.tap(find.text('Disconnect'));
+    await _settle(tester);
+  });
+
+  testWidgets('N6: a failed reconnect shows its message; Try again '
+      'reconnects', (tester) async {
+    final app = await pump(tester);
+    await tester.runAsync(
+      () => app.container
+          .read(knownDevicesRepositoryProvider)
+          .saveAfterPairing(
+            PairedPeer(
+              fingerprint: 'ab' * 32,
+              peerDeviceId: 'srv-a',
+              name: 'Phone A',
+              platform: 'android',
+              addresses: const ['192.168.1.23:4433'],
+              canShareToUs: true,
+            ),
+            temporary: false,
+          ),
+    );
+    await openConnect(tester);
+    await tester.tap(find.text('Remembered devices'));
+    await _settle(tester);
+    await tester.tap(find.text('Reconnect'));
+    await _settle(tester);
+    pairing.next.completeError(
+      const PairingException(PairingFailure.notAllowed),
+    );
+    await _settle(tester);
+    expect(find.text('Not allowed. Scan the QR code again.'), findsOneWidget);
+    pairing.next = Completer();
+    await tester.tap(find.text('Try again'));
+    await _settle(tester);
+    expect(pairing.knownCalls, hasLength(2));
+    pairing.next.completeError(const PairingException(PairingFailure.offline));
+    await _settle(tester);
+    expect(
+      find.text('Can’t reach Phone A. Open “Share this device” on Phone A.'),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('every PairingFailure has a message', (tester) async {
     await pump(tester);

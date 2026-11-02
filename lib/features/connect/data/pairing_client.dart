@@ -40,6 +40,18 @@ enum PairingFailure {
 
   /// The other device didn't speak protocol v1.
   badResponse,
+
+  /// N6: a remembered device presented another key (reinstall, reset or an
+  /// impostor). The stored fingerprint is never updated: scan again.
+  keyChanged,
+
+  /// N6: the other device doesn't know us any more (removed, or our
+  /// identity was reset): scan again.
+  notAllowed,
+
+  /// N6: no stored or nearby address of a remembered device answered (it
+  /// isn't sharing).
+  offline,
 }
 
 /// A typed pairing error the UI shows (rule 8).
@@ -326,6 +338,115 @@ class PairingClient {
       throw _map(e, cancel);
     }
   }
+
+  /// N6 reconnect of a remembered device: pins [fingerprint], tries each of
+  /// [candidates] (2 s each), then on the SAME client signs the nonce and
+  /// sends `POST /v1/pair/known`. Every candidate failing the pin →
+  /// [PairingFailure.keyChanged]; nothing answering → `offline`;
+  /// `pairing_failed` → `notAllowed`. The other device still decides
+  /// (accept prompt, unless it set "Always allow").
+  Future<PairingSuccess> pairKnown({
+    required String fingerprint,
+    required String name,
+    required List<ShareAddress> candidates,
+    PairingWaiting? onWaiting,
+    PairingCancel? cancel,
+  }) async {
+    final me = await _identity.loadOrCreate();
+    RemoteHttp? http;
+    Uint8List? nonce;
+    var sawPinMismatch = false;
+    RemoteApiException? lastApi;
+    for (final a in candidates) {
+      cancel?._check();
+      final c = _pinned(
+        Uri(scheme: 'https', host: a.host, port: a.port),
+        fingerprint,
+      );
+      cancel?._attach(c);
+      try {
+        final n = await c.postJson(
+          ApiRoutes.pairNonce,
+          const <String, Object?>{},
+          decode: PairNonceDto.fromJson,
+          timeout: probeTimeout,
+        );
+        final bytes = fromB64url(n.nonce);
+        if (bytes == null || bytes.length != 32) {
+          c.close();
+          continue;
+        }
+        nonce = bytes;
+        http = c;
+        break;
+      } on RemoteUnavailableException catch (e) {
+        c.close();
+        if (e.reason == RemoteUnavailableReason.pinMismatch) {
+          sawPinMismatch = true;
+        }
+      } on RemoteApiException catch (e) {
+        c.close();
+        lastApi = e;
+      }
+    }
+    cancel?._check();
+    if (http == null || nonce == null) {
+      if (sawPinMismatch) {
+        throw const PairingException(PairingFailure.keyChanged);
+      }
+      if (lastApi != null) throw _fromKnownApi(lastApi);
+      throw const PairingException(PairingFailure.offline);
+    }
+    try {
+      final sig = await _identity.sign(
+        signedMessage(ProofLabels.pairKnown, [_utf8(fingerprint), nonce]),
+      );
+      cancel?._check();
+      final hello = _hello(me);
+      final base = http.base;
+      cancel?._withdraw = () =>
+          _sendCancel(base, fingerprint, hello.pairAttemptId);
+      onWaiting?.call(name, fingerprintWords(fingerprint, me.fingerprint));
+      final accepted = await http.postJson(
+        ApiRoutes.pairKnown,
+        KnownPairRequestDto(
+          hello: hello,
+          nonce: b64url(nonce),
+          sig: b64url(sig),
+        ).toJson(),
+        decode: PairAcceptedDto.fromJson,
+        timeout: kPairRequestTimeout,
+      );
+      cancel?._withdraw = null;
+      http.bearerToken = accepted.token;
+      return PairingSuccess(
+        http: http,
+        accepted: accepted,
+        peerName: name,
+        peerFingerprint: fingerprint,
+      );
+    } on Object catch (e) {
+      cancel?._withdraw = null;
+      http.close();
+      if (cancel != null && cancel.isCancelled) {
+        throw PairingException(PairingFailure.cancelled, cause: e);
+      }
+      throw switch (e) {
+        RemoteApiException() => _fromKnownApi(e),
+        RemoteUnavailableException(
+          reason: RemoteUnavailableReason.pinMismatch,
+        ) =>
+          PairingException(PairingFailure.keyChanged, cause: e),
+        _ => _map(e, cancel),
+      };
+    }
+  }
+
+  /// `/v1/pair/known` answers: `pairing_failed` means "not a known device".
+  static PairingException _fromKnownApi(RemoteApiException e) =>
+      e.code == ApiErrorCode.pairingFailed
+      ? PairingException(PairingFailure.notAllowed, cause: e)
+      : _fromApi(e);
 
   /// `POST /v1/pair/cancel` on a fresh pinned client (the waiting one is
   /// already closed).

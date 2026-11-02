@@ -63,11 +63,18 @@ class ConnectScreen extends ConsumerWidget {
                 title: l10n.connectConnecting,
                 name: name,
               ),
-              ConnectWaiting(:final name, :final words) => _Progress(
-                title: l10n.connectWaiting(name),
-                name: name,
-                words: words,
-              ),
+              ConnectWaiting(
+                :final name,
+                :final words,
+                :final remember,
+                :final showRemember,
+              ) =>
+                _Progress(
+                  title: l10n.connectWaiting(name),
+                  name: name,
+                  words: words,
+                  remember: showRemember ? remember : null,
+                ),
               ConnectConnected(:final peerName, :final roots) =>
                 RefreshIndicator(
                   onRefresh: controller.refreshRoots,
@@ -159,6 +166,9 @@ String pairingFailureMessage(
     PairingFailure.pairingFailed => l10n.connectErrorFailed,
     PairingFailure.network => l10n.connectErrorNetwork(who),
     PairingFailure.badResponse => l10n.connectErrorBadResponse(who),
+    PairingFailure.keyChanged => l10n.connectErrorKeyChanged(who),
+    PairingFailure.notAllowed => l10n.connectErrorNotAllowed,
+    PairingFailure.offline => l10n.connectErrorOffline(who),
   };
 }
 
@@ -193,6 +203,17 @@ class _Choose extends ConsumerWidget {
             title: Text(l10n.connectTypeCode),
             subtitle: Text(l10n.connectTypeCodeHint),
             onTap: controller.typeCode,
+          ),
+        ),
+        // N6: reconnect without scanning.
+        Card(
+          child: ListTile(
+            key: const ValueKey('connect-remembered'),
+            leading: const Icon(Icons.devices_other_outlined),
+            title: Text(l10n.rememberedDevicesTitle),
+            subtitle: Text(l10n.rememberedDevicesHint),
+            onTap: () =>
+                unawaited(context.push(AppRoutes.connectDevicesFromConnect)),
           ),
         ),
       ],
@@ -610,7 +631,12 @@ class _EnterCodeState extends ConsumerState<_EnterCode> {
 }
 
 class _Progress extends ConsumerWidget {
-  const new({required this.title, required this.name, this.words = const []});
+  const new({
+    required this.title,
+    required this.name,
+    this.words = const [],
+    this.remember,
+  });
 
   final String title;
   final String? name;
@@ -618,14 +644,29 @@ class _Progress extends ConsumerWidget {
   /// The 4-word phrase while waiting (N3); empty before.
   final List<String> words;
 
+  /// N6 "Remember this device"; null hides the checkbox.
+  final bool? remember;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final remember = this.remember;
     return _Message(
       icon: null,
       title: title,
       body: words.isEmpty ? null : l10n.pairCompareWords,
       words: words,
+      extra: remember == null
+          ? null
+          : CheckboxListTile(
+              key: const ValueKey('connect-remember'),
+              controlAffinity: ListTileControlAffinity.leading,
+              value: remember,
+              title: Text(l10n.rememberThisDevice),
+              onChanged: (v) => ref
+                  .read(connectControllerProvider.notifier)
+                  .setRemember(remember: v ?? false),
+            ),
       actions: [
         OutlinedButton(
           key: const ValueKey('connect-cancel'),
@@ -644,6 +685,7 @@ class _Message extends StatelessWidget {
     required this.actions,
     this.body,
     this.words = const [],
+    this.extra,
   });
 
   /// Null shows a progress indicator.
@@ -654,6 +696,9 @@ class _Message extends StatelessWidget {
   /// Fixed English words (ARB-exempt, `fingerprint_words.dart`).
   final List<String> words;
   final List<Widget> actions;
+
+  /// Shown above [actions] (N6: the remember checkbox).
+  final Widget? extra;
 
   @override
   Widget build(BuildContext context) {
@@ -693,6 +738,7 @@ class _Message extends StatelessWidget {
                 SizedBox(height: spacing),
                 Text(b, textAlign: TextAlign.center),
               ],
+              if (extra case final e?) ...[SizedBox(height: spacing * 2), e],
               SizedBox(height: spacing * 3),
               Wrap(
                 spacing: spacing * 2,

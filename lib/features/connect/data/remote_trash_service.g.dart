@@ -175,4 +175,4 @@ final class RemoteTrashServiceProvider
 }
 
 String _$remoteTrashServiceHash() =>
-    r'88d3ff4532f49e5c60114e06bf3f7be58f89d7c4';
+    r'837bf5a20e8b050a811068e97113bf68b1dc9264';

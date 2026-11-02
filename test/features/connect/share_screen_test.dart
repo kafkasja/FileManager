@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
@@ -15,7 +17,9 @@ import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
+import 'package:kfm/features/connect/domain/share_scope.dart';
 import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
@@ -702,6 +706,155 @@ void main() {
       (music, false),
       ('/storage/emulated/0', true),
     ]);
+  });
+
+  Future<KnownDeviceRow?> rowOf(WidgetTester tester, TestApp app) async {
+    await tester.runAsync(
+      () => app.container.read(dbWriteQueueProvider).flush(),
+    );
+    return await tester.runAsync<KnownDeviceRow?>(
+      () =>
+          (app.db.select(app.db.knownDevices)
+                ..where((d) => d.publicKeyFingerprint.equals('cd' * 32)))
+              .getSingleOrNull(),
+    );
+  }
+
+  testWidgets('N6: accept dialog has "Remember this device" (on) and '
+      '"Always allow this device" (off, needs Remember); Accept saves the '
+      'device and the picker saves its folders', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final gate = app.container.read(acceptGateProvider);
+    final decision = gate.open(request('r1'))!;
+    await tester.pumpAndSettle();
+    final remember = find.byKey(const ValueKey('accept-remember'));
+    final always = find.byKey(const ValueKey('accept-always-allow'));
+    expect(find.text('Remember this device'), findsOneWidget);
+    expect(find.text('Always allow this device'), findsOneWidget);
+    expect(tester.widget<CheckboxListTile>(remember).value, isTrue);
+    expect(tester.widget<CheckboxListTile>(always).value, isFalse);
+    // Without Remember, Always allow is off and disabled.
+    await tester.tap(remember);
+    await tester.pump();
+    expect(tester.widget<CheckboxListTile>(always).enabled, isFalse);
+    await tester.tap(remember);
+    await tester.pump();
+    await tester.tap(always);
+    await tester.pump();
+    expect(tester.widget<CheckboxListTile>(always).value, isTrue);
+    await tester.tap(find.text('Accept'));
+    await tester.pumpAndSettle();
+    expect(await decision, ConnectionDecision.accepted);
+
+    var row = await rowOf(tester, app);
+    expect(row!.name, 'Phone B');
+    expect(row.peerDeviceId, 'dev-b');
+    expect(row.autoAccept, isTrue);
+    expect(row.canShareToUs, isFalse);
+
+    // The picker's folders are stored for next time.
+    const camera = '/storage/emulated/0/DCIM';
+    await tester.tap(find.byKey(const ValueKey('shared-folder-$camera')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('shared-folders-done')));
+    await tester.pumpAndSettle();
+    row = await rowOf(tester, app);
+    expect(
+      row!.allowedRootsJson,
+      '[{"path":"$camera","label":"Camera","readOnly":true}]',
+    );
+  });
+
+  testWidgets('N6: with Remember unchecked nothing is saved', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final gate = app.container.read(acceptGateProvider);
+    final decision = gate.open(request('r1'))!;
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('accept-remember')));
+    await tester.pump();
+    await tester.tap(find.text('Accept'));
+    await tester.pumpAndSettle();
+    expect(await decision, ConnectionDecision.accepted);
+    expect(await rowOf(tester, app), isNull);
+    await tester.tap(find.byKey(const ValueKey('shared-folders-done')));
+    await tester.pumpAndSettle();
+    expect(await rowOf(tester, app), isNull);
+  });
+
+  testWidgets('N6: a remembered device with stored folders skips the picker '
+      '("Sharing 1 folder · Change"); a missing folder is reported', (
+    tester,
+  ) async {
+    final app = await pump(tester);
+    final repo = app.container.read(knownDevicesRepositoryProvider);
+    await tester.runAsync(() async {
+      await repo.saveAfterPairing(
+        PairedPeer(
+          fingerprint: 'cd' * 32,
+          peerDeviceId: 'dev-b',
+          name: 'Phone B',
+          platform: 'android',
+        ),
+        temporary: false,
+      );
+      await repo.setAllowedRoots('cd' * 32, const [
+        SharedRoot(
+          id: 'old',
+          path: '/storage/emulated/0/DCIM',
+          label: 'Camera',
+          readOnly: true,
+        ),
+      ]);
+    });
+    await openShare(tester);
+    final gate = app.container.read(acceptGateProvider);
+    final d1 = gate.open(request('r1', remembered: true))!;
+    await tester.pumpAndSettle();
+    expect(find.text('Phone B (remembered) wants to connect'), findsOneWidget);
+    await tester.tap(find.text('Accept'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    expect(await d1, ConnectionDecision.accepted);
+    expect(find.byType(SharedFoldersPicker), findsNothing);
+    expect(find.text('Sharing 1 folder'), findsOneWidget);
+    await tester.tap(find.text('Change'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SharedFoldersPicker), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    // The stored folder is gone: hint, and the picker opens.
+    await tester.runAsync(
+      () => repo.setAllowedRoots('cd' * 32, const [
+        SharedRoot(
+          id: 'old',
+          path: '/storage/emulated/0/Gone',
+          label: 'Gone',
+          readOnly: true,
+        ),
+      ]),
+    );
+    final d2 = gate.open(request('r2', remembered: true))!;
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Accept'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    expect(await d2, ConnectionDecision.accepted);
+    expect(find.byType(SharedFoldersPicker), findsOneWidget);
+    expect(find.text('Some shared folders no longer exist'), findsOneWidget);
+  });
+
+  testWidgets('N6: an "Always allow" connect shows "<name> connected" '
+      'without a dialog', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final gate = app.container.read(acceptGateProvider);
+    expect(gate.autoAccept(request('r1', remembered: true)), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byType(AcceptDialog), findsNothing);
+    expect(find.text('Phone B connected'), findsOneWidget);
   });
 }
 

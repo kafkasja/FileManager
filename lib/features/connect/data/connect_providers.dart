@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
@@ -12,6 +14,8 @@ import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/device_identity_repository_impl.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
+import 'package:kfm/features/connect/data/known_devices_dao.dart';
+import 'package:kfm/features/connect/data/known_pair_limiter.dart';
 import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
@@ -29,8 +33,10 @@ import 'package:kfm/features/connect/data/share_background.dart';
 import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -179,7 +185,53 @@ Stream<List<ClientSession>> connectedClients(Ref ref) async* {
   yield* store.changes;
 }
 
+/// Remembered devices (TASK-N6).
+@Riverpod(keepAlive: true)
+KnownDevicesRepository knownDevicesRepository(Ref ref) =>
+    KnownDevicesRepository(
+      KnownDevicesDao(ref.watch(appDatabaseProvider)),
+      ref.watch(dbWriteQueueProvider),
+    );
+
+/// The remembered-devices list (temporary rows hidden).
+@riverpod
+Stream<List<KnownDevice>> knownDevices(Ref ref) =>
+    ref.watch(knownDevicesRepositoryProvider).watchVisible();
+
+/// Startup cleanup (N6): temporary rows not seen for 7 days. The app
+/// watches it once.
+@Riverpod(keepAlive: true)
+Future<int> knownDevicesPurge(Ref ref) =>
+    ref.watch(knownDevicesRepositoryProvider).purgeTemporary();
+
+/// Failed `/v1/pair/known` calls per IP of the current sharing run (N6).
+@Riverpod(keepAlive: true)
+KnownPairLimiter knownPairLimiter(Ref ref) {
+  final limiter = KnownPairLimiter();
+  ref.onDispose(limiter.clear);
+  return limiter;
+}
+
+/// Loads a remembered device's stored folders, re-checked on disk.
+typedef StoredScopeLoader = Future<StoredScope> Function(String fingerprint);
+
+@Riverpod(keepAlive: true)
+StoredScopeLoader storedScopeLoader(Ref ref) => (fp) async {
+  final salt = await ref.read(deviceIdentityRepositoryProvider).rootIdSalt();
+  final fs = ref.read(sharedFolderFsProvider);
+  return await ref
+      .read(knownDevicesRepositoryProvider)
+      .allowedRoots(
+        fp,
+        salt: salt,
+        guard: ref.read(pathGuardProvider),
+        exists: fs.exists,
+      );
+};
+
 /// What happens to a verified pairing request: the accept prompt (N3).
+/// N6: on accept, a remembered device's stored folders are seeded before
+/// the answer lists the roots.
 @Riverpod(keepAlive: true)
 PairHandOff pairHandOff(Ref ref) => promptHandOff(
   gate: ref.watch(acceptGateProvider),
@@ -188,7 +240,39 @@ PairHandOff pairHandOff(Ref ref) => promptHandOff(
       (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
           .deviceId,
   roots: (fp) => ref.read(shareScopeStoreProvider).scopeOf(fp).toDtos(),
+  beforeIssue: (candidate) async {
+    if (candidate.method == PairMethod.known) {
+      // A failure shows through the write queue's error stream.
+      ref
+          .read(knownDevicesRepositoryProvider)
+          .touch(candidate.clientFingerprint, const [])
+          .fireAndForget();
+    }
+    await seedStoredScope(
+      load: ref.read(storedScopeLoaderProvider),
+      scopes: ref.read(shareScopeStoreProvider),
+      clientFingerprint: candidate.clientFingerprint,
+    );
+  },
 );
+
+/// Seeds [clientFingerprint]'s scope from its stored folders (N6). A
+/// failed read leaves the scope as it is: the share screen reads the same
+/// folders and opens the picker instead (where the error shows).
+Future<void> seedStoredScope({
+  required StoredScopeLoader load,
+  required ShareScopeStore scopes,
+  required String clientFingerprint,
+}) async {
+  try {
+    final stored = await load(clientFingerprint);
+    if (stored.roots.isNotEmpty) {
+      scopes.set(clientFingerprint, ShareScope(stored.roots));
+    }
+  } on Object catch (e) {
+    developer.log('stored folders not loaded: $e', name: 'kfm.connect');
+  }
+}
 
 /// mDNS advertise + browse (N2).
 @Riverpod(keepAlive: true)
@@ -263,6 +347,16 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
         thumbnails: () => ref.read(thumbnailCacheProvider.future),
         trash: () => ref.read(remoteTrashServiceProvider),
       ),
+    ),
+    // N6: remembered devices reconnect without a QR.
+    knownPairRoute(
+      nonces: ref.watch(pairNonceStoreProvider),
+      limiter: ref.watch(knownPairLimiterProvider),
+      serverFingerprint: () async =>
+          (await identity.loadOrCreate()).fingerprint,
+      lookup: (fp) =>
+          ref.read(knownDevicesRepositoryProvider).byFingerprint(fp),
+      handOff: (candidate) => ref.read(pairHandOffProvider)(candidate),
     ),
   ];
 }

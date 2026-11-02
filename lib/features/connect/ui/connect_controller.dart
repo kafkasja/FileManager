@@ -7,6 +7,7 @@ import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -59,10 +60,21 @@ final class ConnectWorking extends ConnectState {
 /// `POST /v1/pair` sent: the other device decides (N3). Both devices show
 /// [words].
 final class ConnectWaiting extends ConnectState {
-  const new(this.name, {this.words = const []});
+  const new(
+    this.name, {
+    this.words = const [],
+    this.remember = true,
+    this.showRemember = true,
+  });
 
   final String name;
   final List<String> words;
+
+  /// N6 "Remember this device" (default on): saved after an accept.
+  final bool remember;
+
+  /// False for a remembered device's reconnect (already remembered).
+  final bool showRemember;
 }
 
 /// Paired: mirrors [RemoteConnected] of the keepAlive
@@ -85,13 +97,16 @@ final class ConnectDisconnected extends ConnectState {
 }
 
 final class ConnectFailed extends ConnectState {
-  const new(this.failure, {this.name, this.retry});
+  const new(this.failure, {this.name, this.retry, this.reconnectFingerprint});
 
   final PairingFailure failure;
   final String? name;
 
   /// Where "Try again" goes.
   final ConnectState? retry;
+
+  /// N6: "Try again" reconnects to this remembered device instead.
+  final String? reconnectFingerprint;
 }
 
 /// Result of a scanned QR value.
@@ -100,6 +115,12 @@ enum ScanOutcome { started, notKfm, unsupportedVersion, ignored }
 @riverpod
 class ConnectController extends _$ConnectController {
   PairingCancel? _cancel;
+
+  /// N6: "Remember this device" of the running pairing.
+  bool _remember = true;
+
+  /// The running pairing is a remembered device's reconnect.
+  bool _known = false;
 
   @override
   ConnectState build() {
@@ -208,6 +229,37 @@ class ConnectController extends _$ConnectController {
     );
   }
 
+  /// N6: reconnects to the remembered device [fingerprint] without a QR
+  /// (the other device still decides, unless it set "Always allow").
+  void reconnect(String fingerprint, {required String name}) {
+    unawaited(
+      _run(
+        name,
+        const ConnectChoose(),
+        (cancel) => ref
+            .read(knownDeviceConnectorProvider)
+            .pair(fingerprint, onWaiting: _waiting, cancel: cancel),
+        reconnectFingerprint: fingerprint,
+      ),
+    );
+  }
+
+  /// N6: the waiting screen's "Remember this device" checkbox.
+  void setRemember({required bool remember}) {
+    _remember = remember;
+    final s = state;
+    if (s is ConnectWaiting) {
+      _set(
+        ConnectWaiting(
+          s.name,
+          words: s.words,
+          remember: remember,
+          showRemember: s.showRemember,
+        ),
+      );
+    }
+  }
+
   /// Withdraws a running pairing (and a request waiting for the other
   /// device's accept prompt, `/v1/pair/cancel`).
   void cancel() {
@@ -229,21 +281,39 @@ class ConnectController extends _$ConnectController {
 
   void retry() {
     final s = state;
-    _set(s is ConnectFailed ? (s.retry ?? const ConnectChoose()) : s);
+    if (s is ConnectFailed) {
+      if (s.reconnectFingerprint case final fp?) {
+        reconnect(fp, name: s.name ?? '');
+        return;
+      }
+      _set(s.retry ?? const ConnectChoose());
+      return;
+    }
+    _set(s);
   }
 
   void _waiting(String name, List<String> words) {
     if (!ref.mounted || _cancel == null) return;
-    _set(ConnectWaiting(name, words: words));
+    _set(
+      ConnectWaiting(
+        name,
+        words: words,
+        remember: _remember,
+        showRemember: !_known,
+      ),
+    );
   }
 
   Future<void> _run(
     String? name,
     ConnectState retry,
-    Future<PairingSuccess> Function(PairingCancel cancel) body,
-  ) async {
+    Future<PairingSuccess> Function(PairingCancel cancel) body, {
+    String? reconnectFingerprint,
+  }) async {
     _cancel?.cancel();
     final cancel = _cancel = PairingCancel();
+    _remember = true;
+    _known = reconnectFingerprint != null;
     _set(ConnectWorking(name));
     try {
       final result = await body(cancel);
@@ -254,6 +324,15 @@ class ConnectController extends _$ConnectController {
       _cancel = null;
       // The listener in build() turns this into ConnectConnected.
       ref.read(remoteConnectionControllerProvider.notifier).connect(result);
+      if (reconnectFingerprint == null && _remember) {
+        // N6: a failed save shows through the write queue's error stream.
+        unawaited(
+          ref
+              .read(knownDeviceConnectorProvider)
+              .rememberServer(result)
+              .then<void>((_) {}, onError: (Object _) {}),
+        );
+      }
     } on PairingException catch (e) {
       if (!ref.mounted || cancel.isCancelled) return;
       _cancel = null;
@@ -261,7 +340,14 @@ class ConnectController extends _$ConnectController {
         ConnectWaiting(:final name) => name,
         _ => name,
       };
-      _set(ConnectFailed(e.failure, name: waitingName, retry: retry));
+      _set(
+        ConnectFailed(
+          e.failure,
+          name: waitingName,
+          retry: retry,
+          reconnectFingerprint: reconnectFingerprint,
+        ),
+      );
     }
   }
 

@@ -32,6 +32,17 @@ class ShareScopeStore {
     _changes.add(clientFingerprint);
   }
 
+  /// N6 Remove: forgets [clientFingerprint]'s folders and cancels its
+  /// in-flight streams.
+  void remove(String clientFingerprint) {
+    _scopes.remove(clientFingerprint);
+    _sessions.cancelStreamsWhere(
+      clientFingerprint,
+      (_, {required write}) => false,
+    );
+    _changes.add(clientFingerprint);
+  }
+
   /// Stop sharing.
   void clear() {
     final had = _scopes.keys.toList();

@@ -9,11 +9,13 @@ import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/crypto/constant_time.dart';
 import 'package:kfm/features/connect/data/crypto/identity_proof.dart';
 import 'package:kfm/features/connect/data/crypto/spake2.dart';
+import 'package:kfm/features/connect/data/known_pair_limiter.dart';
 import 'package:kfm/features/connect/data/pair_nonce_store.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/fingerprint_words.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
@@ -32,6 +34,7 @@ class PairCandidate {
     required this.remoteIp,
     required this.method,
     required this.serverFingerprint,
+    this.autoAccept = false,
   });
 
   final ClientHelloDto hello;
@@ -43,6 +46,11 @@ class PairCandidate {
 
   /// This device's fingerprint (for the 4-word phrase).
   final String serverFingerprint;
+
+  /// N6 "Always allow": only ever set by `/v1/pair/known` for a verified,
+  /// remembered device whose row allows it. QR/code pairings never skip
+  /// the prompt.
+  final bool autoAccept;
 }
 
 /// Hands a verified request to the accept prompt ([promptHandOff]); the
@@ -58,11 +66,16 @@ const Duration kPairDecisionTimeout = Duration(seconds: 60);
 /// One prompt at a time (`409 busy`); accept issues a bearer token
 /// (`200 PairAcceptedDto`), decline/timeout answer `403`, a client cancel
 /// `410`. [roots] gives the client's current roots (N4; empty until then).
+/// [beforeIssue] runs on accept before the token and roots are read (N6
+/// seeds a remembered device's stored folders there; keep it fast, it runs
+/// inside the client's 75 s timeout). A remembered device with "Always
+/// allow" skips the prompt but not the busy check (N6).
 PairHandOff promptHandOff({
   required AcceptGate gate,
   required ClientSessionStore sessions,
   required Future<String> Function() serverDeviceId,
   List<RootDto> Function(String clientFingerprint)? roots,
+  Future<void> Function(PairCandidate candidate)? beforeIssue,
   DateTime Function()? clock,
 }) => (candidate) async {
   final hello = candidate.hello;
@@ -81,10 +94,18 @@ PairHandOff promptHandOff({
       candidate.clientFingerprint,
     ),
   );
-  final decision = gate.open(request);
-  if (decision == null) return apiError(ApiErrorCode.busy);
+  final Future<ConnectionDecision> decision;
+  if (candidate.method == PairMethod.known && candidate.autoAccept) {
+    if (!gate.autoAccept(request)) return apiError(ApiErrorCode.busy);
+    decision = Future.value(ConnectionDecision.accepted);
+  } else {
+    final open = gate.open(request);
+    if (open == null) return apiError(ApiErrorCode.busy);
+    decision = open;
+  }
   switch (await decision) {
     case ConnectionDecision.accepted:
+      await beforeIssue?.call(candidate);
       final issued = sessions.issue(
         clientFingerprint: candidate.clientFingerprint,
         clientDeviceId: hello.clientDeviceId,
@@ -122,6 +143,64 @@ ServerRoute pairCancelRoute(AcceptGate gate) =>
       gate.cancel(id, peer);
       return Response(204);
     });
+
+/// `POST /v1/pair/known` (TASK-N6): a remembered device reconnects without
+/// a QR. Checked in order: the [limiter] (`429`), the body, the nonce
+/// (single use, same IP), the identity proof over
+/// `[utf8(serverFp), nonce]`, and that the proven key is a known device.
+/// Every failure is counted and answers `401 pairing_failed` (no hint which
+/// check failed). Never touches N2's QR secret or code counters.
+ServerRoute knownPairRoute({
+  required PairNonceStore nonces,
+  required KnownPairLimiter limiter,
+  required Future<String> Function() serverFingerprint,
+  required Future<KnownDevice?> Function(String clientFingerprint) lookup,
+  required PairHandOff handOff,
+}) => ServerRoute('POST', ApiRoutes.pairKnown, (request) async {
+  final peer = remoteAddressOf(request)?.address;
+  if (peer == null) return apiError(ApiErrorCode.forbidden);
+  if (limiter.isLocked(peer)) return apiError(ApiErrorCode.tooManyAttempts);
+  Response fail() {
+    limiter.recordFailure(peer);
+    return apiError(ApiErrorCode.pairingFailed);
+  }
+
+  final json = await _body(request);
+  final KnownPairRequestDto dto;
+  try {
+    if (json == null) throw const FormatException();
+    dto = KnownPairRequestDto.fromJson(json);
+  } on FormatException {
+    return fail();
+  }
+  final nonceBytes = fromB64url(dto.nonce);
+  final sigBytes = fromB64url(dto.sig);
+  // Always consume the nonce (single use, success or not).
+  final nonceOk = nonceBytes != null && nonces.consume(peer, nonceBytes);
+  if (!nonceOk || sigBytes == null) return fail();
+  final serverFp = await serverFingerprint();
+  final clientFp = verifyIdentityProof(
+    certPem: dto.hello.clientCertPem,
+    message: signedMessage(ProofLabels.pairKnown, [
+      _utf8(serverFp),
+      nonceBytes,
+    ]),
+    sig: sigBytes,
+  );
+  if (clientFp == null) return fail();
+  final known = await lookup(clientFp);
+  if (known == null) return fail();
+  return await handOff(
+    PairCandidate(
+      hello: dto.hello,
+      clientFingerprint: clientFp,
+      remoteIp: peer,
+      method: PairMethod.known,
+      serverFingerprint: serverFp,
+      autoAccept: known.autoAccept,
+    ),
+  );
+});
 
 /// `POST /v1/pair/code/start` and `POST /v1/pair` (TASK-N2).
 List<ServerRoute> pairRoutes({

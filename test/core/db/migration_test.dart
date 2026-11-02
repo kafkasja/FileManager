@@ -13,6 +13,7 @@ import 'generated/schema_v14.dart' as v14;
 import 'generated/schema_v15.dart' as v15;
 import 'generated/schema_v16.dart' as v16;
 import 'generated/schema_v17.dart' as v17;
+import 'generated/schema_v18.dart' as v18;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -51,7 +52,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 18; from++) {
+  for (var from = 1; from < 19; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -604,6 +605,61 @@ void main() {
         ),
         throwsA(anything),
       );
+    });
+  });
+
+  test('v18 -> v19 adds an empty known_devices table; data intact', () async {
+    final schema = await verifier.schemaAt(18);
+    final raw = v18.DatabaseAtV18(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO ai_labels (file_id, label, confidence) '
+      "VALUES ('a', 'cat', 0.9)",
+    );
+    await raw.customStatement(
+      "INSERT INTO settings (key, value) VALUES ('themeMode', '\"dark\"')",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    expect(await db.select(db.aiLabels).get(), hasLength(1));
+    expect((await db.select(db.settings).get()).single.value, '"dark"');
+    expect(await db.select(db.knownDevices).get(), isEmpty);
+  });
+
+  group('known_devices constraints (v19)', () {
+    late AppDatabase db;
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(18)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+    });
+    tearDown(() => db.close());
+
+    Future<void> insert(String id, String fp) => db.customStatement(
+      'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+      'public_key_fingerprint, last_seen_at_ms) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, 'peer', 'Phone', 'android', fp, 1],
+    );
+
+    test('defaults: [] lists, all flags false', () async {
+      await insert('a', 'ab' * 32);
+      final row = await db.select(db.knownDevices).getSingle();
+      expect(row.lastAddresses, '[]');
+      expect(row.allowedRootsJson, '[]');
+      expect(row.canShareToUs, isFalse);
+      expect(row.isTemporary, isFalse);
+      expect(row.autoAccept, isFalse);
+    });
+
+    test('the fingerprint is unique and exactly 64 characters', () async {
+      await insert('a', 'ab' * 32);
+      await expectLater(insert('b', 'ab' * 32), throwsA(anything));
+      await expectLater(insert('c', 'ab'), throwsA(anything));
+      await expectLater(insert('d', 'ab' * 33), throwsA(anything));
+      await insert('e', 'cd' * 32);
+      expect(await db.select(db.knownDevices).get(), hasLength(2));
     });
   });
 }

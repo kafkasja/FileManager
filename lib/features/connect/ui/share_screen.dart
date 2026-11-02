@@ -15,6 +15,7 @@ import 'package:kfm/features/connect/data/remote_trash_service.dart';
 import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/ui/accept_dialog.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
@@ -94,6 +95,12 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     switch (e) {
       case AcceptRequested(:final request):
         unawaited(_showAcceptDialog(request));
+      case AutoAccepted(:final request):
+        // N6 "Always allow": no prompt, just a note.
+        _snack(
+          context.l10n.shareAutoAccepted(request.clientName),
+          change: request,
+        );
       case AcceptClosed(:final request, :final decision):
         if (_dialogFor != request.requestId) return;
         // Ended elsewhere (timeout, the client's cancel): close the dialog.
@@ -131,7 +138,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       SystemSound.play(SystemSoundType.alert).catchError((Object _) {}),
     );
     _dialogFor = request.requestId;
-    final decision = await showDialog<ConnectionDecision>(
+    final answer = await showDialog<AcceptAnswer>(
       context: context,
       barrierDismissible: false,
       builder: (_) => AcceptDialog(
@@ -140,17 +147,86 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       ),
     );
     if (_dialogFor == request.requestId) _dialogFor = null;
-    if (decision == null) return;
+    if (answer == null) return;
     // The token is issued here; the client's root list follows the picker.
-    if (_gate.decide(request.requestId, decision) &&
-        decision == ConnectionDecision.accepted &&
-        mounted) {
-      await showSharedFoldersPicker(
-        context,
-        clientFingerprint: request.clientFingerprint,
-        clientName: request.clientName,
-      );
+    if (!_gate.decide(request.requestId, answer.decision) ||
+        answer.decision != ConnectionDecision.accepted ||
+        !mounted) {
+      return;
     }
+    if (answer.remember) {
+      // N6. Queued before any picker save, so the folders land on the row.
+      ref
+          .read(knownDevicesRepositoryProvider)
+          .saveAfterPairing(
+            PairedPeer(
+              fingerprint: request.clientFingerprint,
+              peerDeviceId: request.clientDeviceId,
+              name: request.clientName,
+              platform: request.clientPlatform,
+              autoAccept: answer.alwaysAllow,
+            ),
+            temporary: false,
+          )
+          // A failure shows through the write queue's error stream.
+          .then<void>((_) {}, onError: (Object _) {})
+          .ignore();
+    }
+    var stored = StoredScope.empty;
+    if (request.remembered) {
+      try {
+        stored = await ref.read(storedScopeLoaderProvider)(
+          request.clientFingerprint,
+        );
+      } on Object {
+        // The picker opens instead; nothing was seeded either.
+      }
+      if (!mounted) return;
+    }
+    final l10n = context.l10n;
+    if (stored.roots.isNotEmpty) {
+      // N6: a remembered device keeps its folders; no picker.
+      _snack(
+        stored.dropped
+            ? l10n.shareFoldersMissing
+            : l10n.shareRememberedFolders(stored.roots.length),
+        change: request,
+      );
+      return;
+    }
+    if (stored.dropped) _snack(l10n.shareFoldersMissing);
+    await showSharedFoldersPicker(
+      context,
+      clientFingerprint: request.clientFingerprint,
+      clientName: request.clientName,
+    );
+  }
+
+  /// A snackbar; with [change], a "Change" action opens that client's
+  /// folder picker.
+  void _snack(String text, {ConnectionRequest? change}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(text),
+          action: change == null
+              ? null
+              : SnackBarAction(
+                  label: context.l10n.shareFoldersChange,
+                  onPressed: () {
+                    if (!mounted) return;
+                    unawaited(
+                      showSharedFoldersPicker(
+                        context,
+                        clientFingerprint: change.clientFingerprint,
+                        clientName: change.clientName,
+                      ),
+                    );
+                  },
+                ),
+        ),
+      );
   }
 
   void _keepAwake({required bool on}) {

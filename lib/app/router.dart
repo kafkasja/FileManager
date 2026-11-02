@@ -9,6 +9,7 @@ import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
 import 'package:kfm/features/browse/ui/collection_screen.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart';
+import 'package:kfm/features/connect/ui/remembered_devices_screen.dart';
 import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
 import 'package:kfm/features/connect/ui/share_screen.dart';
 import 'package:kfm/features/onboarding/ui/permission_gate_screen.dart';
@@ -80,6 +81,11 @@ abstract final class AppRoutes {
   /// N1/N2: top-level (cover the tab bar), opened with `context.push`.
   static const connect = '/connect';
   static const connectShare = '/connect/share';
+
+  /// N6: remembered devices. From the Connect screen with `?from=connect`
+  /// (Reconnect then goes back to it instead of pushing a new one).
+  static const connectDevices = '/connect/devices';
+  static const connectDevicesFromConnect = '/connect/devices?from=connect';
 
   /// N7: browse the connected device `:fp` (its pinned fingerprint).
   static const connectBrowse = '/connect/browse/:fp';
@@ -159,6 +165,12 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: 'share',
             builder: (context, state) => const ShareScreen(),
+          ),
+          GoRoute(
+            path: 'devices',
+            builder: (context, state) => RememberedDevicesScreen(
+              fromConnect: state.uri.queryParameters['from'] == 'connect',
+            ),
           ),
           GoRoute(
             path: 'browse/:fp',

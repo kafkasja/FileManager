@@ -714,17 +714,261 @@ final class ConnectedClientsProvider
 
 String _$connectedClientsHash() => r'34b9c31fb9f04966675e7a1aa000d2e40189d82e';
 
+/// Remembered devices (TASK-N6).
+
+@ProviderFor(knownDevicesRepository)
+final knownDevicesRepositoryProvider = KnownDevicesRepositoryProvider._();
+
+/// Remembered devices (TASK-N6).
+
+final class KnownDevicesRepositoryProvider
+    extends
+        $FunctionalProvider<
+          KnownDevicesRepository,
+          KnownDevicesRepository,
+          KnownDevicesRepository
+        >
+    with $Provider<KnownDevicesRepository> {
+  /// Remembered devices (TASK-N6).
+  KnownDevicesRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'knownDevicesRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$knownDevicesRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<KnownDevicesRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  KnownDevicesRepository create(Ref ref) {
+    return knownDevicesRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(KnownDevicesRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<KnownDevicesRepository>(value),
+    );
+  }
+}
+
+String _$knownDevicesRepositoryHash() =>
+    r'58f6be326d0797d12ebef270641d43af8b0136e6';
+
+/// The remembered-devices list (temporary rows hidden).
+
+@ProviderFor(knownDevices)
+final knownDevicesProvider = KnownDevicesProvider._();
+
+/// The remembered-devices list (temporary rows hidden).
+
+final class KnownDevicesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<KnownDevice>>,
+          List<KnownDevice>,
+          Stream<List<KnownDevice>>
+        >
+    with
+        $FutureModifier<List<KnownDevice>>,
+        $StreamProvider<List<KnownDevice>> {
+  /// The remembered-devices list (temporary rows hidden).
+  KnownDevicesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'knownDevicesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$knownDevicesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<KnownDevice>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<KnownDevice>> create(Ref ref) {
+    return knownDevices(ref);
+  }
+}
+
+String _$knownDevicesHash() => r'87e726a3ec00414877f69c1a8c5a32487869b1bb';
+
+/// Startup cleanup (N6): temporary rows not seen for 7 days. The app
+/// watches it once.
+
+@ProviderFor(knownDevicesPurge)
+final knownDevicesPurgeProvider = KnownDevicesPurgeProvider._();
+
+/// Startup cleanup (N6): temporary rows not seen for 7 days. The app
+/// watches it once.
+
+final class KnownDevicesPurgeProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  /// Startup cleanup (N6): temporary rows not seen for 7 days. The app
+  /// watches it once.
+  KnownDevicesPurgeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'knownDevicesPurgeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$knownDevicesPurgeHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    return knownDevicesPurge(ref);
+  }
+}
+
+String _$knownDevicesPurgeHash() => r'035e3e1ada05363902af2e367180e2d29e36f501';
+
+/// Failed `/v1/pair/known` calls per IP of the current sharing run (N6).
+
+@ProviderFor(knownPairLimiter)
+final knownPairLimiterProvider = KnownPairLimiterProvider._();
+
+/// Failed `/v1/pair/known` calls per IP of the current sharing run (N6).
+
+final class KnownPairLimiterProvider
+    extends
+        $FunctionalProvider<
+          KnownPairLimiter,
+          KnownPairLimiter,
+          KnownPairLimiter
+        >
+    with $Provider<KnownPairLimiter> {
+  /// Failed `/v1/pair/known` calls per IP of the current sharing run (N6).
+  KnownPairLimiterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'knownPairLimiterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$knownPairLimiterHash();
+
+  @$internal
+  @override
+  $ProviderElement<KnownPairLimiter> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  KnownPairLimiter create(Ref ref) {
+    return knownPairLimiter(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(KnownPairLimiter value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<KnownPairLimiter>(value),
+    );
+  }
+}
+
+String _$knownPairLimiterHash() => r'0e800cebaf4170306c5146cb0b7698ccebfc3b13';
+
+@ProviderFor(storedScopeLoader)
+final storedScopeLoaderProvider = StoredScopeLoaderProvider._();
+
+final class StoredScopeLoaderProvider
+    extends
+        $FunctionalProvider<
+          StoredScopeLoader,
+          StoredScopeLoader,
+          StoredScopeLoader
+        >
+    with $Provider<StoredScopeLoader> {
+  StoredScopeLoaderProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'storedScopeLoaderProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$storedScopeLoaderHash();
+
+  @$internal
+  @override
+  $ProviderElement<StoredScopeLoader> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  StoredScopeLoader create(Ref ref) {
+    return storedScopeLoader(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(StoredScopeLoader value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<StoredScopeLoader>(value),
+    );
+  }
+}
+
+String _$storedScopeLoaderHash() => r'cef7dbdb27b10df1abb14f4327651baa77bfbaf7';
+
 /// What happens to a verified pairing request: the accept prompt (N3).
+/// N6: on accept, a remembered device's stored folders are seeded before
+/// the answer lists the roots.
 
 @ProviderFor(pairHandOff)
 final pairHandOffProvider = PairHandOffProvider._();
 
 /// What happens to a verified pairing request: the accept prompt (N3).
+/// N6: on accept, a remembered device's stored folders are seeded before
+/// the answer lists the roots.
 
 final class PairHandOffProvider
     extends $FunctionalProvider<PairHandOff, PairHandOff, PairHandOff>
     with $Provider<PairHandOff> {
   /// What happens to a verified pairing request: the accept prompt (N3).
+  /// N6: on accept, a remembered device's stored folders are seeded before
+  /// the answer lists the roots.
   PairHandOffProvider._()
     : super(
         from: null,
@@ -758,7 +1002,7 @@ final class PairHandOffProvider
   }
 }
 
-String _$pairHandOffHash() => r'e464bfc181321ff47e4eb6ebf79f8e765acd8cfb';
+String _$pairHandOffHash() => r'c523832b49fd7933f736f50b31c8ec50ba4e92cc';
 
 /// mDNS advertise + browse (N2).
 
@@ -1097,7 +1341,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'6c11141cd314ff1a2ad6ea17cf60657e39322fa3';
+String _$shareServerRoutesHash() => r'280154e10abafd864f7db2cad7b80dbeca0a26e9';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

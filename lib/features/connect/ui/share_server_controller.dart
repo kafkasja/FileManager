@@ -238,6 +238,7 @@ class ShareServerController extends _$ShareServerController {
     final background = _stopBackground();
     ref.read(pairNonceStoreProvider).clear();
     ref.read(pairingSecretStoreProvider).clear();
+    ref.read(knownPairLimiterProvider).clear();
     final discovery = ref.read(shareDiscoveryProvider);
     try {
       await discovery.stopAdvertising();

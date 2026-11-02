@@ -15,6 +15,12 @@ final class AcceptRequested extends AcceptGateEvent {
   const new(super.request);
 }
 
+/// A remembered device with "Always allow" connected without a prompt
+/// (TASK-N6); the share screen shows "`name` connected".
+final class AutoAccepted extends AcceptGateEvent {
+  const new(super.request);
+}
+
 /// The pending request ended (by the dialog, the timeout, the client's
 /// cancel or stop sharing).
 final class AcceptClosed extends AcceptGateEvent {
@@ -35,6 +41,7 @@ class AcceptGate {
   ConnectionRequest? _pending;
   Completer<ConnectionDecision>? _decision;
   Timer? _timer;
+
   /// Async: listeners may call [decide] from their handler.
   final StreamController<AcceptGateEvent> _events =
       StreamController.broadcast();
@@ -54,6 +61,15 @@ class AcceptGate {
     _timer = Timer(timeout, () => _finish(ConnectionDecision.timedOut));
     _events.add(AcceptRequested(request));
     return completer.future;
+  }
+
+  /// N6 "Always allow": accepts [request] without a prompt. Still serialised
+  /// with the prompt: false (the route answers `409 busy`) while one is
+  /// open.
+  bool autoAccept(ConnectionRequest request) {
+    if (_pending != null) return false;
+    _events.add(AutoAccepted(request));
+    return true;
   }
 
   /// The dialog's answer for [requestId]; false if that request is gone.
