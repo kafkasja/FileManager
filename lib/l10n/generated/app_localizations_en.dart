@@ -5035,4 +5035,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get devThrowTestError => 'Throw test error';
+
+  @override
+  String get themeColorLabel => 'Color';
+
+  @override
+  String get accentBlue => 'Blue';
+
+  @override
+  String get accentGreen => 'Green';
+
+  @override
+  String get accentPurple => 'Purple';
+
+  @override
+  String get accentOrange => 'Orange';
+
+  @override
+  String get accentMono => 'Mono';
+
+  @override
+  String get accentSystem => 'System colors';
 }

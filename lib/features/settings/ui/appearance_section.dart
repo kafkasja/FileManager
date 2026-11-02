@@ -7,9 +7,10 @@ import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/features/settings/ui/accent_swatches.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
-/// Theme mode + language (F6).
+/// Theme mode + language (F6), color theme (L1).
 class AppearanceSection extends ConsumerWidget {
   const new({super.key});
 
@@ -56,6 +57,8 @@ class AppearanceSection extends ConsumerWidget {
                 .fireAndForget(),
           ),
         ),
+        ListTile(title: Text(l10n.themeColorLabel)),
+        const AccentSwatches(),
         ListTile(
           title: Text(l10n.languageLabel),
           trailing: DropdownButton<String>(

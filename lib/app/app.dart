@@ -36,6 +36,8 @@ class _AppState extends ConsumerState<App> {
       onPause: _flush,
       onHide: _flush,
       onDetach: _flush,
+      // L1: pick up a new wallpaper palette ("System colors").
+      onResume: () => ref.invalidate(systemAccentSeedProvider),
     );
   }
 
@@ -77,11 +79,18 @@ class _AppState extends ConsumerState<App> {
       // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
       // the set stays loaded without rebuilding the app on each change.
       ..listen(favoriteIdsProvider, (_, _) {});
+    // L1: color theme; System without a wallpaper palette falls back to blue.
+    final accent = ref.watch(themeAccentProvider).value ?? AppAccent.blue;
+    final seed = accentSeed(
+      accent,
+      systemSeed: ref.watch(systemAccentSeedProvider).value,
+    );
+    final mono = accent == AppAccent.mono;
     return MaterialApp.router(
       routerConfig: ref.watch(routerProvider),
       onGenerateTitle: (context) => context.l10n.appTitle,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
+      theme: buildTheme(Brightness.light, seed: seed, monochrome: mono),
+      darkTheme: buildTheme(Brightness.dark, seed: seed, monochrome: mono),
       themeMode: ref.watch(themeModeProvider).value ?? ThemeMode.system,
       locale: ref.watch(appLocaleProvider).value,
       supportedLocales: AppLocalizations.supportedLocales,

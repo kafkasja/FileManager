@@ -1,4 +1,7 @@
+import 'package:dynamic_color/dynamic_color.dart' show DynamicColorPlugin;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
+import 'package:kfm/app/theme/app_accent.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -32,3 +35,22 @@ Stream<Locale?> appLocale(Ref ref) => ref
     .watch(settingsRepositoryProvider)
     .watch(AppSettings.localeTag)
     .map(localeFromTag);
+
+/// L1 color theme (separate key from [themeMode]).
+@Riverpod(keepAlive: true)
+Stream<AppAccent> themeAccent(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watch(AppSettings.themeAccent);
+
+/// L1: the wallpaper's primary color on Android 12+, null elsewhere (older
+/// Android, desktop, host tests). "System colors" is offered only when this
+/// is non-null. The app re-reads it on resume, so a wallpaper change shows.
+@Riverpod(keepAlive: true)
+Future<Color?> systemAccentSeed(Ref ref) async {
+  try {
+    final palette = await DynamicColorPlugin.getCorePalette();
+    return palette == null ? null : Color(palette.primary.get(40));
+  } on PlatformException {
+    // "No wallpaper palette" is a normal answer here, not an error to show.
+    return null;
+  }
+}

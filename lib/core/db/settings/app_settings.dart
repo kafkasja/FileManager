@@ -1,3 +1,4 @@
+import 'package:kfm/app/theme/app_accent.dart';
 import 'package:kfm/core/db/settings/setting_key.dart';
 import 'package:kfm/core/files/file_query.dart';
 
@@ -7,6 +8,13 @@ abstract final class AppSettings {
   static final SettingKey<String> themeMode = SettingKey.string(
     'themeMode',
     'system',
+  );
+
+  /// L1. Color theme; unknown or corrupt values read as blue (the default).
+  static final SettingKey<AppAccent> themeAccent = SettingKey.enumeration(
+    'theme.accent',
+    AppAccent.blue,
+    AppAccent.values,
   );
 
   /// F6. '' = follow the system language.
