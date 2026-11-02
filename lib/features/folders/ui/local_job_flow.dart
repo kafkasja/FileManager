@@ -13,6 +13,7 @@ import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/external_storage/ui/place_labels.dart';
 import 'package:kfm/features/folders/data/fat_names.dart';
 import 'package:kfm/features/folders/data/local_job_providers.dart';
@@ -33,6 +34,15 @@ bool needsLocalJob(WidgetRef ref, List<FileRef> files, String target) {
       ref.read(localJobRunnerProvider) != null &&
       files.any((f) => fs.isCrossPlace(f, target));
 }
+
+/// U3: whether a job into [targetPlace] from [sourcePlaces] would touch a
+/// place that is being ejected (refused before the job is created).
+bool jobTouchesEjectingPlace(
+  VolumeActivity activity, {
+  required String targetPlace,
+  required Iterable<String> sourcePlaces,
+}) =>
+    activity.isEjecting(targetPlace) || sourcePlaces.any(activity.isEjecting);
 
 /// The place browser's Copy to / Move to: the B4 picker (with Places),
 /// then a local job (or nothing when dismissed).
@@ -89,6 +99,17 @@ Future<void> startLocalJobFlow(
   final placeId =
       routingOf(fs)?.placeOfFolder(target) ?? placeIdOfFolder(target);
   final place = places.where((p) => p.id == placeId).firstOrNull;
+  // U3: no new work for a place that is being ejected (the job would only
+  // pause itself at its first file).
+  final routing = routingOf(fs);
+  if (jobTouchesEjectingPlace(
+    ref.read(volumeActivityTrackerProvider),
+    targetPlace: placeId,
+    sourcePlaces: routing == null ? const [] : files.map(routing.placeOfFile),
+  )) {
+    say(l10n.ejectRefused);
+    return;
+  }
   final total = files.fold(0, (s, f) => s + f.sizeBytes);
   final free = await fs.freeBytes(target) ?? place?.freeBytes;
   if (free != null && total * 1.01 > free) {

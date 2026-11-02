@@ -147,11 +147,17 @@ class VolumesChannel implements VolumesPlatform {
   Future<int> sdkInt() async =>
       _sdk ??= await _channel.invokeMethod<int>('sdkInt') ?? 0;
 
-  @override
-  Stream<VolumeEvent> events() => _events
+  /// One platform stream for every listener: each `receiveBroadcastStream()`
+  /// call replaces the channel's message handler, so a second one would
+  /// silently take the events away from the first (U3 emulator check:
+  /// places stopped refreshing once the watcher listened too).
+  late final Stream<VolumeEvent> _shared = _events
       .receiveBroadcastStream()
       .where((e) => e is Map)
       .map((e) => parseVolumeEvent(e as Map<Object?, Object?>));
+
+  @override
+  Stream<VolumeEvent> events() => _shared;
 }
 
 @visibleForTesting

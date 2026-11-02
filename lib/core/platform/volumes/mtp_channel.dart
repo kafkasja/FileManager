@@ -114,5 +114,10 @@ class MtpChannel implements MtpPlatform {
       false;
 
   @override
-  Stream<void> changes() => _events.receiveBroadcastStream().map((_) {});
+  Stream<void> changes() => _changes;
+
+  /// One platform stream for every listener (see `VolumesChannel.events`).
+  late final Stream<void> _changes = _events.receiveBroadcastStream().map(
+    (_) {},
+  );
 }

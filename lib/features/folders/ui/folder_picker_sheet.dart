@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show FutureProviderFamily;
+import 'package:kfm/app/file_op_messages.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -356,7 +357,28 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
         builder: (_) => _NewFolderDialog(parent: parent, taken: taken),
       );
       if (name == null || !mounted) return;
-      final path = await _createOrFind(parent, name);
+      final String? path;
+      try {
+        path = await _createOrFind(parent, name);
+      } on FileOpException catch (e) {
+        // U3: e.g. refused while the place is being ejected. A dialog: a
+        // snackbar would sit under this sheet.
+        if (!mounted) return;
+        final l10n = context.l10n;
+        await showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            content: Text(folderOpFailureMessage(l10n, e, name)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(MaterialLocalizations.of(context).okButtonLabel),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
       if (!mounted) return;
       if (path != null) {
         await _pick(path, needsAccess: false);

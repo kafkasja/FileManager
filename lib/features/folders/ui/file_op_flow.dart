@@ -230,7 +230,7 @@ Future<void> createFolderIn(
     await ref.read(folderOpsProvider).createFolder(parent, name);
     text = l10n.browseFolderCreated(name);
   } on FileOpException catch (e) {
-    text = _folderFailure(l10n, e, name);
+    text = folderOpFailureMessage(l10n, e, name);
   }
   messenger
     ..hideCurrentSnackBar()
@@ -271,20 +271,9 @@ Future<void> renameFolderFlow(
         .recordFolderRename(renamed);
     host.show(l10n.opFolderRenamed(nameOf(renamed.newPath)), undo: true);
   } on FileOpException catch (e) {
-    host.show(_folderFailure(l10n, e, name));
+    host.show(folderOpFailureMessage(l10n, e, name));
   }
 }
-
-String _folderFailure(AppLocalizations l, FileOpException e, String name) =>
-    switch (e.failure) {
-      FileOpFailure.targetExists => l.nameExists,
-      FileOpFailure.invalidName => l.nameInvalid,
-      FileOpFailure.permissionDenied ||
-      FileOpFailure.unsupported => l.fileOpNeedsAllFiles,
-      FileOpFailure.notFound => l.fileOpNotFound(name),
-      FileOpFailure.volumeEjecting => l.ejectRefused,
-      _ => l.fileOpFailedGeneric(name),
-    };
 
 /// A one-field name dialog (file rename, folder rename, new folder).
 /// Returns the trimmed, valid name, or null when cancelled.

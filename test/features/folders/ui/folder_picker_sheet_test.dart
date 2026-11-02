@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
 
@@ -16,6 +17,13 @@ FakeFileSource _library() => FakeFileSource()
   ..addFile('$_root/DCIM/Camera/c2.jpg')
   ..addFile('$_root/DCIM/Holiday/h1.jpg')
   ..addFile('$_root/Download/manual.pdf');
+
+/// U3: every new folder is refused (the place is being ejected).
+class _EjectingFiles extends FakeFileSource {
+  @override
+  Future<String> createFolder(String parentPath, String name) async =>
+      throw FileOpException(FileOpFailure.volumeEjecting, parentPath);
+}
 
 /// Opens the picker from inside the app and collects what it returns.
 Future<List<String?>> _open(
@@ -165,6 +173,23 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Manuals');
     await _tapText(tester, 'Create');
     expect(picked, ['$_root/Download/Manuals']);
+  });
+
+  testWidgets('New folder refused while ejecting says why and picks '
+      'nothing', (tester) async {
+    final files = _EjectingFiles()..addFile('$_root/DCIM/Camera/c1.jpg');
+    await pumpApp(tester, files: files);
+    final picked = await _open(tester, mode: FolderPickerMode.copy);
+    await _tapText(tester, 'Internal storage');
+    await _tapText(tester, 'DCIM');
+    await _tapText(tester, 'New folder…');
+    await tester.enterText(find.byType(TextField), 'Trip');
+    await _tapText(tester, 'Create');
+    expect(find.text('This storage is being ejected'), findsOneWidget);
+    await _tapText(tester, 'OK');
+    expect(find.text('This storage is being ejected'), findsNothing);
+    expect(picked, isEmpty);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('without All files access: media folders pick without the '

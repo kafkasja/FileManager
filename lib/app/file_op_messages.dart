@@ -55,6 +55,21 @@ String fileOpFailureMessage(
   };
 }
 
+/// Why a folder could not be created or renamed ([name] = the folder).
+String folderOpFailureMessage(
+  AppLocalizations l,
+  FileOpException e,
+  String name,
+) => switch (e.failure) {
+  FileOpFailure.targetExists => l.nameExists,
+  FileOpFailure.invalidName => l.nameInvalid,
+  FileOpFailure.permissionDenied ||
+  FileOpFailure.unsupported => l.fileOpNeedsAllFiles,
+  FileOpFailure.notFound => l.fileOpNotFound(name),
+  FileOpFailure.volumeEjecting => l.ejectRefused,
+  _ => l.fileOpFailedGeneric(name),
+};
+
 /// "Not enough space (needs 3 GB, 1 GB free)".
 String spaceRefusedMessage(
   AppLocalizations l, {
