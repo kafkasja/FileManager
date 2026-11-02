@@ -174,6 +174,20 @@ class FilesChannel {
       })) ??
       false;
 
+  /// H5: Android share sheet for an app file under `filesDir/logs/export/`
+  /// (FileProvider). False when no app can receive it.
+  Future<bool> shareFile({
+    required String path,
+    required String mime,
+    required String subject,
+  }) async =>
+      (await _invoke<bool>('shareFile', {
+        'path': path,
+        'mime': mime,
+        'subject': subject,
+      })) ??
+      false;
+
   /// C5: EXIF GPS + front camera per MediaStore image id (own executor on
   /// the Kotlin side). Rows: `{id, lat?, lng?, frontCamera,
   /// locationReadable}` or `{id, error}`.

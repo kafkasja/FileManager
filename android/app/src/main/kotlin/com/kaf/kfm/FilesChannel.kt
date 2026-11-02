@@ -3,6 +3,7 @@ package com.kaf.kfm
 import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
@@ -212,6 +213,11 @@ class FilesChannel(
                         call.argument<String>("contentUri"),
                         call.argument<String>("path"),
                         call.argument<String>("mime"),
+                    )
+                    "shareFile" -> shareFile(
+                        call.stringArg("path"),
+                        call.stringArg("mime"),
+                        call.argument<String>("subject"),
                     )
                     "canManageMedia" -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                         MediaStore.canManageMedia(context)
@@ -1170,6 +1176,30 @@ class FilesChannel(
         @Suppress("DEPRECATION")
         if (context.packageManager.queryIntentActivities(view, 0).isEmpty()) return false
         val chooser = Intent.createChooser(view, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            context.startActivity(chooser)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    // ---- share a log export (TASK-H5) ----
+
+    /**
+     * Share sheet for an app file (only `filesDir/logs/export/` is served by the
+     * FileProvider). No result is needed, so the dialog slot isn't used.
+     */
+    private fun shareFile(path: String, mime: String, subject: String?): Boolean {
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(path))
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(mime)
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        if (subject != null) send.putExtra(Intent.EXTRA_SUBJECT, subject)
+        send.clipData = ClipData.newRawUri(subject ?: "", uri)
+        val chooser = Intent.createChooser(send, null)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
         return try {
             context.startActivity(chooser)
             true

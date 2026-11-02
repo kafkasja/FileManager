@@ -3146,5 +3146,17 @@
   "remoteSwipeDiscardTitle": "Discard the swipe session on {device}?",
   "@remoteSwipeDiscardTitle": {"placeholders": {"device": {"type": "String"}}},
   "remoteSwipeDiscardBody": "Your swipes there are forgotten. Nothing is deleted on that device.",
-  "remoteSwipeUnknownDevice": "the other device"
+  "remoteSwipeUnknownDevice": "the other device",
+  "errorLogShare": "Share error log",
+  "errorLogShareSubtitle": "{count, plural, =1{1 error} other{{count} errors}}. Stays on this phone until you share it. Folder and file names are hidden.",
+  "@errorLogShareSubtitle": {"description": "Settings → About (H5). Tag and preset names may still appear.", "placeholders": {"count": {"type": "int"}}},
+  "errorLogEmpty": "No errors logged",
+  "errorLogShareSubject": "KFM error log",
+  "errorLogShareFailed": "Couldn't share the error log",
+  "errorLogClear": "Clear error log",
+  "errorLogClearConfirm": "Clear the error log? This can't be undone.",
+  "errorLogCleared": "Error log cleared",
+  "errorLogClearFailed": "Couldn't clear the error log",
+  "devThrowTestError": "Throw test error",
+  "@devThrowTestError": {"description": "Debug-only Developer tile (H5): throws an uncaught error to test the error log."}
 }

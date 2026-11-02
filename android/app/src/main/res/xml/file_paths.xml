@@ -4,4 +4,6 @@
     <external-path name="external" path="." />
     <root-path name="sd" path="/storage" />
     <cache-path name="cache" path="." />
+    <!-- H5: only the error-log export folder, never the DB or logs/ itself. -->
+    <files-path name="logs" path="logs/export/" />
 </paths>
