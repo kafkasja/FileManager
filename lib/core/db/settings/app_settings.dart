@@ -312,6 +312,20 @@ abstract final class AppSettings {
     'aiLabels.cardDismissed',
     defaultValue: false,
   );
+
+  /// U1: SAF grants per volume uuid → persisted tree URI.
+  static final SettingKey<Map<String, String>> externalSafGrants =
+      SettingKey<Map<String, String>>(
+        'external.safGrants',
+        const {},
+        decode: (j) => j is Map
+            ? {
+                for (final MapEntry(:key, :value) in j.entries)
+                  if (key is String && value is String) key: value,
+              }
+            : const {},
+        encode: (v) => v,
+      );
 }
 
 /// B4: the action of a drag & drop onto a folder.

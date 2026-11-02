@@ -64,6 +64,8 @@ class FilesChannel(
     private val context: Context get() = activity.applicationContext
     /** The Dart call waiting for the one system dialog that can be open (TASK-H1). */
     private var pendingResult: MethodChannel.Result? = null
+    /** U1 (shared with X3): SAF tree picker and persisted grants. */
+    private val safTrees = SafTrees(activity)
 
     /** N7: Files-table changes (non-media files) while the share server runs. */
     private val changesChannel = EventChannel(messenger, "kfm/files_changes")
@@ -98,6 +100,7 @@ class FilesChannel(
             }
         }
         channel.setMethodCallHandler(null)
+        safTrees.dispose()
         stopObservingFiles()
         changesSink = null
         changesChannel.setStreamHandler(null)
@@ -109,7 +112,8 @@ class FilesChannel(
     }
 
     /** Forwarded from MainActivity.onActivityResult. Returns true if handled. */
-    fun onActivityResult(requestCode: Int, resultCode: Int): Boolean {
+    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        if (safTrees.onActivityResult(requestCode, resultCode, data)) return true
         if (requestCode != CONSENT_REQUEST) return false
         val r = pendingResult
         if (r == null) {
@@ -124,6 +128,10 @@ class FilesChannel(
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        if (safTrees.handles(call.method)) {
+            safTrees.onMethodCall(call, result)
+            return
+        }
         when (call.method) {
             "requestWriteConsent" -> {
                 requestWriteConsent(call, result)
@@ -212,7 +220,6 @@ class FilesChannel(
                         call.argument<String>("mime"),
                     )
                     "scanPaths" -> scanPaths(call.argument<List<String>>("paths") ?: emptyList())
-                    "storageVolumes" -> storageVolumes()
                     "hasAllFilesAccess" -> canUseFiles()
                     "listTrashed" -> listTrashed()
                     "openWith" -> openWith(
@@ -1148,21 +1155,6 @@ class FilesChannel(
         } catch (e: Exception) {
             result.error("IO", e.toString(), null)
         }
-    }
-
-    // ---- volumes ----
-
-    private fun storageVolumes(): List<Map<String, Any?>> {
-        val primary = Environment.getExternalStorageDirectory().path
-        val out = mutableListOf<Map<String, Any?>>(
-            mapOf("path" to primary, "label" to null, "removable" to false, "primary" to true),
-        )
-        // getExternalFilesDirs gives <volume>/Android/data/<pkg>/files for each mounted volume.
-        for (dir in context.getExternalFilesDirs(null).drop(1)) {
-            val root = dir?.path?.substringBefore("/Android/data/") ?: continue
-            out.add(mapOf("path" to root, "label" to null, "removable" to true, "primary" to false))
-        }
-        return out
     }
 
     // ---- helpers ----

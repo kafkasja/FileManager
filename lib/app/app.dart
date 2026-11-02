@@ -11,6 +11,7 @@ import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/external_storage/data/places_watcher.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/similar/data/similar_scan_job.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
@@ -67,6 +68,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(smartGroupsJobProvider)
       // C3: on-device labels (idle until turned on with models installed).
       ..watch(labelingJobProvider)
+      // U1: hides index rows of detached volumes, scans mounted ones.
+      ..watch(placesWatcherProvider)
       // P2: tags/favorites follow files whose id changes.
       ..watch(fileIdRekeyerProvider)
       // H5: failed queued writes also go to the error log.

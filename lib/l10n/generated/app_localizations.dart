@@ -7358,6 +7358,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This is how text will look.'**
   String get textSizePreview;
+
+  /// U1 section title above the storage places (internal storage, SD card, USB drive, camera) on the Browse root.
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get externalPlacesTitle;
+
+  /// U1 place row: the phone's own storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal storage'**
+  String get externalInternal;
+
+  /// U1 place row when Android doesn't say whether it is an SD card or a USB drive.
+  ///
+  /// In en, this message translates to:
+  /// **'External storage'**
+  String get externalGeneric;
+
+  /// U1 place row label for an SD card without a name.
+  ///
+  /// In en, this message translates to:
+  /// **'SD card'**
+  String get externalSdCard;
+
+  /// U1 place row label for a USB drive without a name.
+  ///
+  /// In en, this message translates to:
+  /// **'USB drive'**
+  String get externalUsbDrive;
+
+  /// U1 place row subtitle, e.g. '12.3 GB free of 64 GB'.
+  ///
+  /// In en, this message translates to:
+  /// **'{free} free of {total}'**
+  String externalFreeOf(String free, String total);
+
+  /// U1 snackbar when an SD card / USB drive / camera is plugged in.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} connected'**
+  String externalAttached(String label);
+
+  /// U1 snackbar action: open the place that was just connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get externalOpen;
+
+  /// U1 snackbar when an SD card / USB drive is unplugged or unmounted.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage removed'**
+  String get externalRemoved;
+
+  /// U1 title of the one-time explanation before the system folder picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow access to {label}'**
+  String externalGrantTitle(String label);
+
+  /// U1 one-time explanation before the system folder picker for an SD card or USB drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Android asks once which drive KFM may use. On the next screen, choose the drive itself (not a folder inside it) and tap “Use this folder”.'**
+  String get externalGrantExplain;
+
+  /// U1 button that opens the system folder picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get externalGrantContinue;
+
+  /// U1 title when the user picked a folder inside the drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the drive itself'**
+  String get externalPickRootTitle;
+
+  /// U1 explanation when the user picked a subfolder in the system folder picker; nothing was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'That was a folder inside the drive. Pick the drive’s top level so KFM can see all of it.'**
+  String get externalPickRootHint;
+
+  /// U1 button that reopens the system folder picker after a wrong pick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick again'**
+  String get externalRetry;
+
+  /// U1 snackbar when the folder grant could not be kept.
+  ///
+  /// In en, this message translates to:
+  /// **'Android didn’t keep the access. Try again.'**
+  String get externalGrantFailed;
+
+  /// U1 help shown when a USB stick is plugged in but no storage appears within a few seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'The USB drive didn’t open. Android reads FAT32 and exFAT drives; NTFS drives often don’t work. Reformat it on a computer or try another drive.'**
+  String get externalFormatHelp;
+
+  /// U1 place row for a camera connected over USB.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera · {model}'**
+  String externalCameraLabel(String model);
+
+  /// U1 when a USB camera can't be opened (another app holds it or the phone doesn't allow it).
+  ///
+  /// In en, this message translates to:
+  /// **'This camera can’t be opened here. Close other camera apps, or set the camera to USB mass storage.'**
+  String get externalCameraUnsupported;
+
+  /// U1 camera row subtitle while the USB permission isn't granted.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission needed · Tap to allow'**
+  String get externalPermissionNeeded;
+
+  /// U1 camera row subtitle when the camera is connected and allowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · read-only'**
+  String get externalCameraReadOnly;
+
+  /// U1 snackbar when a connected camera is tapped (browsing cameras comes later).
+  ///
+  /// In en, this message translates to:
+  /// **'Opening cameras isn’t available yet.'**
+  String get externalCameraNotYet;
+
+  /// U1 places section error row.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read the storage list.'**
+  String get externalLoadError;
 }
 
 class _AppLocalizationsDelegate

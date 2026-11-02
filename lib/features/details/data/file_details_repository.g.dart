@@ -49,7 +49,7 @@ final class DetailsPlatformProvider
   }
 }
 
-String _$detailsPlatformHash() => r'a3edf79dc9bc9392a33ee070326360867025fd63';
+String _$detailsPlatformHash() => r'47c864e61ab778e95fca6d1b9b129c571f49943d';
 
 /// Parsed once per app run.
 

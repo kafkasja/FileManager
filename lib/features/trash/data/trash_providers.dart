@@ -8,6 +8,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/trash/data/trash_ledger.dart';
@@ -65,7 +66,23 @@ Future<int> startupMaintenance(Ref ref) async {
   final canUseFolder = folder != null && access.canSeeAllFiles;
   // 1. H2: files moved in just before a kill get rows, so H1's lookup sees
   // them.
-  if (canUseFolder) await folder.reconcile([androidPrimaryRoot]);
+  if (canUseFolder) {
+    // U1: every mounted volume reached by path (SD card, USB drive).
+    List<String> roots;
+    try {
+      roots = await pendingFolderRoots(ref, primaryRoot: androidPrimaryRoot);
+    } on Object catch (e, st) {
+      // Volumes unreadable: internal storage still gets its rows.
+      developer.log(
+        'places failed; reconciling internal storage only',
+        name: 'kfm.trash',
+        error: e,
+        stackTrace: st,
+      );
+      roots = const [androidPrimaryRoot];
+    }
+    await folder.reconcile(roots);
+  }
   // 2. D2/H1: rows stuck in `committing` (also without All files access).
   await ref.read(deleteQueueProvider).recoverStuck();
   // H2/V1: deletes the folder couldn't take try again once it works (e.g.

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- U1: cameras over USB (PTP/MTP: still image interface class 6). -->
+<resources>
+    <usb-device class="6" />
+</resources>

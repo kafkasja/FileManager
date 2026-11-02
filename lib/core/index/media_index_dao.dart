@@ -48,6 +48,45 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
 
   static const changeDebounce = Duration(milliseconds: 300);
 
+  Set<String> _excludedRoots = const {};
+
+  /// U1: volume roots (e.g. `/storage/1234-ABCD`) of detached storage. Their
+  /// rows stay in the index (tags, favorites, reviewed labels survive a
+  /// replug) but every query leaves them out (`_applyQuery`, the folder
+  /// lists). Unfiltered helpers ([byId], [countByKind]) still see them.
+  Set<String> get excludedRoots => _excludedRoots;
+
+  /// Replaces [excludedRoots]; a change reloads every open view.
+  void setExcludedRoots(Set<String> roots) {
+    if (roots.length == _excludedRoots.length &&
+        roots.containsAll(_excludedRoots)) {
+      return;
+    }
+    _excludedRoots = Set.unmodifiable(roots);
+    attachedDatabase.notifyUpdates({
+      TableUpdate.onTable(mediaIndex, kind: UpdateKind.update),
+    });
+  }
+
+  /// U1: the roots of removable volumes that have indexed rows
+  /// (`/storage/<id>`, never `/storage/emulated/…`).
+  Future<Set<String>> indexedVolumeRoots() async {
+    final col = mediaIndex.folderPath;
+    final rows =
+        await (selectOnly(mediaIndex, distinct: true)
+              ..addColumns([col])
+              ..where(
+                col.like('/storage/%') & col.like('/storage/emulated/%').not(),
+              ))
+            .get();
+    return {
+      for (final r in rows)
+        if (_removableRoot.firstMatch(r.read(col)!) case final m?) m.group(0)!,
+    };
+  }
+
+  static final _removableRoot = RegExp('^/storage/[^/]+');
+
   Future<IndexPage> page(
     IndexQuery q, {
     IndexCursor? after,
@@ -206,8 +245,12 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     final query = selectOnly(mediaIndex)
       ..addColumns([mediaIndex.folderPath, count])
       ..groupBy([mediaIndex.folderPath])
-      ..orderBy([OrderingTerm.asc(mediaIndex.folderPath)]);
-    if (scope != null) query.where(_applyQuery(mediaIndex, scope));
+      ..orderBy([OrderingTerm.asc(mediaIndex.folderPath)])
+      ..where(
+        scope != null
+            ? _applyQuery(mediaIndex, scope)
+            : _notExcluded(mediaIndex),
+      );
     final rows = await query.get();
     return [
       for (final r in rows)
@@ -356,16 +399,20 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
 
   /// Removes rows of [kinds] (under [rootPath], if given) that the full scan
   /// [generation] didn't see. Returns the number removed.
+  /// U1: rows under [keepUnder] (roots of detached volumes) are never
+  /// removed: their files are only away.
   Future<int> deleteOlderThanGeneration(
     int generation, {
     required Set<FileKind> kinds,
     String? rootPath,
     bool recursive = true,
+    Set<String> keepUnder = const {},
   }) =>
       (delete(mediaIndex)..where((t) {
             var where =
                 t.scanGeneration.isSmallerThanValue(generation) &
-                t.kind.isIn([for (final k in kinds) k.index]);
+                t.kind.isIn([for (final k in kinds) k.index]) &
+                _outside(t, keepUnder);
             if (rootPath != null) {
               final here = t.folderPath.equals(rootPath);
               where =
@@ -419,9 +466,24 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
   Expression<bool> whereFor($MediaIndexTable t, IndexQuery q) =>
       _applyQuery(t, q);
 
+  /// U1: not under any of [excludedRoots].
+  Expression<bool> _notExcluded($MediaIndexTable t) =>
+      _outside(t, _excludedRoots);
+
+  static Expression<bool> _outside($MediaIndexTable t, Set<String> roots) {
+    Expression<bool> where = const Constant(true);
+    for (final root in roots) {
+      where =
+          where &
+          t.folderPath.equals(root).not() &
+          t.folderPath.like('${_escapeLike(root)}/%', escapeChar: r'\').not();
+    }
+    return where;
+  }
+
   /// The one place query filters become SQL (P5 adds its joins here).
   Expression<bool> _applyQuery($MediaIndexTable t, IndexQuery q) {
-    Expression<bool> where = const Constant(true);
+    var where = _notExcluded(t);
     if (q.kinds.isNotEmpty) {
       where = where & t.kind.isIn([for (final k in q.kinds) k.index]);
     }

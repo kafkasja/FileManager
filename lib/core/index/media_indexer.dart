@@ -65,7 +65,9 @@ class MediaIndexer {
     this.fileChangeDebounce = const Duration(seconds: 2),
     this.reconcileMinInterval = const Duration(seconds: 10),
     this._hasNoMediaMarker = _noMediaOnDisk,
-  }) : _source = source {
+    Future<Set<String>> Function()? keepRoots,
+  }) : _source = source,
+       _keepRoots = keepRoots ?? _noRoots {
     _idSub = source.idChanges.listen(
       (c) => unawaited(_serial(() => _dao.applyIdChange(c))),
     );
@@ -82,6 +84,13 @@ class MediaIndexer {
 
   /// Whether a folder holds a `.nomedia` file (its files are hidden).
   final Future<bool> Function(String folderPath) _hasNoMediaMarker;
+
+  /// U1: roots of detached volumes, read when a scan is about to delete
+  /// (never from cached state): their rows are kept, and live deletes of
+  /// their files are ignored. A failure fails the job before any delete.
+  final Future<Set<String>> Function() _keepRoots;
+
+  static Future<Set<String>> _noRoots() async => const {};
 
   static Future<bool> _noMediaOnDisk(String folder) =>
       File('$folder/.nomedia').exists();
@@ -156,6 +165,21 @@ class MediaIndexer {
   });
 
   Future<void> incremental() => _serial(_incremental);
+
+  /// U1: a volume was mounted: upsert what is under [rootPath] (its files
+  /// keep old modified times, so an incremental scan would miss them).
+  /// Never deletes; the daily full scan removes ids MediaStore re-numbered.
+  Future<void> scanRoot(String rootPath) => _serial(() async {
+    final generation = await _settings.read(AppSettings.indexGeneration);
+    final query = FileQuery(
+      kinds: _allowedKinds(),
+      rootPath: rootPath,
+      includeHidden: _canSeeAllFiles(),
+    );
+    await for (final page in _source.scan(query: query)) {
+      await _dao.upsertBatch(page, generation, now: _clock());
+    }
+  });
 
   /// Files this app brought back (trash restore): back into the index now,
   /// since their modified time is old and an incremental scan skips them.
@@ -234,7 +258,17 @@ class MediaIndexer {
     _pendingDeletes.clear();
     _pendingMediaFullScan = false;
     _pendingIncremental = false;
-    if (deletes.isNotEmpty) await _dao.deleteIds(deletes);
+    if (deletes.isNotEmpty) {
+      final keep = await _keepRoots();
+      await _dao.deleteIds(
+        keep.isEmpty
+            ? deletes
+            : [
+                for (final ref in await _dao.byIds(deletes))
+                  if (!_isUnder(ref.folderPath, keep)) ref.id,
+              ],
+      );
+    }
     if (mediaFull) {
       await _fullScan(mediaKinds, isFirstScan: false);
     } else if (incremental) {
@@ -311,6 +345,7 @@ class MediaIndexer {
       kinds: kinds,
       rootPath: rootPath,
       recursive: recursive,
+      keepUnder: await _keepRoots(),
     );
   }
 
@@ -330,6 +365,9 @@ class MediaIndexer {
   }
 
   static final _volumeRoot = RegExp(r'^/storage/(emulated/\d+|[^/]+)');
+
+  static bool _isUnder(String folder, Set<String> roots) =>
+      roots.any((r) => folder == r || folder.startsWith('$r/'));
 
   /// [roots] without the ones inside another of them.
   static List<String> _outermost(Set<String> roots) => [
@@ -359,7 +397,11 @@ class MediaIndexer {
       found += page.length;
       _emit(IndexScanning(found: found, isFirstScan: isFirstScan));
     }
-    await _dao.deleteOlderThanGeneration(generation, kinds: kinds);
+    await _dao.deleteOlderThanGeneration(
+      generation,
+      kinds: kinds,
+      keepUnder: await _keepRoots(),
+    );
     // Only a scan of every allowed kind counts as "the" full scan: a
     // reconciliation or live-change scan of some media kinds must not push
     // back the 24 h scan of the rest (non-media walker files), nor move the

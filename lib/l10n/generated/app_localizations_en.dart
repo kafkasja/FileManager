@@ -5224,4 +5224,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get textSizePreview => 'This is how text will look.';
+
+  @override
+  String get externalPlacesTitle => 'Places';
+
+  @override
+  String get externalInternal => 'Internal storage';
+
+  @override
+  String get externalGeneric => 'External storage';
+
+  @override
+  String get externalSdCard => 'SD card';
+
+  @override
+  String get externalUsbDrive => 'USB drive';
+
+  @override
+  String externalFreeOf(String free, String total) {
+    return '$free free of $total';
+  }
+
+  @override
+  String externalAttached(String label) {
+    return '$label connected';
+  }
+
+  @override
+  String get externalOpen => 'Open';
+
+  @override
+  String get externalRemoved => 'Storage removed';
+
+  @override
+  String externalGrantTitle(String label) {
+    return 'Allow access to $label';
+  }
+
+  @override
+  String get externalGrantExplain =>
+      'Android asks once which drive KFM may use. On the next screen, choose the drive itself (not a folder inside it) and tap “Use this folder”.';
+
+  @override
+  String get externalGrantContinue => 'Continue';
+
+  @override
+  String get externalPickRootTitle => 'Pick the drive itself';
+
+  @override
+  String get externalPickRootHint =>
+      'That was a folder inside the drive. Pick the drive’s top level so KFM can see all of it.';
+
+  @override
+  String get externalRetry => 'Pick again';
+
+  @override
+  String get externalGrantFailed =>
+      'Android didn’t keep the access. Try again.';
+
+  @override
+  String get externalFormatHelp =>
+      'The USB drive didn’t open. Android reads FAT32 and exFAT drives; NTFS drives often don’t work. Reformat it on a computer or try another drive.';
+
+  @override
+  String externalCameraLabel(String model) {
+    return 'Camera · $model';
+  }
+
+  @override
+  String get externalCameraUnsupported =>
+      'This camera can’t be opened here. Close other camera apps, or set the camera to USB mass storage.';
+
+  @override
+  String get externalPermissionNeeded => 'Permission needed · Tap to allow';
+
+  @override
+  String get externalCameraReadOnly => 'Connected · read-only';
+
+  @override
+  String get externalCameraNotYet => 'Opening cameras isn’t available yet.';
+
+  @override
+  String get externalLoadError => 'Couldn’t read the storage list.';
 }

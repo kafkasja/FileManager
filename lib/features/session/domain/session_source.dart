@@ -6,6 +6,17 @@ library;
 const String kLocalSourceId = 'local';
 
 const String _remotePrefix = 'remote:';
+const String _externalPrefix = 'external:';
+
+/// U1/U2: the source id of an external place (`StoragePlace.id`).
+String externalSourceId(String placeId) => '$_externalPrefix$placeId';
+
+/// The place id of an external source id, else null.
+String? placeOfSourceId(String sourceId) =>
+    sourceId.startsWith(_externalPrefix) &&
+        sourceId.length > _externalPrefix.length
+    ? sourceId.substring(_externalPrefix.length)
+    : null;
 
 /// The source id of the connected device [peerFingerprint].
 String remoteSourceId(String peerFingerprint) =>

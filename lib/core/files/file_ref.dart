@@ -54,6 +54,8 @@ class FileRef {
   /// - `path:<absolutePath>`: everything else on Android/Windows
   /// - `ph:<PHAsset.localIdentifier>`: iOS photos (PL2)
   /// - `remote:<deviceId>:<id>`: files on a connected device (N7)
+  /// - `saf:<treeUri>|<documentId>`, `mtp:<usbDevice>|<storageId>|<handle>`:
+  ///   external places (U1/U2; build and parse with `file_ids.dart`)
   /// Ids can change on move/rename: see `FileSource.idChanges`.
   final String id;
 

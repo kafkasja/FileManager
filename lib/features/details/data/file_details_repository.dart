@@ -9,6 +9,8 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/source_rule.dart';
+import 'package:kfm/core/platform/volumes/volumes_channel.dart';
+import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/features/details/domain/file_details.dart';
 import 'package:kfm/features/details/domain/known_files.dart';
 import 'package:kfm/features/details/domain/path_app.dart';
@@ -29,13 +31,16 @@ abstract interface class DetailsPlatform {
 
   /// One EXIF row for an `ms:` id ([mediaId]) or a `path:` file.
   Future<MediaRow?> exif({int? mediaId, String? path});
+
+  /// `{path, label?, primary}` per mounted volume.
   Future<List<MediaRow>> storageVolumes();
 }
 
 class ChannelDetailsPlatform implements DetailsPlatform {
-  const new(this._channel);
+  const new(this._channel, this._volumes);
 
   final FilesChannel _channel;
+  final VolumesPlatform _volumes;
 
   @override
   Future<MediaRow> fileDetails(String path, {int? id}) =>
@@ -60,7 +65,17 @@ class ChannelDetailsPlatform implements DetailsPlatform {
   }
 
   @override
-  Future<List<MediaRow>> storageVolumes() => _channel.storageVolumes();
+  Future<List<MediaRow>> storageVolumes() async => [
+    // U1: the one volume source (VolumesChannel).
+    for (final v in await _volumes.list())
+      if (v.isMounted && v.rootPath != null)
+        {
+          'path': v.rootPath,
+          'label': v.description,
+          'removable': v.isRemovable,
+          'primary': v.isPrimary,
+        },
+  ];
 }
 
 /// Not Android yet (PL1/PL2): only what the FileRef and the path say.
@@ -260,9 +275,12 @@ class FileDetailsRepository {
 }
 
 @Riverpod(keepAlive: true)
-DetailsPlatform detailsPlatform(Ref ref) => Platform.isAndroid
-    ? ChannelDetailsPlatform(FilesChannel())
-    : const NoDetailsPlatform();
+DetailsPlatform detailsPlatform(Ref ref) {
+  final volumes = ref.watch(volumesPlatformProvider);
+  return Platform.isAndroid && volumes != null
+      ? ChannelDetailsPlatform(FilesChannel(), volumes)
+      : const NoDetailsPlatform();
+}
 
 /// Parsed once per app run.
 @Riverpod(keepAlive: true)

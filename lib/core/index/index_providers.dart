@@ -10,6 +10,7 @@ import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/index/media_store_counts.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/core/thumbs/thumbnail_cache.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -55,8 +56,12 @@ IndexTrigger indexTriggerFor(StorageAccess? before, StorageAccess? now) {
 /// Starts once storage access allows it (and rescans when it widens). The shell reads it so it exists for the app's lifetime.
 @Riverpod(keepAlive: true)
 MediaIndexer mediaIndexer(Ref ref) {
+  final dao = ref.watch(mediaIndexDaoProvider);
+  final volumes = ref.watch(volumesPlatformProvider);
   final indexer = MediaIndexer(
-    dao: ref.watch(mediaIndexDaoProvider),
+    dao: dao,
+    // U1: rows of a detached SD card / USB stick are kept by scans.
+    keepRoots: volumes == null ? null : () => readDetachedRoots(dao, volumes),
     source: ref.watch(fileSourceProvider),
     settings: ref.watch(settingsRepositoryProvider),
     canSeeAllFiles: () => _canSeeAllFiles(ref),

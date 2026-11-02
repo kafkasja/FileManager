@@ -22,6 +22,7 @@ import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:kfm/features/browse/ui/widgets/sort_sheet.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_carousel.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
+import 'package:kfm/features/external_storage/ui/places_list.dart';
 import 'package:kfm/features/folders/ui/file_drag.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/folders/ui/last_operation_undo.dart';
@@ -356,6 +357,8 @@ class _Body extends ConsumerWidget {
       query: view.query,
       leading: [
         ...banner,
+        // U1: SD cards, USB drives and cameras (hidden without them).
+        const SliverToBoxAdapter(child: PlacesList()),
         const SliverToBoxAdapter(child: SourcesCarousel()),
       ],
     );

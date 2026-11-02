@@ -168,11 +168,41 @@ class FilesChannel {
   Future<bool> requestWriteConsent(List<String> uris) async =>
       (await _invoke<bool>('requestWriteConsent', {'uris': uris})) ?? false;
 
-  /// `{path, label?, removable, primary}` per mounted volume (U1).
-  Future<List<MediaRow>> storageVolumes() async {
-    final rows = await _invokeList('storageVolumes');
-    return rows.map(_row).toList(growable: false);
+  /// U1 (X3 reuses it): the SAF tree picker, opened at the volume [uuid]
+  /// when given. Null = cancelled.
+  Future<({String uri, String? treeDocumentId})?> pickTree({
+    String? uuid,
+  }) async {
+    final row = await _invoke<Map<Object?, Object?>>('pickTree', {
+      'uuid': uuid,
+    });
+    final uri = row?['uri'];
+    if (uri is! String) return null;
+    final doc = row?['treeDocumentId'];
+    return (uri: uri, treeDocumentId: doc is String ? doc : null);
   }
+
+  /// Keeps read + write access to the tree [uri] across restarts.
+  Future<bool> persistTree(String uri) async =>
+      (await _invoke<bool>('persistTree', {'uri': uri})) ?? false;
+
+  Future<bool> releaseTree(String uri) async =>
+      (await _invoke<bool>('releaseTree', {'uri': uri})) ?? false;
+
+  /// The tree URIs this app holds a persisted grant for.
+  Future<List<String>> persistedTrees() async {
+    try {
+      return await _channel.invokeListMethod<String>('persistedTrees') ??
+          const [];
+    } on PlatformException catch (e) {
+      throw FilesChannelException(e.code, e.message ?? '');
+    }
+  }
+
+  /// True when the grant is persisted and the tree's root still accepts new
+  /// files (a reformatted stick with the same uuid fails).
+  Future<bool> validateTree(String uri) async =>
+      (await _invoke<bool>('validateTree', {'uri': uri})) ?? false;
 
   /// B1: Android "Open with" chooser. [contentUri] for MediaStore items,
   /// else [path] (shared through the FileProvider). False = no app.
