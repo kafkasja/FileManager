@@ -14,6 +14,9 @@ enum FileOpFailure {
 
   /// N7: the device holding the file isn't connected (remote files).
   unavailable,
+
+  /// U3: the volume is being ejected; new work on it is refused.
+  volumeEjecting,
 }
 
 /// Every FileSource failure. The UI maps [failure] to a localized message;

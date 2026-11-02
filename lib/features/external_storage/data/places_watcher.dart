@@ -4,8 +4,10 @@ import 'dart:developer' as developer;
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/volumes/volumes_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
+import 'package:kfm/features/external_storage/data/eject_watch.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/external_storage/data/saf_grants.dart';
+import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/external_storage/domain/storage_place.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -32,6 +34,13 @@ class PlaceRemoved extends ExternalNotice {
   final StoragePlace place;
 }
 
+/// U3: a place that was being ejected went away: safe to unplug.
+class PlaceEjected extends ExternalNotice {
+  const new(this.place);
+
+  final StoragePlace place;
+}
+
 /// A USB stick was plugged in but no volume mounted (NTFS, broken).
 class UsbFormatHelp extends ExternalNotice {
   const new();
@@ -46,6 +55,8 @@ class PlacesWatcher {
     required this._scanRoot,
     this._validateGrant,
     this._dropGrant,
+    this._isEjecting,
+    this._onEjected,
     this.formatHelpDelay = const Duration(seconds: 5),
     this.rescanDelay = const Duration(seconds: 30),
   });
@@ -53,6 +64,10 @@ class PlacesWatcher {
   final Future<void> Function(String rootPath) _scanRoot;
   final Future<bool> Function(String treeUri)? _validateGrant;
   final Future<void> Function(String uuid)? _dropGrant;
+
+  /// U3: whether a place is being ejected, and what to do once it's gone.
+  final bool Function(String placeId)? _isEjecting;
+  final void Function(String placeId)? _onEjected;
   final Duration formatHelpDelay;
   final Duration rescanDelay;
 
@@ -87,7 +102,14 @@ class PlacesWatcher {
       if (uuid != null && tree != null) unawaited(_revalidate(uuid, tree));
     }
     for (final p in before.values) {
-      if (!now.containsKey(p.id)) _emit(PlaceRemoved(p));
+      if (now.containsKey(p.id)) continue;
+      if (_isEjecting?.call(p.id) ?? false) {
+        _onEjected?.call(p.id);
+        _emit(PlaceEjected(p));
+      } else {
+        _onEjected?.call(p.id); // unplugged: forget any count
+        _emit(PlaceRemoved(p));
+      }
     }
   }
 
@@ -148,11 +170,17 @@ PlacesWatcher placesWatcher(Ref ref) {
   final indexer = ref.watch(mediaIndexerProvider);
   final dao = ref.watch(mediaIndexDaoProvider);
   final grants = ref.watch(safGrantsProvider);
+  final tracker = ref.watch(volumeActivityTrackerProvider.notifier);
   final watcher = PlacesWatcher(
     // Failures land on the indexer's status (IndexFailed).
     scanRoot: indexer.scanRoot,
     validateGrant: grants?.isValid,
     dropGrant: grants?.drop,
+    isEjecting: (id) => ref.read(volumeActivityTrackerProvider).isEjecting(id),
+    onEjected: (id) {
+      tracker.completeEject(id);
+      ref.read(ejectWatchProvider).stop(id);
+    },
   );
   ref
     ..onDispose(watcher.dispose)

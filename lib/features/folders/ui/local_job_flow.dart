@@ -28,8 +28,8 @@ const int _stagingMargin = 64 * 1024 * 1024;
 /// True when moving/copying [files] into [target] crosses places (U2): a
 /// local job runs instead of B4's in-place runner.
 bool needsLocalJob(WidgetRef ref, List<FileRef> files, String target) {
-  final fs = ref.read(fileSourceProvider);
-  return fs is RoutingFileSource &&
+  final fs = routingOf(ref.read(fileSourceProvider));
+  return fs != null &&
       ref.read(localJobRunnerProvider) != null &&
       files.any((f) => fs.isCrossPlace(f, target));
 }
@@ -86,9 +86,8 @@ Future<void> startLocalJobFlow(
   // Space on the target (null = unknown: the place's volume stats, else
   // ENOSPC per file).
   final places = ref.read(placesProvider).value ?? const [];
-  final placeId = fs is RoutingFileSource
-      ? fs.placeOfFolder(target)
-      : placeIdOfFolder(target);
+  final placeId =
+      routingOf(fs)?.placeOfFolder(target) ?? placeIdOfFolder(target);
   final place = places.where((p) => p.id == placeId).firstOrNull;
   final total = files.fold(0, (s, f) => s + f.sizeBytes);
   final free = await fs.freeBytes(target) ?? place?.freeBytes;
@@ -155,8 +154,9 @@ Future<void> startLocalJobFlow(
 Future<Set<String>> _existingNames(WidgetRef ref, String target) async {
   final fs = ref.read(fileSourceProvider);
   try {
-    if (fs is RoutingFileSource && fs.saf.locator.owns(target)) {
-      final l = await fs.saf.listChildren(target, includeHidden: true);
+    final routing = routingOf(fs);
+    if (routing != null && routing.saf.locator.owns(target)) {
+      final l = await routing.saf.listChildren(target, includeHidden: true);
       return {for (final f in l.files) f.name.toLowerCase()};
     }
     final l = await fs

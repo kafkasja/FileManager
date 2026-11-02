@@ -1,9 +1,11 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/folders/data/fat_names.dart';
 import 'package:kfm/features/folders/data/local_job_runner.dart';
 import 'package:kfm/features/folders/data/local_jobs_dao.dart';
@@ -40,7 +42,11 @@ void main() {
   late List<FileRef> indexed;
   late LocalJobRunner runner;
 
-  LocalJobRunner build({bool fat32 = false, int? fatMax}) => LocalJobRunner(
+  LocalJobRunner build({
+    bool fat32 = false,
+    int? fatMax,
+    VolumeActivityTracker? tracker,
+  }) => LocalJobRunner(
     dao: dao,
     files: s.router,
     crossPlace: s.router.crossPlace,
@@ -53,6 +59,7 @@ void main() {
     isFat32: (_) async => fat32,
     fat32MaxBytes: fatMax ?? kFat32MaxFileBytes,
     stagesInTarget: s.router.saf.locator.owns,
+    track: tracker?.runAll,
   );
 
   setUp(() {
@@ -459,5 +466,68 @@ void main() {
         expect(moves.calls, isEmpty);
       },
     );
+  });
+
+  group('U3 safe eject', () {
+    late ProviderContainer container;
+    late VolumeActivityTracker tracker;
+    setUp(() {
+      container = ProviderContainer();
+      tracker = container.read(volumeActivityTrackerProvider.notifier);
+      runner = build(tracker: tracker);
+    });
+    tearDown(() => container.dispose());
+
+    test('a job reaching an ejecting place pauses, resumable', () async {
+      final target = '${s.usb}/Photos';
+      final place = s.router.placeOfFolder(target);
+      tracker.beginEject(place);
+      final files = addLocal(2);
+      var view = await run(
+        LocalJobRequest(
+          mode: LocalJobMode.copy,
+          files: files,
+          targetFolder: target,
+        ),
+      );
+      expect(view.job.status, LocalJobStatus.paused);
+      expect(
+        view.files.map((f) => f.status),
+        everyElement(LocalFileStatus.queued),
+      );
+      expect(container.read(volumeActivityTrackerProvider).open, isEmpty);
+      tracker.cancelEject(place);
+      await runner.resume(view.job.id);
+      await runner.idle;
+      await queue.flush();
+      view = LocalJobView(
+        (await dao.job(view.job.id))!,
+        await dao.files(view.job.id),
+      );
+      expect(view.job.status, LocalJobStatus.done);
+    });
+
+    test('pauseWhere pauses the jobs on a place', () async {
+      final target = '${s.usb}/Photos';
+      final place = s.router.placeOfFolder(target);
+      final id = await runner.start(
+        LocalJobRequest(
+          mode: LocalJobMode.copy,
+          files: addLocal(3),
+          targetFolder: target,
+        ),
+      );
+      expect(await runner.activeJobsOn(place), [id]);
+      expect(await runner.activeJobsOn('other'), isEmpty);
+      expect(await runner.pauseWhere(place), 1);
+      await runner.idle;
+      await queue.flush();
+      final job = (await dao.job(id))!;
+      expect(job.status, LocalJobStatus.paused);
+      // Whatever finished is complete (verified); the rest stays queued.
+      for (final f in await dao.files(id)) {
+        expect(f.status, anyOf(LocalFileStatus.done, LocalFileStatus.queued));
+      }
+    });
   });
 }

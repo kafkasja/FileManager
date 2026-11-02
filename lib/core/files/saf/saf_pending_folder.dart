@@ -8,6 +8,8 @@ import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/pending_folder.dart';
+import 'package:kfm/core/files/place_guard.dart';
+import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/files/saf/saf_channel.dart';
 import 'package:kfm/core/files/saf/saf_file_source.dart';
 import 'package:kfm/core/utils/random_id.dart';
@@ -26,10 +28,15 @@ class SafPendingFolder {
     required this._locator,
     required this._retentionDays,
     this._clock = DateTime.now,
+    PlaceGuard? guard,
     Random? random,
-  }) : _random = random ?? Random.secure();
+  }) : _guard = guard ?? unguarded,
+       _random = random ?? Random.secure();
 
   final AppDatabase _db;
+
+  /// U3: counts work on a removable volume (refused while ejecting).
+  final PlaceGuard _guard;
   final SafPlatform _channel;
   final SafLocator _locator;
   final Future<int> Function() _retentionDays;
@@ -55,7 +62,10 @@ class SafPendingFolder {
   /// Moves [f] (a `saf:` file) into its volume's folder. Throws
   /// `pendingFolderUnavailable` when the folder can't be made or the
   /// provider can't move; the file stays put.
-  Future<PendingFolderItemRow> moveIn(FileRef f) async {
+  Future<PendingFolderItemRow> moveIn(FileRef f) =>
+      _guard(placeIdOfPath(f.folderPath), () => _moveIn(f));
+
+  Future<PendingFolderItemRow> _moveIn(FileRef f) async {
     final at = _locator.locate(f.id);
     final parent = _locator.locate(f.folderPath);
     if (at == null || parent == null) {
@@ -143,6 +153,11 @@ class SafPendingFolder {
   /// deleted folder is recreated). Returns the restored file's `saf:` id.
   Future<String> restore(String itemId) async {
     final row = await _byId(itemId);
+    return await _guard(placeIdOfPath(row.volumeId), () => _restore(itemId));
+  }
+
+  Future<String> _restore(String itemId) async {
+    final row = await _byId(itemId);
     final stored = _locator.locate(row.storedPath);
     if (stored == null) {
       throw FileOpException(
@@ -217,7 +232,13 @@ class SafPendingFolder {
     var purged = 0;
     for (final row in expired) {
       if (_locator.locate(row.storedPath) == null) continue;
-      await _deleteItem(row);
+      try {
+        await _guard(placeIdOfPath(row.volumeId), () => _deleteItem(row));
+      } on FileOpException catch (e) {
+        // Ejecting: kept for the next purge.
+        if (e.failure == FileOpFailure.volumeEjecting) continue;
+        rethrow;
+      }
       purged++;
     }
     return purged;

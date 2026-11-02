@@ -34,6 +34,7 @@ String fileOpFailureMessage(
       FileOpFailure.notFound => l.fileOpFolderMissing,
       FileOpFailure.userCancelled => l.fileOpDeclined,
       FileOpFailure.noSpace => l.fileOpNoSpace,
+      FileOpFailure.volumeEjecting => l.ejectRefused,
       FileOpFailure.unsupported ||
       FileOpFailure.permissionDenied => l.fileOpNeedsAllFiles,
       _ => fallback,
@@ -49,6 +50,7 @@ String fileOpFailureMessage(
     FileOpFailure.targetExists => l.nameExists,
     FileOpFailure.pendingFolderUnavailable => l.pendingFallbackTitle,
     FileOpFailure.unavailable => l.remoteNotConnected,
+    FileOpFailure.volumeEjecting => l.ejectRefused,
     FileOpFailure.ioError || null => fallback,
   };
 }

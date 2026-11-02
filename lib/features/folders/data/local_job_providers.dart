@@ -4,6 +4,7 @@ import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/external_storage/domain/storage_place.dart';
 import 'package:kfm/features/folders/data/local_job_runner.dart';
 import 'package:kfm/features/folders/data/local_jobs_dao.dart';
@@ -30,8 +31,8 @@ bool placeMounted(List<StoragePlace> places, String placeId) {
 /// jobs once and follows U1's place changes (pause / resume).
 @Riverpod(keepAlive: true)
 LocalJobRunner? localJobRunner(Ref ref) {
-  final fs = ref.watch(fileSourceProvider);
-  if (fs is! RoutingFileSource) return null;
+  final fs = routingOf(ref.watch(fileSourceProvider));
+  if (fs == null) return null;
   var places = const <StoragePlace>[];
   final runner = LocalJobRunner(
     dao: ref.watch(localJobsDaoProvider),
@@ -44,6 +45,7 @@ LocalJobRunner? localJobRunner(Ref ref) {
     placeOfFolder: fs.placeOfFolder,
     staging: transferStagingDir,
     stagesInTarget: fs.saf.locator.owns,
+    track: ref.watch(volumeActivityTrackerProvider.notifier).runAll,
   );
   final ready = runner.recover();
   ref.listen(placesProvider, (_, next) {

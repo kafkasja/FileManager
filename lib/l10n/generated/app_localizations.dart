@@ -8060,6 +8060,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Can\'t load'**
   String get swipeSetupPresetBroken;
+
+  /// U3 button/tooltip on a removable place (SD card, USB drive, camera).
+  ///
+  /// In en, this message translates to:
+  /// **'Eject'**
+  String get ejectAction;
+
+  /// No description provided for @ejectRunningJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer still running} other{{count} transfers still running}}'**
+  String ejectRunningJobs(int count);
+
+  /// No description provided for @ejectRunningJobsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pausing stops after the current file. Paused transfers can be resumed later.'**
+  String get ejectRunningJobsBody;
+
+  /// No description provided for @ejectWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait'**
+  String get ejectWait;
+
+  /// No description provided for @ejectPauseAndEject.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause & eject'**
+  String get ejectPauseAndEject;
+
+  /// No description provided for @ejectWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing work on {label}…'**
+  String ejectWaiting(String label);
+
+  /// No description provided for @ejectHintTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Eject {label}'**
+  String ejectHintTitle(String label);
+
+  /// No description provided for @ejectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Android lets only its own settings eject storage. Tap the drive, then Eject (on some phones: ⋮ → Unmount).'**
+  String get ejectHint;
+
+  /// No description provided for @ejectOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get ejectOpenSettings;
+
+  /// No description provided for @ejectSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} can be safely removed'**
+  String ejectSafe(String label);
+
+  /// No description provided for @ejectNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not ejected yet'**
+  String get ejectNotYet;
+
+  /// No description provided for @ejectOpenAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings again'**
+  String get ejectOpenAgain;
+
+  /// No description provided for @ejectCameraSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera can be disconnected'**
+  String get ejectCameraSafe;
+
+  /// No description provided for @ejectRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'This storage is being ejected'**
+  String get ejectRefused;
+
+  /// No description provided for @ejectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t open the storage settings'**
+  String get ejectFailed;
 }
 
 class _AppLocalizationsDelegate

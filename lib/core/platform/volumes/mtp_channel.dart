@@ -73,6 +73,9 @@ abstract interface class MtpPlatform {
 
   /// Attach, detach and permission answers (broadcast).
   Stream<void> changes();
+
+  /// U3 Eject: closes the open camera session. True if one was open.
+  Future<bool> close(String deviceName);
 }
 
 /// Typed wrapper around `com.kaf.kfm/mtp` (+ `/events`).
@@ -103,6 +106,11 @@ class MtpChannel implements MtpPlatform {
       await _channel.invokeMethod<bool>('requestPermission', {
         'deviceName': deviceName,
       }) ??
+      false;
+
+  @override
+  Future<bool> close(String deviceName) async =>
+      await _channel.invokeMethod<bool>('close', {'deviceName': deviceName}) ??
       false;
 
   @override

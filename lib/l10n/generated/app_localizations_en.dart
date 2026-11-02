@@ -5708,4 +5708,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get swipeSetupPresetBroken => 'Can\'t load';
+
+  @override
+  String get ejectAction => 'Eject';
+
+  @override
+  String ejectRunningJobs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers still running',
+      one: '1 transfer still running',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ejectRunningJobsBody =>
+      'Pausing stops after the current file. Paused transfers can be resumed later.';
+
+  @override
+  String get ejectWait => 'Wait';
+
+  @override
+  String get ejectPauseAndEject => 'Pause & eject';
+
+  @override
+  String ejectWaiting(String label) {
+    return 'Finishing work on $label…';
+  }
+
+  @override
+  String ejectHintTitle(String label) {
+    return 'Eject $label';
+  }
+
+  @override
+  String get ejectHint =>
+      'Android lets only its own settings eject storage. Tap the drive, then Eject (on some phones: ⋮ → Unmount).';
+
+  @override
+  String get ejectOpenSettings => 'Open settings';
+
+  @override
+  String ejectSafe(String label) {
+    return '$label can be safely removed';
+  }
+
+  @override
+  String get ejectNotYet => 'Not ejected yet';
+
+  @override
+  String get ejectOpenAgain => 'Open settings again';
+
+  @override
+  String get ejectCameraSafe => 'Camera can be disconnected';
+
+  @override
+  String get ejectRefused => 'This storage is being ejected';
+
+  @override
+  String get ejectFailed => 'Can\'t open the storage settings';
 }

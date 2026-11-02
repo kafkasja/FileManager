@@ -52,7 +52,7 @@ final class PendingFolderProvider
   }
 }
 
-String _$pendingFolderHash() => r'e67158a19ed9314e37863fcf91da532432f29534';
+String _$pendingFolderHash() => r'1d9a66e96d7ee07042035c6e3608bcc1ff245063';
 
 /// The SAF trees KFM can use right now (kept current from `placesProvider`
 /// without rebuilding the file source).
@@ -153,24 +153,27 @@ final class SafPendingFolderProvider
   }
 }
 
-String _$safPendingFolderHash() => r'bd22db4243e8476681cb54ac2bff25c540532549';
+String _$safPendingFolderHash() => r'68467bbd5319314bb89c8473e5a2aa961331e43c';
 
 /// Every place KFM can reach: device storage, SAF volumes and cameras
-/// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+/// behind one [RoutingFileSource] (TASK-U2), wrapped in U3's
+/// [TrackedFileSource]. Tests override this with
 /// `FakeFileSource`.
 
 @ProviderFor(fileSource)
 final fileSourceProvider = FileSourceProvider._();
 
 /// Every place KFM can reach: device storage, SAF volumes and cameras
-/// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+/// behind one [RoutingFileSource] (TASK-U2), wrapped in U3's
+/// [TrackedFileSource]. Tests override this with
 /// `FakeFileSource`.
 
 final class FileSourceProvider
     extends $FunctionalProvider<FileSource, FileSource, FileSource>
     with $Provider<FileSource> {
   /// Every place KFM can reach: device storage, SAF volumes and cameras
-  /// behind one [RoutingFileSource] (TASK-U2). Tests override this with
+  /// behind one [RoutingFileSource] (TASK-U2), wrapped in U3's
+  /// [TrackedFileSource]. Tests override this with
   /// `FakeFileSource`.
   FileSourceProvider._()
     : super(
@@ -205,7 +208,7 @@ final class FileSourceProvider
   }
 }
 
-String _$fileSourceHash() => r'89548a9bbd0c004f86527a9ba717a8d47f8c23a5';
+String _$fileSourceHash() => r'faff00ff6295425ef58dd573bc613aa228c201a3';
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
 
