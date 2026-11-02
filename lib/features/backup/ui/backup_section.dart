@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
+import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
 import 'package:kfm/features/backup/ui/import_preview_screen.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:path/path.dart' as p;
@@ -129,7 +130,10 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     if (mounted) setState(() => _busy = true);
     String text;
     try {
-      await container.read(backupServiceProvider).undoLastImport();
+      final switchTo = await container
+          .read(backupServiceProvider)
+          .undoLastImport();
+      await syncSwipeAfterBackup(container, switchTo);
       text = l10n.backupUndone;
     } on Object catch (e) {
       text = l10n.backupUndoFailed(e.toString());

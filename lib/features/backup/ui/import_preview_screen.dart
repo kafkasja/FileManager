@@ -6,6 +6,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/domain/import_plan.dart';
+import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
 
 /// What an import would change (TASK-X6). Pops `true` once applied;
 /// Cancel or back writes nothing.
@@ -41,10 +42,12 @@ class _ImportPreviewScreenState extends ConsumerState<ImportPreviewScreen> {
       _applying = true;
       _applyError = null;
     });
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
-      await ref
+      final switchTo = await ref
           .read(backupServiceProvider)
           .apply(plan, applySettings: _applySettings);
+      await syncSwipeAfterBackup(container, switchTo);
       if (mounted) Navigator.of(context).pop(true);
     } on Object catch (e) {
       if (mounted) {

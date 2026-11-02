@@ -6,10 +6,13 @@ import 'package:drift/drift.dart';
 import 'package:kfm/app/app_info.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/domain/backup_settings_policy.dart';
 import 'package:kfm/features/backup/domain/file_matcher.dart';
 import 'package:kfm/features/backup/domain/import_plan.dart';
+import 'package:kfm/features/session/domain/session_source.dart';
+import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:path/path.dart' as p;
 
 /// Export, import plan/apply, pre-import snapshot and "Undo last import"
@@ -224,16 +227,59 @@ class BackupService {
 
   /// Snapshots the current state, then applies [plan] in one transaction.
   /// Errors propagate; on failure nothing of the import is written.
-  Future<void> apply(ImportPlan plan, {required bool applySettings}) =>
-      _queue.enqueue(null, () async {
-        final snapshotName = await _writeSnapshot(await _snapshot());
-        await _db.transaction(() => _applyPlan(plan, applySettings));
-        final dir = await _snapshotDir();
-        await File(p.join(dir.path, _undoMarker)).writeAsString(snapshotName);
-        await _prune(dir);
-      });
+  ///
+  /// Returns the preset to switch to (0 = Basic) when the backup's active
+  /// preset differs from the open swipe session's: the caller switches
+  /// through `ActivePresetController` (that pauses the session and commits
+  /// its queued deletes), so `presets.active` is not written here then.
+  Future<int?> apply(ImportPlan plan, {required bool applySettings}) async {
+    int? switchTo;
+    await _queue.enqueue(null, () async {
+      final snapshotName = await _writeSnapshot(await _snapshot());
+      switchTo = await _db.transaction(() => _applyPlan(plan, applySettings));
+      final dir = await _snapshotDir();
+      await File(p.join(dir.path, _undoMarker)).writeAsString(snapshotName);
+      await _prune(dir);
+    });
+    return switchTo;
+  }
 
-  Future<void> _applyPlan(ImportPlan plan, bool applySettings) async {
+  /// The open local swipe session (sessions aren't part of a backup).
+  Future<SessionRow?> _activeLocalSession() =>
+      (_db.select(_db.sessions)..where(
+            (s) =>
+                s.sourceId.equals(kLocalSourceId) &
+                s.isActive.equals(true) &
+                s.endedAt.isNull(),
+          ))
+          .getSingleOrNull();
+
+  /// Basic's layout lives on its open sessions too: keep them in step with
+  /// `swipe.layout.current` ([layoutJson] = the session column format).
+  Future<void> _setBasicSessionsLayout(String layoutJson) =>
+      (_db.update(_db.sessions)..where(
+            (s) =>
+                s.sourceId.equals(kLocalSourceId) &
+                s.presetId.isNull() &
+                s.endedAt.isNull(),
+          ))
+          .write(
+            SessionsCompanion(
+              layout: Value(layoutJson),
+              updatedAt: Value(_clock()),
+            ),
+          );
+
+  /// The session column format of a raw `swipe.layout.current` row value
+  /// ('' or missing = Basic); null when unreadable.
+  static String? _sessionLayoutOf(String? raw) {
+    final value = raw == null ? '' : _jsonOrNull(raw);
+    if (value is! String) return null;
+    if (value.isEmpty) return jsonEncode(SwipeLayout.basic.toJson());
+    return _jsonMap(value) == null ? null : value;
+  }
+
+  Future<int?> _applyPlan(ImportPlan plan, bool applySettings) async {
     final now = _clock();
     final tagIds = <int, int>{};
     for (final t in plan.newTags) {
@@ -326,20 +372,34 @@ class BackupService {
       ]);
     });
 
-    if (!applySettings) return;
+    if (!applySettings) return null;
+    final session = await _activeLocalSession();
+    int? switchTo;
     for (final s in plan.settingChanges) {
       final String raw;
       if (s.layout case final layout?) {
         raw = jsonEncode(jsonEncode(remapLayoutTags(layout, tag).toJson()));
       } else if (s.presetId case final id?) {
-        raw = jsonEncode(preset(id) ?? 0);
+        final target = preset(id) ?? 0;
+        if (session != null) {
+          // Switching needs the session machinery: the caller does it.
+          if (target != (session.presetId ?? 0)) switchTo = target;
+          continue;
+        }
+        raw = jsonEncode(target);
       } else {
         raw = s.raw!;
       }
       await _db
           .into(_db.settings)
           .insertOnConflictUpdate(SettingRow(key: s.name, value: raw));
+      if (s.name == AppSettings.swipeLayoutCurrent.name) {
+        if (_sessionLayoutOf(raw) case final layoutJson?) {
+          await _setBasicSessionsLayout(layoutJson);
+        }
+      }
     }
+    return switchTo;
   }
 
   // ---- Snapshot + undo ---------------------------------------------------
@@ -349,7 +409,20 @@ class BackupService {
 
   /// Restores the state from before the last import (everything changed in
   /// these tables since is lost too) and forgets that import.
-  Future<void> undoLastImport() => _queue.enqueue(null, () async {
+  ///
+  /// Like [apply], returns the preset to switch to (0 = Basic) when the
+  /// restored active preset differs from the open swipe session's. With a
+  /// session open, `presets.active` is set to that session's preset (what
+  /// the caller's switch starts from).
+  Future<int?> undoLastImport() async {
+    int? switchTo;
+    await _queue.enqueue(null, () async {
+      switchTo = await _undo();
+    });
+    return switchTo;
+  }
+
+  Future<int?> _undo() async {
     final target = await _undoTarget();
     if (target == null) throw StateError('no import to undo');
     final snap = _Snapshot.fromJson(switch (jsonDecode(
@@ -358,7 +431,27 @@ class BackupService {
       final Map<String, Object?> j => j,
       _ => throw const FormatException('bad snapshot'),
     });
+    final active = AppSettings.activePresetId.name;
+    final layoutKey = AppSettings.swipeLayoutCurrent.name;
+    int? switchTo;
     await _db.transaction(() async {
+      final session = await _activeLocalSession();
+      var settings = snap.settings;
+      if (session != null) {
+        final row = settings.where((r) => r.key == active).firstOrNull;
+        final restored = switch (row == null ? 0 : _jsonOrNull(row.value)) {
+          final int id => id,
+          _ => 0,
+        };
+        final open = session.presetId ?? 0;
+        if (restored != open) switchTo = restored;
+        // The open session's preset stays active until the caller switches.
+        settings = [
+          for (final r in settings)
+            if (r.key != active) r,
+          SettingRow(key: active, value: jsonEncode(open)),
+        ];
+      }
       await _db.delete(_db.fileTags).go();
       await _db.delete(_db.favorites).go();
       await _db.delete(_db.reviewedLabels).go();
@@ -374,11 +467,18 @@ class BackupService {
           ..insertAll(_db.fileTags, snap.fileTags)
           ..insertAll(_db.favorites, snap.favorites)
           ..insertAll(_db.reviewedLabels, snap.reviewed)
-          ..insertAll(_db.settings, snap.settings);
+          ..insertAll(_db.settings, settings);
       });
+      final layoutRow = snap.settings
+          .where((r) => r.key == layoutKey)
+          .firstOrNull;
+      if (_sessionLayoutOf(layoutRow?.value) case final layoutJson?) {
+        await _setBasicSessionsLayout(layoutJson);
+      }
     });
     await File(p.join((await _snapshotDir()).path, _undoMarker)).delete();
-  });
+    return switchTo;
+  }
 
   Future<File?> _undoTarget() async {
     final dir = await _snapshotDir();

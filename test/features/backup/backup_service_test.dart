@@ -356,6 +356,92 @@ void main() {
     expect(await b.service.canUndo(), isFalse);
   });
 
+  Future<int> openSession(_Device d, {int? presetId}) => d.db
+      .into(d.db.sessions)
+      .insert(
+        SessionsCompanion.insert(
+          presetId: Value(presetId),
+          layout: jsonEncode(SwipeLayout.basic.toJson()),
+          startedAt: DateTime.utc(2026),
+          updatedAt: DateTime.utc(2026),
+          isActive: true,
+        ),
+      );
+
+  Future<SessionRow> sessionRow(_Device d, int id) =>
+      (d.db.select(d.db.sessions)..where((s) => s.id.equals(id))).getSingle();
+
+  test('with an open session the preset switch is left to the caller and '
+      "Basic's session follows the imported layout", () async {
+    await seedA();
+    await seedB();
+    await a.settings.write(
+      AppSettings.swipeLayoutCurrent,
+      jsonEncode(
+        const SwipeLayout(directions: {SwipeDirection.left: SwipeAction.trash})
+            .toJson(),
+      ),
+    );
+    final session = await openSession(b);
+    final data = await b.service.decode(await a.service.exportJson());
+    final switchTo = await b.service.apply(
+      await b.service.plan(data, importedSuffix: 'imported'),
+      applySettings: true,
+    );
+    final preset = await b.db.select(b.db.presets).getSingle();
+    expect(switchTo, preset.id);
+    // Not written: ActivePresetController.switchTo needs the old value.
+    expect(await b.settings.read(AppSettings.activePresetId), 0);
+    final row = await sessionRow(b, session);
+    expect(
+      SwipeLayout.decode(row.layout).actionFor(SwipeDirection.right),
+      isNull,
+    );
+
+    // Undo while the imported preset's session is open: back to Basic.
+    await b.db
+        .update(b.db.sessions)
+        .write(const SessionsCompanion(isActive: Value(false)));
+    await openSession(b, presetId: preset.id);
+    await b.settings.write(AppSettings.activePresetId, preset.id);
+    expect(await b.service.undoLastImport(), 0);
+    expect(await b.settings.read(AppSettings.activePresetId), preset.id);
+    expect(
+      SwipeLayout.decode((await sessionRow(b, session)).layout),
+      SwipeLayout.basic,
+    );
+  });
+
+  test('undo with the Basic session open keeps Basic active', () async {
+    await seedA();
+    await seedB();
+    await openSession(b);
+    final data = await b.service.decode(await a.service.exportJson());
+    await b.service.apply(
+      await b.service.plan(data, importedSuffix: 'imported'),
+      applySettings: true,
+    );
+    // Even when the setting drifted from the session.
+    await b.settings.write(AppSettings.activePresetId, 99);
+    expect(await b.service.undoLastImport(), isNull);
+    expect(await b.settings.read(AppSettings.activePresetId), 0);
+  });
+
+  test('without an open session the active preset is written', () async {
+    await seedA();
+    await seedB();
+    final data = await b.service.decode(await a.service.exportJson());
+    final switchTo = await b.service.apply(
+      await b.service.plan(data, importedSuffix: 'imported'),
+      applySettings: true,
+    );
+    expect(switchTo, isNull);
+    final preset = await b.db.select(b.db.presets).getSingle();
+    expect(await b.settings.read(AppSettings.activePresetId), preset.id);
+    expect(await b.service.undoLastImport(), isNull);
+    expect(await b.settings.read(AppSettings.activePresetId), 0);
+  });
+
   test('suggested file name', () {
     expect(a.service.suggestedFileName(), 'kfm-backup-2026-11-02.json');
   });
