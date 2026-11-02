@@ -5,6 +5,7 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/volumes/volumes_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/features/external_storage/data/eject_watch.dart';
+import 'package:kfm/features/external_storage/data/known_places.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/external_storage/data/saf_grants.dart';
 import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
@@ -171,6 +172,7 @@ PlacesWatcher placesWatcher(Ref ref) {
   final dao = ref.watch(mediaIndexDaoProvider);
   final grants = ref.watch(safGrantsProvider);
   final tracker = ref.watch(volumeActivityTrackerProvider.notifier);
+  KnownPlaces.reset();
   final watcher = PlacesWatcher(
     // Failures land on the indexer's status (IndexFailed).
     scanRoot: indexer.scanRoot,
@@ -185,7 +187,10 @@ PlacesWatcher placesWatcher(Ref ref) {
   ref
     ..onDispose(watcher.dispose)
     ..listen(placesProvider, (_, next) {
-      if (next case AsyncData(:final value)) watcher.onPlaces(value);
+      if (next case AsyncData(:final value)) {
+        KnownPlaces.update(value);
+        watcher.onPlaces(value);
+      }
     }, fireImmediately: true)
     ..listen(unmountedRootsProvider, (_, next) {
       if (next case AsyncData(:final value)) dao.setExcludedRoots(value);

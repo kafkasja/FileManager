@@ -58,6 +58,7 @@ Future<void> moveOrCopyFiles(
   List<FileRef> files, {
   required bool copy,
   int skippedNeedAccess = 0,
+  bool fromSelection = false,
 }) async {
   if (files.isEmpty) return;
   final folders = {for (final f in files) f.folderPath};
@@ -70,7 +71,14 @@ Future<void> moveOrCopyFiles(
   if (target == null || !context.mounted) return;
   // U2: another place (SD card, USB drive) → a verified local job.
   if (needsLocalJob(ref, files, target)) {
-    await startLocalJobFlow(context, ref, files, target, move: !copy);
+    await startLocalJobFlow(
+      context,
+      ref,
+      files,
+      target,
+      move: !copy,
+      fromSelection: fromSelection,
+    );
     return;
   }
   await runFileOperation(
@@ -187,6 +195,7 @@ Future<void> dropSelectionOnFolder(
       files,
       folder,
       move: action != DropAction.copy,
+      fromSelection: true,
     );
     return;
   }

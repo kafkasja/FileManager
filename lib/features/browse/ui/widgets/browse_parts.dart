@@ -8,6 +8,8 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
+import 'package:kfm/features/external_storage/data/known_places.dart';
+import 'package:kfm/features/external_storage/ui/place_labels.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// A folder's display name; volume roots get a friendly one.
@@ -17,6 +19,9 @@ String nameOfFolder(AppLocalizations l10n, String path) {
   if (RegExp(r'^/storage/emulated/\d+$').hasMatch(root)) {
     return l10n.browseInternalStorage;
   }
+  // The name Places shows (U2 follow-up), else a generic one.
+  final place = KnownPlaces.atRoot(root);
+  if (place != null) return placeLabel(l10n, place);
   return l10n.browseExternalVolume(root.substring(root.lastIndexOf('/') + 1));
 }
 

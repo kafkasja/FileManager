@@ -66,6 +66,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(app.container.read(browseViewControllerProvider).folder, _sd);
     expect(find.byType(BrowseScreen), findsOneWidget);
+    // U2 follow-up: the breadcrumb uses the same name as Places.
+    expect(find.text('SD card or USB (1234-ABCD)'), findsNothing);
+    expect(find.text('SanDisk SD card'), findsWidgets);
 
     // Unplugged: Browse leaves the card's folder, "Storage removed".
     volumes

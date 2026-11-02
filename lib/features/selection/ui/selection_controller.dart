@@ -19,8 +19,9 @@ typedef _Entry = ({int seq, int size});
 
 /// The one global selection (TASK-B6), used by Browse, collections and
 /// search. State changes at once; writes follow through the write queue.
-/// Nothing here removes a file except [remove] (Edit mode), [clearAll] and
-/// pruning files that left the index.
+/// Nothing here removes a file except [remove] (Edit mode), [clearAll],
+/// [dropAll] (files a move job moved away) and pruning files that left the
+/// index.
 @Riverpod(keepAlive: true)
 class SelectionController extends _$SelectionController {
   /// Adds (taps, drags) are written in one batch per this window: every
@@ -127,6 +128,30 @@ class SelectionController extends _$SelectionController {
     );
     _flushAdds();
     _repo.remove([f.id]).fireAndForget();
+  }
+
+  /// U2 follow-up: files a move job takes away from where they were leave
+  /// the selection (no Edit-mode undo). Unselected ids are ignored.
+  void dropAll(Iterable<String> ids) {
+    final s = _s;
+    if (s == null) return;
+    var bytes = 0;
+    final dropped = <String>{};
+    for (final id in ids) {
+      final entry = _entries.remove(id);
+      if (entry == null) continue;
+      bytes += entry.size;
+      dropped.add(id);
+    }
+    if (dropped.isEmpty) return;
+    state = AsyncData(
+      s.copyWith(
+        ids: Set.unmodifiable(s.ids.difference(dropped)),
+        totalBytes: s.totalBytes - bytes,
+      ),
+    );
+    _flushAdds();
+    _repo.remove(dropped.toList()).fireAndForget();
   }
 
   bool get canUndoRemove => _removed.isNotEmpty;

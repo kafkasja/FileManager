@@ -67,6 +67,9 @@ class FakeFileSource implements FileSource {
   /// Adds an empty folder (and its parents).
   void addFolder(String path) => _addFolders(path);
 
+  /// Announces a move done elsewhere (U2's `CrossPlaceOps.announceMoved`).
+  void emitIdChange(FileIdChange change) => _idChanges.add(change);
+
   /// P3: make [requestWriteAccess] answer "declined".
   bool declineWriteAccess = false;
 

@@ -135,6 +135,20 @@ void main() {
     expect(await storedIds(), [photos[1].id, photos[2].id]);
   });
 
+  // U2 follow-up (d): a move job started from the selection drops its
+  // files; the rest stays selected and it survives a restart.
+  test('dropAll removes only the given selected files', () async {
+    final c = await launch();
+    ctl(c).addAll(photos.sublist(0, 4));
+    ctl(c).dropAll([photos[1].id, photos[2].id, photos[5].id]);
+    expect(st(c).ids, {photos[0].id, photos[3].id});
+    expect(st(c).totalBytes, photos[0].sizeBytes + photos[3].sizeBytes);
+    expect(ctl(c).canUndoRemove, isFalse);
+    await close(c);
+    final next = await launch();
+    expect(st(next).ids, {photos[0].id, photos[3].id});
+  });
+
   test('clear all then restore gives the same set and order', () async {
     final c = await launch();
     ctl(c).addAll([photos[3], photos[1], photos[4]]);

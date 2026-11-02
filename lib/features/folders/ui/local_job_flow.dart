@@ -20,6 +20,7 @@ import 'package:kfm/features/folders/data/local_job_providers.dart';
 import 'package:kfm/features/folders/data/local_job_runner.dart';
 import 'package:kfm/features/folders/data/local_jobs_dao.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
+import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/transfers/ui/permanent_move_confirm.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 
@@ -65,12 +66,15 @@ Future<void> pickTargetAndStartLocalJob(
 /// Pre-checks and questions, then starts the job (TASK-U2): a permanent
 /// delete setting asks N11's confirmation (move), space on the target and
 /// in the staging folder, one collision question for the whole job.
+/// [fromSelection]: a move's files leave the B6 selection once the job
+/// starts (U2 follow-up: "5 selected" stayed after the job).
 Future<void> startLocalJobFlow(
   BuildContext context,
   WidgetRef ref,
   List<FileRef> files,
   String target, {
   required bool move,
+  bool fromSelection = false,
 }) async {
   final l10n = context.l10n;
   final messenger = ScaffoldMessenger.of(context);
@@ -154,6 +158,11 @@ Future<void> startLocalJobFlow(
       deleteMode: deleteMode,
     ),
   );
+  if (move && fromSelection) {
+    ref
+        .read(selectionControllerProvider.notifier)
+        .dropAll(files.map((f) => f.id));
+  }
   if (!context.mounted) return;
   messenger.showSnackBar(
     SnackBar(

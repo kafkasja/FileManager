@@ -9,6 +9,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
@@ -76,10 +77,10 @@ SwipeFileOps swipeFileOps(Ref ref) {
     indexer: ref.watch(mediaIndexerProvider),
     remoteSource: (id) => ref.read(fileSourceResolverProvider)(id),
     crossPlaceCopy: switch (ref.watch(fileSourceProvider)) {
-      final RoutingFileSource fs => (file, target) async =>
-          fs.isCrossPlace(file, target)
-          ? (await fs.crossPlace.copyVerified(file, target)).copy
-          : null,
+      final RoutingFileSource fs =>
+        (file, target) async => fs.isCrossPlace(file, target)
+            ? (await fs.crossPlace.copyVerified(file, target)).copy
+            : null,
       _ => null,
     },
     queueDelete: ref.watch(deleteQueueProvider).queueInTransaction,
@@ -329,6 +330,13 @@ class SwipeDeckController extends _$SwipeDeckController {
     // P2: a move/copy finishes (or fails) after the card has gone.
     final fileOps = ref.read(swipeFileOpsProvider).events.listen(_onFileOp);
     ref.onDispose(fileOps.cancel);
+    // U2 follow-up: a file of an upcoming card was moved outside the deck
+    // (B4, a local job): the card must not keep a dead id.
+    final idChanges = ref
+        .read(fileSourceProvider)
+        .idChanges
+        .listen((c) => unawaited(_onIdChange(c, generation)));
+    ref.onDispose(idChanges.cancel);
     // Tags must be loaded before the first tag swipe is checked.
     ref.listen(tagsByIdProvider, (_, _) {});
 
@@ -871,6 +879,39 @@ class SwipeDeckController extends _$SwipeDeckController {
           ),
         );
     }
+  }
+
+  /// An upcoming card's file got a new id (B4, a U2 job, a rename). Moved
+  /// to another place (e.g. the SD card) and no longer in this deck's
+  /// filter: the card goes. Otherwise the card shows the file under its new
+  /// id (never a dead one: swiping it would fail).
+  Future<void> _onIdChange(FileIdChange change, int generation) async {
+    final before = state.value;
+    if (before == null || _stale(generation)) return;
+    final old = before.upcoming.where((f) => f.id == change.oldId).firstOrNull;
+    if (old == null) return;
+    final now = change.newRef;
+    var keep = true;
+    final queue = _queue;
+    if (placeIdOf(old) != placeIdOf(now) && queue is IndexQueueSource) {
+      final q = queue.query;
+      // The job indexed the copy before it announced the move.
+      keep =
+          q != null &&
+          await ref.read(mediaIndexDaoProvider).countAmong(q, [now.id]) > 0;
+    }
+    final deck = state.value;
+    if (deck == null || _stale(generation)) return;
+    final i = deck.upcoming.indexWhere((f) => f.id == change.oldId);
+    if (i < 0) return;
+    final upcoming = [...deck.upcoming];
+    if (!keep || upcoming.any((f) => f.id == now.id)) {
+      upcoming.removeAt(i);
+    } else {
+      upcoming[i] = now;
+    }
+    state = AsyncData(deck.copyWith(upcoming: upcoming));
+    // The left count follows the index (`_onIndexChanged`).
   }
 
   /// Picks up layout changes (SE3 reset, P1 Customize swipes); applies from

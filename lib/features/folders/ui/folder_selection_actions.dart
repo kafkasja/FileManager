@@ -6,7 +6,8 @@ import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/selection/ui/selection_actions.dart';
 
 /// B4's selection bar actions: Move to / Delete as buttons, Copy to /
-/// Duplicate under More. The selection is never cleared afterwards (B6).
+/// Duplicate under More. The selection is never cleared afterwards (B6),
+/// except that a move to another place (a U2 job) drops the moved files.
 final List<SelectionAction> folderSelectionActions = List.unmodifiable([
   SelectionAction(
     id: 'b4.move',
@@ -21,6 +22,7 @@ final List<SelectionAction> folderSelectionActions = List.unmodifiable([
         files,
         copy: false,
         skippedNeedAccess: skipped,
+        fromSelection: true,
       ),
     ),
   ),

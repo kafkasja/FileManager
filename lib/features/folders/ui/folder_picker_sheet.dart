@@ -160,7 +160,7 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
       final needsAccess = !canSeeAll && !_isMediaFolder(path) && !_isSaf(path);
       return ListTile(
         leading: const Icon(Icons.folder_outlined),
-        title: Text(_leaf(path)),
+        title: Text(nameOfFolder(l10n, path)),
         enabled: !disabled,
         subtitle: Text(
           disabled
@@ -412,11 +412,6 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
   }
 
   static bool _isMediaFolder(String path) => isMediaFolderPath(path);
-
-  static String _leaf(String path) {
-    final parts = path.split('/').where((p) => p.isNotEmpty);
-    return parts.isEmpty ? path : parts.last;
-  }
 }
 
 /// A folder row in All folders: tapping opens it (doesn't pick it).
