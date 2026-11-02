@@ -418,6 +418,8 @@ class FakeFileSource implements FileSource {
     final ref = addFile(
       '$targetFolder/$unique',
       bytes: bytes,
+      // Like the dart:io import: the file keeps the staged file's time.
+      modifiedAt: await staged.lastModified(),
       mimeType: mimeType,
     );
     await staged.delete();

@@ -87,6 +87,13 @@ class CrossPlaceOps {
         await _stream(source, f, part);
       }
       final size = await part.length();
+      // The copy keeps the original's modified time (dart:io imports carry
+      // the part's time over; photos without EXIF are dated by it).
+      try {
+        await part.setLastModified(f.modifiedAt);
+      } on FileSystemException catch (e) {
+        developer.log('modified time not kept: $e', name: 'kfm.crossPlace');
+      }
       sourceHash ??= await _hashFile(part.path);
       onVerifying?.call();
       final copy = await target.importFile(

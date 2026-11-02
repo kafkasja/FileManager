@@ -170,6 +170,24 @@ void main() {
   });
 
   group('CrossPlaceOps', () {
+    test('the copy keeps the original modified time', () async {
+      final s = Setup();
+      addTearDown(s.dispose);
+      s.safFake.addFile('${s.usb}/DCIM/c.jpg', [
+        5,
+        6,
+      ], modifiedMs: 1700000000000);
+      final usb = (await s.saf.statPath('${s.usb}/DCIM/c.jpg'))!;
+      final done = await s.router.crossPlace.copyVerified(
+        usb,
+        '${Setup.internal}/Pictures',
+      );
+      expect(
+        done.copy.modifiedAt.millisecondsSinceEpoch ~/ 1000,
+        usb.modifiedAt.millisecondsSinceEpoch ~/ 1000,
+      );
+    });
+
     test('mismatch on a path target (hash override) throws', () async {
       final s = Setup(hashRef: (f, src) async => 'not-the-hash');
       addTearDown(s.dispose);
