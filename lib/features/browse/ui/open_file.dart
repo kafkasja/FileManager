@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
@@ -5,12 +7,15 @@ import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/open_with.dart';
+import 'package:kfm/features/apk_install/domain/apk_detect.dart';
+import 'package:kfm/features/apk_install/ui/apk_info_sheet.dart';
 import 'package:kfm/features/browse/ui/text_viewer_screen.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 
 /// Normal-mode tap on any file (Browse, B8/C4 results, B7's viewer). Only
-/// visual media and text files open inside KFM; the rest goes to Android
-/// "Open with" (user decision 2026-10-24).
+/// visual media and text files open inside KFM (and `.apk` files get X5's
+/// info sheet); the rest goes to Android "Open with" (user decision
+/// 2026-10-24).
 Future<void> openFile(BuildContext context, WidgetRef ref, FileRef f) async {
   switch (f.kind) {
     case FileKind.image || FileKind.video:
@@ -20,6 +25,9 @@ Future<void> openFile(BuildContext context, WidgetRef ref, FileRef f) async {
         swipeable: false,
         actions: [OpenWithButton(file: f)],
       );
+    // X5: an app package shows what it is, then offers Install.
+    case _ when Platform.isAndroid && isApk(f):
+      await showApkInfoSheet(context, f);
     case _ when isTextFile(f):
       await Navigator.of(
         context,

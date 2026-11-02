@@ -19,6 +19,7 @@ import 'package:kfm/features/smart_groups/ui/smart_groups_settings_section.dart'
 import 'package:kfm/features/storage/ui/storage_overview_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/trash/ui/deleting_section.dart';
+import 'package:kfm/features/updates/ui/updates_section.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'settings_sections.g.dart';
@@ -110,6 +111,12 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 800,
       titleBuilder: (c) => c.l10n.backupSectionTitle,
       builder: (_) => const BackupSection(),
+    ),
+    // X7: opt-in update check, right before About.
+    SettingsSection(
+      order: 850,
+      titleBuilder: (c) => c.l10n.updatesSectionTitle,
+      builder: (_) => const UpdatesSettingsSection(),
     ),
     if (kDebugMode)
       SettingsSection(

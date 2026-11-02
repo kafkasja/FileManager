@@ -333,6 +333,30 @@ abstract final class AppSettings {
     'privacy.stripLocation',
     defaultValue: false,
   );
+
+  /// X7. Opt-in network: daily GitHub release check (rule 7: off).
+  static final SettingKey<bool> updateCheckEnabled = SettingKey.boolean(
+    'updates.checkEnabled',
+    defaultValue: false,
+  );
+
+  /// X7. ISO-8601 UTC of the last automatic check; '' = never.
+  static final SettingKey<String> updateLastCheckAt = SettingKey.string(
+    'updates.lastCheckAt',
+    '',
+  );
+
+  /// X7. Version the user dismissed ('' = none); its banner stays hidden.
+  static final SettingKey<String> updateDismissedVersion = SettingKey.string(
+    'updates.dismissedVersion',
+    '',
+  );
+
+  /// X7. The last newer release as JSON ('' = none).
+  static final SettingKey<String> updateLatestJson = SettingKey.string(
+    'updates.latestJson',
+    '',
+  );
 }
 
 /// B4: the action of a drag & drop onto a folder.

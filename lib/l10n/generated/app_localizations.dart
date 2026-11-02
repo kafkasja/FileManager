@@ -8846,6 +8846,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t undo the import: {error}'**
   String backupUndoFailed(String error);
+
+  /// X5 info sheet button: hand the APK to Android's installer.
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get apkInstall;
+
+  /// X5: the APK's package isn't installed.
+  ///
+  /// In en, this message translates to:
+  /// **'New app'**
+  String get apkNewApp;
+
+  /// X5: installed version → APK version.
+  ///
+  /// In en, this message translates to:
+  /// **'Update from {from} to {to}'**
+  String apkUpdateFromTo(String from, String to);
+
+  /// X5: same version code as installed.
+  ///
+  /// In en, this message translates to:
+  /// **'This version is already installed'**
+  String get apkSameVersion;
+
+  /// X5 warning: the APK has a lower version code.
+  ///
+  /// In en, this message translates to:
+  /// **'Older than the installed version ({installed})'**
+  String apkDowngrade(String installed);
+
+  /// X5: another app's package that Android hides from KFM.
+  ///
+  /// In en, this message translates to:
+  /// **'Android will show whether this is a new app or an update'**
+  String get apkUnknownInstalled;
+
+  /// X5 warning: signing certificates differ.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed by a different developer. Android will refuse this update. Uninstall the old app first (its data is lost).'**
+  String get apkSignerMismatch;
+
+  /// X5 note when the installed app can't be compared.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates must be signed by the same developer.'**
+  String get apkSignerUnknown;
+
+  /// X5 note on the info sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Only install apps from sources you trust.'**
+  String get apkTrustNote;
+
+  /// X5: the APK couldn't be parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn\'t a valid app package.'**
+  String get apkInvalid;
+
+  /// X5: no room for the cache copy of a USB/SD APK.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space to inspect this file.'**
+  String get apkNoSpace;
+
+  /// X5: other inspect error.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read this file: {error}'**
+  String apkReadFailed(String error);
+
+  /// X5 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start the installer: {error}'**
+  String apkInstallFailed(String error);
+
+  /// X5: no installer activity.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this device can install packages.'**
+  String get apkNoInstaller;
+
+  /// X5: before opening the permission page.
+  ///
+  /// In en, this message translates to:
+  /// **'To install apps, Android asks you to allow KFM in \"Install unknown apps\". KFM never installs anything without Android\'s own confirmation.'**
+  String get apkPermissionWhy;
+
+  /// X5 button: the "Install unknown apps" page.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get apkOpenSettings;
+
+  /// X5: back from settings without the permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission not granted.'**
+  String get apkPermissionDenied;
+
+  /// X5 info sheet subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{package} · version {version}'**
+  String apkPackageLine(String package, String version);
+
+  /// X7 Settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get updatesSectionTitle;
+
+  /// X7 switch (off by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get updatesCheckSetting;
+
+  /// X7 switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a day KFM asks GitHub if there\'s a newer version. Nothing about you or your files is sent; GitHub sees your IP address like any website.'**
+  String get updatesCheckSettingHelp;
+
+  /// X7 manual check row (works with the switch off).
+  ///
+  /// In en, this message translates to:
+  /// **'Check now'**
+  String get updatesCheckNow;
+
+  /// X7 check-now subtitle before any check.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed version {version}'**
+  String updatesCurrentVersion(String version);
+
+  /// X7 while the request runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get updatesChecking;
+
+  /// X7 result.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date'**
+  String get updatesUpToDate;
+
+  /// X7 manual check: GitHub has no release (404).
+  ///
+  /// In en, this message translates to:
+  /// **'No releases found'**
+  String get updatesNoReleases;
+
+  /// X7 banner and result.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM {version} is available'**
+  String updatesAvailable(String version);
+
+  /// X7 Settings line after a failed check.
+  ///
+  /// In en, this message translates to:
+  /// **'Last check failed'**
+  String get updatesLastCheckFailed;
+
+  /// X7 manual check snackbar: offline/timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach GitHub. Check your connection.'**
+  String get updatesFailedOffline;
+
+  /// X7 manual check snackbar: 403/429 rate limit.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub is busy. Try again later.'**
+  String get updatesFailedBusy;
+
+  /// X7 manual check snackbar: other errors.
+  ///
+  /// In en, this message translates to:
+  /// **'Update check failed: {error}'**
+  String updatesFailed(String error);
+
+  /// X7 banner button: release notes sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get updatesWhatsNew;
+
+  /// X7 button: opens the release page in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get updatesDownload;
+
+  /// X7 banner close tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide until the next version'**
+  String get updatesDismiss;
+
+  /// X7 What's new sheet with an empty body.
+  ///
+  /// In en, this message translates to:
+  /// **'No release notes.'**
+  String get updatesNoNotes;
+
+  /// X7 snackbar: Download couldn't open the page.
+  ///
+  /// In en, this message translates to:
+  /// **'No browser app found'**
+  String get updatesNoBrowser;
+
+  /// X7 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the page: {error}'**
+  String updatesOpenFailed(String error);
 }
 
 class _AppLocalizationsDelegate

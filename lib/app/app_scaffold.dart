@@ -8,6 +8,7 @@ import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
 import 'package:kfm/features/onboarding/ui/limited_access_banner.dart';
 import 'package:kfm/features/share_in/ui/share_in_prompter.dart';
+import 'package:kfm/features/updates/ui/update_banner.dart';
 
 /// Bottom navigation (rail on wide screens) around the four tabs, with the
 /// app-wide banners above the tab content.
@@ -51,6 +52,8 @@ class AppScaffold extends StatelessWidget {
           const IncomingOfferPrompter(),
           // X1: files shared into KFM from other apps.
           const ShareInPrompter(),
+          // X7: never over the swipe card (rule 5).
+          if (shell.currentIndex != AppTab.swipe.index) const UpdateBanner(),
           if (onMediaTab) const LimitedAccessBanner(),
           if (onMediaTab) const IndexingChip(),
           Expanded(child: shell),

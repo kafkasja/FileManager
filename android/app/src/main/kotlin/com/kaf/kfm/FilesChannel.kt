@@ -70,6 +70,8 @@ class FilesChannel(
     private val safTrees = SafTrees(activity)
     /** X6: "Save as" / open-file pickers for backup files. */
     private val safDocuments = SafDocuments(activity)
+    /** X5: APK info + hand-off to the system installer. */
+    private val apk = ApkSupport(activity.applicationContext)
 
     /** N7: Files-table changes (non-media files) while the share server runs. */
     private val changesChannel = EventChannel(messenger, "kfm/files_changes")
@@ -144,6 +146,27 @@ class FilesChannel(
             return
         }
         when (call.method) {
+            // X5 (main thread: only intents and a permission check).
+            "canInstallPackages", "openInstallPermissionSettings", "installApk",
+            "discardApkCopy", "openUrl" -> {
+                try {
+                    val value: Any? = when (call.method) {
+                        "canInstallPackages" -> apk.canInstall()
+                        "openInstallPermissionSettings" -> apk.openPermissionSettings()
+                        "installApk" -> apk.install(call.stringArg("path"))
+                        "discardApkCopy" -> apk.discardCopy(call.stringArg("path"))
+                        else -> openUrl(call.stringArg("url"))
+                    }
+                    result.success(value)
+                } catch (e: FilesError) {
+                    result.error(e.code, e.message, null)
+                } catch (e: ApkSupport.ApkError) {
+                    result.error(e.code, e.message, null)
+                } catch (e: Exception) {
+                    result.error("IO", e.toString(), null)
+                }
+                return
+            }
             "requestWriteConsent" -> {
                 requestWriteConsent(call, result)
                 return
@@ -267,6 +290,11 @@ class FilesChannel(
                     )
                     "canManageMedia" -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                         MediaStore.canManageMedia(context)
+                    "inspectApk" -> apk.inspect(
+                        call.argument<String>("path"),
+                        call.argument<String>("uri"),
+                        call.argument<Number>("size")?.toLong() ?: 0L,
+                    )
                     else -> {
                         main.post { result.notImplemented() }
                         return@execute
@@ -275,11 +303,30 @@ class FilesChannel(
                 main.post { result.success(value) }
             } catch (e: FilesError) {
                 main.post { result.error(e.code, e.message, null) }
+            } catch (e: ApkSupport.ApkError) {
+                main.post { result.error(e.code, e.message, null) }
             } catch (e: SecurityException) {
                 main.post { result.error("PERMISSION_DENIED", e.toString(), null) }
             } catch (e: Exception) {
                 main.post { result.error("IO", e.toString(), null) }
             }
+        }
+    }
+
+    // ---- browser (TASK-X7) ----
+
+    /** Opens an https page in the browser. False when no app can. */
+    private fun openUrl(url: String): Boolean {
+        val uri = Uri.parse(url)
+        if (uri.scheme != "https") throw FilesError("BAD_ARGS", "only https")
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            context.startActivity(intent)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
         }
     }
 

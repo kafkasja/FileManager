@@ -107,6 +107,11 @@ const Set<String> excludedBackupSettings = {
   'aiLabels.paused',
   'aiLabels.cardDismissed',
   'external.safGrants',
+  // X7: a network opt-in (chosen per device) and its cache.
+  'updates.checkEnabled',
+  'updates.lastCheckAt',
+  'updates.dismissedVersion',
+  'updates.latestJson',
 };
 
 final Map<String, BackupSetting> backupSettingsByName = Map.unmodifiable({

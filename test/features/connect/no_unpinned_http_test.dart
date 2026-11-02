@@ -32,16 +32,22 @@ const _aiModelStore = 'features/ai_labels/data/ai_model_store.dart';
 
 /// S5's player pool: remote videos play through the N5 loopback proxy
 /// (`http://127.0.0.1:<port>`), which forwards over PinnedClient.
+/// X7's opt-in update check: one GET to api.github.com (public host,
+/// system-trusted TLS); it never talks to a KFM device.
+const _releaseClient = 'features/updates/data/github_release_client.dart';
+
 const _videoPool = 'features/swipe/ui/video_controller_pool.dart';
 
 final List<_Rule> _rules = [
   _Rule('HttpClient(', RegExp(r'\bHttpClient\('), {
     _pinnedClient,
     _aiModelStore,
+    _releaseClient,
   }),
   _Rule('HttpClient.new', RegExp(r'\bHttpClient\.new\b'), {
     _pinnedClient,
     _aiModelStore,
+    _releaseClient,
   }),
   _Rule('package:http/', RegExp('package:http/')),
   _Rule('NetworkImage(', RegExp(r'\bNetworkImage\(')),

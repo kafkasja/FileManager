@@ -6376,4 +6376,139 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupUndoFailed(String error) {
     return 'Couldn\'t undo the import: $error';
   }
+
+  @override
+  String get apkInstall => 'Install';
+
+  @override
+  String get apkNewApp => 'New app';
+
+  @override
+  String apkUpdateFromTo(String from, String to) {
+    return 'Update from $from to $to';
+  }
+
+  @override
+  String get apkSameVersion => 'This version is already installed';
+
+  @override
+  String apkDowngrade(String installed) {
+    return 'Older than the installed version ($installed)';
+  }
+
+  @override
+  String get apkUnknownInstalled =>
+      'Android will show whether this is a new app or an update';
+
+  @override
+  String get apkSignerMismatch =>
+      'Signed by a different developer. Android will refuse this update. Uninstall the old app first (its data is lost).';
+
+  @override
+  String get apkSignerUnknown =>
+      'Updates must be signed by the same developer.';
+
+  @override
+  String get apkTrustNote => 'Only install apps from sources you trust.';
+
+  @override
+  String get apkInvalid => 'This file isn\'t a valid app package.';
+
+  @override
+  String get apkNoSpace => 'Not enough space to inspect this file.';
+
+  @override
+  String apkReadFailed(String error) {
+    return 'Couldn\'t read this file: $error';
+  }
+
+  @override
+  String apkInstallFailed(String error) {
+    return 'Couldn\'t start the installer: $error';
+  }
+
+  @override
+  String get apkNoInstaller => 'No app on this device can install packages.';
+
+  @override
+  String get apkPermissionWhy =>
+      'To install apps, Android asks you to allow KFM in \"Install unknown apps\". KFM never installs anything without Android\'s own confirmation.';
+
+  @override
+  String get apkOpenSettings => 'Open settings';
+
+  @override
+  String get apkPermissionDenied => 'Permission not granted.';
+
+  @override
+  String apkPackageLine(String package, String version) {
+    return '$package · version $version';
+  }
+
+  @override
+  String get updatesSectionTitle => 'Updates';
+
+  @override
+  String get updatesCheckSetting => 'Check for updates';
+
+  @override
+  String get updatesCheckSettingHelp =>
+      'Once a day KFM asks GitHub if there\'s a newer version. Nothing about you or your files is sent; GitHub sees your IP address like any website.';
+
+  @override
+  String get updatesCheckNow => 'Check now';
+
+  @override
+  String updatesCurrentVersion(String version) {
+    return 'Installed version $version';
+  }
+
+  @override
+  String get updatesChecking => 'Checking…';
+
+  @override
+  String get updatesUpToDate => 'You\'re up to date';
+
+  @override
+  String get updatesNoReleases => 'No releases found';
+
+  @override
+  String updatesAvailable(String version) {
+    return 'KFM $version is available';
+  }
+
+  @override
+  String get updatesLastCheckFailed => 'Last check failed';
+
+  @override
+  String get updatesFailedOffline =>
+      'Couldn\'t reach GitHub. Check your connection.';
+
+  @override
+  String get updatesFailedBusy => 'GitHub is busy. Try again later.';
+
+  @override
+  String updatesFailed(String error) {
+    return 'Update check failed: $error';
+  }
+
+  @override
+  String get updatesWhatsNew => 'What\'s new';
+
+  @override
+  String get updatesDownload => 'Download';
+
+  @override
+  String get updatesDismiss => 'Hide until the next version';
+
+  @override
+  String get updatesNoNotes => 'No release notes.';
+
+  @override
+  String get updatesNoBrowser => 'No browser app found';
+
+  @override
+  String updatesOpenFailed(String error) {
+    return 'Couldn\'t open the page: $error';
+  }
 }
