@@ -189,6 +189,22 @@ class FilesChannel {
   Future<bool> releaseTree(String uri) async =>
       (await _invoke<bool>('releaseTree', {'uri': uri})) ?? false;
 
+  /// X6: the system "Save as" picker. Null = cancelled.
+  Future<String?> createDocument(String name, String mime) =>
+      _invoke<String>('createDocument', {'name': name, 'mime': mime});
+
+  /// X6: the system file picker for one of [mimes]. Null = cancelled.
+  Future<String?> openDocument(List<String> mimes) =>
+      _invoke<String>('openDocument', {'mimes': mimes});
+
+  /// X6: copies the local file [srcPath] into the picked document [uri].
+  Future<void> writeDocument(String uri, String srcPath) =>
+      _invoke<bool>('writeDocument', {'uri': uri, 'srcPath': srcPath});
+
+  /// X6: copies the picked document [uri] to the local file [destPath].
+  Future<void> readDocument(String uri, String destPath) =>
+      _invoke<bool>('readDocument', {'uri': uri, 'destPath': destPath});
+
   /// The tree URIs this app holds a persisted grant for.
   Future<List<String>> persistedTrees() async {
     try {

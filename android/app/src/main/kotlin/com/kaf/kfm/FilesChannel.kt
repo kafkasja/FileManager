@@ -68,6 +68,8 @@ class FilesChannel(
     private var pendingResult: MethodChannel.Result? = null
     /** U1 (shared with X3): SAF tree picker and persisted grants. */
     private val safTrees = SafTrees(activity)
+    /** X6: "Save as" / open-file pickers for backup files. */
+    private val safDocuments = SafDocuments(activity)
 
     /** N7: Files-table changes (non-media files) while the share server runs. */
     private val changesChannel = EventChannel(messenger, "kfm/files_changes")
@@ -103,6 +105,7 @@ class FilesChannel(
         }
         channel.setMethodCallHandler(null)
         safTrees.dispose()
+        safDocuments.dispose()
         stopObservingFiles()
         changesSink = null
         changesChannel.setStreamHandler(null)
@@ -117,6 +120,7 @@ class FilesChannel(
     /** Forwarded from MainActivity.onActivityResult. Returns true if handled. */
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (safTrees.onActivityResult(requestCode, resultCode, data)) return true
+        if (safDocuments.onActivityResult(requestCode, resultCode, data)) return true
         if (requestCode != CONSENT_REQUEST) return false
         val r = pendingResult
         if (r == null) {
@@ -133,6 +137,10 @@ class FilesChannel(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         if (safTrees.handles(call.method)) {
             safTrees.onMethodCall(call, result)
+            return
+        }
+        if (safDocuments.handles(call.method)) {
+            safDocuments.onMethodCall(call, result)
             return
         }
         when (call.method) {
