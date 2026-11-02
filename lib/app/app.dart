@@ -6,6 +6,7 @@ import 'package:kfm/app/theme/app_theme.dart';
 import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/background/in_app_jobs.dart';
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
@@ -65,6 +66,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(labelingJobProvider)
       // P2: tags/favorites follow files whose id changes.
       ..watch(fileIdRekeyerProvider)
+      // H5: failed queued writes also go to the error log.
+      ..watch(errorLogDbBridgeProvider)
       // Recover stuck deletes, purge expired pending files (D2/D4).
       ..watch(startupMaintenanceProvider)
       // N6: forget temporary remembered devices after 7 days.

@@ -4996,4 +4996,43 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get errorLogShare => 'Share error log';
+
+  @override
+  String errorLogShareSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    return '$_temp0. Stays on this phone until you share it. Folder and file names are hidden.';
+  }
+
+  @override
+  String get errorLogEmpty => 'No errors logged';
+
+  @override
+  String get errorLogShareSubject => 'KFM error log';
+
+  @override
+  String get errorLogShareFailed => 'Couldn\'t share the error log';
+
+  @override
+  String get errorLogClear => 'Clear error log';
+
+  @override
+  String get errorLogClearConfirm =>
+      'Clear the error log? This can\'t be undone.';
+
+  @override
+  String get errorLogCleared => 'Error log cleared';
+
+  @override
+  String get errorLogClearFailed => 'Couldn\'t clear the error log';
+
+  @override
+  String get devThrowTestError => 'Throw test error';
 }

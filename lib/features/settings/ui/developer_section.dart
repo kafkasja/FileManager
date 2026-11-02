@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
@@ -51,6 +53,15 @@ class DeveloperSection extends ConsumerWidget {
               );
             }
           },
+        ),
+        // H5: an uncaught async error (→ error log, source "platform"); the
+        // About count refreshes after leaving and reopening Settings.
+        ListTile(
+          leading: const Icon(Icons.bug_report_outlined),
+          title: Text(l10n.devThrowTestError),
+          onTap: () => scheduleMicrotask(
+            () => throw StateError('H5 test error (Developer section)'),
+          ),
         ),
       ],
     );

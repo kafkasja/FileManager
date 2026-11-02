@@ -46,5 +46,10 @@ void main() {
       multiLine: true,
     ).firstMatch(pubspec)!.group(1);
     expect(appVersion, version);
+    final build = RegExp(
+      r'^version:\s*[^+\s]+\+(\d+)',
+      multiLine: true,
+    ).firstMatch(pubspec)!.group(1);
+    expect(appBuildNumber, build);
   });
 }

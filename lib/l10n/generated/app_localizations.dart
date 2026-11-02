@@ -6998,6 +6998,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Its 1 transfer is removed too.} other{Its {count} transfers are removed too.}}'**
   String rememberedRemoveTransfers(int count);
+
+  /// No description provided for @errorLogShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share error log'**
+  String get errorLogShare;
+
+  /// Settings → About (H5). Tag and preset names may still appear.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 error} other{{count} errors}}. Stays on this phone until you share it. Folder and file names are hidden.'**
+  String errorLogShareSubtitle(int count);
+
+  /// No description provided for @errorLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No errors logged'**
+  String get errorLogEmpty;
+
+  /// No description provided for @errorLogShareSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM error log'**
+  String get errorLogShareSubject;
+
+  /// No description provided for @errorLogShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t share the error log'**
+  String get errorLogShareFailed;
+
+  /// No description provided for @errorLogClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear error log'**
+  String get errorLogClear;
+
+  /// No description provided for @errorLogClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the error log? This can\'t be undone.'**
+  String get errorLogClearConfirm;
+
+  /// No description provided for @errorLogCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Error log cleared'**
+  String get errorLogCleared;
+
+  /// No description provided for @errorLogClearFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t clear the error log'**
+  String get errorLogClearFailed;
+
+  /// Debug-only Developer tile (H5): throws an uncaught error to test the error log.
+  ///
+  /// In en, this message translates to:
+  /// **'Throw test error'**
+  String get devThrowTestError;
 }
 
 class _AppLocalizationsDelegate

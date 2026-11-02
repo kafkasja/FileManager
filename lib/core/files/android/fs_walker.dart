@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:kfm/core/diagnostics/spawn_logged.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -74,7 +75,11 @@ Stream<List<FileRef>> walkFiles(WalkOptions options) {
           }
         });
       try {
-        isolate = await Isolate.spawn(_walkEntry, (receive.sendPort, options));
+        // H5: errors escaping _walkEntry's own reporting go to the log.
+        isolate = await spawnLogged(_walkEntry, (
+          receive.sendPort,
+          options,
+        ), debugName: 'kfm-walker');
       } on Object catch (e, st) {
         controller.addError(e, st);
         shutDown();

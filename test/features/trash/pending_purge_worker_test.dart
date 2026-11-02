@@ -9,6 +9,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
+import 'package:kfm/core/diagnostics/error_log.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
@@ -108,6 +109,21 @@ void main() {
     );
     expect(ok, isFalse);
     expect(await settings.read(AppSettings.pendingLastPurgeError), 'ioError');
+  });
+
+  test('H5: a failing purge is written to errors-bg.log', () async {
+    final logDir = Directory('$root/logs');
+    final log = ErrorLog.background(() async => logDir);
+    await runPendingPurge(
+      settings,
+      _FailingFolder(db, FileOpFailure.ioError),
+      volumeRoot: root,
+      log: log,
+    );
+    await log.flush();
+    final text = File('${logDir.path}/errors-bg.log').readAsStringSync();
+    expect(text, contains('[bg] pending purge:'));
+    expect(File('${logDir.path}/errors.log').existsSync(), isFalse);
   });
 
   test(
