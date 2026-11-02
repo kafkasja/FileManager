@@ -21,7 +21,6 @@ import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
-import 'package:kfm/features/presets/ui/preset_chip.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/reviewed/ui/reviewed_badge.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -41,6 +40,7 @@ import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
+import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_bar.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_launcher.dart';
 import 'package:kfm/features/swipe/ui/swipe_toast.dart';
@@ -58,8 +58,8 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 /// right = keep, undo always visible.
 ///
 /// N8: with a `'remote:<fp>'` [sourceId] (inside a [SwipeDeckScope]) it
-/// swipes a connected device's folder: no preset chip, filter, Clear…,
-/// rename pill or D1 question; Done needs the connection.
+/// swipes a connected device's folder: no presets or filter (S6 strip),
+/// Clear…, rename pill or D1 question; Done needs the connection.
 class SwipeScreen extends ConsumerWidget {
   const new({super.key, this.sourceId = kLocalSourceId});
 
@@ -126,7 +126,6 @@ class SwipeScreen extends ConsumerWidget {
         actions: [
           // N9: only while a transfer runs; opens the Transfers page.
           const TransferBadge(),
-          if (peer == null) const PresetChip(),
           if (value != null && value.swiped > 0)
             TextButton(
               onPressed: peer != null && !connected
@@ -139,18 +138,6 @@ class SwipeScreen extends ConsumerWidget {
                     )
                   : () => _finish(context, ref, value),
               child: Text(l10n.swipeDone),
-            ),
-          // SS1: the main filter is hidden (and kept) while a source is open.
-          if (value != null && value.source == null && peer == null)
-            IconButton(
-              tooltip: l10n.filterButton,
-              onPressed: () => showFilterSheet(context),
-              icon: Badge(
-                isLabelVisible: !FileFilter.decode(value.session.filterJson)
-                    .isEmpty,
-                smallSize: 8,
-                child: const Icon(Icons.filter_list),
-              ),
             ),
           if (value != null && peer == null)
             PopupMenuButton<String>(
@@ -172,6 +159,12 @@ class SwipeScreen extends ConsumerWidget {
           child: Column(
             children: [
               SwipeSourceBar(deck: value),
+              // S6: preset, directions, filter and the setup sheet.
+              SwipeSetupStrip(
+                deck: value,
+                sourceId: sourceId,
+                deviceName: device,
+              ),
               Expanded(child: _Deck(deck: value)),
             ],
           ),

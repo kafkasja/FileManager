@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/presets/domain/preset.dart';
-import 'package:kfm/features/presets/ui/preset_chip.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/pump_app.dart';
@@ -24,8 +24,10 @@ Future<TestApp> _pump(WidgetTester tester) async {
   return app;
 }
 
-Finder _chipLabel(String text) =>
-    find.descendant(of: find.byType(PresetChip), matching: find.text(text));
+Finder _chipLabel(String text) => find.descendant(
+  of: find.byType(SwipeSetupStrip),
+  matching: find.text(text),
+);
 
 void main() {
   testWidgets('fresh install: no chip; Presets shows the examples', (
@@ -45,11 +47,8 @@ void main() {
     final app = await _pump(tester);
     app.container.read(routerProvider).go(AppRoutes.customizeSwipes);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Save as preset…'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text('Save as preset…'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save as preset…'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'Mine');
@@ -61,9 +60,10 @@ void main() {
     await tester.pump(const Duration(seconds: 5)); // let the snackbar go
     await tester.pumpAndSettle();
     expect(_chipLabel('Basic'), findsOneWidget);
-    await tester.tap(find.byType(PresetChip));
+    // S6-2 a: tap the preset name → chips in the strip → one tap switches.
+    await tester.tap(_chipLabel('Basic'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Mine'));
+    await tester.tap(_chipLabel('Mine'));
     await tester.pumpAndSettle();
     expect(_chipLabel('Mine'), findsOneWidget);
     final deck = app.container.read(swipeDeckControllerProvider).value!;

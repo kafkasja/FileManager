@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/filters/ui/filter_sheet.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/pump_app.dart';
@@ -38,8 +42,10 @@ List<String> _deckNames(TestApp app) => [
     f.name,
 ];
 
+/// S6: the filter is opened from the setup sheet (or the strip's filter
+/// icon once a filter is on); these tests open it directly.
 Future<void> _openSheet(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.filter_list));
+  unawaited(showFilterSheet(tester.element(find.byType(SwipeSetupStrip))));
   await tester.pumpAndSettle();
 }
 
