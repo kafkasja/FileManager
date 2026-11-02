@@ -3,8 +3,10 @@ import 'dart:developer' as developer;
 
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
+import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
+import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
 import 'package:meta/meta.dart';
@@ -134,13 +136,21 @@ List<ServerRoute> unguardedRoutes(Iterable<ServerRoute> routes) => [
 /// global middleware can't see route parameters or bodies, so every file
 /// and upload route wraps its handler with [guarded].
 class AllowListGuard {
-  new({required this.scopeOf, required this.source, required this.paths});
+  new({
+    required this.scopeOf,
+    required this.source,
+    required this.paths,
+    this.grants = const NoOfferGrants(),
+  });
 
   /// The client's scope by fingerprint (read per request: edits apply to
   /// the next request).
   final ShareScope Function(String clientFingerprint) scopeOf;
   final FileSource Function() source;
   final PathGuard paths;
+
+  /// N12: accepted send-files offers (upload roots `offer:<id>`).
+  final OfferGrants grants;
 
   /// Wraps [inner]: every target [extract] returns must be inside the
   /// session's scope, outside the excluded locations, and (when written:
@@ -159,7 +169,12 @@ class AllowListGuard {
     Future<Response> handler(Request request) async {
       final session = sessionOf(request);
       if (session == null) return apiError(ApiErrorCode.unauthorized);
-      final scope = scopeOf(session.clientFingerprint);
+      // N12: a send-only session reaches no shared folder, whatever the
+      // scope store holds for that key.
+      final scope = session.sendOnly
+          ? ShareScope.empty
+          : scopeOf(session.clientFingerprint);
+      final fp = session.clientFingerprint;
       final input = GuardInput(request);
       final resolved = <ResolvedTarget>[];
       try {
@@ -169,7 +184,7 @@ class AllowListGuard {
           return apiError(ApiErrorCode.forbiddenPath);
         }
         for (final t in targets) {
-          resolved.add(await _check(scope, t, write: write || t.write));
+          resolved.add(await _check(scope, fp, t, write: write || t.write));
         }
       } on GuardRejection catch (e) {
         return apiError(e.code);
@@ -194,11 +209,31 @@ class AllowListGuard {
 
   Future<ResolvedTarget> _check(
     ShareScope scope,
+    String clientFingerprint,
     GuardTarget target, {
     required bool write,
   }) async {
     final String canonical;
     GuardedFile? file;
+    if (target case RootPathTarget(:final rootId, :final relativePath)
+        when isOfferRootId(rootId)) {
+      // N12: offer roots have no sub-paths (no traversal, no realpath of
+      // a folder that may not exist yet).
+      if (relativePath.isNotEmpty) {
+        throw const GuardRejection(ApiErrorCode.forbiddenPath, 'offer path');
+      }
+      final root =
+          await grants.inboxRoot(clientFingerprint, rootId) ??
+          (throw const GuardRejection(ApiErrorCode.forbiddenPath, 'offer'));
+      if (PathGuard.isExcluded(root.path)) {
+        throw const GuardRejection(ApiErrorCode.forbiddenPath, 'excluded');
+      }
+      return ResolvedTarget(
+        target: target,
+        canonicalPath: root.path,
+        root: root,
+      );
+    }
     switch (target) {
       case FileIdTarget(:final id):
         file = await paths.resolveFileId(

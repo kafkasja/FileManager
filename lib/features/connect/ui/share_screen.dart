@@ -28,7 +28,11 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// (N5b notification). The QR area is
 /// filled by N2. The screen stays on while open.
 class ShareScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({this.receive = false, super.key});
+
+  /// N12 "Receive files": the same server, headed "Ready to receive files".
+  /// Send pairings never open the folder picker either way.
+  final bool receive;
 
   @override
   ConsumerState<ShareScreen> createState() => _ShareScreenState();
@@ -241,7 +245,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     final state = ref.watch(shareServerControllerProvider);
     final spacing = context.tokens.spacing;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.shareTitle)),
+      appBar: AppBar(
+        title: Text(widget.receive ? l10n.receiveFiles : l10n.shareTitle),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -262,7 +268,10 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
           icon: null,
           title: l10n.sharePreparing,
         ),
-        ShareServerStatus.running => _Running(state: state),
+        ShareServerStatus.running => _Running(
+          state: state,
+          receive: widget.receive,
+        ),
         ShareServerStatus.error => _Centered(
           icon: Icons.wifi_off_outlined,
           title: state.error is NoLocalNetworkException
@@ -329,9 +338,10 @@ class RemoteRequestBanner extends ConsumerWidget {
 }
 
 class _Running extends ConsumerWidget {
-  const new({required this.state});
+  const new({required this.state, this.receive = false});
 
   final ShareServerState state;
+  final bool receive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -342,13 +352,13 @@ class _Running extends ConsumerWidget {
     return ListView(
       children: [
         Text(
-          l10n.shareSharing,
+          receive ? l10n.receiveReadyTitle : l10n.shareSharing,
           style: theme.textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
         SizedBox(height: spacing),
         Text(
-          l10n.shareSharingAs(name),
+          receive ? l10n.receiveReadyHint(name) : l10n.shareSharingAs(name),
           style: theme.textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
@@ -437,24 +447,35 @@ class ConnectedClientsList extends ConsumerWidget {
               child: ListTile(
                 key: ValueKey('share-client-${c.sessionId}'),
                 leading: const Icon(Icons.devices_outlined),
-                title: Text(l10n.shareConnectedTo(c.clientName)),
-                subtitle: Text(
-                  l10n.shareClientFolders(
-                    ref
-                            .watch(shareScopeProvider(c.clientFingerprint))
-                            .value
-                            ?.roots
-                            .length ??
-                        0,
-                  ),
+                title: Text(
+                  c.sendOnly
+                      ? l10n.shareSessionSending(c.clientName)
+                      : l10n.shareConnectedTo(c.clientName),
                 ),
-                onTap: () => unawaited(
-                  showSharedFoldersPicker(
-                    context,
-                    clientFingerprint: c.clientFingerprint,
-                    clientName: c.clientName,
-                  ),
-                ),
+                // N12: a send-only session has no folders to pick.
+                subtitle: c.sendOnly
+                    ? null
+                    : Text(
+                        l10n.shareClientFolders(
+                          ref
+                                  .watch(
+                                    shareScopeProvider(c.clientFingerprint),
+                                  )
+                                  .value
+                                  ?.roots
+                                  .length ??
+                              0,
+                        ),
+                      ),
+                onTap: c.sendOnly
+                    ? null
+                    : () => unawaited(
+                        showSharedFoldersPicker(
+                          context,
+                          clientFingerprint: c.clientFingerprint,
+                          clientName: c.clientName,
+                        ),
+                      ),
                 trailing: TextButton(
                   onPressed: () =>
                       ref.read(clientSessionStoreProvider).revoke(c.sessionId),

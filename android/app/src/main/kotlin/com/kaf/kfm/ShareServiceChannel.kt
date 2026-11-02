@@ -57,6 +57,24 @@ class ShareServiceChannel(private val context: Context, messenger: BinaryMesseng
                 stopService()
                 result.success(null)
             }
+            // N12: "<S> wants to send you files" (high importance).
+            "showOffer" -> {
+                try {
+                    ShareService.showOffer(
+                        context,
+                        call.argument<String>("channel") ?: "",
+                        call.argument<String>("title") ?: "",
+                        call.argument<String>("text") ?: "",
+                    )
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("notify_failed", e.toString(), null)
+                }
+            }
+            "cancelOffer" -> {
+                ShareService.cancelOffer(context)
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }

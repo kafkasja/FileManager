@@ -61,6 +61,10 @@ void main() {
     WidgetTester tester, {
     List<Override> extra = const [],
   }) async {
+    // Tall enough for every card (N12 added a switch per device).
+    tester.view.physicalSize = const Size(1080, 4000);
+    tester.view.devicePixelRatio = 1.5;
+    addTearDown(tester.view.reset);
     identity = _FakeIdentity();
     discovery = FakeDiscovery();
     final app = await pumpApp(

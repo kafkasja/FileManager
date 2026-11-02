@@ -68,6 +68,7 @@ KnownDevice knownDeviceFromRow(KnownDeviceRow r) => KnownDevice(
   canShareToUs: r.canShareToUs,
   isTemporary: r.isTemporary,
   autoAccept: r.autoAccept,
+  autoAcceptFiles: r.autoAcceptFiles,
 );
 
 /// Remembered devices (TASK-N6). Reads go straight to the DAO; every write
@@ -184,6 +185,16 @@ class KnownDevicesRepository {
         () => _dao.updateByFingerprint(
           fp,
           KnownDevicesCompanion(autoAccept: Value(autoAccept)),
+        ),
+      );
+
+  /// N12 "Accept files without asking" (no-op for an unknown device).
+  Future<void> setAutoAcceptFiles(String fp, {required bool enabled}) =>
+      _queue.enqueue(
+        null,
+        () => _dao.updateByFingerprint(
+          fp,
+          KnownDevicesCompanion(autoAcceptFiles: Value(enabled)),
         ),
       );
 

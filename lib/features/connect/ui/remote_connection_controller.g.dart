@@ -238,7 +238,7 @@ final class RemoteConnectionControllerProvider
 }
 
 String _$remoteConnectionControllerHash() =>
-    r'baafd2d8442100fc827b35ef670a771ec22c85f6';
+    r'06554ee441bf245a36c4956c510f267166157c65';
 
 /// The connection of this device to a sharing device (TASK-N5). Owns the
 /// pinned client after pairing, so it outlives the Connect screen; N7's

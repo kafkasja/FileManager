@@ -44,10 +44,7 @@ class PairNonceStore {
     final nonce = Uint8List.fromList(
       List.generate(32, (_) => _random.nextInt(256)),
     );
-    _entries[_key(nonce)] = _Entry(
-      remoteIp,
-      _clock().add(kPairNonceLifetime),
-    );
+    _entries[_key(nonce)] = _Entry(remoteIp, _clock().add(kPairNonceLifetime));
     return nonce;
   }
 

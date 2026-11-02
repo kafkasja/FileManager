@@ -39,6 +39,11 @@ class KnownDevices extends Table {
   /// without the accept prompt (sharing side only).
   BoolColumn get autoAccept => boolean().withDefault(const Constant(false))();
 
+  /// "Accept files without asking" (TASK-N12): a verified, non-temporary
+  /// peer's send-files offers are accepted without the offer prompt.
+  BoolColumn get autoAcceptFiles =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 

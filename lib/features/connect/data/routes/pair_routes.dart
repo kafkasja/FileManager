@@ -79,6 +79,25 @@ PairHandOff promptHandOff({
   DateTime Function()? clock,
 }) => (candidate) async {
   final hello = candidate.hello;
+  // N12: a send-only pairing skips the accept prompt, the folder seeding
+  // and the picker: its session reaches no folder (empty scope), so the
+  // offer prompt is the one decision. QR/code still needed the code on
+  // this screen; `/known` a verified remembered key.
+  if (hello.sendOnly) {
+    final issued = sessions.issue(
+      clientFingerprint: candidate.clientFingerprint,
+      clientDeviceId: hello.clientDeviceId,
+      clientName: hello.clientName,
+      purpose: SessionPurpose.send,
+    );
+    return jsonOk(
+      PairAcceptedDto(
+        token: issued.token,
+        serverDeviceId: await serverDeviceId(),
+        roots: const [],
+      ).toJson(),
+    );
+  }
   final request = ConnectionRequest(
     requestId: randomHexId(),
     pairAttemptId: hello.pairAttemptId,

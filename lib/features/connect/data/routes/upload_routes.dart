@@ -11,10 +11,12 @@ import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
+import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/data/upload_store.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
+import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:shelf/shelf.dart';
@@ -30,6 +32,7 @@ class UploadRoutesEnv {
     required this.stagingFreeBytes,
     this.hashPath = _hashPath,
     this.hashFile = hashFileRef,
+    this.grants = const NoOfferGrants(),
   });
 
   static Future<String> _hashPath(String path) => hashFileInIsolate(path);
@@ -50,6 +53,9 @@ class UploadRoutesEnv {
 
   /// N11: SHA-256 of the imported file, read back through the source.
   final Future<String> Function(FileRef f, FileSource source) hashFile;
+
+  /// N12: uploads into `offer:<id>` claim an offered file first.
+  final OfferGrants grants;
 }
 
 /// Whether [request] is a chunk upload (its own body limit instead of the
@@ -227,6 +233,18 @@ Future<Response> _create(UploadRoutesEnv env, Request r) async {
       (freeStaging != null && freeStaging < need)) {
     return apiError(ApiErrorCode.insufficientStorage);
   }
+  // N12: only offered files (name, size + slack, count) may land in an
+  // offer folder.
+  if (offerIdOfRoot(body.rootId) case final offerId?) {
+    final ok = await env.grants.claim(
+      offerId: offerId,
+      clientFingerprint: _session(r).clientFingerprint,
+      name: name,
+      size: body.size,
+      uploadId: body.uploadId,
+    );
+    if (!ok) return apiError(ApiErrorCode.conflict, 'not offered');
+  }
   final u = await env.uploads.create(
     uploadId: body.uploadId,
     ownerFingerprint: _session(r).clientFingerprint,
@@ -235,6 +253,13 @@ Future<Response> _create(UploadRoutesEnv env, Request r) async {
     name: name,
     size: body.size,
   );
+  // N12: the receiver may have stopped the offer meanwhile.
+  if (isOfferRootId(body.rootId) &&
+      await env.grants.inboxRoot(_session(r).clientFingerprint, body.rootId) ==
+          null) {
+    await env.uploads.remove(u.uploadId);
+    return apiError(ApiErrorCode.forbiddenPath);
+  }
   return _statusOk(u, status: 201);
 }
 
@@ -443,6 +468,7 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
     }
   }
   await env.uploads.completed(u.uploadId, finalId: out.id, sha256: finalHash);
+  if (isOfferRootId(u.rootId)) await env.grants.completed(u.uploadId, out.id);
   unawaited(env.addToIndex([out]));
   return jsonOk(
     UploadCompletedDto(finalId: out.id, sha256: finalHash).toJson(),
@@ -462,6 +488,7 @@ Future<Response> _delete(UploadRoutesEnv env, Request r) async {
   final u = await _upload(env, r);
   if (u == null) return apiError(ApiErrorCode.notFound);
   await env.uploads.remove(u.uploadId);
+  if (isOfferRootId(u.rootId)) await env.grants.released(u.uploadId);
   return Response(204);
 }
 

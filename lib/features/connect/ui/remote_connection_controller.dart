@@ -125,6 +125,7 @@ class RemoteConnectionController extends _$RemoteConnectionController {
       peerName: result.peerName,
       peerFingerprint: result.peerFingerprint,
       roots: result.accepted.roots,
+      sendOnly: result.sendOnly,
     );
     if (ref.read(remoteFollowsAppLifecycleProvider)) {
       _lifecycle = AppLifecycleListener(onStateChange: onLifecycle);
@@ -169,11 +170,16 @@ class RemoteConnectionController extends _$RemoteConnectionController {
       );
       if (!identical(http, _http)) return;
       _beatsSinceRoots = 0;
-      if (state case RemoteConnected(:final peerName, :final peerFingerprint)) {
+      if (state case RemoteConnected(
+        :final peerName,
+        :final peerFingerprint,
+        :final sendOnly,
+      )) {
         state = RemoteConnected(
           peerName: peerName,
           peerFingerprint: peerFingerprint,
           roots: r.roots,
+          sendOnly: sendOnly,
         );
       }
     } on RemoteApiException catch (e) {
@@ -214,11 +220,13 @@ class RemoteConnectionController extends _$RemoteConnectionController {
           ref.read(remoteChangeTokenProvider.notifier).publish(token);
         }
         _beatsSinceRoots++;
-        final roots = switch (state) {
-          RemoteConnected(:final roots) => roots,
-          _ => const <RootDto>[],
+        final (roots, sendOnly) = switch (state) {
+          RemoteConnected(:final roots, :final sendOnly) => (roots, sendOnly),
+          _ => (const <RootDto>[], false),
         };
-        if (roots.isEmpty || _beatsSinceRoots >= kRootsRefreshEveryBeats) {
+        // N12: a send-only session never gets folders.
+        if (!sendOnly &&
+            (roots.isEmpty || _beatsSinceRoots >= kRootsRefreshEveryBeats)) {
           unawaited(refreshRoots());
         }
         return;

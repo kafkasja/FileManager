@@ -4,6 +4,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/app/widgets/indexing_chip.dart';
+import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
 import 'package:kfm/features/onboarding/ui/limited_access_banner.dart';
 
@@ -45,6 +46,8 @@ class AppScaffold extends StatelessWidget {
           const DbErrorBanner(),
           // U1: "USB drive connected · Open", "Storage removed".
           const ExternalNotices(),
+          // N12: send-files offer prompts and their snackbars.
+          const IncomingOfferPrompter(),
           if (onMediaTab) const LimitedAccessBanner(),
           if (onMediaTab) const IndexingChip(),
           Expanded(child: shell),

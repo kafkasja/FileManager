@@ -5769,4 +5769,331 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ejectFailed => 'Can\'t open the storage settings';
+
+  @override
+  String get sendTo => 'Send to…';
+
+  @override
+  String sendSheetTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Send $count files to…',
+      one: 'Send 1 file to…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sendSheetConnected => 'Connected';
+
+  @override
+  String get sendSheetConnectedToYou => 'Connected to you';
+
+  @override
+  String get sendSheetRemembered => 'Remembered';
+
+  @override
+  String get sendSheetNearby => 'Nearby';
+
+  @override
+  String get sendSheetOnline => 'Nearby now';
+
+  @override
+  String sendAskReceive(String device) {
+    return 'Ask $device to open Receive files';
+  }
+
+  @override
+  String sendSwitchDevice(String from, String to) {
+    return 'Disconnect from $from to send to $to?';
+  }
+
+  @override
+  String get sendSwitchAction => 'Disconnect';
+
+  @override
+  String sendConnecting(String device) {
+    return 'Connecting to $device…';
+  }
+
+  @override
+  String sendConfirmTitle(int count, String size, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Send $count files ($size) to $device?',
+      one: 'Send 1 file ($size) to $device?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sendConfirmHint(String device) {
+    return '$device decides whether to take them. Nothing else is shared.';
+  }
+
+  @override
+  String sendSharedFolderInstead(String device) {
+    return 'Put them in a shared folder on $device…';
+  }
+
+  @override
+  String get sendAction => 'Send';
+
+  @override
+  String sendWaiting(String device) {
+    return 'Waiting for $device to accept…';
+  }
+
+  @override
+  String sendDeclined(String device) {
+    return '$device declined';
+  }
+
+  @override
+  String sendNoAnswer(String device) {
+    return 'No answer from $device';
+  }
+
+  @override
+  String sendNoSpace(String device) {
+    return 'Not enough space on $device';
+  }
+
+  @override
+  String sendStopped(String device) {
+    return 'Stopped by $device';
+  }
+
+  @override
+  String sendSending(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sending $count files to $device',
+      one: 'Sending 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sendPairToSend => 'Connect to send files';
+
+  @override
+  String sendConfirmPanelTitle(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Send $count files to $device',
+      one: 'Send 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get receiveFiles => 'Receive files';
+
+  @override
+  String get receiveFilesHint => 'Let another device send you files';
+
+  @override
+  String get receiveReadyTitle => 'Ready to receive files';
+
+  @override
+  String receiveReadyHint(String device) {
+    return 'On the other device: Send to… → $device, or scan this code';
+  }
+
+  @override
+  String offerTitle(String device, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$device wants to send you $count files',
+      one: '$device wants to send you 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerSize(String size) {
+    return 'Total $size';
+  }
+
+  @override
+  String offerMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'and $count more',
+      one: 'and 1 more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerSaveTo(String folder) {
+    return 'Save to $folder';
+  }
+
+  @override
+  String get offerChangeFolder => 'Change';
+
+  @override
+  String get offerFolderExcluded => 'Files can\'t be saved there';
+
+  @override
+  String offerRemember(String device) {
+    return 'Remember $device';
+  }
+
+  @override
+  String offerAlwaysAccept(String device) {
+    return 'Always accept files from $device';
+  }
+
+  @override
+  String get offerAccept => 'Accept';
+
+  @override
+  String get offerDecline => 'Decline';
+
+  @override
+  String offerAutoDecline(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: 'Declines in $seconds seconds',
+      one: 'Declines in 1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get offerNotificationChannel => 'Incoming files';
+
+  @override
+  String offerNotificationTitle(String device) {
+    return '$device wants to send you files';
+  }
+
+  @override
+  String offerNotificationBody(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files · $size · Tap to answer',
+      one: '1 file · $size · Tap to answer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerReceiving(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Receiving $count files from $device',
+      one: 'Receiving 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerReceived(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Received $count files from $device',
+      one: 'Received 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get offerOpenFolder => 'Open';
+
+  @override
+  String get rememberedAcceptFiles => 'Accept files without asking';
+
+  @override
+  String get rememberedAcceptFilesHint =>
+      'Files this device sends go to your Download folder without a prompt';
+
+  @override
+  String connectSendOnly(String device) {
+    return 'Connected to $device to send files';
+  }
+
+  @override
+  String shareSessionSending(String device) {
+    return '$device · sending files';
+  }
+
+  @override
+  String get transferReceivedSection => 'Received';
+
+  @override
+  String get transferOfferedSection => 'Offered';
+
+  @override
+  String get transferWaitingForYou => 'Waiting for you';
+
+  @override
+  String get transferPreparing => 'Preparing…';
+
+  @override
+  String transferFromDeviceOffer(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'From $device · $count files · $size',
+      one: 'From $device · 1 file · $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferToDeviceOffer(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'To $device · $count files · $size',
+      one: 'To $device · 1 file · $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferOfferReceiving(int done, int count) {
+    return '$done of $count received';
+  }
+
+  @override
+  String get transferOfferDone => 'Done';
+
+  @override
+  String get transferOfferCancelled => 'Stopped';
+
+  @override
+  String get transferOfferDeclined => 'Declined';
+
+  @override
+  String get transferOfferExpired => 'No answer';
+
+  @override
+  String get transferOfferStop => 'Stop';
+
+  @override
+  String get transferOfferAnswer => 'Answer';
+
+  @override
+  String get transferOfferOpenFolder => 'Open folder';
+
+  @override
+  String get transferOfferAccepted => 'Accepted';
+
+  @override
+  String get transfersEmptyReceived => 'Files other devices send you show here';
 }

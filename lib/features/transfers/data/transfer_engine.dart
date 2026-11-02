@@ -10,15 +10,18 @@ import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
+import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:kfm/features/transfers/data/chunked_uploader.dart';
+import 'package:kfm/features/transfers/data/offer_client.dart';
 import 'package:kfm/features/transfers/data/resumable_downloader.dart';
 import 'package:kfm/features/transfers/data/transfer_run.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
@@ -90,6 +93,8 @@ class TransferEngine {
     required Future<void> Function(List<FileRef> files) addToIndex,
     this._onUnauthorized,
     this._reconnect,
+    this._reconnectToSend,
+    this._onOffersIdle,
     this._verifiedMove,
     bool Function()? isForeground,
     Future<bool> Function(RemoteHttp http)? probe,
@@ -103,6 +108,7 @@ class TransferEngine {
     this.maxAttempts = 10,
     this.reconnectBase = const Duration(seconds: 5),
     this.reconnectCap = const Duration(seconds: 60),
+    this.offerPollInterval = const Duration(milliseconds: 1500),
     Random? random,
   }) : _isForeground = isForeground ?? _always,
        _probe = probe ?? _sessionProbe {
@@ -133,6 +139,14 @@ class TransferEngine {
   /// `KnownDeviceConnector.reconnect` (N6): returns once connected.
   final Future<void> Function(String peerFingerprint)? _reconnect;
 
+  /// N12: the same with a send-only session (no connection prompt on the
+  /// other device); used when every unfinished job of it is a send.
+  final Future<void> Function(String peerFingerprint)? _reconnectToSend;
+
+  /// N12: the last send job of a device ended (a send-only connection may
+  /// close itself).
+  final void Function(String peerFingerprint)? _onOffersIdle;
+
   /// N11: deletes the originals of verified upload-moves (this device's).
   final VerifiedMove? _verifiedMove;
   final bool Function() _isForeground;
@@ -149,7 +163,16 @@ class TransferEngine {
   final Duration reconnectBase;
   final Duration reconnectCap;
 
+  /// N12: how often an unanswered offer is asked about.
+  final Duration offerPollInterval;
+
   final Map<int, TransferRun> _running = {};
+
+  /// N12: offers created on the other device in this run (others are
+  /// POSTed again first: idempotent).
+  final Set<String> _postedOffers = {};
+  Timer? _offerTimer;
+  bool _checkingOffers = false;
 
   /// N11: move jobs whose originals are being deleted right now.
   final Set<String> _finalizing = {};
@@ -218,6 +241,10 @@ class TransferEngine {
       _recoveryFailures = 0;
       unawaited(_resumeWaiting(peerFingerprint));
       unawaited(_finalizeRemotePending(peerFingerprint));
+      _startOfferPolling();
+    } else {
+      _offerTimer?.cancel();
+      _offerTimer = null;
     }
     _recoveryTimer?.cancel();
     _recoveryTimer = null;
@@ -293,6 +320,176 @@ class TransferEngine {
     return id;
   }
 
+  /// N12 "Send to…": one job sending copies of [files] to
+  /// [peerFingerprint] without any shared folder. The job is written
+  /// (paused, `awaitingAccept`) before the offer is posted, so a crash
+  /// keeps it; the offer id is part of its target root. Nothing is sent
+  /// until the other device accepts.
+  Future<String> enqueueSend(
+    List<FileRef> files, {
+    required String peerFingerprint,
+    required String peerName,
+  }) async {
+    final deviceId = await deviceIdFor(peerFingerprint, peerName);
+    final id = await _repo.createJob(
+      deviceId: deviceId,
+      direction: TransferDirection.upload,
+      targetRootId: offerRootId(randomHexId()),
+      targetPath: '',
+      files: [for (final f in files) _newFile(f)],
+      pauseReason: TransferPauseReason.awaitingAccept,
+    );
+    _startOfferPolling();
+    unawaited(checkOffers());
+    return id;
+  }
+
+  // ---- N12: offers of send jobs ----
+
+  void _startOfferPolling() {
+    if (_disposed || _offerTimer != null || _connected == null) return;
+    _offerTimer = Timer.periodic(
+      offerPollInterval,
+      (_) => unawaited(checkOffers()),
+    );
+  }
+
+  /// Posts or asks about every unanswered offer of the connected device;
+  /// accepted ones start, refused ones end. Stops polling when none wait.
+  Future<void> checkOffers() async {
+    if (_disposed || _checkingOffers) return;
+    final fp = _connected;
+    final http = fp == null ? null : _http(fp);
+    if (fp == null || http == null) return;
+    _checkingOffers = true;
+    try {
+      final ids = await _repo.dao.pausedJobsOf(
+        fp,
+        TransferPauseReason.awaitingAccept,
+      );
+      if (ids.isEmpty) {
+        _offerTimer?.cancel();
+        _offerTimer = null;
+        return;
+      }
+      final client = OfferClient(http);
+      for (final id in ids) {
+        final job = await _repo.dao.job(id);
+        final offerId = job?.offerId;
+        if (job == null || offerId == null) continue;
+        await _checkOffer(job, offerId, client);
+      }
+    } on Object catch (e) {
+      developer.log('offers not checked: $e', name: 'kfm.transfers');
+    } finally {
+      _checkingOffers = false;
+    }
+  }
+
+  Future<void> _checkOffer(
+    TransferJob job,
+    String offerId,
+    OfferClient client,
+  ) async {
+    final OfferDto dto;
+    try {
+      if (_postedOffers.contains(offerId)) {
+        dto = await client.status(offerId);
+      } else {
+        dto = await client.create(offerId, [
+          for (final f in job.files)
+            OfferFileDto(name: f.name, size: f.sizeBytes),
+        ]);
+        _postedOffers.add(offerId);
+      }
+    } on RemoteApiException catch (e) {
+      switch (e.code) {
+        case ApiErrorCode.unauthorized:
+          _onUnauthorized?.call();
+        // One pending offer per device: this one waits its turn.
+        case ApiErrorCode.busy:
+          break;
+        // A known offer the other device lost (data wiped).
+        case ApiErrorCode.notFound when _postedOffers.contains(offerId):
+          await _endOfferJob(job, TransferErrors.offerExpired);
+        case _:
+          await _endOfferJob(job, e.error.code);
+      }
+      return;
+    } on Object {
+      // Network: asked again on the next tick.
+      return;
+    }
+    switch (dto.status) {
+      case OfferWireStatus.pending:
+        break;
+      case OfferWireStatus.accepted || OfferWireStatus.done:
+        await _repo.resumeJob(job.id);
+        pump();
+      case OfferWireStatus.declined:
+        await _endOfferJob(
+          job,
+          dto.reason == OfferDeclineReason.noSpace
+              ? TransferErrors.offerNoSpace
+              : TransferErrors.offerDeclined,
+        );
+      case OfferWireStatus.expired:
+        await _endOfferJob(job, TransferErrors.offerExpired);
+      case OfferWireStatus.cancelled:
+        await _endOfferJob(job, TransferErrors.offerCancelled);
+    }
+  }
+
+  Future<void> _endOfferJob(TransferJob job, String error) async {
+    _postedOffers.remove(job.offerId);
+    await _repo.endOffer(job.id, error);
+    await _offerJobEnded(job.deviceFingerprint);
+  }
+
+  /// A send job ended: when it gave up on files, the other device is told
+  /// (its grant ends); when no unfinished job of that device is left,
+  /// [_onOffersIdle] runs.
+  Future<void> _maybeEndOffer(String jobId) async {
+    try {
+      final job = await _repo.dao.job(jobId);
+      final offerId = job?.offerId;
+      if (job == null || offerId == null || !job.allFilesEnded) return;
+      if (job.files.any((f) => f.status != TransferFileStatus.done)) {
+        final http = _http(job.deviceFingerprint);
+        if (http != null) {
+          try {
+            await OfferClient(http).cancel(offerId);
+          } on Object catch (e) {
+            developer.log('offer not closed: $e', name: 'kfm.transfers');
+          }
+        }
+      }
+      await _offerJobEnded(job.deviceFingerprint);
+    } on Object catch (e) {
+      developer.log('offer job end failed: $e', name: 'kfm.transfers');
+    }
+  }
+
+  Future<void> _offerJobEnded(String fp) async {
+    final idle = _onOffersIdle;
+    if (idle == null) return;
+    final open = [
+      for (final j in await _repo.dao.jobs())
+        if (j.deviceFingerprint == fp && !j.isFinished) j,
+    ];
+    if (open.isEmpty) idle(fp);
+  }
+
+  /// Whether every unfinished job of [fp] is a send (N12): then a
+  /// reconnect uses a send-only session.
+  Future<bool> _onlySends(String fp) async {
+    final open = [
+      for (final j in await _repo.dao.jobs())
+        if (j.deviceFingerprint == fp && !j.isFinished) j,
+    ];
+    return open.isNotEmpty && open.every((j) => j.isOffer);
+  }
+
   static NewTransferFile _newFile(FileRef f) => (
     sourceFileId: f.id,
     name: f.name,
@@ -308,6 +505,24 @@ class TransferEngine {
   Future<void> cancelJob(String jobId) async {
     final job = await _repo.dao.job(jobId);
     final move = job?.isMove ?? false;
+    // N12: the offer ends on the other device too (its prompt closes).
+    if (job?.offerId case final offerId?) {
+      final http = _http(job!.deviceFingerprint);
+      if (http != null) {
+        unawaited(
+          OfferClient(http)
+              .cancel(offerId)
+              .then<void>(
+                (_) {},
+                onError: (Object e) => developer.log(
+                  'offer not cancelled: $e',
+                  name: 'kfm.transfers',
+                ),
+              ),
+        );
+      }
+      _postedOffers.remove(offerId);
+    }
     if (move) await _repo.keepPendingOriginals(jobId);
     await _repo.cancelQueued(jobId);
     for (final r in _running.values.toList()) {
@@ -351,7 +566,8 @@ class TransferEngine {
   /// its device the job waits for it (and may reconnect by itself).
   Future<void> resumeJob(String jobId) async {
     final job = await _repo.dao.job(jobId);
-    if (job == null) return;
+    // N12: only the other device's accept starts a send.
+    if (job == null || job.awaitingAccept) return;
     if (_connected == job.deviceFingerprint) {
       await _repo.resumeJob(jobId);
     } else {
@@ -366,7 +582,9 @@ class TransferEngine {
   /// (the accept prompt shows on the other device unless it always allows
   /// us). Throws [PairingException] for the caller to show (rule 8).
   Future<void> reconnect(String peerFingerprint) async {
-    final connect = _reconnect;
+    final connect = await _onlySends(peerFingerprint)
+        ? _reconnectToSend ?? _reconnect
+        : _reconnect;
     if (connect == null) {
       throw const PairingException(PairingFailure.offline);
     }
@@ -445,6 +663,7 @@ class TransferEngine {
               _publish();
               pump();
               if (q.job.isMove) unawaited(_maybeFinalize(q.job.id));
+              if (q.job.isOffer) unawaited(_maybeEndOffer(q.job.id));
             }),
           );
         }
@@ -537,6 +756,14 @@ class TransferEngine {
       return;
     }
     final code = _codeOf(e);
+    // N12: a refused upload into an offer: did the receiver stop it?
+    if (job.isOffer &&
+        (code == ApiErrorCode.forbiddenPath.wire ||
+            code == ApiErrorCode.notFound.wire ||
+            code == ApiErrorCode.conflict.wire) &&
+        await _offerEnded(run)) {
+      return;
+    }
     if (code == TransferErrors.verificationFailed) {
       await _verificationFailed(run);
       return;
@@ -603,6 +830,37 @@ class TransferEngine {
         await _fail(run, code);
         await _discardPartials(job, f, uploadId: run.uploadId);
     }
+  }
+
+  /// N12: asks the receiver about [run]'s offer after a refused upload.
+  /// True when the offer is over (the job ended with its reason).
+  Future<bool> _offerEnded(TransferRun run) async {
+    final job = run.job;
+    final offerId = job.offerId;
+    final http = _http(job.deviceFingerprint);
+    if (offerId == null || http == null) return false;
+    final OfferDto dto;
+    try {
+      dto = await OfferClient(http).status(offerId);
+    } on RemoteApiException catch (e) {
+      if (e.code != ApiErrorCode.notFound) return false;
+      await _requeue(run);
+      await _endOfferJob(job, TransferErrors.offerExpired);
+      return true;
+    } on Object {
+      return false;
+    }
+    final error = switch (dto.status) {
+      OfferWireStatus.cancelled ||
+      OfferWireStatus.done => TransferErrors.offerCancelled,
+      OfferWireStatus.expired => TransferErrors.offerExpired,
+      OfferWireStatus.declined => TransferErrors.offerDeclined,
+      _ => null,
+    };
+    if (error == null) return false;
+    await _requeue(run);
+    await _endOfferJob(job, error);
+    return true;
   }
 
   /// N11: the copy didn't match. The bad copy is already gone (the other
@@ -976,8 +1234,10 @@ class TransferEngine {
         return;
       }
     } else {
-      final connect = _reconnect;
       final target = waiting.where((w) => !w.temporary).firstOrNull;
+      final connect = target != null && await _onlySends(target.fingerprint)
+          ? _reconnectToSend ?? _reconnect
+          : _reconnect;
       if (!_autoReconnect || connect == null || target == null) return;
       if (_isForeground() && !_reconnecting) {
         _reconnecting = true;
@@ -1063,6 +1323,7 @@ class TransferEngine {
     _disposed = true;
     _liveTimer?.cancel();
     _recoveryTimer?.cancel();
+    _offerTimer?.cancel();
     for (final t in _retryTimers) {
       t.cancel();
     }

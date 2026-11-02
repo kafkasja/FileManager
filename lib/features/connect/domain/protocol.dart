@@ -92,6 +92,26 @@ abstract final class ApiRoutes {
 
   /// shelf_router path of one upload.
   static const uploadIdPattern = '/v1/uploads/<id>';
+
+  // ---- N12 send files (DTOs in offer_protocol.dart) ----
+
+  /// `POST /v1/offers` (`CreateOfferDto` → `OfferDto`).
+  static const offers = '/v1/offers';
+
+  /// `GET` / `DELETE /v1/offers/<id>` (status / the sender cancels).
+  static String offer(String offerId) =>
+      '$offers/${Uri.encodeComponent(offerId)}';
+  static const offerIdPattern = '/v1/offers/<id>';
+
+  /// N12b: `GET /v1/inbox` (offers this server makes to the caller).
+  static const inbox = '/v1/inbox';
+  static const inboxIdPattern = '/v1/inbox/<id>';
+  static String inboxAccept(String offerId) =>
+      '$inbox/${Uri.encodeComponent(offerId)}/accept';
+  static String inboxDecline(String offerId) =>
+      '$inbox/${Uri.encodeComponent(offerId)}/decline';
+  static String inboxFinished(String offerId) =>
+      '$inbox/${Uri.encodeComponent(offerId)}/finished';
 }
 
 /// Routes that skip `authenticate` (exact method + path).
@@ -110,6 +130,15 @@ const Set<RouteKey> kNoFileAccessRoutes = {
   'GET /v1/session',
   'POST /v1/session/close',
   'GET /v1/roots',
+  // N12: offers touch no file; the bytes go through the guarded upload
+  // and file routes (offer grants).
+  'POST /v1/offers',
+  'GET /v1/offers/<id>',
+  'DELETE /v1/offers/<id>',
+  'GET /v1/inbox',
+  'POST /v1/inbox/<id>/accept',
+  'POST /v1/inbox/<id>/decline',
+  'POST /v1/inbox/<id>/finished',
 };
 
 /// Max JSON request body (`requestSizeLimit`); N10's chunk route has its own.
@@ -264,6 +293,7 @@ class ClientHelloDto {
     required this.clientName,
     required this.clientPlatform,
     required this.clientCertPem,
+    this.purpose = 'connect',
   });
 
   factory fromJson(Map<String, Object?> json) => ClientHelloDto(
@@ -272,6 +302,8 @@ class ClientHelloDto {
     clientName: _str(json, 'clientName'),
     clientPlatform: _str(json, 'clientPlatform'),
     clientCertPem: _str(json, 'clientCertPem'),
+    // N12: optional; anything but "send" is a normal connection.
+    purpose: json['purpose'] == 'send' ? 'send' : 'connect',
   );
 
   /// Client-generated 128-bit random hex; used by `/pair/cancel`.
@@ -285,12 +317,18 @@ class ClientHelloDto {
   /// The server derives the client fingerprint (sha256 of the DER) itself.
   final String clientCertPem;
 
+  /// N12: `connect` (default, not sent) or `send` (a send-only session).
+  final String purpose;
+
+  bool get sendOnly => purpose == 'send';
+
   Map<String, Object?> toJson() => {
     'pairAttemptId': pairAttemptId,
     'clientDeviceId': clientDeviceId,
     'clientName': clientName,
     'clientPlatform': clientPlatform,
     'clientCertPem': clientCertPem,
+    if (sendOnly) 'purpose': 'send',
   };
 }
 

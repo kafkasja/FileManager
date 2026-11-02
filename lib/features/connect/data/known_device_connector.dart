@@ -4,6 +4,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
+import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
@@ -69,6 +70,7 @@ class KnownDeviceConnector {
     String fingerprint, {
     PairingWaiting? onWaiting,
     PairingCancel? cancel,
+    SessionPurpose purpose = SessionPurpose.connect,
   }) async {
     final device = await _repo.byFingerprint(fingerprint);
     if (device == null) {
@@ -80,6 +82,7 @@ class KnownDeviceConnector {
       candidates: candidatesFor(device, _nearby()),
       onWaiting: onWaiting,
       cancel: cancel,
+      purpose: purpose,
     );
     // Shown via the write queue's error stream when it fails.
     _repo.touch(fingerprint, [hostPortOf(result.http.base)]).fireAndForget();
@@ -88,8 +91,12 @@ class KnownDeviceConnector {
 
   /// The one entry point N9/N10 use: returns once connected, or throws
   /// [PairingException] for the caller to show (rule 8).
-  Future<void> reconnect(String fingerprint) async {
-    final result = await pair(fingerprint);
+  /// N12: [purpose] send pairs a send-only session (no prompt there).
+  Future<void> reconnect(
+    String fingerprint, {
+    SessionPurpose purpose = SessionPurpose.connect,
+  }) async {
+    final result = await pair(fingerprint, purpose: purpose);
     _connect(result);
   }
 

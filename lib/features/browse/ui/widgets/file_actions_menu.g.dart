@@ -58,4 +58,4 @@ final class FileMenuItemsProvider
   }
 }
 
-String _$fileMenuItemsHash() => r'f73b9833988e6671f40f56f71264d202e0e95518';
+String _$fileMenuItemsHash() => r'2954fb987ec811ef8673b06ab9e470c2e8a3d0db';

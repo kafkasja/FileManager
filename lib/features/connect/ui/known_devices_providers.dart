@@ -50,6 +50,9 @@ RememberedDevicesService rememberedDevicesService(Ref ref) =>
         ref.invalidate(deviceIdentityProvider);
       },
       // Not awaited: removal and revocation never wait on file I/O.
-      removeUploads: (fp) async =>
-          unawaited(ref.read(uploadStoreProvider).removeOwner(fp)),
+      // N12: its open offers end too.
+      removeUploads: (fp) async {
+        unawaited(ref.read(uploadStoreProvider).removeOwner(fp));
+        unawaited(ref.read(offerServiceProvider).revokeDevice(fp));
+      },
     );

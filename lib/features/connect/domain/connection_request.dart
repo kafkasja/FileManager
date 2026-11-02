@@ -39,6 +39,17 @@ class ConnectionRequest {
   final List<String> words;
 }
 
+/// Why a client pairs (TASK-N12). `send` sessions get an empty folder
+/// scope and no connection prompt: they can only post send-files offers,
+/// heartbeat and close.
+enum SessionPurpose {
+  connect,
+  send;
+
+  /// Null/unknown on the wire = [connect] (older builds).
+  static SessionPurpose fromWire(Object? v) => v == 'send' ? send : connect;
+}
+
 /// How a pending request ended.
 enum ConnectionDecision { accepted, declined, timedOut, cancelled }
 
@@ -53,6 +64,7 @@ class ClientSession {
     required this.tokenHash,
     required this.createdAt,
     required this.lastUsedAt,
+    this.purpose = SessionPurpose.connect,
   });
 
   final String sessionId;
@@ -65,6 +77,11 @@ class ClientSession {
   final DateTime createdAt;
   final DateTime lastUsedAt;
 
+  /// N12: a `send` session reaches no shared folder.
+  final SessionPurpose purpose;
+
+  bool get sendOnly => purpose == SessionPurpose.send;
+
   ClientSession touched(DateTime now) => ClientSession(
     sessionId: sessionId,
     clientFingerprint: clientFingerprint,
@@ -73,5 +90,6 @@ class ClientSession {
     tokenHash: tokenHash,
     createdAt: createdAt,
     lastUsedAt: now,
+    purpose: purpose,
   );
 }

@@ -657,7 +657,243 @@ final class AllowListGuardProvider
   }
 }
 
-String _$allowListGuardHash() => r'a03e84a6353093c08e693c386ebbe8271ba88008';
+String _$allowListGuardHash() => r'e7c6fae4837e511367212eb70a230effce810d45';
+
+/// Send-files offers (TASK-N12).
+
+@ProviderFor(offerRepository)
+final offerRepositoryProvider = OfferRepositoryProvider._();
+
+/// Send-files offers (TASK-N12).
+
+final class OfferRepositoryProvider
+    extends
+        $FunctionalProvider<OfferRepository, OfferRepository, OfferRepository>
+    with $Provider<OfferRepository> {
+  /// Send-files offers (TASK-N12).
+  OfferRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'offerRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$offerRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<OfferRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  OfferRepository create(Ref ref) {
+    return offerRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(OfferRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<OfferRepository>(value),
+    );
+  }
+}
+
+String _$offerRepositoryHash() => r'92a969653c583509f1667cb713f1f8fe9de1930a';
+
+/// Where received files go by default: Android
+/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+
+@ProviderFor(receiveDownloadsRoot)
+final receiveDownloadsRootProvider = ReceiveDownloadsRootProvider._();
+
+/// Where received files go by default: Android
+/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+
+final class ReceiveDownloadsRootProvider
+    extends $FunctionalProvider<String, String, String>
+    with $Provider<String> {
+  /// Where received files go by default: Android
+  /// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+  ReceiveDownloadsRootProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'receiveDownloadsRootProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$receiveDownloadsRootHash();
+
+  @$internal
+  @override
+  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String create(Ref ref) {
+    return receiveDownloadsRoot(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$receiveDownloadsRootHash() =>
+    r'efcdc492d79ebab5dd7d84c3a6f19edea00f3291';
+
+/// The receiving side of send files (N12): offers, prompts, grants.
+
+@ProviderFor(offerService)
+final offerServiceProvider = OfferServiceProvider._();
+
+/// The receiving side of send files (N12): offers, prompts, grants.
+
+final class OfferServiceProvider
+    extends $FunctionalProvider<OfferService, OfferService, OfferService>
+    with $Provider<OfferService> {
+  /// The receiving side of send files (N12): offers, prompts, grants.
+  OfferServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'offerServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$offerServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<OfferService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  OfferService create(Ref ref) {
+    return offerService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(OfferService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<OfferService>(value),
+    );
+  }
+}
+
+String _$offerServiceHash() => r'f827eca5aa460389693248c2f72db2301bda69cf';
+
+/// Every offer this device's server holds, newest first (Transfers
+/// Received / Offered cards).
+
+@ProviderFor(shareOffers)
+final shareOffersProvider = ShareOffersProvider._();
+
+/// Every offer this device's server holds, newest first (Transfers
+/// Received / Offered cards).
+
+final class ShareOffersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ShareOffer>>,
+          List<ShareOffer>,
+          Stream<List<ShareOffer>>
+        >
+    with $FutureModifier<List<ShareOffer>>, $StreamProvider<List<ShareOffer>> {
+  /// Every offer this device's server holds, newest first (Transfers
+  /// Received / Offered cards).
+  ShareOffersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shareOffersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$shareOffersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ShareOffer>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ShareOffer>> create(Ref ref) {
+    return shareOffers(ref);
+  }
+}
+
+String _$shareOffersHash() => r'da78a2e93ff09b74c5bf5628e02ce6a7f3bf54b0';
+
+/// Incoming offers waiting for the receiver's decision (N12 prompter).
+
+@ProviderFor(offerPrompts)
+final offerPromptsProvider = OfferPromptsProvider._();
+
+/// Incoming offers waiting for the receiver's decision (N12 prompter).
+
+final class OfferPromptsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<OfferPrompt>>,
+          List<OfferPrompt>,
+          Stream<List<OfferPrompt>>
+        >
+    with
+        $FutureModifier<List<OfferPrompt>>,
+        $StreamProvider<List<OfferPrompt>> {
+  /// Incoming offers waiting for the receiver's decision (N12 prompter).
+  OfferPromptsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'offerPromptsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$offerPromptsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<OfferPrompt>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<OfferPrompt>> create(Ref ref) {
+    return offerPrompts(ref);
+  }
+}
+
+String _$offerPromptsHash() => r'20bd61607a8a603d17395b3b954e3212ed36a47f';
 
 /// The request the accept dialog shows (N3); null when none.
 
@@ -1390,7 +1626,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'8bbfabd003e349a47c51d958f4543729b7681017';
+String _$shareServerRoutesHash() => r'da5698bb0bac3b187cf39f98d52dbba42f3ed8a9';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();
@@ -1431,4 +1667,4 @@ final class ShareServerProvider
   }
 }
 
-String _$shareServerHash() => r'214cbc68363a5d46c0b83a4ed375c2917d5ce2cf';
+String _$shareServerHash() => r'5ca5b22ebc7034f84ba973fb58912042de1f20d9';

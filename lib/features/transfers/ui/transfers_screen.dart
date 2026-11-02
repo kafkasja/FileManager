@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart'
@@ -13,6 +14,7 @@ import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/folders/ui/local_jobs_section.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
+import 'package:kfm/features/transfers/ui/received_section.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -37,7 +39,21 @@ List<TransferSection> transferSections(Ref ref) => [
     label: (context) => context.l10n.transfersLocalSection,
     builder: (_) => const LocalJobsSection(),
   ),
+  // N12: files other devices sent here (and N12b offers made from here).
+  TransferSection(
+    id: 'received',
+    label: (context) => context.l10n.transferReceivedSection,
+    builder: (_) => const ReceivedOffersSection(),
+  ),
 ];
+
+bool _isOfferError(String? code) => switch (code) {
+  TransferErrors.offerDeclined ||
+  TransferErrors.offerExpired ||
+  TransferErrors.offerNoSpace ||
+  TransferErrors.offerCancelled => true,
+  _ => false,
+};
 
 /// What a stored error code shows (TASK-N9 messages).
 String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {
@@ -61,6 +77,11 @@ String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {
     TransferErrors.verificationFailed => l10n.transferVerifyFailed,
     TransferErrors.alreadyMoved => l10n.transferAlreadyMoved,
     TransferErrors.locationNotRemoved => l10n.privacyTransferNotRemoved,
+    TransferErrors.offerDeclined => l10n.sendDeclined(device),
+    TransferErrors.offerExpired => l10n.sendNoAnswer(device),
+    TransferErrors.offerNoSpace => l10n.sendNoSpace(device),
+    TransferErrors.offerCancelled => l10n.sendStopped(device),
+    'busy' || 'too_many_attempts' => l10n.connectErrorBusy(device),
     _ => l10n.transferFailedGeneric,
   };
 }
@@ -104,7 +125,11 @@ class TransfersScreen extends ConsumerWidget {
     final jobs = ref.watch(transferJobsProvider);
     final sections = ref.watch(transferSectionsProvider);
     final all = jobs.value ?? const <TransferJob>[];
-    final anyFinished = all.any((j) => j.isFinished);
+    final anyFinished =
+        all.any((j) => j.isFinished) ||
+        (ref.watch(shareOffersProvider).value ?? const []).any(
+          (o) => !o.isOpen,
+        );
     return DefaultTabController(
       length: 2 + sections.length,
       child: Scaffold(
@@ -161,6 +186,8 @@ class TransfersScreen extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(transferEngineProvider).clearFinished();
+      // N12: finished offers (Received / Offered cards).
+      await ref.read(offerRepositoryProvider).clearFinished();
     } on Object catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
@@ -211,8 +238,14 @@ class _JobCard extends ConsumerWidget {
     final total = job.totalBytes;
     final done = live.doneBytesOf(job);
     final download = job.direction == TransferDirection.download;
+    // N12: a send whose offer ended (declined, no answer, stopped).
+    final offerEnd = job.isOffer && job.isFinished
+        ? job.files.map((f) => f.error).where(_isOfferError).firstOrNull
+        : null;
     final status = switch (job.status) {
+      _ when offerEnd != null => transferErrorText(l10n, offerEnd, job),
       TransferStatus.paused => switch (job.pauseReason) {
+        TransferPauseReason.awaitingAccept => l10n.sendWaiting(job.deviceName),
         TransferPauseReason.user => l10n.transferPausedByYou,
         TransferPauseReason.noSpace =>
           download
@@ -258,11 +291,14 @@ class _JobCard extends ConsumerWidget {
     // Waiting for the device: it continues by itself; Pause keeps it.
     final waiting =
         job.isPaused && job.pauseReason == TransferPauseReason.waitingForDevice;
-    final retryable = job.files.any(
-      (f) =>
-          f.status == TransferFileStatus.failed ||
-          f.status == TransferFileStatus.cancelled,
-    );
+    // N12: an ended offer can't take files any more (send again).
+    final retryable =
+        offerEnd == null &&
+        job.files.any(
+          (f) =>
+              f.status == TransferFileStatus.failed ||
+              f.status == TransferFileStatus.cancelled,
+        );
     return Card(
       key: ValueKey('transfer-job-${job.id}'),
       child: ExpansionTile(
@@ -297,7 +333,7 @@ class _JobCard extends ConsumerWidget {
                     onPressed: () => unawaited(engine.pauseJob(job.id)),
                     child: Text(l10n.transferPause),
                   ),
-                if (job.isPaused && !waiting)
+                if (job.isPaused && !waiting && !job.awaitingAccept)
                   TextButton(
                     key: ValueKey('transfer-resume-${job.id}'),
                     onPressed: () => unawaited(engine.resumeJob(job.id)),
@@ -402,6 +438,8 @@ class _FileRow extends ConsumerWidget {
       TransferFileStatus.done ||
       TransferFileStatus.skipped => l10n.transferStatusDone,
       TransferFileStatus.failed => transferErrorText(l10n, f.error, job),
+      TransferFileStatus.cancelled when _isOfferError(f.error) =>
+        transferErrorText(l10n, f.error, job),
       TransferFileStatus.cancelled => l10n.transferStatusCancelled,
     };
     final Widget? trailing = switch (f.status) {
@@ -410,7 +448,8 @@ class _FileRow extends ConsumerWidget {
         icon: const Icon(Icons.close),
         onPressed: () => unawaited(engine.cancelFile(job.id, f.id)),
       ),
-      TransferFileStatus.failed || TransferFileStatus.cancelled => IconButton(
+      TransferFileStatus.failed ||
+      TransferFileStatus.cancelled when !_isOfferError(f.error) => IconButton(
         tooltip: l10n.transferRetry,
         icon: const Icon(Icons.refresh),
         onPressed: () => unawaited(engine.retry(job.id, fileId: f.id)),

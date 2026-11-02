@@ -54,4 +54,4 @@ final class TransferSectionsProvider
   }
 }
 
-String _$transferSectionsHash() => r'3f7840a33ce90ab7b56ade9e44d456a23601f4b1';
+String _$transferSectionsHash() => r'cffab795f890511223de8f5e1fee1c0a4bd939c7';
