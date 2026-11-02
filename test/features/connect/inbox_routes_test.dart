@@ -184,15 +184,23 @@ void main() {
       expect(mine.offers.single.senderName, 'Tablet');
       expect(
         [for (final f in mine.offers.single.files) (f.name, f.size, f.id)],
+        // Opaque ids: no local path or MediaStore id leaves (review 4).
         [
-          ('a.jpg', 3, 'path:$_root/DCIM/a.jpg'),
-          ('b.pdf', 2, 'path:$_root/Docs/b.pdf'),
+          ('a.jpg', 3, OfferService.offeredId(o.id, 0)),
+          ('b.pdf', 2, OfferService.offeredId(o.id, 1)),
         ],
+      );
+      expect(
+        mine.offers.single.files.map((f) => f.id),
+        everyElement(isNot(contains('/'))),
       );
       expect((await inbox(as: other)).offers, isEmpty);
       // Not accepted yet: nothing readable.
       expect(
-        (await call('GET', content('path:$_root/DCIM/a.jpg'))).statusCode,
+        (await call(
+          'GET',
+          content(OfferService.offeredId(o.id, 0)),
+        )).statusCode,
         403,
       );
     },
@@ -212,26 +220,32 @@ void main() {
       final r = await call('POST', ApiRoutes.inboxAccept(o.id), json: const {});
       expect(r.statusCode, 204);
       expect((await inbox()).offers, isEmpty);
-      final read = await call('GET', content('path:$_root/DCIM/a.jpg'));
+      final a = OfferService.offeredId(o.id, 0);
+      final read = await call('GET', content(a));
       expect(read.statusCode, 200);
       expect(await read.readAsString(), '$_root/DCIM/a.jpg');
-      // Another file, another client, a write.
+      // The real id isn't a grant; a made-up seq neither.
       expect(
-        (await call('GET', content('path:$_root/DCIM/secret.jpg'))).statusCode,
+        (await call('GET', content('path:$_root/DCIM/a.jpg'))).statusCode,
         403,
       );
       expect(
         (await call(
           'GET',
-          content('path:$_root/DCIM/a.jpg'),
-          as: other,
+          content(OfferService.offeredId(o.id, 7)),
         )).statusCode,
         403,
       );
+      // Another file, another client, a write.
+      expect(
+        (await call('GET', content('path:$_root/DCIM/secret.jpg'))).statusCode,
+        403,
+      );
+      expect((await call('GET', content(a), as: other)).statusCode, 403);
       expect(
         (await call(
           'POST',
-          '/v1/files/${Uri.encodeComponent('path:$_root/DCIM/a.jpg')}/rename',
+          '/v1/files/${Uri.encodeComponent(a)}/rename',
           json: const {},
         )).statusCode,
         403,
@@ -243,10 +257,7 @@ void main() {
         json: const InboxFinishedDto(done: [0, 1]).toJson(),
       );
       expect(f.statusCode, 204);
-      expect(
-        (await call('GET', content('path:$_root/DCIM/a.jpg'))).statusCode,
-        403,
-      );
+      expect((await call('GET', content(a))).statusCode, 403);
       final row = await ShareOffersDao(db).byId(o.id);
       expect(row?.status, OfferStatus.done);
     },
@@ -272,9 +283,13 @@ void main() {
 
     final c = await service.offerToClient(_fpR, 'Laptop', picked);
     await call('POST', ApiRoutes.inboxAccept(c.id), json: const {});
+    expect(
+      (await call('GET', content(OfferService.offeredId(c.id, 0)))).statusCode,
+      200,
+    );
     await service.stopByReceiver(c.id);
     expect(
-      (await call('GET', content('path:$_root/DCIM/a.jpg'))).statusCode,
+      (await call('GET', content(OfferService.offeredId(c.id, 0)))).statusCode,
       403,
     );
   });
@@ -287,14 +302,48 @@ void main() {
       final listed = (await inbox()).offers.single.files;
       final staged = listed.first;
       expect(staged.size, 2); // the prepared size
-      expect(staged.id, startsWith('path:'));
-      expect(staged.id, contains('offer-${o.id}'));
-      // The pdf isn't a photo: offered as it is.
-      expect(listed.last.id, 'path:$_root/Docs/b.pdf');
+      expect(staged.id, OfferService.offeredId(o.id, 0));
+      await call('POST', ApiRoutes.inboxAccept(o.id), json: const {});
+      // Behind the opaque id: the staged copy; the pdf (not a photo) as is.
+      expect(
+        await service.offeredFileId(_fpR, staged.id!),
+        allOf(startsWith('path:'), contains('offer-${o.id}')),
+      );
+      expect(
+        await service.offeredFileId(_fpR, listed.last.id!),
+        'path:$_root/Docs/b.pdf',
+      );
       final dir = Directory('${staging.path}/offer-${o.id}');
       expect(dir.existsSync(), isTrue);
       await service.stopByReceiver(o.id);
       expect(dir.existsSync(), isFalse);
     },
   );
+
+  test('the client refuses bad offers without a prompt (review 3)', () {
+    OfferDto offer(List<OfferFileDto> files) =>
+        OfferDto(id: 'a' * 32, status: OfferWireStatus.pending, files: files);
+    const ok = OfferFileDto(name: 'a.jpg', size: 1, id: 'offered-x-0');
+    expect(isAcceptableInboxOffer(offer(const [ok])), isTrue);
+    expect(isAcceptableInboxOffer(offer(const [])), isFalse);
+    expect(
+      isAcceptableInboxOffer(offer(List.filled(kMaxOfferFiles + 1, ok))),
+      isFalse,
+    );
+    for (final bad in ['../x', '.nomedia', 'a/b', 'a\u0001b', 'x' * 300]) {
+      expect(
+        isAcceptableInboxOffer(
+          offer([OfferFileDto(name: bad, size: 1, id: 'i')]),
+        ),
+        isFalse,
+        reason: bad,
+      );
+    }
+    expect(
+      isAcceptableInboxOffer(
+        offer(const [OfferFileDto(name: 'a.jpg', size: 1)]),
+      ),
+      isFalse,
+    );
+  });
 }

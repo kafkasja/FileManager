@@ -17,6 +17,10 @@ const Duration kOfferDecisionTimeout = Duration(minutes: 2);
 /// An accepted grant without a chunk for this long ends (as N10 partials).
 const Duration kOfferGrantIdle = Duration(days: 7);
 
+/// A grant never lives longer than this after it was accepted, however
+/// often activity extends it.
+const Duration kOfferGrantMaxAge = Duration(days: 7);
+
 /// X2's location strip may change a file's size: a claimed upload may be
 /// this much bigger than offered.
 const int kOfferSizeSlackBytes = 1024 * 1024;
@@ -56,6 +60,20 @@ bool isValidOfferName(String name) {
   } on FileOpException {
     return false;
   }
+}
+
+/// N12b: whether a client may prompt for [o] at all (the sharing device
+/// is checked like any sender): 1 to [kMaxOfferFiles] files, every name
+/// valid, sizes not negative, and a server id for each file.
+bool isAcceptableInboxOffer(OfferDto o) {
+  if (o.files.isEmpty || o.files.length > kMaxOfferFiles) return false;
+  for (final f in o.files) {
+    if (!isValidOfferName(f.name) || f.size < 0 || f.size > (1 << 50)) {
+      return false;
+    }
+    if (f.id == null || f.id!.isEmpty || f.id!.length > 128) return false;
+  }
+  return true;
 }
 
 String _str(Map<String, Object?> json, String key) {

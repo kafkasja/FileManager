@@ -681,4 +681,133 @@ void main() {
       expect(await service.inboxRoot(_fpS, offerRootId(id)), isNull);
     });
   });
+
+  group('review fixes', () {
+    test(
+      'a finished upload id never opens another upload (review 1)',
+      () async {
+        final id = _hex(200);
+        await create(id, [('a.jpg', 3), ('b.jpg', 3)]);
+        await service.decide(id, accept: true);
+        expect(
+          (await send(_hex(201), offerRootId(id), 'a.jpg', [
+            1,
+            2,
+            3,
+          ])).statusCode,
+          200,
+        );
+        // The same id again, for a file that was never offered.
+        final reuse = await call(
+          'POST',
+          ApiRoutes.uploads,
+          json: up(_hex(201), offerRootId(id), 'evil.apk', 3),
+        );
+        expect(reuse.statusCode, 409);
+        // Nor for the offered name again.
+        final again = await call(
+          'POST',
+          ApiRoutes.uploads,
+          json: up(_hex(201), offerRootId(id), 'a.jpg', 3),
+        );
+        expect(again.statusCode, 409);
+        expect(
+          files.calls.where((c) => c.startsWith('importFile')),
+          hasLength(1),
+        );
+        // A repeated create of a running upload (lost answer) still passes.
+        final first = await call(
+          'POST',
+          ApiRoutes.uploads,
+          json: up(_hex(202), offerRootId(id), 'b.jpg', 3),
+        );
+        expect(first.statusCode, 201);
+        final repeat = await call(
+          'POST',
+          ApiRoutes.uploads,
+          json: up(_hex(202), offerRootId(id), 'b.jpg', 3),
+        );
+        expect(repeat.statusCode, 200);
+      },
+    );
+
+    test(
+      'a grant ends 7 days after accept, however active (review 5)',
+      () async {
+        final id = _hex(210);
+        await create(id, [for (var i = 0; i < 10; i++) ('f$i.jpg', 1)]);
+        await service.decide(id, accept: true);
+        for (var day = 1; day <= 6; day++) {
+          now = now.add(const Duration(days: 1));
+          final r = await send(_hex(211 + day), offerRootId(id), 'f$day.jpg', [
+            day,
+          ]);
+          expect(r.statusCode, 200, reason: 'day $day');
+        }
+        now = now.add(const Duration(days: 1, minutes: 1));
+        expect(await service.inboxRoot(_fpS, offerRootId(id)), isNull);
+      },
+    );
+
+    test('an unanswered offer counts toward the decline cooldown', () async {
+      for (var i = 0; i < 3; i++) {
+        await create(_hex(230 + i));
+        now = now.add(const Duration(minutes: 3));
+        await call('GET', ApiRoutes.offer(_hex(230 + i)));
+      }
+      final r = await call(
+        'POST',
+        ApiRoutes.offers,
+        json: offer(_hex(240), [('a.jpg', 1)]),
+      );
+      expect(r.statusCode, 429);
+    });
+
+    test(
+      'a send via /known for a temporary row gets the prompt (review 2)',
+      () async {
+        final gate = AcceptGate();
+        final store = ClientSessionStore();
+        final handOff = promptHandOff(
+          gate: gate,
+          sessions: store,
+          serverDeviceId: () async => 'srv',
+        );
+        PairCandidate candidate({required bool temporary}) => PairCandidate(
+          hello: const ClientHelloDto(
+            pairAttemptId: 'p',
+            clientDeviceId: 'd',
+            clientName: 'Pixel',
+            clientPlatform: 'android',
+            clientCertPem: 'pem',
+            purpose: 'send',
+          ),
+          clientFingerprint: _fpS,
+          remoteIp: '192.168.1.40',
+          method: PairMethod.known,
+          serverFingerprint: 'cd' * 32,
+          knownTemporary: temporary,
+        );
+        final pending = handOff(candidate(temporary: true));
+        await Future<void>.delayed(Duration.zero);
+        final request = gate.pending;
+        expect(request, isNotNull, reason: 'the N3 prompt shows');
+        expect(store.sessions, isEmpty);
+        gate.decide(request!.requestId, ConnectionDecision.accepted);
+        final r = await pending;
+        expect(r.statusCode, 200);
+        expect(store.sessions.single.sendOnly, isTrue);
+        final dto = PairAcceptedDto.fromJson(
+          jsonDecode(await r.readAsString()) as Map<String, Object?>,
+        );
+        expect(dto.roots, isEmpty);
+        // A remembered row: no prompt.
+        final direct = await handOff(candidate(temporary: false));
+        expect(direct.statusCode, 200);
+        expect(gate.pending, isNull);
+        gate.cancelAll();
+        store.clear();
+      },
+    );
+  });
 }

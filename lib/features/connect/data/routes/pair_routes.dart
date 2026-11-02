@@ -35,6 +35,7 @@ class PairCandidate {
     required this.method,
     required this.serverFingerprint,
     this.autoAccept = false,
+    this.knownTemporary = false,
   });
 
   final ClientHelloDto hello;
@@ -51,6 +52,10 @@ class PairCandidate {
   /// remembered device whose row allows it. QR/code pairings never skip
   /// the prompt.
   final bool autoAccept;
+
+  /// N12: `/v1/pair/known` matched a temporary row (kept only to resume a
+  /// transfer): a send-only pairing then still gets the accept prompt.
+  final bool knownTemporary;
 }
 
 /// Hands a verified request to the accept prompt ([promptHandOff]); the
@@ -83,7 +88,10 @@ PairHandOff promptHandOff({
   // and the picker: its session reaches no folder (empty scope), so the
   // offer prompt is the one decision. QR/code still needed the code on
   // this screen; `/known` a verified remembered key.
-  if (hello.sendOnly) {
+  // A temporary row (no "Remember") gets the N3 prompt instead.
+  final promptFirst =
+      candidate.method == PairMethod.known && candidate.knownTemporary;
+  if (hello.sendOnly && !promptFirst) {
     final issued = sessions.issue(
       clientFingerprint: candidate.clientFingerprint,
       clientDeviceId: hello.clientDeviceId,
@@ -124,17 +132,21 @@ PairHandOff promptHandOff({
   }
   switch (await decision) {
     case ConnectionDecision.accepted:
-      await beforeIssue?.call(candidate);
+      // An accepted send-only pairing still reaches no folder.
+      if (!hello.sendOnly) await beforeIssue?.call(candidate);
       final issued = sessions.issue(
         clientFingerprint: candidate.clientFingerprint,
         clientDeviceId: hello.clientDeviceId,
         clientName: hello.clientName,
+        purpose: hello.sendOnly ? SessionPurpose.send : SessionPurpose.connect,
       );
       return jsonOk(
         PairAcceptedDto(
           token: issued.token,
           serverDeviceId: await serverDeviceId(),
-          roots: roots?.call(candidate.clientFingerprint) ?? const [],
+          roots: hello.sendOnly
+              ? const []
+              : roots?.call(candidate.clientFingerprint) ?? const [],
         ).toJson(),
       );
     case ConnectionDecision.declined:
@@ -216,7 +228,9 @@ ServerRoute knownPairRoute({
       remoteIp: peer,
       method: PairMethod.known,
       serverFingerprint: serverFp,
-      autoAccept: known.autoAccept,
+      // "Always allow" only for a remembered (non-temporary) row.
+      autoAccept: known.autoAccept && !known.isTemporary,
+      knownTemporary: known.isTemporary,
     ),
   );
 });

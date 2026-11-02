@@ -46,9 +46,10 @@ abstract interface class OfferGrants {
   /// The sender dropped the upload (its file may be claimed again).
   Future<void> released(String uploadId);
 
-  /// N12b: whether [clientFingerprint] may READ the file [fileId] (exactly
-  /// a file of an accepted offer this device made to it).
-  Future<bool> isOfferedFile(String clientFingerprint, String fileId);
+  /// N12b: the local file id behind the opaque offered id [fileId]
+  /// (`offered-<offerId>-<seq>`) when it is a file of an accepted offer
+  /// this device made to [clientFingerprint] (READ only); else null.
+  Future<String?> offeredFileId(String clientFingerprint, String fileId);
 }
 
 /// No offers (tests and the N4 guard without N12).
@@ -77,8 +78,10 @@ class NoOfferGrants implements OfferGrants {
   Future<void> released(String uploadId) async {}
 
   @override
-  Future<bool> isOfferedFile(String clientFingerprint, String fileId) async =>
-      false;
+  Future<String?> offeredFileId(
+    String clientFingerprint,
+    String fileId,
+  ) async => null;
 }
 
 /// Reads the grants only when a request needs them (building the routes
@@ -115,8 +118,8 @@ class LazyOfferGrants implements OfferGrants {
   Future<void> released(String uploadId) => _get().released(uploadId);
 
   @override
-  Future<bool> isOfferedFile(String clientFingerprint, String fileId) =>
-      _get().isOfferedFile(clientFingerprint, fileId);
+  Future<String?> offeredFileId(String clientFingerprint, String fileId) =>
+      _get().offeredFileId(clientFingerprint, fileId);
 }
 
 /// The receiver picked an excluded location for received files.
@@ -407,10 +410,20 @@ class OfferService implements OfferGrants {
 
   /// A pending offer past its deadline expires now (the timer may not
   /// have run yet).
-  Future<ShareOffer> _due(ShareOffer o) async =>
-      o.status == OfferStatus.pending && !_clock().isBefore(o.expiresAt)
-      ? await _end(o, OfferStatus.expired)
-      : o;
+  Future<ShareOffer> _due(ShareOffer o) async {
+    if (o.status != OfferStatus.pending || _clock().isBefore(o.expiresAt)) {
+      return o;
+    }
+    _countExpiry(o);
+    return await _end(o, OfferStatus.expired);
+  }
+
+  /// An unanswered incoming offer counts like a decline (spam cooldown).
+  void _countExpiry(ShareOffer o) {
+    if (o.direction == OfferDirection.incoming) {
+      limiter.recordDecline(o.peerFingerprint);
+    }
+  }
 
   /// `DELETE /v1/offers/<id>`: the sender cancels (or ends a job with
   /// files it gave up on). Null (404) for another owner.
@@ -623,6 +636,7 @@ class OfferService implements OfferGrants {
       _timers.remove(o.id);
       final now = _open[o.id];
       if (now != null && now.status == OfferStatus.pending) {
+        _countExpiry(now);
         unawaited(_end(now, OfferStatus.expired));
       }
     });
@@ -668,6 +682,14 @@ class OfferService implements OfferGrants {
 
   // ---- grants (OfferGrants) ----
 
+  /// Activity extends a grant by [kOfferGrantIdle], but never past
+  /// [kOfferGrantMaxAge] after it was accepted.
+  DateTime _extended(ShareOffer o) {
+    final idle = _clock().add(kOfferGrantIdle);
+    final cap = (o.decidedAt ?? _clock()).add(kOfferGrantMaxAge);
+    return idle.isBefore(cap) ? idle : cap;
+  }
+
   Future<ShareOffer?> _grant(String clientFingerprint, String offerId) async {
     final o = _open[offerId];
     if (o == null ||
@@ -677,7 +699,8 @@ class OfferService implements OfferGrants {
         o.folder == null) {
       return null;
     }
-    if (!_clock().isBefore(o.expiresAt)) {
+    final cap = (o.decidedAt ?? o.createdAt).add(kOfferGrantMaxAge);
+    if (!_clock().isBefore(o.expiresAt) || !_clock().isBefore(cap)) {
       await _end(o, OfferStatus.expired);
       return null;
     }
@@ -734,7 +757,16 @@ class OfferService implements OfferGrants {
     await start();
     final o = await _grant(clientFingerprint, offerId);
     if (o == null) return false;
-    if (o.files.any((f) => f.uploadId == uploadId)) return true;
+    // A repeated create of the SAME upload (lost answer) passes only for
+    // that exact file while it transfers; a finished file's id never opens
+    // another upload.
+    final mine = o.files.where((f) => f.uploadId == uploadId).firstOrNull;
+    if (mine != null) {
+      return mine.status == OfferFileStatus.transferring &&
+          mine.name == name &&
+          size >= 0 &&
+          size <= mine.sizeBytes + kOfferSizeSlackBytes;
+    }
     // Claims whose upload is gone (verification failed, dropped partial)
     // may be taken again by the sender's retry.
     final stale = <int>{};
@@ -764,9 +796,7 @@ class OfferService implements OfferGrants {
       uploadId: uploadId,
       status: OfferFileStatus.transferring,
     );
-    final next = cur
-        .withFile(claimed)
-        .copyWith(expiresAt: _clock().add(kOfferGrantIdle));
+    final next = cur.withFile(claimed).copyWith(expiresAt: _extended(cur));
     _cache(next);
     await _repo.saveFile(offerId, claimed);
     await _repo.save(next);
@@ -781,9 +811,7 @@ class OfferService implements OfferGrants {
     final f = o.files.where((f) => f.uploadId == uploadId).firstOrNull;
     if (f == null) return;
     final done = f.copyWith(status: OfferFileStatus.done, localFileId: finalId);
-    var next = o
-        .withFile(done)
-        .copyWith(expiresAt: _clock().add(kOfferGrantIdle));
+    var next = o.withFile(done).copyWith(expiresAt: _extended(o));
     final finished = next.allFilesEnded;
     if (finished) next = next.copyWith(status: OfferStatus.done);
     _cache(next);
@@ -898,7 +926,8 @@ class OfferService implements OfferGrants {
                 name: f.name,
                 size: f.sizeBytes,
                 mime: f.mimeType,
-                id: f.localFileId,
+                // Opaque: no local path or MediaStore id leaves.
+                id: offeredId(cur.id, f.seq),
                 modifiedAtMs: f.sourceModifiedAtMs,
               ),
           ],
@@ -979,23 +1008,30 @@ class OfferService implements OfferGrants {
     return true;
   }
 
-  /// N12b: whether [fileId] is exactly a file of an accepted offer made to
-  /// [clientFingerprint] (read only).
+  /// The opaque id a client downloads offered file [seq] of [offerId] by.
+  static String offeredId(String offerId, int seq) => 'offered-$offerId-$seq';
+
+  static final RegExp _offeredId = RegExp(
+    r'^offered-([0-9a-f]{32})-(\d{1,4})$',
+  );
+
   @override
-  Future<bool> isOfferedFile(String clientFingerprint, String fileId) async {
+  Future<String?> offeredFileId(String clientFingerprint, String fileId) async {
+    final m = _offeredId.firstMatch(fileId);
+    if (m == null) return null;
     await start();
-    for (final o in _open.values) {
-      if (o.direction != OfferDirection.outgoing ||
-          o.status != OfferStatus.accepted ||
-          o.peerFingerprint != clientFingerprint) {
-        continue;
-      }
-      if (!_clock().isBefore(o.expiresAt)) continue;
-      for (final f in o.files) {
-        if (f.localFileId == fileId && !f.ended) return true;
-      }
+    final o = _open[m.group(1)!];
+    if (o == null ||
+        o.direction != OfferDirection.outgoing ||
+        o.status != OfferStatus.accepted ||
+        o.peerFingerprint != clientFingerprint ||
+        !_clock().isBefore(o.expiresAt)) {
+      return null;
     }
-    return false;
+    final seq = int.parse(m.group(2)!);
+    final f = o.files.where((f) => f.seq == seq).firstOrNull;
+    if (f == null || f.ended) return null;
+    return f.localFileId;
   }
 
   /// The wire view of [o].

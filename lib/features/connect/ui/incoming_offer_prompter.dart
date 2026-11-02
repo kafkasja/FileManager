@@ -266,7 +266,20 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
               !_handledInbox.contains(o.id),
         )
         .firstOrNull;
-    if (next != null) unawaited(_showInbox(next, c));
+    if (next == null) return;
+    if (!isAcceptableInboxOffer(next)) {
+      // Too many files, a bad name or no file id: checked like any sender,
+      // refused without a prompt.
+      _handledInbox.add(next.id);
+      ref.read(remoteInboxProvider.notifier).remove(next.id);
+      final http = ref.read(remoteConnectionControllerProvider.notifier).http;
+      if (http != null) {
+        unawaited(OfferClient(http).decline(next.id).catchError((Object _) {}));
+      }
+      _next();
+      return;
+    }
+    unawaited(_showInbox(next, c));
   }
 
   Future<void> _showInbox(OfferDto o, RemoteConnected c) async {
@@ -274,10 +287,12 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     _inboxDialogFor = o.id;
     final l10n = context.l10n;
     final fp = c.peerFingerprint;
-    final name = o.senderName?.isNotEmpty ?? false ? o.senderName! : c.peerName;
-    final folder = defaultDownloadFolder(ref.read(downloadsRootProvider), name);
     final devices = ref.read(knownDevicesRepositoryProvider);
     final known = await devices.byFingerprint(fp);
+    // A remembered name wins over what the offer claims; the name only
+    // labels the prompt and the Download/<name> folder.
+    final name = known?.name ?? c.peerName;
+    final folder = defaultDownloadFolder(ref.read(downloadsRootProvider), name);
     if (!mounted) return;
     OfferAnswer? answer;
     if (known != null && !known.isTemporary && known.autoAcceptFiles) {

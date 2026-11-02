@@ -238,8 +238,8 @@ class AllowListGuard {
     // caller accepted: readable (only), wherever it lives (a staged
     // location-free copy sits in app storage).
     if (target case FileIdTarget(:final id) when !write) {
-      if (await grants.isOfferedFile(clientFingerprint, id)) {
-        final offered = await paths.resolveFileId(id, source());
+      if (await grants.offeredFileId(clientFingerprint, id) case final local?) {
+        final offered = await paths.resolveFileId(local, source());
         return ResolvedTarget(
           target: target,
           canonicalPath: offered.canonicalPath,

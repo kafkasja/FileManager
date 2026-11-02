@@ -467,8 +467,10 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
       return apiError(ApiErrorCode.verificationFailed);
     }
   }
-  await env.uploads.completed(u.uploadId, finalId: out.id, sha256: finalHash);
+  // N12: the offered file is done BEFORE its partial goes, so a parallel
+  // claim never sees it as a dropped upload it could take again.
   if (isOfferRootId(u.rootId)) await env.grants.completed(u.uploadId, out.id);
+  await env.uploads.completed(u.uploadId, finalId: out.id, sha256: finalHash);
   unawaited(env.addToIndex([out]));
   return jsonOk(
     UploadCompletedDto(finalId: out.id, sha256: finalHash).toJson(),
