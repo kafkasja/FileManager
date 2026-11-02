@@ -132,6 +132,12 @@ class _UpstreamHttp implements RemoteHttp {
   }) => throw UnimplementedError();
 
   @override
+  Future<T> deleteJson<T>(
+    String path, {
+    required T Function(Map<String, Object?> json) decode,
+  }) => throw UnimplementedError();
+
+  @override
   void close() => _client.close(force: true);
 }
 

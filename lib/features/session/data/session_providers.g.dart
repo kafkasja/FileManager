@@ -223,7 +223,7 @@ final class UndoServiceProvider
   }
 }
 
-String _$undoServiceHash() => r'db6b117833baefa0e7232a438b98e456a7452a00';
+String _$undoServiceHash() => r'5ac44b1a409806fa5dea9c0629140a5e928029fa';
 
 /// Commit problems that aren't per file (shown as a snackbar).
 

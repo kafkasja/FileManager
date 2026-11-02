@@ -32,6 +32,12 @@ abstract interface class RemoteHttp {
     Duration? timeout,
   });
 
+  /// `DELETE` (N9: cancel an upload); non-2xx → [RemoteApiException].
+  Future<T> deleteJson<T>(
+    String path, {
+    required T Function(Map<String, Object?> json) decode,
+  });
+
   /// Streaming GET (thumb/preview/content, Range); the caller cancels the
   /// subscription.
   Future<HttpClientResponse> getStream(
@@ -172,6 +178,12 @@ final class PinnedClient implements FirstContactHttp {
     decode: decode,
     timeout: timeout ?? kDefaultRequestTimeout,
   );
+
+  @override
+  Future<T> deleteJson<T>(
+    String path, {
+    required T Function(Map<String, Object?> json) decode,
+  }) => _json('DELETE', path, decode: decode, timeout: kDefaultRequestTimeout);
 
   @override
   Future<HttpClientResponse> getStream(

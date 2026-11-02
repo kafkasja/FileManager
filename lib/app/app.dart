@@ -13,6 +13,7 @@ import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/similar/data/similar_scan_job.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
@@ -68,6 +69,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(startupMaintenanceProvider)
       // N6: forget temporary remembered devices after 7 days.
       ..watch(knownDevicesPurgeProvider)
+      // N9: Wi-Fi transfers follow the connection as long as the app runs.
+      ..watch(transferEngineProvider)
       // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
       // the set stays loaded without rebuilding the app on each change.
       ..listen(favoriteIdsProvider, (_, _) {});

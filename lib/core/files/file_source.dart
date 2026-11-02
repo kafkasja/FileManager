@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/trash_types.dart';
@@ -86,6 +88,18 @@ abstract interface class FileSource {
   /// MediaStore indexed them, else `path:`). Missing paths are skipped. The
   /// caller adds the refs to the index (`MediaIndexer.addFiles`).
   Future<List<FileRef>> registerCreated(List<String> paths);
+
+  /// N9: publishes the fully written app-private file [staged] (a transfer
+  /// partial) in [targetFolder] (created when missing) as [name]; a name
+  /// clash gets ` (1)`… Returns the new file; [staged] is gone afterwards.
+  /// Throws `invalidName` (checked with `validateFileName`), `noSpace`,
+  /// `permissionDenied` (the platform won't put such a file there).
+  Future<FileRef> importFile(
+    File staged, {
+    required String targetFolder,
+    required String name,
+    String? mimeType,
+  });
 
   /// Emitted whenever move/rename/restore gives a file a new id.
   Stream<FileIdChange> get idChanges;

@@ -7,6 +7,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
@@ -27,6 +28,7 @@ import 'package:kfm/features/connect/data/routes/file_routes.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/routes/roots_routes.dart';
 import 'package:kfm/features/connect/data/routes/session_routes.dart';
+import 'package:kfm/features/connect/data/routes/upload_routes.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
 import 'package:kfm/features/connect/data/share_background.dart';
@@ -34,6 +36,7 @@ import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
+import 'package:kfm/features/connect/data/upload_store.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
@@ -143,6 +146,16 @@ Stream<ShareScope> shareScope(Ref ref, String clientFingerprint) {
     unawaited(out.close());
   });
   return out.stream;
+}
+
+/// Uploads of the current sharing run (N9). Leftover partials of a crashed
+/// run are deleted when it is first used.
+@Riverpod(keepAlive: true)
+UploadStore uploadStore(Ref ref) {
+  final store = UploadStore(staging: transferStagingDir);
+  unawaited(store.purgeLeftovers());
+  ref.onDispose(() => unawaited(store.clear()));
+  return store;
 }
 
 /// Path canonicalisation + exclusions (N4).
@@ -348,6 +361,19 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
         trash: () => ref.read(remoteTrashServiceProvider),
       ),
     ),
+    // N9: uploads into writable shared folders.
+    ...uploadRoutes(
+      UploadRoutesEnv(
+        guard: ref.watch(allowListGuardProvider),
+        sessions: ref.watch(clientSessionStoreProvider),
+        uploads: ref.watch(uploadStoreProvider),
+        source: () => ref.read(fileSourceProvider),
+        addToIndex: (files) => ref.read(mediaIndexerProvider).addFiles(files),
+        stagingFreeBytes: () async => await ref
+            .read(fileSourceProvider)
+            .freeBytes((await transferStagingDir()).path),
+      ),
+    ),
     // N6: remembered devices reconnect without a QR.
     knownPairRoute(
       nonces: ref.watch(pairNonceStoreProvider),
@@ -369,6 +395,8 @@ ShareServer shareServer(Ref ref) {
       served: served,
       routes: ref.read(shareServerRoutesProvider),
       authenticate: authenticate(ref.read(clientSessionStoreProvider)),
+      // N9: chunks have their own limit (kTransferChunkBytes).
+      sizeLimitExempt: isUploadChunkRequest,
     ),
   );
   ref.onDispose(server.stop);

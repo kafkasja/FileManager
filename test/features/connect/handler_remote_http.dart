@@ -109,6 +109,12 @@ class HandlerRemoteHttp implements FirstContactHttp {
   }) => _send('POST', path, body, decode);
 
   @override
+  Future<T> deleteJson<T>(
+    String path, {
+    required T Function(Map<String, Object?> json) decode,
+  }) => _send('DELETE', path, null, decode);
+
+  @override
   Future<HttpClientResponse> getStream(
     String path, {
     Map<String, String> query = const {},

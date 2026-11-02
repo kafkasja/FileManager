@@ -13,6 +13,7 @@ import 'package:kfm/features/connect/domain/fingerprint_words.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
 
 /// "Remembered devices" (TASK-N6): reconnect without scanning, "Share from
 /// this device", "Always allow", Remove and Remove all.
@@ -267,11 +268,27 @@ class _DeviceCard extends ConsumerWidget {
   Future<void> _remove(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
+    // N9: its transfers go with it (FK cascade).
+    final transfers = await ref
+        .read(transfersRepositoryProvider)
+        .dao
+        .countForDevice(device.id);
+    if (!context.mounted) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.rememberedRemoveTitle(device.name)),
-        content: Text(l10n.rememberedRemoveBody),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.rememberedRemoveBody),
+            if (transfers > 0) ...[
+              const SizedBox(height: 12),
+              Text(l10n.rememberedRemoveTransfers(transfers)),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
             autofocus: true,

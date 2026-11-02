@@ -137,6 +137,7 @@ void showUndoOutcome(BuildContext context, UndoOutcome outcome) {
         when remote =>
       l10n.remoteSwipeRestoreOnDevice(device),
     Undone(restoredFromTrash: true) => l10n.undoRestored,
+    Undone(alreadySent: true) => l10n.transferAlreadySent,
     PermanentlyDeleted() => l10n.undoPermanentlyDeleted,
     UndoFailed(error: UnimplementedError()) => l10n.undoNotPossibleYet,
     UndoFailed() => l10n.undoFailed,

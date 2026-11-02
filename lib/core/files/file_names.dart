@@ -51,6 +51,19 @@ void validateFileName(String name) {
   }
 }
 
+/// N9: a folder name made from a name another device chose (its display
+/// name for `Download/<device>`). Forbidden characters (see
+/// [validateFileName]) become `_`, spaces and dots are trimmed from both
+/// ends (so `..` can't climb), capped at 64 characters; empty → `Device`.
+String safeFolderName(String raw) {
+  var s = raw.replaceAll(_forbidden, '_');
+  s = s.replaceAll(RegExp(r'^[\s.]+|[\s.]+$'), '');
+  if (s.length > 64) {
+    s = s.substring(0, 64).replaceAll(RegExp(r'[\s.]+$'), '');
+  }
+  return s.isEmpty ? 'Device' : s;
+}
+
 /// Lenient check for FileSource renames: throws `invalidName` only for names
 /// that can't be one path segment at all: empty (or only spaces), `.`/`..`,
 /// containing `/` or NUL, or more than [maxFileNameBytes] UTF-8 bytes.

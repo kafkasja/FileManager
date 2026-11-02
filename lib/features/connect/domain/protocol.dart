@@ -70,6 +70,23 @@ abstract final class ApiRoutes {
 
   /// shelf_router paths of the routes above (server side).
   static const fileIdPattern = '/v1/files/<id>';
+
+  // ---- N9 uploads (DTOs in upload_protocol.dart) ----
+
+  /// `PUT /v1/uploads/<id>/chunk?offset=` (binary body).
+  static String uploadChunk(String uploadId) =>
+      '$uploads/${Uri.encodeComponent(uploadId)}/chunk';
+
+  /// `POST /v1/uploads/<id>/complete`.
+  static String uploadComplete(String uploadId) =>
+      '$uploads/${Uri.encodeComponent(uploadId)}/complete';
+
+  /// `DELETE /v1/uploads/<id>` (cancel; deletes the partial).
+  static String upload(String uploadId) =>
+      '$uploads/${Uri.encodeComponent(uploadId)}';
+
+  /// shelf_router path of one upload.
+  static const uploadIdPattern = '/v1/uploads/<id>';
 }
 
 /// Routes that skip `authenticate` (exact method + path).

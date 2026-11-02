@@ -16,6 +16,7 @@ import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
+import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
@@ -44,6 +45,7 @@ import 'package:kfm/features/swipe/ui/swipe_source_launcher.dart';
 import 'package:kfm/features/swipe/ui/swipe_toast.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
+import 'package:kfm/features/transfers/ui/transfer_badge.dart';
 import 'package:kfm/features/trash/domain/delete_batch_policy.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 import 'package:kfm/features/trash/ui/pending_unavailable_sheet.dart';
@@ -114,6 +116,8 @@ class SwipeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(peer == null ? l10n.tabSwipe : device),
         actions: [
+          // N9: only while a transfer runs; opens the Transfers page.
+          const TransferBadge(),
           if (peer == null) const PresetChip(),
           if (value != null && value.swiped > 0)
             TextButton(
@@ -412,6 +416,7 @@ class _DeckState extends ConsumerState<_Deck> {
                 a,
                 deck.session.deleteMode,
                 tags: tags,
+                deviceNameOf: (id) => knownDeviceName(ref, id),
               ),
             ): () =>
                 _cardController.flyOff(d),

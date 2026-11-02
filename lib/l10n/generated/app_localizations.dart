@@ -6710,6 +6710,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'the other device'**
   String get remoteSwipeUnknownDevice;
+
+  /// No description provided for @transfersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers'**
+  String get transfersTitle;
+
+  /// No description provided for @transfersDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get transfersDownloads;
+
+  /// No description provided for @transfersUploads.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploads'**
+  String get transfersUploads;
+
+  /// No description provided for @transfersEmptyDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'No downloads yet. Select files on a connected device and tap Download.'**
+  String get transfersEmptyDownloads;
+
+  /// No description provided for @transfersEmptyUploads.
+  ///
+  /// In en, this message translates to:
+  /// **'No uploads yet. Select files and tap Send to device.'**
+  String get transfersEmptyUploads;
+
+  /// No description provided for @transferFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String transferFiles(int count);
+
+  /// No description provided for @transferFromDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'From {device}'**
+  String transferFromDevice(String device);
+
+  /// No description provided for @transferToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'To {device}'**
+  String transferToDevice(String device);
+
+  /// No description provided for @transferSpeedEta.
+  ///
+  /// In en, this message translates to:
+  /// **'{speed}/s · {eta} left'**
+  String transferSpeedEta(String speed, String eta);
+
+  /// No description provided for @transferProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total}'**
+  String transferProgress(String done, String total);
+
+  /// No description provided for @transferStatusQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get transferStatusQueued;
+
+  /// No description provided for @transferStatusWaitingFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {device}'**
+  String transferStatusWaitingFor(String device);
+
+  /// No description provided for @transferStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Transferring'**
+  String get transferStatusRunning;
+
+  /// No description provided for @transferStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get transferStatusDone;
+
+  /// No description provided for @transferStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file failed} other{{count} files failed}}'**
+  String transferStatusFailed(int count);
+
+  /// No description provided for @transferStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get transferStatusCancelled;
+
+  /// No description provided for @transferCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get transferCancel;
+
+  /// No description provided for @transferRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get transferRetry;
+
+  /// No description provided for @transferClearFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear finished'**
+  String get transferClearFinished;
+
+  /// No description provided for @transferNoSpaceOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space on {device}'**
+  String transferNoSpaceOn(String device);
+
+  /// No description provided for @transferNoSpaceHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough space on this device'**
+  String get transferNoSpaceHere;
+
+  /// No description provided for @transferNotAllowedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed on {device}'**
+  String transferNotAllowedOn(String device);
+
+  /// No description provided for @transferNoWritableFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No writable folder shared by {device}'**
+  String transferNoWritableFolder(String device);
+
+  /// No description provided for @transferInvalidName.
+  ///
+  /// In en, this message translates to:
+  /// **'This file name can’t be used here'**
+  String get transferInvalidName;
+
+  /// No description provided for @transferNoLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location info isn’t included'**
+  String get transferNoLocation;
+
+  /// No description provided for @transferAlreadySent.
+  ///
+  /// In en, this message translates to:
+  /// **'Already sent'**
+  String get transferAlreadySent;
+
+  /// No description provided for @transferConnectToPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to {device} to pick a folder'**
+  String transferConnectToPick(String device);
+
+  /// No description provided for @transfersRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing running} =1{1 transfer running} other{{count} transfers running}}'**
+  String transfersRunning(int count);
+
+  /// No description provided for @transferLostConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Lost the connection to {device}'**
+  String transferLostConnection(String device);
+
+  /// No description provided for @transferInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped when KFM closed'**
+  String get transferInterrupted;
+
+  /// No description provided for @transferSourceGone.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is gone'**
+  String get transferSourceGone;
+
+  /// No description provided for @transferIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The transfer was cut off'**
+  String get transferIncomplete;
+
+  /// No description provided for @transferFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t transfer this file'**
+  String get transferFailedGeneric;
+
+  /// No description provided for @transferDownloadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get transferDownloadAction;
+
+  /// No description provided for @transferDownloadQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Downloading 1 file from {device}} other{Downloading {count} files from {device}}}'**
+  String transferDownloadQueued(int count, String device);
+
+  /// No description provided for @transferUploadQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Sending 1 file to {device}} other{Sending {count} files to {device}}}'**
+  String transferUploadQueued(int count, String device);
+
+  /// No description provided for @transferShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get transferShow;
+
+  /// No description provided for @transferSendToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to device'**
+  String get transferSendToDevice;
+
+  /// No description provided for @transferConnectFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a device first'**
+  String get transferConnectFirst;
+
+  /// No description provided for @transferDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Download 1 file?} other{Download {count} files?}}'**
+  String transferDownloadTitle(int count);
+
+  /// No description provided for @transferDownloadTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved in {folder}'**
+  String transferDownloadTo(String folder);
+
+  /// No description provided for @transferChangeFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Change folder'**
+  String get transferChangeFolder;
+
+  /// No description provided for @transferPickDeviceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to which device?'**
+  String get transferPickDeviceTitle;
+
+  /// No description provided for @transferNoRememberedDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'No remembered devices yet. Connect to one with “Remember this device” on.'**
+  String get transferNoRememberedDevices;
+
+  /// No description provided for @swipeProblemDeviceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'That device isn’t remembered any more'**
+  String get swipeProblemDeviceMissing;
+
+  /// No description provided for @swipeActionSendToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to device…'**
+  String get swipeActionSendToDevice;
+
+  /// No description provided for @swipeActionSendToNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to {device}'**
+  String swipeActionSendToNamed(String device);
+
+  /// No description provided for @rememberedRemoveTransfers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Its 1 transfer is removed too.} other{Its {count} transfers are removed too.}}'**
+  String rememberedRemoveTransfers(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -9,8 +9,12 @@ sealed class PreviousState {
 
   static PreviousState fromJson(SwipeActionType type, Map<String, Object?> j) =>
       switch (type) {
-        SwipeActionType.keep ||
-        SwipeActionType.sendToDevice => const NoPreviousState(),
+        SwipeActionType.keep => const NoPreviousState(),
+        // Rows from before N9 have no transfer file.
+        SwipeActionType.sendToDevice => switch (j['transferFileId']) {
+          final int id => SendPreviousState(transferFileId: id),
+          _ => const NoPreviousState(),
+        },
         SwipeActionType.trash => TrashPreviousState(
           mode: j['mode'] as String? ?? 'trash',
           trashedItem: (j['trashedItem'] as Map?)?.cast<String, Object?>(),
@@ -39,12 +43,22 @@ sealed class PreviousState {
   Map<String, Object?> toJson();
 }
 
-/// keep, sendToDevice.
+/// keep.
 final class NoPreviousState extends PreviousState {
   const new();
 
   @override
   Map<String, Object?> toJson() => const {};
+}
+
+/// sendToDevice (N9): the queued transfer file undo removes.
+final class SendPreviousState extends PreviousState {
+  const new({required this.transferFileId});
+
+  final int transferFileId;
+
+  @override
+  Map<String, Object?> toJson() => {'transferFileId': transferFileId};
 }
 
 final class TrashPreviousState extends PreviousState {

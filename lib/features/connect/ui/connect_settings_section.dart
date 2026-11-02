@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
 
 /// Settings → Connect a device (TASK-N1): the entry rows of Phase 5. N6
 /// adds "Remembered devices" and "Reset this device's identity".
@@ -26,6 +27,16 @@ class ConnectSettingsSection extends ConsumerWidget {
           title: Text(l10n.connectToDevice),
           subtitle: Text(l10n.connectToDeviceHint),
           onTap: () => context.push(AppRoutes.connect),
+        ),
+        // N9: every Wi-Fi transfer in one place.
+        ListTile(
+          key: const ValueKey('settings-transfers'),
+          leading: const Icon(Icons.swap_vert),
+          title: Text(l10n.transfersTitle),
+          subtitle: Text(
+            l10n.transfersRunning(ref.watch(activeTransferCountProvider)),
+          ),
+          onTap: () => context.push(AppRoutes.transfers),
         ),
         ListTile(
           key: const ValueKey('settings-remembered-devices'),

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/domain/swipe_deck_state.dart';
@@ -103,6 +104,7 @@ abstract final class SwipeFeedback {
           SwipeActionProblem.notOnDevice => l10n.swipeProblemNotOnDevice(
             device,
           ),
+          SwipeActionProblem.deviceMissing => l10n.swipeProblemDeviceMissing,
         }),
       ),
     );
@@ -118,5 +120,6 @@ abstract final class SwipeFeedback {
     action,
     deleteMode: deck.session.deleteMode,
     tagName: ref.read(tagsByIdProvider).value?[action.tagId]?.name,
+    deviceName: knownDeviceName(ref, action.deviceId),
   );
 }

@@ -24,6 +24,8 @@ import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/session/domain/remote_deck_root.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
+import 'package:kfm/features/transfers/ui/transfer_badge.dart';
+import 'package:kfm/features/transfers/ui/transfer_flows.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// What a remote file operation failure shows (N7 error table).
@@ -152,6 +154,13 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
           ),
           actions: [
             if (selecting) ...[
+              // N9: copy the selected files to this device.
+              IconButton(
+                key: const ValueKey('remote-download'),
+                tooltip: l10n.transferDownloadAction,
+                icon: const Icon(Icons.download_outlined),
+                onPressed: () => unawaited(_download(selected, name)),
+              ),
               if (writable && selected.length == 1)
                 IconButton(
                   tooltip: l10n.fileMenuRename,
@@ -203,6 +212,7 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
                 onSort: (s) => unawaited(_controller.setSort(s)),
               ),
             ],
+            if (!selecting) const TransfersAction(),
           ],
         ),
         body: SafeArea(child: body),
@@ -235,6 +245,17 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
   void _snack(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<void> _download(List<FileRef> files, String device) async {
+    await startDownload(
+      context,
+      ref,
+      peerFingerprint: _fp,
+      peerName: device,
+      files: files,
+    );
+    if (mounted) _clearSelection();
   }
 
   Future<void> _rename(FileRef f, String device) async {
@@ -297,18 +318,14 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
     required bool move,
   }) async {
     final l10n = context.l10n;
-    final target = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _RemoteFolderPicker(
-        source: ref.read(remoteSourceProvider(_fp)),
-        device: device,
-        roots: [
-          for (final r in roots)
-            if (!r.readOnly) r,
-        ],
-      ),
+    final target = await showRemoteFolderPicker(
+      context,
+      source: ref.read(remoteSourceProvider(_fp)),
+      device: device,
+      roots: [
+        for (final r in roots)
+          if (!r.readOnly) r,
+      ],
     );
     if (target == null || !mounted) return;
     final failed = move
@@ -696,20 +713,48 @@ class _Footer extends StatelessWidget {
   }
 }
 
+/// Picks a folder in one of [roots] (the caller passes the writable ones)
+/// of the other device; returns its remote `folderPath` (N7 move/copy, N9
+/// uploads and swipe sends). [note] is a line under the title.
+Future<String?> showRemoteFolderPicker(
+  BuildContext context, {
+  required RemoteFileSource source,
+  required String device,
+  required List<RootDto> roots,
+  String? note,
+}) => showModalBottomSheet<String>(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (_) => RemoteFolderPicker(
+    source: source,
+    device: device,
+    roots: roots,
+    note: note,
+  ),
+);
+
 /// Picks a folder in one of the other device's writable roots; pops with
 /// its remote `folderPath`.
-class _RemoteFolderPicker extends StatefulWidget {
-  const new({required this.source, required this.device, required this.roots});
+class RemoteFolderPicker extends StatefulWidget {
+  const new({
+    required this.source,
+    required this.device,
+    required this.roots,
+    this.note,
+    super.key,
+  });
 
   final RemoteFileSource source;
   final String device;
   final List<RootDto> roots;
+  final String? note;
 
   @override
-  State<_RemoteFolderPicker> createState() => _RemoteFolderPickerState();
+  State<RemoteFolderPicker> createState() => _RemoteFolderPickerState();
 }
 
-class _RemoteFolderPickerState extends State<_RemoteFolderPicker> {
+class _RemoteFolderPickerState extends State<RemoteFolderPicker> {
   RootDto? _root;
   String _path = '';
   Future<List<RemoteFolderDto>>? _folders;
@@ -761,9 +806,11 @@ class _RemoteFolderPickerState extends State<_RemoteFolderPicker> {
                     ? root.label
                     : _path.substring(_path.lastIndexOf('/') + 1),
               ),
+              subtitle: widget.note == null ? null : Text(widget.note!),
               trailing: root == null
                   ? null
                   : FilledButton(
+                      key: const ValueKey('remote-pick-here'),
                       onPressed: () =>
                           Navigator.of(context)
                               .pop(remoteFolderPath(root.id, _path)),

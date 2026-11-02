@@ -40,7 +40,8 @@ class SwipeAction {
 
   final SwipeActionType type;
 
-  /// moveTo / copyTo (P2).
+  /// moveTo / copyTo (P2). sendToDevice (N9): `<rootId>/<path>` on that
+  /// device.
   final String? targetFolder;
 
   /// addTag (P2).
@@ -81,8 +82,7 @@ class SwipeAction {
   String toString() => 'SwipeAction(${type.name})';
 }
 
-/// Types the "Customize swipes" picker offers (P1–P3). `sendToDevice`
-/// (Phase 5) is added by its task.
+/// Types the "Customize swipes" picker offers (P1–P3, N9).
 const assignableSwipeActionTypes = <SwipeActionType>[
   SwipeActionType.trash,
   SwipeActionType.keep,
@@ -91,6 +91,7 @@ const assignableSwipeActionTypes = <SwipeActionType>[
   SwipeActionType.addTag,
   SwipeActionType.favorite,
   SwipeActionType.renameBatch,
+  SwipeActionType.sendToDevice,
 ];
 
 extension SwipeActionTypeX on SwipeActionType {
@@ -98,7 +99,8 @@ extension SwipeActionTypeX on SwipeActionType {
   bool get needsTarget => switch (this) {
     SwipeActionType.moveTo ||
     SwipeActionType.copyTo ||
-    SwipeActionType.addTag => true,
+    SwipeActionType.addTag ||
+    SwipeActionType.sendToDevice => true,
     _ => false,
   };
 }
@@ -117,6 +119,9 @@ enum SwipeActionProblem {
 
   /// N8: not available for another device's files (rename batch, send).
   notOnDevice,
+
+  /// N9: the send target device was removed (no remembered row).
+  deviceMissing,
 }
 
 /// What each direction (and the optional action bar, P4) does.

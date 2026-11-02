@@ -515,6 +515,55 @@ final class ShareScopeFamily extends $Family
   String toString() => r'shareScopeProvider';
 }
 
+/// Uploads of the current sharing run (N9). Leftover partials of a crashed
+/// run are deleted when it is first used.
+
+@ProviderFor(uploadStore)
+final uploadStoreProvider = UploadStoreProvider._();
+
+/// Uploads of the current sharing run (N9). Leftover partials of a crashed
+/// run are deleted when it is first used.
+
+final class UploadStoreProvider
+    extends $FunctionalProvider<UploadStore, UploadStore, UploadStore>
+    with $Provider<UploadStore> {
+  /// Uploads of the current sharing run (N9). Leftover partials of a crashed
+  /// run are deleted when it is first used.
+  UploadStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'uploadStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$uploadStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<UploadStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  UploadStore create(Ref ref) {
+    return uploadStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UploadStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UploadStore>(value),
+    );
+  }
+}
+
+String _$uploadStoreHash() => r'e3c81d203bfa1867d6d77b6bceb27f1eee278ef8';
+
 /// Path canonicalisation + exclusions (N4).
 
 @ProviderFor(pathGuard)
@@ -1341,7 +1390,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'280154e10abafd864f7db2cad7b80dbeca0a26e9';
+String _$shareServerRoutesHash() => r'8bbfabd003e349a47c51d958f4543729b7681017';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();
@@ -1382,4 +1431,4 @@ final class ShareServerProvider
   }
 }
 
-String _$shareServerHash() => r'b244a75fe9fe6dc82a4637dae5b3e691368801ff';
+String _$shareServerHash() => r'9c41e03882bf626f8961b486ceb9187afca72d62';

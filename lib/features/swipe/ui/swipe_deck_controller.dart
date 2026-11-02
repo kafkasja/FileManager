@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
@@ -11,8 +12,10 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/data/remote_swipe_queue_source.dart';
+import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/filters/data/filter_query.dart';
@@ -38,6 +41,8 @@ import 'package:kfm/features/swipe/domain/swipe_deck_state.dart';
 import 'package:kfm/features/swipe/domain/swipe_source.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_launcher.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
+import 'package:kfm/features/transfers/data/swipe_sends.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
@@ -87,6 +92,11 @@ SwipeActionDispatcher swipeActionDispatcher(Ref ref) => SwipeActionDispatcher(
   tags: ref.watch(tagRepositoryProvider),
   favorites: ref.watch(favoritesRepositoryProvider),
   renames: ref.watch(renameBatchRepositoryProvider),
+  // N9: sends queue a transfer in the undo row's transaction.
+  sends: swipeSendQueue(
+    ref.watch(transfersRepositoryProvider).dao,
+    downloadsRoot: ref.watch(downloadsRootProvider),
+  ),
 );
 
 /// D1: no active session and the setting is "delete permanently" → the
@@ -216,6 +226,7 @@ class SwipeDeckController extends _$SwipeDeckController {
 
   @override
   Future<SwipeDeckState> build(String sourceId) async {
+    unawaited(_loadKnownDevices());
     _generation++;
     _sourceId = sourceId;
     _peer = peerOfSourceId(sourceId);
@@ -419,9 +430,33 @@ class SwipeDeckController extends _$SwipeDeckController {
     return switch (ref.read(remoteConnectionControllerProvider)) {
       RemoteConnected(:final peerFingerprint, :final roots)
           when peerFingerprint == fp =>
-        RemoteSwipeRules(roots: {for (final r in roots) r.id: r.readOnly}),
-      _ => const RemoteSwipeRules(),
+        RemoteSwipeRules(
+          roots: {for (final r in roots) r.id: r.readOnly},
+          peerDeviceId: _knownIdOf(fp),
+        ),
+      _ => RemoteSwipeRules(peerDeviceId: _knownIdOf(fp)),
     };
+  }
+
+  /// N9: remembered devices, read once per deck build (a one-off query: a
+  /// live watch here would hold the database in widget tests). Null until
+  /// loaded: sends are then not pre-checked.
+  List<KnownDevice>? _known;
+
+  Future<void> _loadKnownDevices() async {
+    try {
+      _known = await ref.read(knownDevicesRepositoryProvider).all();
+    } on Object catch (e) {
+      developer.log('remembered devices not loaded: $e', name: 'kfm.swipe');
+    }
+  }
+
+  /// N9: the remembered row id of [fp] (null = not remembered / unknown).
+  String? _knownIdOf(String fp) {
+    for (final d in _known ?? const <KnownDevice>[]) {
+      if (d.fingerprint == fp) return d.id;
+    }
+    return null;
   }
 
   /// SS1: closes the open source; the main deck continues where it was.
@@ -635,6 +670,7 @@ class SwipeDeckController extends _$SwipeDeckController {
         ref.read(tagsByIdProvider).value ?? const {},
         remote: _remoteRules(),
         file: state.value?.current,
+        knownDeviceIds: _known?.map((d) => d.id).toSet(),
       );
 
   /// Returns false when nothing happened (no file, the direction has no

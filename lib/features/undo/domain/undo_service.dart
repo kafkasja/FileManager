@@ -35,10 +35,14 @@ class Undone extends UndoOutcome {
     this.restoredFromTrash = false,
     this.file,
     this.reshow = true,
+    this.alreadySent = false,
   });
 
   final SessionAction action;
   final bool restoredFromTrash;
+
+  /// N9: the swipe send had already started or finished; it stays.
+  final bool alreadySent;
 
   /// The file to show again when it isn't `action.fileId` (a move undone:
   /// the file is back under its old folder, maybe with a new id).
@@ -81,7 +85,11 @@ class UndoService {
     required this._renames,
     required this._renameRunner,
     this._remoteSource,
+    this._cancelQueuedSend,
   });
+
+  /// N9: removes a still-queued swipe send; false = already started.
+  final Future<bool> Function(int transferFileId)? _cancelQueuedSend;
 
   final UndoRepository _repo;
   final DeleteQueue _deletes;
@@ -138,8 +146,16 @@ class UndoService {
       final source = _sourceOf(a.fileId);
       switch (a.action.type) {
         case SwipeActionType.keep:
-        case SwipeActionType.sendToDevice:
           break;
+        case SwipeActionType.sendToDevice:
+          if (a.previous case SendPreviousState(:final transferFileId)) {
+            final removed =
+                await _cancelQueuedSend?.call(transferFileId) ?? true;
+            if (!removed) {
+              await _repo.markUndone(a.id);
+              return Undone(a, alreadySent: true);
+            }
+          }
         case SwipeActionType.trash:
           if (a.status == ActionStatus.applied) {
             await _deletes.unqueue(a.id);

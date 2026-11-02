@@ -204,6 +204,12 @@ class FilesChannel(
                     "moveMedia" -> moveMedia(call.longArg("id"), call.stringArg("targetDir"), call.stringArg("displayName"))
                     "renameMedia" -> renameMedia(call.longArg("id"), call.stringArg("displayName"))
                     "copyMedia" -> copyMedia(call.longArg("id"), call.stringArg("targetDir"), call.stringArg("displayName"))
+                    "importMedia" -> importMedia(
+                        call.stringArg("stagedPath"),
+                        call.stringArg("targetDir"),
+                        call.stringArg("displayName"),
+                        call.argument<String>("mime"),
+                    )
                     "scanPaths" -> scanPaths(call.argument<List<String>>("paths") ?: emptyList())
                     "storageVolumes" -> storageVolumes()
                     "hasAllFilesAccess" -> canUseFiles()
@@ -859,6 +865,72 @@ class FilesChannel(
             throw if (e is FilesError) e else FilesError("IO", e.toString())
         }
         return statMedia(ContentUris.parseId(newUri)) ?: throw FilesError("IO", "copy not found")
+    }
+
+    /**
+     * N9: publishes a fully written app-private file ([stagedPath]) as [displayName] in
+     * [targetDir] through a MediaStore insert (API 29+ without direct file access). Images,
+     * videos and audio go to their collection; anything else, or media the collection refuses
+     * under `Download/`, goes to `MediaStore.Downloads`. IS_PENDING hides it until the copy is
+     * complete; on failure the row is deleted. MediaStore renames on a name clash. Returns the
+     * new row; the staged file is left for the caller to delete.
+     */
+    private fun importMedia(stagedPath: String, targetDir: String, displayName: String, mimeArg: String?): Map<String, Any?> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) throw FilesError("NOT_ALLOWED", "no write access")
+        val staged = File(stagedPath)
+        if (!staged.isFile) throw FilesError("NOT_FOUND", "staged file missing")
+        if (!targetDir.startsWith(Environment.getExternalStorageDirectory().path)) {
+            throw FilesError("NOT_ALLOWED", "only the primary volume")
+        }
+        val mime = mimeArg
+            ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(File(displayName).extension.lowercase())
+            ?: "application/octet-stream"
+        val rel = relativePath(targetDir)
+        val downloads = MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        val primary = when {
+            mime.startsWith("image/") -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            mime.startsWith("video/") -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            mime.startsWith("audio/") -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            else -> downloads
+        }
+        val collections = if (primary != downloads && rel.startsWith("Download/", ignoreCase = true)) {
+            listOf(primary, downloads)
+        } else {
+            listOf(primary)
+        }
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+            put(MediaStore.MediaColumns.MIME_TYPE, mime)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, rel)
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val resolver = context.contentResolver
+        var newUri: Uri? = null
+        var refused: Exception? = null
+        for (collection in collections) {
+            try {
+                newUri = resolver.insert(collection, values)
+                if (newUri != null) break
+            } catch (e: IllegalArgumentException) {
+                refused = e // e.g. "Primary directory Download not allowed for images"
+            }
+        }
+        val uri = newUri ?: throw FilesError("NOT_ALLOWED", refused?.toString() ?: "insert failed")
+        try {
+            staged.inputStream().use { input ->
+                resolver.openOutputStream(uri).use { output ->
+                    if (output == null) throw FilesError("IO", "stream open failed")
+                    input.copyTo(output)
+                }
+            }
+            resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null) // no partial file left behind
+            if (e is FilesError) throw e
+            val noSpace = e.toString().contains("ENOSPC") || e.toString().contains("No space")
+            throw FilesError(if (noSpace) "NO_SPACE" else "IO", e.toString())
+        }
+        return statMedia(ContentUris.parseId(uri)) ?: throw FilesError("IO", "import not found")
     }
 
     /** Returns path → MediaStore id (null when the scanner didn't index it, e.g. deleted). */

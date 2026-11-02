@@ -251,6 +251,8 @@ class ShareServerController extends _$ShareServerController {
     ref.read(acceptGateProvider).cancelAll();
     ref.read(clientSessionStoreProvider).clear();
     ref.read(shareScopeStoreProvider).clear();
+    // N9: unfinished uploads end; their partials are deleted.
+    unawaited(ref.read(uploadStoreProvider).clear());
     await ref.read(shareServerProvider).stop();
     await background;
     state = ShareServerState.stopped;

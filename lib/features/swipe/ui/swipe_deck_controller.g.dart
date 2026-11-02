@@ -236,7 +236,7 @@ final class SwipeActionDispatcherProvider
 }
 
 String _$swipeActionDispatcherHash() =>
-    r'23eb8f11bcf3027e34ef408db90c2fb07277395b';
+    r'92edb955946b53c88c9c9fdf542dc25db316f157';
 
 /// D1: no active session and the setting is "delete permanently" → the
 /// user confirms once before the session starts (resumed sessions never ask).
@@ -341,7 +341,7 @@ final class SwipeDeckControllerProvider
 }
 
 String _$swipeDeckControllerHash() =>
-    r'20ae046aa592dbdc5b8da0520aca5c53ade24e30';
+    r'95b980b7d181eaffa69c28621e2ba4ec08001ef7';
 
 /// The swipe deck (TASK-S1). Swipes advance the state immediately; all
 /// saving happens in the background through the write queue.

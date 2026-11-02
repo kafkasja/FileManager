@@ -4767,4 +4767,233 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteSwipeUnknownDevice => 'the other device';
+
+  @override
+  String get transfersTitle => 'Transfers';
+
+  @override
+  String get transfersDownloads => 'Downloads';
+
+  @override
+  String get transfersUploads => 'Uploads';
+
+  @override
+  String get transfersEmptyDownloads =>
+      'No downloads yet. Select files on a connected device and tap Download.';
+
+  @override
+  String get transfersEmptyUploads =>
+      'No uploads yet. Select files and tap Send to device.';
+
+  @override
+  String transferFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferFromDevice(String device) {
+    return 'From $device';
+  }
+
+  @override
+  String transferToDevice(String device) {
+    return 'To $device';
+  }
+
+  @override
+  String transferSpeedEta(String speed, String eta) {
+    return '$speed/s · $eta left';
+  }
+
+  @override
+  String transferProgress(String done, String total) {
+    return '$done of $total';
+  }
+
+  @override
+  String get transferStatusQueued => 'Waiting';
+
+  @override
+  String transferStatusWaitingFor(String device) {
+    return 'Waiting for $device';
+  }
+
+  @override
+  String get transferStatusRunning => 'Transferring';
+
+  @override
+  String get transferStatusDone => 'Done';
+
+  @override
+  String transferStatusFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files failed',
+      one: '1 file failed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transferStatusCancelled => 'Cancelled';
+
+  @override
+  String get transferCancel => 'Cancel';
+
+  @override
+  String get transferRetry => 'Retry';
+
+  @override
+  String get transferClearFinished => 'Clear finished';
+
+  @override
+  String transferNoSpaceOn(String device) {
+    return 'Not enough space on $device';
+  }
+
+  @override
+  String get transferNoSpaceHere => 'Not enough space on this device';
+
+  @override
+  String transferNotAllowedOn(String device) {
+    return 'Not allowed on $device';
+  }
+
+  @override
+  String transferNoWritableFolder(String device) {
+    return 'No writable folder shared by $device';
+  }
+
+  @override
+  String get transferInvalidName => 'This file name can’t be used here';
+
+  @override
+  String get transferNoLocation => 'Location info isn’t included';
+
+  @override
+  String get transferAlreadySent => 'Already sent';
+
+  @override
+  String transferConnectToPick(String device) {
+    return 'Connect to $device to pick a folder';
+  }
+
+  @override
+  String transfersRunning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers running',
+      one: '1 transfer running',
+      zero: 'Nothing running',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferLostConnection(String device) {
+    return 'Lost the connection to $device';
+  }
+
+  @override
+  String get transferInterrupted => 'Stopped when KFM closed';
+
+  @override
+  String get transferSourceGone => 'The file is gone';
+
+  @override
+  String get transferIncomplete => 'The transfer was cut off';
+
+  @override
+  String get transferFailedGeneric => 'Couldn’t transfer this file';
+
+  @override
+  String get transferDownloadAction => 'Download';
+
+  @override
+  String transferDownloadQueued(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Downloading $count files from $device',
+      one: 'Downloading 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferUploadQueued(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sending $count files to $device',
+      one: 'Sending 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transferShow => 'Show';
+
+  @override
+  String get transferSendToDevice => 'Send to device';
+
+  @override
+  String get transferConnectFirst => 'Connect to a device first';
+
+  @override
+  String transferDownloadTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Download $count files?',
+      one: 'Download 1 file?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transferDownloadTo(String folder) {
+    return 'Saved in $folder';
+  }
+
+  @override
+  String get transferChangeFolder => 'Change folder';
+
+  @override
+  String get transferPickDeviceTitle => 'Send to which device?';
+
+  @override
+  String get transferNoRememberedDevices =>
+      'No remembered devices yet. Connect to one with “Remember this device” on.';
+
+  @override
+  String get swipeProblemDeviceMissing =>
+      'That device isn’t remembered any more';
+
+  @override
+  String get swipeActionSendToDevice => 'Send to device…';
+
+  @override
+  String swipeActionSendToNamed(String device) {
+    return 'Send to $device';
+  }
+
+  @override
+  String rememberedRemoveTransfers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Its $count transfers are removed too.',
+      one: 'Its 1 transfer is removed too.',
+    );
+    return '$_temp0';
+  }
 }

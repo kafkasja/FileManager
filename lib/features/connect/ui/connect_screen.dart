@@ -16,6 +16,7 @@ import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/connect/ui/remote_swipe_screen.dart';
+import 'package:kfm/features/transfers/ui/transfer_badge.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -48,7 +49,10 @@ class ConnectScreen extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(l10n.connectToDevice)),
+        appBar: AppBar(
+          title: Text(l10n.connectToDevice),
+          actions: const [TransfersAction()],
+        ),
         body: SafeArea(
           child: Padding(
             padding: EdgeInsetsDirectional.all(spacing * 2),

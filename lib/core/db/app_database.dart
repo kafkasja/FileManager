@@ -20,6 +20,7 @@ import 'package:kfm/core/db/tables/smart_groups_table.dart';
 import 'package:kfm/core/db/tables/swipe_source_items_table.dart';
 import 'package:kfm/core/db/tables/swipe_sources_table.dart';
 import 'package:kfm/core/db/tables/tags_table.dart';
+import 'package:kfm/core/db/tables/transfers_table.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/source_backfill.dart';
 import 'package:kfm/core/index/source_rule.dart';
@@ -59,6 +60,8 @@ part 'app_database.g.dart';
     AiLabels,
     AiLabelStatus,
     KnownDevices,
+    Transfers,
+    TransferFiles,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -79,7 +82,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -239,6 +242,13 @@ class AppDatabase extends _$AppDatabase {
         );
         await m.createIndex(oneActiveSessionPerSource);
         await m.createIndex(oneOpenSessionPerSourcePreset);
+      }
+      if (from < 21) {
+        // TASK-N9
+        await m.createTable(transfers);
+        await m.createTable(transferFiles);
+        await m.createIndex(transfersStatus);
+        await m.createIndex(transferFilesJobStatus);
       }
     },
     beforeOpen: (details) async {

@@ -56,8 +56,7 @@ String swipeTypeName(
   SwipeActionType.addTag => l.swipeActionAddTag,
   SwipeActionType.favorite => l.swipeActionFavorite,
   SwipeActionType.renameBatch => l.swipeActionRenameBatch,
-  // Not assignable yet (Phase 5): shown only if a stored layout has it.
-  SwipeActionType.sendToDevice => actionLabel(l, SwipeAction(type)),
+  SwipeActionType.sendToDevice => l.swipeActionSendToDevice,
 };
 
 /// What a direction does, as a name ("Move to Holiday"), not a result label.
@@ -66,7 +65,12 @@ String swipeActionName(
   SwipeAction? a,
   DeleteMode mode, {
   Map<int, Tag> tags = const {},
+  String? Function(String? deviceId)? deviceNameOf,
 }) => switch (a?.type) {
+  SwipeActionType.sendToDevice => switch (deviceNameOf?.call(a!.deviceId)) {
+    final name? => l.swipeActionSendToNamed(name),
+    null => l.swipeActionSendToDevice,
+  },
   SwipeActionType.moveTo => l.swipeActionMoveToNamed(_leafOf(a!.targetFolder)),
   SwipeActionType.copyTo => l.swipeActionCopyToNamed(_leafOf(a!.targetFolder)),
   SwipeActionType.addTag => switch (tags[a!.tagId]) {

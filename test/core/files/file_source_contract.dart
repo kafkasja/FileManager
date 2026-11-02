@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -256,6 +258,59 @@ void fileSourceContract(
     test('freeBytes is null or not negative', () async {
       final free = await s.freeBytes(h.root);
       expect(free == null || free >= 0, isTrue);
+    });
+
+    group('importFile (N9)', () {
+      late Directory staging;
+
+      setUp(() async {
+        staging = await Directory.systemTemp.createTemp('kfm_staging');
+      });
+      tearDown(() async {
+        if (await staging.exists()) await staging.delete(recursive: true);
+      });
+
+      Future<File> stage(String name, List<int> bytes) async {
+        final f = File('${staging.path}/$name');
+        await f.writeAsBytes(bytes);
+        return f;
+      }
+
+      test('publishes the staged bytes in a new folder; staged gone', () async {
+        final part = await stage('dl-1.part', [5, 6, 7]);
+        final f = await s.importFile(
+          part,
+          targetFolder: '${h.root}/in',
+          name: 'photo.jpg',
+        );
+        expect(f.name, 'photo.jpg');
+        expect(f.folderPath, '${h.root}/in');
+        expect(f.sizeBytes, 3);
+        expect(await _read(s, f), [5, 6, 7]);
+        expect(await part.exists(), isFalse);
+      });
+
+      test('a name clash gets (1), nothing is overwritten', () async {
+        await h.addFile('${h.root}/in/a.pdf', [1]);
+        final f = await s.importFile(
+          await stage('dl-2.part', [2, 2]),
+          targetFolder: '${h.root}/in',
+          name: 'a.pdf',
+        );
+        expect(f.name, 'a (1).pdf');
+        expect((await s.statPath('${h.root}/in/a.pdf'))?.sizeBytes, 1);
+      });
+
+      test('a bad name is refused before anything is written', () async {
+        final part = await stage('dl-3.part', [1]);
+        for (final bad in ['a/b.jpg', '..', '', 'x' * 300]) {
+          await expectLater(
+            s.importFile(part, targetFolder: '${h.root}/in', name: bad),
+            _fails(FileOpFailure.invalidName),
+          );
+        }
+        expect(await part.exists(), isTrue);
+      });
     });
 
     test('createFolder creates, then refuses a duplicate', () async {

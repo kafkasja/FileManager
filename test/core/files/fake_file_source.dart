@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_names.dart';
@@ -374,6 +375,35 @@ class FakeFileSource implements FileSource {
 
   @override
   Future<int?> freeBytes(String folderPath) async => freeBytesValue;
+
+  /// N9: when set, [importFile] throws it.
+  FileOpException? importFailure;
+
+  @override
+  Future<FileRef> importFile(
+    File staged, {
+    required String targetFolder,
+    required String name,
+    String? mimeType,
+  }) async {
+    validateFileName(name);
+    calls.add('importFile $targetFolder $name');
+    final failure = importFailure;
+    if (failure != null) throw failure;
+    final bytes = await staged.readAsBytes();
+    _addFolders(targetFolder);
+    final unique = await uniqueName(
+      name,
+      (c) async => _taken('$targetFolder/$c'),
+    );
+    final ref = addFile(
+      '$targetFolder/$unique',
+      bytes: bytes,
+      mimeType: mimeType,
+    );
+    await staged.delete();
+    return ref;
+  }
 
   /// B5: refs of the given paths from the in-memory map (tests add the
   /// files first with [addFile]); unknown paths are skipped.

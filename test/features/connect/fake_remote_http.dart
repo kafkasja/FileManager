@@ -16,8 +16,9 @@ typedef FakeRemoteCall = ({
 
 /// Answers a JSON call: return the response JSON, or throw
 /// [RemoteApiException] / [RemoteUnavailableException].
-typedef FakeJsonHandler =
-    FutureOr<Map<String, Object?>> Function(FakeRemoteCall call);
+typedef FakeJsonHandler = FutureOr<Map<String, Object?>> Function(
+  FakeRemoteCall call,
+);
 
 /// In-memory [RemoteHttp] for N2/N5/N7/N10 tests (TASK-N1). Register
 /// answers per route key (`'GET /v1/info'`); unknown routes answer
@@ -50,11 +51,11 @@ class FakeRemoteHttp implements RemoteHttp {
       json[routeKey(method, path)] = answer;
 
   /// Makes `METHOD path` fail with an API error.
-  void fail(String method, String path, ApiErrorCode code) =>
-      on(method, path, (_) => throw RemoteApiException(
-        code.status,
-        ApiErrorDto(code.wire, ''),
-      ));
+  void fail(String method, String path, ApiErrorCode code) => on(
+    method,
+    path,
+    (_) => throw RemoteApiException(code.status, ApiErrorDto(code.wire, '')),
+  );
 
   Future<T> _call<T>(
     String method,
@@ -99,6 +100,12 @@ class FakeRemoteHttp implements RemoteHttp {
     required T Function(Map<String, Object?> json) decode,
     Duration? timeout,
   }) => _call('POST', path, const {}, body, decode);
+
+  @override
+  Future<T> deleteJson<T>(
+    String path, {
+    required T Function(Map<String, Object?> json) decode,
+  }) => _call('DELETE', path, const {}, null, decode);
 
   @override
   Future<HttpClientResponse> getStream(

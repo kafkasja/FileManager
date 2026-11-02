@@ -16,9 +16,13 @@ import 'package:meta/meta.dart';
 /// (not connected: nothing is checked, nothing runs on the device anyway).
 @immutable
 class RemoteSwipeRules {
-  const new({this.roots});
+  const new({this.roots, this.peerDeviceId});
 
   final Map<String, bool>? roots;
+
+  /// N9: that device's known_devices id (null = not remembered). A send to
+  /// it from its own session downloads the file here.
+  final String? peerDeviceId;
 
   /// The root id of a remote `folderPath` (`'<rootId>[/<path>]'`), or null
   /// for a local (absolute) path.
@@ -29,6 +33,15 @@ class RemoteSwipeRules {
     return slash < 0 ? folderPath : folderPath.substring(0, slash);
   }
 }
+
+/// N9: queues a swipe send inside the undo row's transaction and returns
+/// the transfer file id (local session: upload into the action's folder on
+/// its device; remote session: download into `Download/<device>`).
+typedef SwipeSendQueue = Future<int> Function(
+  Session session,
+  FileRef file,
+  SwipeAction action,
+);
 
 /// Routes a swipe to the undo log (S2) and, for trash, the delete queue (D2),
 /// without awaiting any I/O on the gesture path. Write failures surface on
@@ -42,6 +55,7 @@ class SwipeActionDispatcher {
     required this._tags,
     required this._favorites,
     required this._renames,
+    this._sends,
   });
 
   final UndoRepository _undo;
@@ -50,6 +64,7 @@ class SwipeActionDispatcher {
   final TagRepository _tags;
   final FavoritesRepository _favorites;
   final RenameBatchRepository _renames;
+  final SwipeSendQueue? _sends;
 
   /// Types the deck can dispatch; others act as unmapped (spring back).
   static const Set<SwipeActionType> supported = {
@@ -60,17 +75,21 @@ class SwipeActionDispatcher {
     SwipeActionType.addTag,
     SwipeActionType.favorite,
     SwipeActionType.renameBatch,
+    SwipeActionType.sendToDevice,
   };
 
   /// Synchronous pre-check (no I/O). A missing folder is only found by the
   /// file operation itself. N8: in a remote session ([remote]) the target
   /// must be a writable folder on that device, and [file]'s folder must be
-  /// writable for trash and move.
+  /// writable for trash and move. N9: a send needs a remembered device
+  /// ([knownDeviceIds]; null = not loaded, not checked) and, locally, a
+  /// folder on it.
   static SwipeActionProblem? problemFor(
     SwipeAction action,
     Map<int, Tag> tags, {
     RemoteSwipeRules? remote,
     FileRef? file,
+    Set<String>? knownDeviceIds,
   }) {
     if (remote != null) {
       final problem = _remoteProblem(action, remote, file);
@@ -88,6 +107,16 @@ class SwipeActionDispatcher {
         action.targetFolder == null) {
       return SwipeActionProblem.unsupported;
     }
+    if (action.type == SwipeActionType.sendToDevice) {
+      final device = action.deviceId;
+      if (device == null) return SwipeActionProblem.unsupported;
+      if (knownDeviceIds != null && !knownDeviceIds.contains(device)) {
+        return SwipeActionProblem.deviceMissing;
+      }
+      if (remote == null && action.targetFolder == null) {
+        return SwipeActionProblem.unsupported;
+      }
+    }
     return null;
   }
 
@@ -97,8 +126,14 @@ class SwipeActionDispatcher {
     FileRef? file,
   ) {
     switch (action.type) {
-      case SwipeActionType.renameBatch || SwipeActionType.sendToDevice:
+      case SwipeActionType.renameBatch:
         return SwipeActionProblem.notOnDevice;
+      case SwipeActionType.sendToDevice:
+        // Only "to this device" (a download); never to a third device.
+        if (rules.peerDeviceId == null ||
+            action.deviceId != rules.peerDeviceId) {
+          return SwipeActionProblem.notOnDevice;
+        }
       case SwipeActionType.moveTo || SwipeActionType.copyTo:
         final target = RemoteSwipeRules.rootOf(action.targetFolder);
         if (action.targetFolder != null && target == null) {
@@ -164,8 +199,17 @@ class SwipeActionDispatcher {
           action,
           applyInTransaction: () => _renames.addInTransaction(session.id, file),
         ),
-        SwipeActionType.sendToDevice => throw StateError(
-          'not dispatchable: ${action.type.name}',
+        SwipeActionType.sendToDevice => _undo.recordWith(
+          session.id,
+          file,
+          action,
+          applyInTransaction: () async {
+            final sends =
+                _sends ?? (throw StateError('no transfer queue (N9)'));
+            return SendPreviousState(
+              transferFileId: await sends(session, file, action),
+            );
+          },
         ),
       };
 }

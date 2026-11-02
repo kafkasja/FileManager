@@ -6,6 +6,8 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/presets/ui/save_preset_dialog.dart';
@@ -16,6 +18,7 @@ import 'package:kfm/features/swipe/ui/swipe_layout_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/tags/ui/tag_picker_sheet.dart';
+import 'package:kfm/features/transfers/ui/transfer_flows.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 
@@ -205,11 +208,14 @@ class _DirectionTile extends ConsumerWidget {
     final l10n = context.l10n;
     final colors = Theme.of(context).colorScheme;
     final tags = ref.watch(tagsByIdProvider).value ?? const {};
+    // N9: send labels name the device.
+    ref.watch(knownDevicesProvider);
     final name = swipeActionName(
       l10n,
       action,
       ref.watch(_deleteModeProvider),
       tags: tags,
+      deviceNameOf: (id) => knownDeviceName(ref, id),
     );
     final tagMissing =
         action?.type == SwipeActionType.addTag &&
@@ -390,11 +396,12 @@ Future<SwipeAction?> _withTarget(
     case SwipeActionType.addTag:
       final tagId = await showTagPicker(context);
       return tagId == null ? null : SwipeAction(type, tagId: tagId);
+    case SwipeActionType.sendToDevice:
+      return await pickSendToDeviceAction(context);
     case SwipeActionType.trash ||
         SwipeActionType.keep ||
         SwipeActionType.favorite ||
-        SwipeActionType.renameBatch ||
-        SwipeActionType.sendToDevice:
+        SwipeActionType.renameBatch:
       return SwipeAction(type);
   }
 }
@@ -445,7 +452,15 @@ class _ActionBarSection extends ConsumerWidget {
                       index: i,
                       child: const Icon(Icons.drag_handle),
                     ),
-                    title: Text(swipeActionName(l10n, a, mode, tags: tags)),
+                    title: Text(
+                      swipeActionName(
+                        l10n,
+                        a,
+                        mode,
+                        tags: tags,
+                        deviceNameOf: (id) => knownDeviceName(ref, id),
+                      ),
+                    ),
                     trailing: IconButton(
                       tooltip: l10n.actionBarRemove,
                       icon: const Icon(Icons.remove_circle_outline),

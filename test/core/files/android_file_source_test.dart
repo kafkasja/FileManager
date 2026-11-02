@@ -111,6 +111,87 @@ void main() {
     diskRefusesWindowsChars: Platform.isWindows,
   );
 
+  group('importFile without All files access (N9)', () {
+    late Directory staging;
+    final calls = <MethodCall>[];
+
+    setUp(() async {
+      staging = await Directory.systemTemp.createTemp('kfm_import');
+      calls.clear();
+    });
+    tearDown(() async {
+      if (await staging.exists()) await staging.delete(recursive: true);
+    });
+
+    AndroidFileSource create(Object? Function(MethodCall call) answer) {
+      _mockChannel((call) async {
+        calls.add(call);
+        if (call.method == 'sdkInt') return 33;
+        return answer(call);
+      });
+      return AndroidFileSource(
+        channel: FilesChannel(),
+        canSeeAllFiles: () => false,
+        folderExists: (_) async => true,
+      );
+    }
+
+    test(
+      'a photo goes through a MediaStore insert; staged file deleted',
+      () async {
+        final source = create(
+          (call) => _row(42, path: '/storage/emulated/0/Download/Phone/a.jpg'),
+        );
+        addTearDown(source.dispose);
+        final part = File('${staging.path}/dl-1.part')..writeAsBytesSync([1]);
+        final f = await source.importFile(
+          part,
+          targetFolder: '/storage/emulated/0/Download/Phone',
+          name: 'a.jpg',
+        );
+        expect(f.id, 'ms:42');
+        final call = calls.singleWhere((c) => c.method == 'importMedia');
+        expect(call.arguments, {
+          'stagedPath': part.path,
+          'targetDir': '/storage/emulated/0/Download/Phone',
+          'displayName': 'a.jpg',
+          'mime': null,
+        });
+        expect(part.existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'a folder MediaStore refuses is permissionDenied; no space maps',
+      () async {
+        var code = 'NOT_ALLOWED';
+        final source = create(
+          (call) => throw PlatformException(code: code, message: 'x'),
+        );
+        addTearDown(source.dispose);
+        final part = File('${staging.path}/dl-2.part')..writeAsBytesSync([1]);
+        await expectLater(
+          source.importFile(
+            part,
+            targetFolder: '/storage/emulated/0/DCIM',
+            name: 'a.pdf',
+          ),
+          _fails(FileOpFailure.permissionDenied),
+        );
+        code = 'NO_SPACE';
+        await expectLater(
+          source.importFile(
+            part,
+            targetFolder: '/storage/emulated/0/DCIM',
+            name: 'a.jpg',
+          ),
+          _fails(FileOpFailure.noSpace),
+        );
+        expect(part.existsSync(), isTrue);
+      },
+    );
+  });
+
   group('MediaStore half (mocked channel)', () {
     late AndroidFileSource source;
     final calls = <MethodCall>[];

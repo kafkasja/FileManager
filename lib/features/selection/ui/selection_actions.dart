@@ -6,6 +6,7 @@ import 'package:kfm/features/folders/ui/folder_selection_actions.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/swipe/ui/swipe_these.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
+import 'package:kfm/features/transfers/ui/transfer_flows.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'selection_actions.g.dart';
@@ -57,6 +58,8 @@ List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
     compressSelectionAction,
     ...tagSelectionActions,
     swipeSelectionAction,
+    // N9: upload to the connected device.
+    sendToDeviceSelectionAction,
     detailsSelectionAction,
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );

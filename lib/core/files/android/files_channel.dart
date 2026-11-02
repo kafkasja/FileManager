@@ -139,6 +139,20 @@ class FilesChannel {
         'displayName': displayName,
       });
 
+  /// N9: publishes the app-private file [stagedPath] as [displayName] in
+  /// [targetDir] (MediaStore insert, API 29+). Returns the new row.
+  Future<MediaRow> importMedia(
+    String stagedPath,
+    String targetDir,
+    String displayName, {
+    String? mime,
+  }) => _invokeRow('importMedia', {
+    'stagedPath': stagedPath,
+    'targetDir': targetDir,
+    'displayName': displayName,
+    'mime': mime,
+  });
+
   /// Asks MediaStore to (re)index [paths]. Returns path → new media id.
   Future<Map<String, int?>> scanPaths(List<String> paths) async {
     final result = await _invoke<Map<Object?, Object?>>('scanPaths', {

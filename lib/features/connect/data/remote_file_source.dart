@@ -500,6 +500,15 @@ class RemoteFileSource implements FileSource {
   Future<List<FileRef>> registerCreated(List<String> paths) =>
       Future.error(_unsupported('registerCreated'));
 
+  /// Uploads go through the transfer engine (N9), not this source.
+  @override
+  Future<FileRef> importFile(
+    File staged, {
+    required String targetFolder,
+    required String name,
+    String? mimeType,
+  }) => Future.error(_unsupported('importFile'));
+
   @override
   Stream<FileIdChange> get idChanges => _ids.stream;
 

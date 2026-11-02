@@ -31,6 +31,7 @@ import 'package:kfm/features/swipe/ui/customize_swipes_screen.dart';
 import 'package:kfm/features/swipe/ui/swipe_screen.dart';
 import 'package:kfm/features/tags/ui/collections_screen.dart';
 import 'package:kfm/features/tags/ui/tag_files_screen.dart';
+import 'package:kfm/features/transfers/ui/transfers_screen.dart';
 import 'package:kfm/features/trash/ui/trash_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -92,6 +93,9 @@ abstract final class AppRoutes {
   static const connectBrowse = '/connect/browse/:fp';
   static String connectBrowseFor(String peerFingerprint) =>
       '/connect/browse/$peerFingerprint';
+
+  /// N9: Wi-Fi transfers (Downloads · Uploads).
+  static const transfers = '/transfers';
 
   /// N8: swipe the connected device `:fp`'s folder (its session).
   static const connectSwipe = '/connect/swipe/:fp';
@@ -163,6 +167,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: AppRoutes.permission,
         builder: (context, state) => const PermissionGateScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.transfers,
+        builder: (context, state) => const TransfersScreen(),
       ),
       GoRoute(
         path: AppRoutes.connect,

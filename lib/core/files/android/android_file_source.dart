@@ -218,6 +218,66 @@ class AndroidFileSource implements FileSource {
     return refs;
   }
 
+  @override
+  Future<FileRef> importFile(
+    File staged, {
+    required String targetFolder,
+    required String name,
+    String? mimeType,
+  }) async {
+    validateFileName(name);
+    final target = _trimSlash(targetFolder);
+    if (_canSeeAllFiles() || await _sdkInt() < 29) {
+      return await _importIo(staged, target, name);
+    }
+    final MediaRow row;
+    try {
+      row = await _guard(
+        null,
+        () => _channel.importMedia(staged.path, target, name, mime: mimeType),
+      );
+    } on FileOpException catch (e) {
+      // MediaStore refuses that kind of file in that folder.
+      if (e.failure != FileOpFailure.unsupported) rethrow;
+      throw FileOpException(FileOpFailure.permissionDenied, e.message);
+    }
+    try {
+      await staged.delete();
+    } on FileSystemException catch (e) {
+      developer.log('staged file not deleted: $e', name: 'kfm.files');
+    }
+    if (_mediaTypes.contains(row['mediaType'])) return _mediaRef(row);
+    // Documents and other files are `path:` refs everywhere else.
+    final path = row['path'];
+    final ref = path is String ? await _statPath(path) : null;
+    return ref ?? _mediaRef(row);
+  }
+
+  /// dart:io import (All files access, API ≤28): rename when on the same
+  /// volume, else a verified copy; then a media scan.
+  Future<FileRef> _importIo(File staged, String target, String name) async {
+    final String path;
+    try {
+      await Directory(target).create(recursive: true);
+      final unique = await uniqueName(name, (c) => _exists('$target/$c'));
+      path = '$target/$unique';
+      try {
+        await staged.rename(path);
+      } on FileSystemException {
+        await _copyVerified(staged, path);
+        await staged.delete();
+      }
+    } on FileSystemException catch (e) {
+      throw fileOpExceptionFromIo(e, target);
+    }
+    final refs = await registerCreated([path]);
+    return refs.firstOrNull ??
+        (throw const FileOpException(
+          FileOpFailure.ioError,
+          'gone after import',
+        ));
+  }
+
   static const _registerChunk = 500;
   static const _mediaTypes = {'image', 'video', 'audio'};
 
@@ -912,6 +972,7 @@ class AndroidFileSource implements FileSource {
       // Media can't be moved there without All files access (e.g. a photo
       // outside DCIM/Pictures), or across volumes (U2 / N11 safe move).
       'NOT_ALLOWED' || 'CROSS_VOLUME' => FileOpFailure.unsupported,
+      'NO_SPACE' => FileOpFailure.noSpace,
       // H1: the activity died while a system dialog was open. The caller
       // re-queues; the next commit reconciles from the file state.
       'INTERRUPTED' => FileOpFailure.ioError,

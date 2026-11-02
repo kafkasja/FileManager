@@ -49,6 +49,16 @@ Finder _arrow(IconData icon) =>
 Future<void> _assign(WidgetTester tester, IconData arrow, String action) async {
   await tester.tap(_arrow(arrow));
   await tester.pumpAndSettle();
+  // Eight options (N9 added "Send to device…"): the last ones may need a
+  // scroll.
+  await tester.scrollUntilVisible(
+    _inSheet(action),
+    100,
+    scrollable: find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(Scrollable),
+    ),
+  );
   await tester.tap(_inSheet(action));
   await tester.pumpAndSettle();
 }
@@ -107,6 +117,14 @@ void main() {
 
       await tester.tap(_arrow(Icons.arrow_forward));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        _inSheet('Nothing'),
+        100,
+        scrollable: find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byType(Scrollable),
+        ),
+      );
       final nothing = tester.widget<ListTile>(
         find.ancestor(of: _inSheet('Nothing'), matching: find.byType(ListTile)),
       );

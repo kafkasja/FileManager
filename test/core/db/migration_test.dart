@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/db/tables/transfers_table.dart';
 import 'package:kfm/core/index/source_rule.dart';
 
 import 'generated/schema.dart';
@@ -15,6 +16,7 @@ import 'generated/schema_v16.dart' as v16;
 import 'generated/schema_v17.dart' as v17;
 import 'generated/schema_v18.dart' as v18;
 import 'generated/schema_v19.dart' as v19;
+import 'generated/schema_v20.dart' as v20;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -53,7 +55,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 20; from++) {
+  for (var from = 1; from < 21; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -747,6 +749,136 @@ void main() {
         throwsA(anything),
       );
       await insert('remote:${'ab' * 32}', active: false, preset: 1);
+    });
+  });
+
+  test('v20 -> v21 adds empty transfer tables; data intact', () async {
+    final schema = await verifier.schemaAt(20);
+    final raw = v20.DatabaseAtV20(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+      "public_key_fingerprint, last_seen_at_ms) VALUES ('d', 'p', 'PC', "
+      "'windows', '${'ab' * 32}', 1)",
+    );
+    await raw.customStatement(
+      'INSERT INTO sessions (layout, delete_mode, cursor, started_at, '
+      "updated_at, is_active) VALUES ('{}', 'trash', 3, 1, 1, 1)",
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    expect(await db.select(db.knownDevices).get(), hasLength(1));
+    expect(await db.select(db.sessions).get(), hasLength(1));
+    expect(await db.select(db.transfers).get(), isEmpty);
+    expect(await db.select(db.transferFiles).get(), isEmpty);
+    final names = [
+      for (final r
+          in await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type = 'index'",
+              )
+              .get())
+        r.read<String>('name'),
+    ];
+    expect(
+      names,
+      containsAll(['transfers_status', 'transfer_files_job_status']),
+    );
+  });
+
+  group('transfers foreign keys (v21)', () {
+    late AppDatabase db;
+    final now = DateTime.utc(2026);
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(20)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+      await db.customStatement(
+        'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+        "public_key_fingerprint, last_seen_at_ms) VALUES ('d', 'p', 'PC', "
+        "'windows', '${'ab' * 32}', 1)",
+      );
+    });
+    tearDown(() => db.close());
+
+    Future<void> job(String id, {String device = 'd', int? session}) => db
+        .into(db.transfers)
+        .insert(
+          TransfersCompanion.insert(
+            id: id,
+            deviceId: device,
+            direction: TransferDirection.download,
+            mode: TransferMode.copy,
+            targetPath: '/x',
+            status: TransferStatus.queued,
+            swipeSessionId: Value(session),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+
+    Future<int> file(String job, int seq) => db
+        .into(db.transferFiles)
+        .insert(
+          TransferFilesCompanion.insert(
+            transferId: job,
+            seq: seq,
+            sourceFileId: 'f$seq',
+            name: 'f$seq.jpg',
+            sizeBytes: 1,
+            sourceModifiedAtMs: 1,
+            status: TransferFileStatus.queued,
+          ),
+        );
+
+    test('device_id is required and must exist', () async {
+      await expectLater(job('j', device: 'missing'), throwsA(anything));
+      await expectLater(
+        db.customStatement(
+          'INSERT INTO transfers (id, direction, mode, target_path, status, '
+          "created_at, updated_at) VALUES ('j', 'upload', 'copy', '', "
+          "'queued', 1, 1)",
+        ),
+        throwsA(anything),
+      );
+    });
+
+    test('removing the device cascades to jobs and files (N6)', () async {
+      await job('j');
+      await file('j', 0);
+      await file('j', 1);
+      await expectLater(file('j', 1), throwsA(anything)); // unique seq
+      await db.customStatement("DELETE FROM known_devices WHERE id = 'd'");
+      expect(await db.select(db.transfers).get(), isEmpty);
+      expect(await db.select(db.transferFiles).get(), isEmpty);
+    });
+
+    test('a deleted session leaves the job with a null session', () async {
+      final session = await db
+          .into(db.sessions)
+          .insert(
+            SessionsCompanion.insert(
+              layout: '{}',
+              startedAt: now,
+              updatedAt: now,
+              isActive: false,
+            ),
+          );
+      await job('j', session: session);
+      await db.customStatement('DELETE FROM sessions WHERE id = $session');
+      final row = await db.select(db.transfers).getSingle();
+      expect(row.swipeSessionId, null);
+    });
+
+    test('file defaults: 0 bytes, 0 attempts', () async {
+      await job('j');
+      await file('j', 0);
+      final f = await db.select(db.transferFiles).getSingle();
+      expect(f.bytesDone, 0);
+      expect(f.attempts, 0);
+      expect(f.error, null);
     });
   });
 }

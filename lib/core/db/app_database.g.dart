@@ -13021,6 +13021,1896 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
   }
 }
 
+class $TransfersTable extends Transfers
+    with TableInfo<$TransfersTable, TransferRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TransfersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES known_devices (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<TransferDirection, String>
+  direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<TransferDirection>($TransfersTable.$converterdirection);
+  @override
+  late final GeneratedColumnWithTypeConverter<TransferMode, String> mode =
+      GeneratedColumn<String>(
+        'mode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<TransferMode>($TransfersTable.$convertermode);
+  static const VerificationMeta _targetRootIdMeta = const VerificationMeta(
+    'targetRootId',
+  );
+  @override
+  late final GeneratedColumn<String> targetRootId = GeneratedColumn<String>(
+    'target_root_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetPathMeta = const VerificationMeta(
+    'targetPath',
+  );
+  @override
+  late final GeneratedColumn<String> targetPath = GeneratedColumn<String>(
+    'target_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<TransferStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<TransferStatus>($TransfersTable.$converterstatus);
+  @override
+  late final GeneratedColumnWithTypeConverter<TransferPauseReason?, String>
+  pauseReason = GeneratedColumn<String>(
+    'pause_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<TransferPauseReason?>($TransfersTable.$converterpauseReasonn);
+  static const VerificationMeta _deleteModeMeta = const VerificationMeta(
+    'deleteMode',
+  );
+  @override
+  late final GeneratedColumn<String> deleteMode = GeneratedColumn<String>(
+    'delete_mode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _swipeSessionIdMeta = const VerificationMeta(
+    'swipeSessionId',
+  );
+  @override
+  late final GeneratedColumn<int> swipeSessionId = GeneratedColumn<int>(
+    'swipe_session_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES sessions (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    deviceId,
+    direction,
+    mode,
+    targetRootId,
+    targetPath,
+    status,
+    pauseReason,
+    deleteMode,
+    swipeSessionId,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'transfers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TransferRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('target_root_id')) {
+      context.handle(
+        _targetRootIdMeta,
+        targetRootId.isAcceptableOrUnknown(
+          data['target_root_id']!,
+          _targetRootIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('target_path')) {
+      context.handle(
+        _targetPathMeta,
+        targetPath.isAcceptableOrUnknown(data['target_path']!, _targetPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetPathMeta);
+    }
+    if (data.containsKey('delete_mode')) {
+      context.handle(
+        _deleteModeMeta,
+        deleteMode.isAcceptableOrUnknown(data['delete_mode']!, _deleteModeMeta),
+      );
+    }
+    if (data.containsKey('swipe_session_id')) {
+      context.handle(
+        _swipeSessionIdMeta,
+        swipeSessionId.isAcceptableOrUnknown(
+          data['swipe_session_id']!,
+          _swipeSessionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TransferRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TransferRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      direction: $TransfersTable.$converterdirection.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}direction'],
+        )!,
+      ),
+      mode: $TransfersTable.$convertermode.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}mode'],
+        )!,
+      ),
+      targetRootId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_root_id'],
+      ),
+      targetPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_path'],
+      )!,
+      status: $TransfersTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      pauseReason: $TransfersTable.$converterpauseReasonn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}pause_reason'],
+        ),
+      ),
+      deleteMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}delete_mode'],
+      ),
+      swipeSessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}swipe_session_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TransfersTable createAlias(String alias) {
+    return $TransfersTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<TransferDirection, String, String>
+  $converterdirection = const EnumNameConverter<TransferDirection>(
+    TransferDirection.values,
+  );
+  static JsonTypeConverter2<TransferMode, String, String> $convertermode =
+      const EnumNameConverter<TransferMode>(TransferMode.values);
+  static JsonTypeConverter2<TransferStatus, String, String> $converterstatus =
+      const EnumNameConverter<TransferStatus>(TransferStatus.values);
+  static JsonTypeConverter2<TransferPauseReason, String, String>
+  $converterpauseReason = const EnumNameConverter<TransferPauseReason>(
+    TransferPauseReason.values,
+  );
+  static JsonTypeConverter2<TransferPauseReason?, String?, String?>
+  $converterpauseReasonn = JsonTypeConverter2.asNullable($converterpauseReason);
+}
+
+class TransferRow extends DataClass implements Insertable<TransferRow> {
+  /// `randomHexId()`.
+  final String id;
+
+  /// The peer (N6 local id). Removing the device removes its jobs.
+  final String deviceId;
+  final TransferDirection direction;
+  final TransferMode mode;
+
+  /// Upload: N4 root id on the peer. Download: null.
+  final String? targetRootId;
+
+  /// Upload: path relative to [targetRootId] ('' = the root). Download:
+  /// absolute local folder.
+  final String targetPath;
+  final TransferStatus status;
+
+  /// N10.
+  final TransferPauseReason? pauseReason;
+
+  /// N11: 'trash' | 'permanent' for upload-moves; null otherwise.
+  final String? deleteMode;
+
+  /// The swipe session this job collects sends for (one open job per
+  /// device and session).
+  final int? swipeSessionId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const TransferRow({
+    required this.id,
+    required this.deviceId,
+    required this.direction,
+    required this.mode,
+    this.targetRootId,
+    required this.targetPath,
+    required this.status,
+    this.pauseReason,
+    this.deleteMode,
+    this.swipeSessionId,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['device_id'] = Variable<String>(deviceId);
+    {
+      map['direction'] = Variable<String>(
+        $TransfersTable.$converterdirection.toSql(direction),
+      );
+    }
+    {
+      map['mode'] = Variable<String>(
+        $TransfersTable.$convertermode.toSql(mode),
+      );
+    }
+    if (!nullToAbsent || targetRootId != null) {
+      map['target_root_id'] = Variable<String>(targetRootId);
+    }
+    map['target_path'] = Variable<String>(targetPath);
+    {
+      map['status'] = Variable<String>(
+        $TransfersTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || pauseReason != null) {
+      map['pause_reason'] = Variable<String>(
+        $TransfersTable.$converterpauseReasonn.toSql(pauseReason),
+      );
+    }
+    if (!nullToAbsent || deleteMode != null) {
+      map['delete_mode'] = Variable<String>(deleteMode);
+    }
+    if (!nullToAbsent || swipeSessionId != null) {
+      map['swipe_session_id'] = Variable<int>(swipeSessionId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TransfersCompanion toCompanion(bool nullToAbsent) {
+    return TransfersCompanion(
+      id: Value(id),
+      deviceId: Value(deviceId),
+      direction: Value(direction),
+      mode: Value(mode),
+      targetRootId: targetRootId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetRootId),
+      targetPath: Value(targetPath),
+      status: Value(status),
+      pauseReason: pauseReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pauseReason),
+      deleteMode: deleteMode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deleteMode),
+      swipeSessionId: swipeSessionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(swipeSessionId),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TransferRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TransferRow(
+      id: serializer.fromJson<String>(json['id']),
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      direction: $TransfersTable.$converterdirection.fromJson(
+        serializer.fromJson<String>(json['direction']),
+      ),
+      mode: $TransfersTable.$convertermode.fromJson(
+        serializer.fromJson<String>(json['mode']),
+      ),
+      targetRootId: serializer.fromJson<String?>(json['targetRootId']),
+      targetPath: serializer.fromJson<String>(json['targetPath']),
+      status: $TransfersTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      pauseReason: $TransfersTable.$converterpauseReasonn.fromJson(
+        serializer.fromJson<String?>(json['pauseReason']),
+      ),
+      deleteMode: serializer.fromJson<String?>(json['deleteMode']),
+      swipeSessionId: serializer.fromJson<int?>(json['swipeSessionId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'deviceId': serializer.toJson<String>(deviceId),
+      'direction': serializer.toJson<String>(
+        $TransfersTable.$converterdirection.toJson(direction),
+      ),
+      'mode': serializer.toJson<String>(
+        $TransfersTable.$convertermode.toJson(mode),
+      ),
+      'targetRootId': serializer.toJson<String?>(targetRootId),
+      'targetPath': serializer.toJson<String>(targetPath),
+      'status': serializer.toJson<String>(
+        $TransfersTable.$converterstatus.toJson(status),
+      ),
+      'pauseReason': serializer.toJson<String?>(
+        $TransfersTable.$converterpauseReasonn.toJson(pauseReason),
+      ),
+      'deleteMode': serializer.toJson<String?>(deleteMode),
+      'swipeSessionId': serializer.toJson<int?>(swipeSessionId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TransferRow copyWith({
+    String? id,
+    String? deviceId,
+    TransferDirection? direction,
+    TransferMode? mode,
+    Value<String?> targetRootId = const Value.absent(),
+    String? targetPath,
+    TransferStatus? status,
+    Value<TransferPauseReason?> pauseReason = const Value.absent(),
+    Value<String?> deleteMode = const Value.absent(),
+    Value<int?> swipeSessionId = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => TransferRow(
+    id: id ?? this.id,
+    deviceId: deviceId ?? this.deviceId,
+    direction: direction ?? this.direction,
+    mode: mode ?? this.mode,
+    targetRootId: targetRootId.present ? targetRootId.value : this.targetRootId,
+    targetPath: targetPath ?? this.targetPath,
+    status: status ?? this.status,
+    pauseReason: pauseReason.present ? pauseReason.value : this.pauseReason,
+    deleteMode: deleteMode.present ? deleteMode.value : this.deleteMode,
+    swipeSessionId: swipeSessionId.present
+        ? swipeSessionId.value
+        : this.swipeSessionId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  TransferRow copyWithCompanion(TransfersCompanion data) {
+    return TransferRow(
+      id: data.id.present ? data.id.value : this.id,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      targetRootId: data.targetRootId.present
+          ? data.targetRootId.value
+          : this.targetRootId,
+      targetPath: data.targetPath.present
+          ? data.targetPath.value
+          : this.targetPath,
+      status: data.status.present ? data.status.value : this.status,
+      pauseReason: data.pauseReason.present
+          ? data.pauseReason.value
+          : this.pauseReason,
+      deleteMode: data.deleteMode.present
+          ? data.deleteMode.value
+          : this.deleteMode,
+      swipeSessionId: data.swipeSessionId.present
+          ? data.swipeSessionId.value
+          : this.swipeSessionId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransferRow(')
+          ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('direction: $direction, ')
+          ..write('mode: $mode, ')
+          ..write('targetRootId: $targetRootId, ')
+          ..write('targetPath: $targetPath, ')
+          ..write('status: $status, ')
+          ..write('pauseReason: $pauseReason, ')
+          ..write('deleteMode: $deleteMode, ')
+          ..write('swipeSessionId: $swipeSessionId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    deviceId,
+    direction,
+    mode,
+    targetRootId,
+    targetPath,
+    status,
+    pauseReason,
+    deleteMode,
+    swipeSessionId,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TransferRow &&
+          other.id == this.id &&
+          other.deviceId == this.deviceId &&
+          other.direction == this.direction &&
+          other.mode == this.mode &&
+          other.targetRootId == this.targetRootId &&
+          other.targetPath == this.targetPath &&
+          other.status == this.status &&
+          other.pauseReason == this.pauseReason &&
+          other.deleteMode == this.deleteMode &&
+          other.swipeSessionId == this.swipeSessionId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TransfersCompanion extends UpdateCompanion<TransferRow> {
+  final Value<String> id;
+  final Value<String> deviceId;
+  final Value<TransferDirection> direction;
+  final Value<TransferMode> mode;
+  final Value<String?> targetRootId;
+  final Value<String> targetPath;
+  final Value<TransferStatus> status;
+  final Value<TransferPauseReason?> pauseReason;
+  final Value<String?> deleteMode;
+  final Value<int?> swipeSessionId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const TransfersCompanion({
+    this.id = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.targetRootId = const Value.absent(),
+    this.targetPath = const Value.absent(),
+    this.status = const Value.absent(),
+    this.pauseReason = const Value.absent(),
+    this.deleteMode = const Value.absent(),
+    this.swipeSessionId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TransfersCompanion.insert({
+    required String id,
+    required String deviceId,
+    required TransferDirection direction,
+    required TransferMode mode,
+    this.targetRootId = const Value.absent(),
+    required String targetPath,
+    required TransferStatus status,
+    this.pauseReason = const Value.absent(),
+    this.deleteMode = const Value.absent(),
+    this.swipeSessionId = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       deviceId = Value(deviceId),
+       direction = Value(direction),
+       mode = Value(mode),
+       targetPath = Value(targetPath),
+       status = Value(status),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TransferRow> custom({
+    Expression<String>? id,
+    Expression<String>? deviceId,
+    Expression<String>? direction,
+    Expression<String>? mode,
+    Expression<String>? targetRootId,
+    Expression<String>? targetPath,
+    Expression<String>? status,
+    Expression<String>? pauseReason,
+    Expression<String>? deleteMode,
+    Expression<int>? swipeSessionId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (deviceId != null) 'device_id': deviceId,
+      if (direction != null) 'direction': direction,
+      if (mode != null) 'mode': mode,
+      if (targetRootId != null) 'target_root_id': targetRootId,
+      if (targetPath != null) 'target_path': targetPath,
+      if (status != null) 'status': status,
+      if (pauseReason != null) 'pause_reason': pauseReason,
+      if (deleteMode != null) 'delete_mode': deleteMode,
+      if (swipeSessionId != null) 'swipe_session_id': swipeSessionId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TransfersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? deviceId,
+    Value<TransferDirection>? direction,
+    Value<TransferMode>? mode,
+    Value<String?>? targetRootId,
+    Value<String>? targetPath,
+    Value<TransferStatus>? status,
+    Value<TransferPauseReason?>? pauseReason,
+    Value<String?>? deleteMode,
+    Value<int?>? swipeSessionId,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TransfersCompanion(
+      id: id ?? this.id,
+      deviceId: deviceId ?? this.deviceId,
+      direction: direction ?? this.direction,
+      mode: mode ?? this.mode,
+      targetRootId: targetRootId ?? this.targetRootId,
+      targetPath: targetPath ?? this.targetPath,
+      status: status ?? this.status,
+      pauseReason: pauseReason ?? this.pauseReason,
+      deleteMode: deleteMode ?? this.deleteMode,
+      swipeSessionId: swipeSessionId ?? this.swipeSessionId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(
+        $TransfersTable.$converterdirection.toSql(direction.value),
+      );
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(
+        $TransfersTable.$convertermode.toSql(mode.value),
+      );
+    }
+    if (targetRootId.present) {
+      map['target_root_id'] = Variable<String>(targetRootId.value);
+    }
+    if (targetPath.present) {
+      map['target_path'] = Variable<String>(targetPath.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $TransfersTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (pauseReason.present) {
+      map['pause_reason'] = Variable<String>(
+        $TransfersTable.$converterpauseReasonn.toSql(pauseReason.value),
+      );
+    }
+    if (deleteMode.present) {
+      map['delete_mode'] = Variable<String>(deleteMode.value);
+    }
+    if (swipeSessionId.present) {
+      map['swipe_session_id'] = Variable<int>(swipeSessionId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransfersCompanion(')
+          ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('direction: $direction, ')
+          ..write('mode: $mode, ')
+          ..write('targetRootId: $targetRootId, ')
+          ..write('targetPath: $targetPath, ')
+          ..write('status: $status, ')
+          ..write('pauseReason: $pauseReason, ')
+          ..write('deleteMode: $deleteMode, ')
+          ..write('swipeSessionId: $swipeSessionId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TransferFilesTable extends TransferFiles
+    with TableInfo<$TransferFilesTable, TransferFileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TransferFilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _transferIdMeta = const VerificationMeta(
+    'transferId',
+  );
+  @override
+  late final GeneratedColumn<String> transferId = GeneratedColumn<String>(
+    'transfer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES transfers (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceFileIdMeta = const VerificationMeta(
+    'sourceFileId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceFileId = GeneratedColumn<String>(
+    'source_file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceModifiedAtMsMeta =
+      const VerificationMeta('sourceModifiedAtMs');
+  @override
+  late final GeneratedColumn<int> sourceModifiedAtMs = GeneratedColumn<int>(
+    'source_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bytesDoneMeta = const VerificationMeta(
+    'bytesDone',
+  );
+  @override
+  late final GeneratedColumn<int> bytesDone = GeneratedColumn<int>(
+    'bytes_done',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<TransferFileStatus, String>
+  status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<TransferFileStatus>($TransferFilesTable.$converterstatus);
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetFileIdMeta = const VerificationMeta(
+    'targetFileId',
+  );
+  @override
+  late final GeneratedColumn<String> targetFileId = GeneratedColumn<String>(
+    'target_file_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _uploadIdMeta = const VerificationMeta(
+    'uploadId',
+  );
+  @override
+  late final GeneratedColumn<String> uploadId = GeneratedColumn<String>(
+    'upload_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+    'etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextRetryAtMeta = const VerificationMeta(
+    'nextRetryAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextRetryAt = GeneratedColumn<DateTime>(
+    'next_retry_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _senderSha256Meta = const VerificationMeta(
+    'senderSha256',
+  );
+  @override
+  late final GeneratedColumn<String> senderSha256 = GeneratedColumn<String>(
+    'sender_sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _receiverSha256Meta = const VerificationMeta(
+    'receiverSha256',
+  );
+  @override
+  late final GeneratedColumn<String> receiverSha256 = GeneratedColumn<String>(
+    'receiver_sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SourceOutcome?, String>
+  sourceOutcome = GeneratedColumn<String>(
+    'source_outcome',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<SourceOutcome?>($TransferFilesTable.$convertersourceOutcomen);
+  static const VerificationMeta _sourceErrorMeta = const VerificationMeta(
+    'sourceError',
+  );
+  @override
+  late final GeneratedColumn<String> sourceError = GeneratedColumn<String>(
+    'source_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    transferId,
+    seq,
+    sourceFileId,
+    name,
+    sizeBytes,
+    sourceModifiedAtMs,
+    bytesDone,
+    status,
+    error,
+    targetFileId,
+    uploadId,
+    etag,
+    attempts,
+    nextRetryAt,
+    senderSha256,
+    receiverSha256,
+    sourceOutcome,
+    sourceError,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'transfer_files';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TransferFileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('transfer_id')) {
+      context.handle(
+        _transferIdMeta,
+        transferId.isAcceptableOrUnknown(data['transfer_id']!, _transferIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_transferIdMeta);
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seqMeta);
+    }
+    if (data.containsKey('source_file_id')) {
+      context.handle(
+        _sourceFileIdMeta,
+        sourceFileId.isAcceptableOrUnknown(
+          data['source_file_id']!,
+          _sourceFileIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceFileIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('source_modified_at_ms')) {
+      context.handle(
+        _sourceModifiedAtMsMeta,
+        sourceModifiedAtMs.isAcceptableOrUnknown(
+          data['source_modified_at_ms']!,
+          _sourceModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceModifiedAtMsMeta);
+    }
+    if (data.containsKey('bytes_done')) {
+      context.handle(
+        _bytesDoneMeta,
+        bytesDone.isAcceptableOrUnknown(data['bytes_done']!, _bytesDoneMeta),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    if (data.containsKey('target_file_id')) {
+      context.handle(
+        _targetFileIdMeta,
+        targetFileId.isAcceptableOrUnknown(
+          data['target_file_id']!,
+          _targetFileIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('upload_id')) {
+      context.handle(
+        _uploadIdMeta,
+        uploadId.isAcceptableOrUnknown(data['upload_id']!, _uploadIdMeta),
+      );
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+        _etagMeta,
+        etag.isAcceptableOrUnknown(data['etag']!, _etagMeta),
+      );
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('next_retry_at')) {
+      context.handle(
+        _nextRetryAtMeta,
+        nextRetryAt.isAcceptableOrUnknown(
+          data['next_retry_at']!,
+          _nextRetryAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sender_sha256')) {
+      context.handle(
+        _senderSha256Meta,
+        senderSha256.isAcceptableOrUnknown(
+          data['sender_sha256']!,
+          _senderSha256Meta,
+        ),
+      );
+    }
+    if (data.containsKey('receiver_sha256')) {
+      context.handle(
+        _receiverSha256Meta,
+        receiverSha256.isAcceptableOrUnknown(
+          data['receiver_sha256']!,
+          _receiverSha256Meta,
+        ),
+      );
+    }
+    if (data.containsKey('source_error')) {
+      context.handle(
+        _sourceErrorMeta,
+        sourceError.isAcceptableOrUnknown(
+          data['source_error']!,
+          _sourceErrorMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {transferId, seq},
+  ];
+  @override
+  TransferFileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TransferFileRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      transferId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transfer_id'],
+      )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      sourceFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_file_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      sourceModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_modified_at_ms'],
+      )!,
+      bytesDone: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes_done'],
+      )!,
+      status: $TransferFilesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+      targetFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_file_id'],
+      ),
+      uploadId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}upload_id'],
+      ),
+      etag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}etag'],
+      ),
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      nextRetryAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_retry_at'],
+      ),
+      senderSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sender_sha256'],
+      ),
+      receiverSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receiver_sha256'],
+      ),
+      sourceOutcome: $TransferFilesTable.$convertersourceOutcomen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}source_outcome'],
+        ),
+      ),
+      sourceError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_error'],
+      ),
+    );
+  }
+
+  @override
+  $TransferFilesTable createAlias(String alias) {
+    return $TransferFilesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<TransferFileStatus, String, String>
+  $converterstatus = const EnumNameConverter<TransferFileStatus>(
+    TransferFileStatus.values,
+  );
+  static JsonTypeConverter2<SourceOutcome, String, String>
+  $convertersourceOutcome = const EnumNameConverter<SourceOutcome>(
+    SourceOutcome.values,
+  );
+  static JsonTypeConverter2<SourceOutcome?, String?, String?>
+  $convertersourceOutcomen = JsonTypeConverter2.asNullable(
+    $convertersourceOutcome,
+  );
+}
+
+class TransferFileRow extends DataClass implements Insertable<TransferFileRow> {
+  final int id;
+  final String transferId;
+
+  /// Order inside the job.
+  final int seq;
+
+  /// `FileRef.id` on the sending side (the remote id for downloads).
+  final String sourceFileId;
+
+  /// The target name (checked with `validateFileName` before writing).
+  final String name;
+  final int sizeBytes;
+
+  /// N10 "source changed" check.
+  final int sourceModifiedAtMs;
+  final int bytesDone;
+  final TransferFileStatus status;
+
+  /// An `ApiErrorCode` wire code, a `FileOpFailure` name or an engine code.
+  final String? error;
+
+  /// The final file (local `FileRef.id` or the server's `finalId`).
+  final String? targetFileId;
+
+  /// Server upload handle.
+  final String? uploadId;
+
+  /// N10 download validator.
+  final String? etag;
+
+  /// N10.
+  final int attempts;
+
+  /// N10.
+  final DateTime? nextRetryAt;
+
+  /// N10/N11.
+  final String? senderSha256;
+
+  /// N11.
+  final String? receiverSha256;
+
+  /// N11.
+  final SourceOutcome? sourceOutcome;
+
+  /// N11.
+  final String? sourceError;
+  const TransferFileRow({
+    required this.id,
+    required this.transferId,
+    required this.seq,
+    required this.sourceFileId,
+    required this.name,
+    required this.sizeBytes,
+    required this.sourceModifiedAtMs,
+    required this.bytesDone,
+    required this.status,
+    this.error,
+    this.targetFileId,
+    this.uploadId,
+    this.etag,
+    required this.attempts,
+    this.nextRetryAt,
+    this.senderSha256,
+    this.receiverSha256,
+    this.sourceOutcome,
+    this.sourceError,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['transfer_id'] = Variable<String>(transferId);
+    map['seq'] = Variable<int>(seq);
+    map['source_file_id'] = Variable<String>(sourceFileId);
+    map['name'] = Variable<String>(name);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs);
+    map['bytes_done'] = Variable<int>(bytesDone);
+    {
+      map['status'] = Variable<String>(
+        $TransferFilesTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    if (!nullToAbsent || targetFileId != null) {
+      map['target_file_id'] = Variable<String>(targetFileId);
+    }
+    if (!nullToAbsent || uploadId != null) {
+      map['upload_id'] = Variable<String>(uploadId);
+    }
+    if (!nullToAbsent || etag != null) {
+      map['etag'] = Variable<String>(etag);
+    }
+    map['attempts'] = Variable<int>(attempts);
+    if (!nullToAbsent || nextRetryAt != null) {
+      map['next_retry_at'] = Variable<DateTime>(nextRetryAt);
+    }
+    if (!nullToAbsent || senderSha256 != null) {
+      map['sender_sha256'] = Variable<String>(senderSha256);
+    }
+    if (!nullToAbsent || receiverSha256 != null) {
+      map['receiver_sha256'] = Variable<String>(receiverSha256);
+    }
+    if (!nullToAbsent || sourceOutcome != null) {
+      map['source_outcome'] = Variable<String>(
+        $TransferFilesTable.$convertersourceOutcomen.toSql(sourceOutcome),
+      );
+    }
+    if (!nullToAbsent || sourceError != null) {
+      map['source_error'] = Variable<String>(sourceError);
+    }
+    return map;
+  }
+
+  TransferFilesCompanion toCompanion(bool nullToAbsent) {
+    return TransferFilesCompanion(
+      id: Value(id),
+      transferId: Value(transferId),
+      seq: Value(seq),
+      sourceFileId: Value(sourceFileId),
+      name: Value(name),
+      sizeBytes: Value(sizeBytes),
+      sourceModifiedAtMs: Value(sourceModifiedAtMs),
+      bytesDone: Value(bytesDone),
+      status: Value(status),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+      targetFileId: targetFileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetFileId),
+      uploadId: uploadId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uploadId),
+      etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
+      attempts: Value(attempts),
+      nextRetryAt: nextRetryAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextRetryAt),
+      senderSha256: senderSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(senderSha256),
+      receiverSha256: receiverSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receiverSha256),
+      sourceOutcome: sourceOutcome == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceOutcome),
+      sourceError: sourceError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceError),
+    );
+  }
+
+  factory TransferFileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TransferFileRow(
+      id: serializer.fromJson<int>(json['id']),
+      transferId: serializer.fromJson<String>(json['transferId']),
+      seq: serializer.fromJson<int>(json['seq']),
+      sourceFileId: serializer.fromJson<String>(json['sourceFileId']),
+      name: serializer.fromJson<String>(json['name']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      sourceModifiedAtMs: serializer.fromJson<int>(json['sourceModifiedAtMs']),
+      bytesDone: serializer.fromJson<int>(json['bytesDone']),
+      status: $TransferFilesTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      error: serializer.fromJson<String?>(json['error']),
+      targetFileId: serializer.fromJson<String?>(json['targetFileId']),
+      uploadId: serializer.fromJson<String?>(json['uploadId']),
+      etag: serializer.fromJson<String?>(json['etag']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      nextRetryAt: serializer.fromJson<DateTime?>(json['nextRetryAt']),
+      senderSha256: serializer.fromJson<String?>(json['senderSha256']),
+      receiverSha256: serializer.fromJson<String?>(json['receiverSha256']),
+      sourceOutcome: $TransferFilesTable.$convertersourceOutcomen.fromJson(
+        serializer.fromJson<String?>(json['sourceOutcome']),
+      ),
+      sourceError: serializer.fromJson<String?>(json['sourceError']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'transferId': serializer.toJson<String>(transferId),
+      'seq': serializer.toJson<int>(seq),
+      'sourceFileId': serializer.toJson<String>(sourceFileId),
+      'name': serializer.toJson<String>(name),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'sourceModifiedAtMs': serializer.toJson<int>(sourceModifiedAtMs),
+      'bytesDone': serializer.toJson<int>(bytesDone),
+      'status': serializer.toJson<String>(
+        $TransferFilesTable.$converterstatus.toJson(status),
+      ),
+      'error': serializer.toJson<String?>(error),
+      'targetFileId': serializer.toJson<String?>(targetFileId),
+      'uploadId': serializer.toJson<String?>(uploadId),
+      'etag': serializer.toJson<String?>(etag),
+      'attempts': serializer.toJson<int>(attempts),
+      'nextRetryAt': serializer.toJson<DateTime?>(nextRetryAt),
+      'senderSha256': serializer.toJson<String?>(senderSha256),
+      'receiverSha256': serializer.toJson<String?>(receiverSha256),
+      'sourceOutcome': serializer.toJson<String?>(
+        $TransferFilesTable.$convertersourceOutcomen.toJson(sourceOutcome),
+      ),
+      'sourceError': serializer.toJson<String?>(sourceError),
+    };
+  }
+
+  TransferFileRow copyWith({
+    int? id,
+    String? transferId,
+    int? seq,
+    String? sourceFileId,
+    String? name,
+    int? sizeBytes,
+    int? sourceModifiedAtMs,
+    int? bytesDone,
+    TransferFileStatus? status,
+    Value<String?> error = const Value.absent(),
+    Value<String?> targetFileId = const Value.absent(),
+    Value<String?> uploadId = const Value.absent(),
+    Value<String?> etag = const Value.absent(),
+    int? attempts,
+    Value<DateTime?> nextRetryAt = const Value.absent(),
+    Value<String?> senderSha256 = const Value.absent(),
+    Value<String?> receiverSha256 = const Value.absent(),
+    Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+    Value<String?> sourceError = const Value.absent(),
+  }) => TransferFileRow(
+    id: id ?? this.id,
+    transferId: transferId ?? this.transferId,
+    seq: seq ?? this.seq,
+    sourceFileId: sourceFileId ?? this.sourceFileId,
+    name: name ?? this.name,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+    bytesDone: bytesDone ?? this.bytesDone,
+    status: status ?? this.status,
+    error: error.present ? error.value : this.error,
+    targetFileId: targetFileId.present ? targetFileId.value : this.targetFileId,
+    uploadId: uploadId.present ? uploadId.value : this.uploadId,
+    etag: etag.present ? etag.value : this.etag,
+    attempts: attempts ?? this.attempts,
+    nextRetryAt: nextRetryAt.present ? nextRetryAt.value : this.nextRetryAt,
+    senderSha256: senderSha256.present ? senderSha256.value : this.senderSha256,
+    receiverSha256: receiverSha256.present
+        ? receiverSha256.value
+        : this.receiverSha256,
+    sourceOutcome: sourceOutcome.present
+        ? sourceOutcome.value
+        : this.sourceOutcome,
+    sourceError: sourceError.present ? sourceError.value : this.sourceError,
+  );
+  TransferFileRow copyWithCompanion(TransferFilesCompanion data) {
+    return TransferFileRow(
+      id: data.id.present ? data.id.value : this.id,
+      transferId: data.transferId.present
+          ? data.transferId.value
+          : this.transferId,
+      seq: data.seq.present ? data.seq.value : this.seq,
+      sourceFileId: data.sourceFileId.present
+          ? data.sourceFileId.value
+          : this.sourceFileId,
+      name: data.name.present ? data.name.value : this.name,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      sourceModifiedAtMs: data.sourceModifiedAtMs.present
+          ? data.sourceModifiedAtMs.value
+          : this.sourceModifiedAtMs,
+      bytesDone: data.bytesDone.present ? data.bytesDone.value : this.bytesDone,
+      status: data.status.present ? data.status.value : this.status,
+      error: data.error.present ? data.error.value : this.error,
+      targetFileId: data.targetFileId.present
+          ? data.targetFileId.value
+          : this.targetFileId,
+      uploadId: data.uploadId.present ? data.uploadId.value : this.uploadId,
+      etag: data.etag.present ? data.etag.value : this.etag,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      nextRetryAt: data.nextRetryAt.present
+          ? data.nextRetryAt.value
+          : this.nextRetryAt,
+      senderSha256: data.senderSha256.present
+          ? data.senderSha256.value
+          : this.senderSha256,
+      receiverSha256: data.receiverSha256.present
+          ? data.receiverSha256.value
+          : this.receiverSha256,
+      sourceOutcome: data.sourceOutcome.present
+          ? data.sourceOutcome.value
+          : this.sourceOutcome,
+      sourceError: data.sourceError.present
+          ? data.sourceError.value
+          : this.sourceError,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransferFileRow(')
+          ..write('id: $id, ')
+          ..write('transferId: $transferId, ')
+          ..write('seq: $seq, ')
+          ..write('sourceFileId: $sourceFileId, ')
+          ..write('name: $name, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('bytesDone: $bytesDone, ')
+          ..write('status: $status, ')
+          ..write('error: $error, ')
+          ..write('targetFileId: $targetFileId, ')
+          ..write('uploadId: $uploadId, ')
+          ..write('etag: $etag, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextRetryAt: $nextRetryAt, ')
+          ..write('senderSha256: $senderSha256, ')
+          ..write('receiverSha256: $receiverSha256, ')
+          ..write('sourceOutcome: $sourceOutcome, ')
+          ..write('sourceError: $sourceError')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    transferId,
+    seq,
+    sourceFileId,
+    name,
+    sizeBytes,
+    sourceModifiedAtMs,
+    bytesDone,
+    status,
+    error,
+    targetFileId,
+    uploadId,
+    etag,
+    attempts,
+    nextRetryAt,
+    senderSha256,
+    receiverSha256,
+    sourceOutcome,
+    sourceError,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TransferFileRow &&
+          other.id == this.id &&
+          other.transferId == this.transferId &&
+          other.seq == this.seq &&
+          other.sourceFileId == this.sourceFileId &&
+          other.name == this.name &&
+          other.sizeBytes == this.sizeBytes &&
+          other.sourceModifiedAtMs == this.sourceModifiedAtMs &&
+          other.bytesDone == this.bytesDone &&
+          other.status == this.status &&
+          other.error == this.error &&
+          other.targetFileId == this.targetFileId &&
+          other.uploadId == this.uploadId &&
+          other.etag == this.etag &&
+          other.attempts == this.attempts &&
+          other.nextRetryAt == this.nextRetryAt &&
+          other.senderSha256 == this.senderSha256 &&
+          other.receiverSha256 == this.receiverSha256 &&
+          other.sourceOutcome == this.sourceOutcome &&
+          other.sourceError == this.sourceError);
+}
+
+class TransferFilesCompanion extends UpdateCompanion<TransferFileRow> {
+  final Value<int> id;
+  final Value<String> transferId;
+  final Value<int> seq;
+  final Value<String> sourceFileId;
+  final Value<String> name;
+  final Value<int> sizeBytes;
+  final Value<int> sourceModifiedAtMs;
+  final Value<int> bytesDone;
+  final Value<TransferFileStatus> status;
+  final Value<String?> error;
+  final Value<String?> targetFileId;
+  final Value<String?> uploadId;
+  final Value<String?> etag;
+  final Value<int> attempts;
+  final Value<DateTime?> nextRetryAt;
+  final Value<String?> senderSha256;
+  final Value<String?> receiverSha256;
+  final Value<SourceOutcome?> sourceOutcome;
+  final Value<String?> sourceError;
+  const TransferFilesCompanion({
+    this.id = const Value.absent(),
+    this.transferId = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.sourceFileId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.sourceModifiedAtMs = const Value.absent(),
+    this.bytesDone = const Value.absent(),
+    this.status = const Value.absent(),
+    this.error = const Value.absent(),
+    this.targetFileId = const Value.absent(),
+    this.uploadId = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextRetryAt = const Value.absent(),
+    this.senderSha256 = const Value.absent(),
+    this.receiverSha256 = const Value.absent(),
+    this.sourceOutcome = const Value.absent(),
+    this.sourceError = const Value.absent(),
+  });
+  TransferFilesCompanion.insert({
+    this.id = const Value.absent(),
+    required String transferId,
+    required int seq,
+    required String sourceFileId,
+    required String name,
+    required int sizeBytes,
+    required int sourceModifiedAtMs,
+    this.bytesDone = const Value.absent(),
+    required TransferFileStatus status,
+    this.error = const Value.absent(),
+    this.targetFileId = const Value.absent(),
+    this.uploadId = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextRetryAt = const Value.absent(),
+    this.senderSha256 = const Value.absent(),
+    this.receiverSha256 = const Value.absent(),
+    this.sourceOutcome = const Value.absent(),
+    this.sourceError = const Value.absent(),
+  }) : transferId = Value(transferId),
+       seq = Value(seq),
+       sourceFileId = Value(sourceFileId),
+       name = Value(name),
+       sizeBytes = Value(sizeBytes),
+       sourceModifiedAtMs = Value(sourceModifiedAtMs),
+       status = Value(status);
+  static Insertable<TransferFileRow> custom({
+    Expression<int>? id,
+    Expression<String>? transferId,
+    Expression<int>? seq,
+    Expression<String>? sourceFileId,
+    Expression<String>? name,
+    Expression<int>? sizeBytes,
+    Expression<int>? sourceModifiedAtMs,
+    Expression<int>? bytesDone,
+    Expression<String>? status,
+    Expression<String>? error,
+    Expression<String>? targetFileId,
+    Expression<String>? uploadId,
+    Expression<String>? etag,
+    Expression<int>? attempts,
+    Expression<DateTime>? nextRetryAt,
+    Expression<String>? senderSha256,
+    Expression<String>? receiverSha256,
+    Expression<String>? sourceOutcome,
+    Expression<String>? sourceError,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (transferId != null) 'transfer_id': transferId,
+      if (seq != null) 'seq': seq,
+      if (sourceFileId != null) 'source_file_id': sourceFileId,
+      if (name != null) 'name': name,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (sourceModifiedAtMs != null)
+        'source_modified_at_ms': sourceModifiedAtMs,
+      if (bytesDone != null) 'bytes_done': bytesDone,
+      if (status != null) 'status': status,
+      if (error != null) 'error': error,
+      if (targetFileId != null) 'target_file_id': targetFileId,
+      if (uploadId != null) 'upload_id': uploadId,
+      if (etag != null) 'etag': etag,
+      if (attempts != null) 'attempts': attempts,
+      if (nextRetryAt != null) 'next_retry_at': nextRetryAt,
+      if (senderSha256 != null) 'sender_sha256': senderSha256,
+      if (receiverSha256 != null) 'receiver_sha256': receiverSha256,
+      if (sourceOutcome != null) 'source_outcome': sourceOutcome,
+      if (sourceError != null) 'source_error': sourceError,
+    });
+  }
+
+  TransferFilesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? transferId,
+    Value<int>? seq,
+    Value<String>? sourceFileId,
+    Value<String>? name,
+    Value<int>? sizeBytes,
+    Value<int>? sourceModifiedAtMs,
+    Value<int>? bytesDone,
+    Value<TransferFileStatus>? status,
+    Value<String?>? error,
+    Value<String?>? targetFileId,
+    Value<String?>? uploadId,
+    Value<String?>? etag,
+    Value<int>? attempts,
+    Value<DateTime?>? nextRetryAt,
+    Value<String?>? senderSha256,
+    Value<String?>? receiverSha256,
+    Value<SourceOutcome?>? sourceOutcome,
+    Value<String?>? sourceError,
+  }) {
+    return TransferFilesCompanion(
+      id: id ?? this.id,
+      transferId: transferId ?? this.transferId,
+      seq: seq ?? this.seq,
+      sourceFileId: sourceFileId ?? this.sourceFileId,
+      name: name ?? this.name,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+      bytesDone: bytesDone ?? this.bytesDone,
+      status: status ?? this.status,
+      error: error ?? this.error,
+      targetFileId: targetFileId ?? this.targetFileId,
+      uploadId: uploadId ?? this.uploadId,
+      etag: etag ?? this.etag,
+      attempts: attempts ?? this.attempts,
+      nextRetryAt: nextRetryAt ?? this.nextRetryAt,
+      senderSha256: senderSha256 ?? this.senderSha256,
+      receiverSha256: receiverSha256 ?? this.receiverSha256,
+      sourceOutcome: sourceOutcome ?? this.sourceOutcome,
+      sourceError: sourceError ?? this.sourceError,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (transferId.present) {
+      map['transfer_id'] = Variable<String>(transferId.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (sourceFileId.present) {
+      map['source_file_id'] = Variable<String>(sourceFileId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (sourceModifiedAtMs.present) {
+      map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs.value);
+    }
+    if (bytesDone.present) {
+      map['bytes_done'] = Variable<int>(bytesDone.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $TransferFilesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (targetFileId.present) {
+      map['target_file_id'] = Variable<String>(targetFileId.value);
+    }
+    if (uploadId.present) {
+      map['upload_id'] = Variable<String>(uploadId.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (nextRetryAt.present) {
+      map['next_retry_at'] = Variable<DateTime>(nextRetryAt.value);
+    }
+    if (senderSha256.present) {
+      map['sender_sha256'] = Variable<String>(senderSha256.value);
+    }
+    if (receiverSha256.present) {
+      map['receiver_sha256'] = Variable<String>(receiverSha256.value);
+    }
+    if (sourceOutcome.present) {
+      map['source_outcome'] = Variable<String>(
+        $TransferFilesTable.$convertersourceOutcomen.toSql(sourceOutcome.value),
+      );
+    }
+    if (sourceError.present) {
+      map['source_error'] = Variable<String>(sourceError.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransferFilesCompanion(')
+          ..write('id: $id, ')
+          ..write('transferId: $transferId, ')
+          ..write('seq: $seq, ')
+          ..write('sourceFileId: $sourceFileId, ')
+          ..write('name: $name, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('bytesDone: $bytesDone, ')
+          ..write('status: $status, ')
+          ..write('error: $error, ')
+          ..write('targetFileId: $targetFileId, ')
+          ..write('uploadId: $uploadId, ')
+          ..write('etag: $etag, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextRetryAt: $nextRetryAt, ')
+          ..write('senderSha256: $senderSha256, ')
+          ..write('receiverSha256: $receiverSha256, ')
+          ..write('sourceOutcome: $sourceOutcome, ')
+          ..write('sourceError: $sourceError')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -13062,6 +14952,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AiLabelsTable aiLabels = $AiLabelsTable(this);
   late final $AiLabelStatusTable aiLabelStatus = $AiLabelStatusTable(this);
   late final $KnownDevicesTable knownDevices = $KnownDevicesTable(this);
+  late final $TransfersTable transfers = $TransfersTable(this);
+  late final $TransferFilesTable transferFiles = $TransferFilesTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -13166,6 +15058,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'ai_labels_label',
     'CREATE INDEX ai_labels_label ON ai_labels (label, file_id)',
   );
+  late final Index transfersStatus = Index(
+    'transfers_status',
+    'CREATE INDEX transfers_status ON transfers (status)',
+  );
+  late final Index transferFilesJobStatus = Index(
+    'transfer_files_job_status',
+    'CREATE INDEX transfer_files_job_status ON transfer_files (transfer_id, status)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -13198,6 +15098,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     aiLabels,
     aiLabelStatus,
     knownDevices,
+    transfers,
+    transferFiles,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -13224,6 +15126,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     sgKindRank,
     smgiFile,
     aiLabelsLabel,
+    transfersStatus,
+    transferFilesJobStatus,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -13296,6 +15200,27 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('smart_group_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'known_devices',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('transfers', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('transfers', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'transfers',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('transfer_files', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -14069,6 +15994,24 @@ final class $$SessionsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$TransfersTable, List<TransferRow>>
+  _transfersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.transfers,
+    aliasName: 'sessions__id__transfers__swipe_session_id',
+  );
+
+  $$TransfersTableProcessedTableManager get transfersRefs {
+    final manager = $$TransfersTableTableManager(
+      $_db,
+      $_db.transfers,
+    ).filter((f) => f.swipeSessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_transfersRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$SessionsTableFilterComposer
@@ -14231,6 +16174,31 @@ class $$SessionsTableFilterComposer
           }) => $$SwipeSourcesTableFilterComposer(
             $db: $db,
             $table: $db.swipeSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> transfersRefs(
+    Expression<bool> Function($$TransfersTableFilterComposer f) f,
+  ) {
+    final $$TransfersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.swipeSessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableFilterComposer(
+            $db: $db,
+            $table: $db.transfers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -14459,6 +16427,31 @@ class $$SessionsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> transfersRefs<T extends Object>(
+    Expression<T> Function($$TransfersTableAnnotationComposer a) f,
+  ) {
+    final $$TransfersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.swipeSessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transfers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SessionsTableTableManager
@@ -14479,6 +16472,7 @@ class $$SessionsTableTableManager
             bool pendingDeletesRefs,
             bool renameBatchesRefs,
             bool swipeSourcesRefs,
+            bool transfersRefs,
           })
         > {
   $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
@@ -14562,6 +16556,7 @@ class $$SessionsTableTableManager
                 pendingDeletesRefs = false,
                 renameBatchesRefs = false,
                 swipeSourcesRefs = false,
+                transfersRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -14570,6 +16565,7 @@ class $$SessionsTableTableManager
                     if (pendingDeletesRefs) db.pendingDeletes,
                     if (renameBatchesRefs) db.renameBatches,
                     if (swipeSourcesRefs) db.swipeSources,
+                    if (transfersRefs) db.transfers,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -14654,6 +16650,26 @@ class $$SessionsTableTableManager
                           referencedColumn: 'session_id',
                           typedResults: items,
                         ),
+                      if (transfersRefs)
+                        await $_getPrefetchedDataByColumns<
+                          SessionRow,
+                          $SessionsTable,
+                          TransferRow,
+                          $TransfersTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SessionsTableReferences
+                              ._transfersRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).transfersRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'swipe_session_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -14679,6 +16695,7 @@ typedef $$SessionsTableProcessedTableManager =
         bool pendingDeletesRefs,
         bool renameBatchesRefs,
         bool swipeSourcesRefs,
+        bool transfersRefs,
       })
     >;
 typedef $$SessionActionsTableCreateCompanionBuilder =
@@ -21866,6 +23883,29 @@ typedef $$KnownDevicesTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
+final class $$KnownDevicesTableReferences
+    extends BaseReferences<_$AppDatabase, $KnownDevicesTable, KnownDeviceRow> {
+  $$KnownDevicesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$TransfersTable, List<TransferRow>>
+  _transfersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.transfers,
+    aliasName: 'known_devices__id__transfers__device_id',
+  );
+
+  $$TransfersTableProcessedTableManager get transfersRefs {
+    final manager = $$TransfersTableTableManager(
+      $_db,
+      $_db.transfers,
+    ).filter((f) => f.deviceId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_transfersRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
 class $$KnownDevicesTableFilterComposer
     extends Composer<_$AppDatabase, $KnownDevicesTable> {
   $$KnownDevicesTableFilterComposer({
@@ -21929,6 +23969,31 @@ class $$KnownDevicesTableFilterComposer
     column: $table.autoAccept,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> transfersRefs(
+    Expression<bool> Function($$TransfersTableFilterComposer f) f,
+  ) {
+    final $$TransfersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.deviceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableFilterComposer(
+            $db: $db,
+            $table: $db.transfers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$KnownDevicesTableOrderingComposer
@@ -22053,6 +24118,31 @@ class $$KnownDevicesTableAnnotationComposer
     column: $table.autoAccept,
     builder: (column) => column,
   );
+
+  Expression<T> transfersRefs<T extends Object>(
+    Expression<T> Function($$TransfersTableAnnotationComposer a) f,
+  ) {
+    final $$TransfersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.deviceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transfers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$KnownDevicesTableTableManager
@@ -22066,12 +24156,9 @@ class $$KnownDevicesTableTableManager
           $$KnownDevicesTableAnnotationComposer,
           $$KnownDevicesTableCreateCompanionBuilder,
           $$KnownDevicesTableUpdateCompanionBuilder,
-          (
-            KnownDeviceRow,
-            BaseReferences<_$AppDatabase, $KnownDevicesTable, KnownDeviceRow>,
-          ),
+          (KnownDeviceRow, $$KnownDevicesTableReferences),
           KnownDeviceRow,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool transfersRefs})
         > {
   $$KnownDevicesTableTableManager(_$AppDatabase db, $KnownDevicesTable table)
     : super(
@@ -22144,15 +24231,41 @@ class $$KnownDevicesTableTableManager
               .map(
                 (e) => (
                   e.readTable<$KnownDevicesTable, KnownDeviceRow>(table),
-                  BaseReferences<
-                    _$AppDatabase,
-                    $KnownDevicesTable,
-                    KnownDeviceRow
-                  >(db, table, e),
+                  $$KnownDevicesTableReferences(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({transfersRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (transfersRefs) db.transfers],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (transfersRefs)
+                    await $_getPrefetchedDataByColumns<
+                      KnownDeviceRow,
+                      $KnownDevicesTable,
+                      TransferRow,
+                      $TransfersTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$KnownDevicesTableReferences
+                          ._transfersRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$KnownDevicesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).transfersRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'device_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -22167,12 +24280,1259 @@ typedef $$KnownDevicesTableProcessedTableManager =
       $$KnownDevicesTableAnnotationComposer,
       $$KnownDevicesTableCreateCompanionBuilder,
       $$KnownDevicesTableUpdateCompanionBuilder,
-      (
-        KnownDeviceRow,
-        BaseReferences<_$AppDatabase, $KnownDevicesTable, KnownDeviceRow>,
-      ),
+      (KnownDeviceRow, $$KnownDevicesTableReferences),
       KnownDeviceRow,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool transfersRefs})
+    >;
+typedef $$TransfersTableCreateCompanionBuilder = TransfersCompanion Function({
+  required String id,
+  required String deviceId,
+  required TransferDirection direction,
+  required TransferMode mode,
+  Value<String?> targetRootId,
+  required String targetPath,
+  required TransferStatus status,
+  Value<TransferPauseReason?> pauseReason,
+  Value<String?> deleteMode,
+  Value<int?> swipeSessionId,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$TransfersTableUpdateCompanionBuilder = TransfersCompanion Function({
+  Value<String> id,
+  Value<String> deviceId,
+  Value<TransferDirection> direction,
+  Value<TransferMode> mode,
+  Value<String?> targetRootId,
+  Value<String> targetPath,
+  Value<TransferStatus> status,
+  Value<TransferPauseReason?> pauseReason,
+  Value<String?> deleteMode,
+  Value<int?> swipeSessionId,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+final class $$TransfersTableReferences
+    extends BaseReferences<_$AppDatabase, $TransfersTable, TransferRow> {
+  $$TransfersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $KnownDevicesTable _deviceIdTable(_$AppDatabase db) =>
+      db.knownDevices.createAlias('transfers__device_id__known_devices__id');
+
+  $$KnownDevicesTableProcessedTableManager get deviceId {
+    final $_column = $_itemColumn<String>('device_id')!;
+
+    final manager = $$KnownDevicesTableTableManager(
+      $_db,
+      $_db.knownDevices,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_deviceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $SessionsTable _swipeSessionIdTable(_$AppDatabase db) =>
+      db.sessions.createAlias('transfers__swipe_session_id__sessions__id');
+
+  $$SessionsTableProcessedTableManager? get swipeSessionId {
+    final $_column = $_itemColumn<int>('swipe_session_id');
+    if ($_column == null) return null;
+    final manager = $$SessionsTableTableManager(
+      $_db,
+      $_db.sessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_swipeSessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$TransferFilesTable, List<TransferFileRow>>
+  _transferFilesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.transferFiles,
+    aliasName: 'transfers__id__transfer_files__transfer_id',
+  );
+
+  $$TransferFilesTableProcessedTableManager get transferFilesRefs {
+    final manager = $$TransferFilesTableTableManager(
+      $_db,
+      $_db.transferFiles,
+    ).filter((f) => f.transferId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_transferFilesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$TransfersTableFilterComposer
+    extends Composer<_$AppDatabase, $TransfersTable> {
+  $$TransfersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TransferDirection, TransferDirection, String>
+  get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TransferMode, TransferMode, String> get mode =>
+      $composableBuilder(
+        column: $table.mode,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get targetRootId => $composableBuilder(
+    column: $table.targetRootId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetPath => $composableBuilder(
+    column: $table.targetPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TransferStatus, TransferStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    TransferPauseReason?,
+    TransferPauseReason,
+    String
+  >
+  get pauseReason => $composableBuilder(
+    column: $table.pauseReason,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get deleteMode => $composableBuilder(
+    column: $table.deleteMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$KnownDevicesTableFilterComposer get deviceId {
+    final $$KnownDevicesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.deviceId,
+      referencedTable: $db.knownDevices,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KnownDevicesTableFilterComposer(
+            $db: $db,
+            $table: $db.knownDevices,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SessionsTableFilterComposer get swipeSessionId {
+    final $$SessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.swipeSessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> transferFilesRefs(
+    Expression<bool> Function($$TransferFilesTableFilterComposer f) f,
+  ) {
+    final $$TransferFilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transferFiles,
+      getReferencedColumn: (t) => t.transferId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransferFilesTableFilterComposer(
+            $db: $db,
+            $table: $db.transferFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$TransfersTableOrderingComposer
+    extends Composer<_$AppDatabase, $TransfersTable> {
+  $$TransfersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetRootId => $composableBuilder(
+    column: $table.targetRootId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetPath => $composableBuilder(
+    column: $table.targetPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pauseReason => $composableBuilder(
+    column: $table.pauseReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deleteMode => $composableBuilder(
+    column: $table.deleteMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$KnownDevicesTableOrderingComposer get deviceId {
+    final $$KnownDevicesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.deviceId,
+      referencedTable: $db.knownDevices,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KnownDevicesTableOrderingComposer(
+            $db: $db,
+            $table: $db.knownDevices,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SessionsTableOrderingComposer get swipeSessionId {
+    final $$SessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.swipeSessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransfersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TransfersTable> {
+  $$TransfersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TransferDirection, String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TransferMode, String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<String> get targetRootId => $composableBuilder(
+    column: $table.targetRootId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get targetPath => $composableBuilder(
+    column: $table.targetPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<TransferStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TransferPauseReason?, String>
+  get pauseReason => $composableBuilder(
+    column: $table.pauseReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get deleteMode => $composableBuilder(
+    column: $table.deleteMode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$KnownDevicesTableAnnotationComposer get deviceId {
+    final $$KnownDevicesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.deviceId,
+      referencedTable: $db.knownDevices,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KnownDevicesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.knownDevices,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SessionsTableAnnotationComposer get swipeSessionId {
+    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.swipeSessionId,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> transferFilesRefs<T extends Object>(
+    Expression<T> Function($$TransferFilesTableAnnotationComposer a) f,
+  ) {
+    final $$TransferFilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transferFiles,
+      getReferencedColumn: (t) => t.transferId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransferFilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transferFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$TransfersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TransfersTable,
+          TransferRow,
+          $$TransfersTableFilterComposer,
+          $$TransfersTableOrderingComposer,
+          $$TransfersTableAnnotationComposer,
+          $$TransfersTableCreateCompanionBuilder,
+          $$TransfersTableUpdateCompanionBuilder,
+          (TransferRow, $$TransfersTableReferences),
+          TransferRow,
+          PrefetchHooks Function({
+            bool deviceId,
+            bool swipeSessionId,
+            bool transferFilesRefs,
+          })
+        > {
+  $$TransfersTableTableManager(_$AppDatabase db, $TransfersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TransfersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TransfersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TransfersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> deviceId = const Value.absent(),
+                Value<TransferDirection> direction = const Value.absent(),
+                Value<TransferMode> mode = const Value.absent(),
+                Value<String?> targetRootId = const Value.absent(),
+                Value<String> targetPath = const Value.absent(),
+                Value<TransferStatus> status = const Value.absent(),
+                Value<TransferPauseReason?> pauseReason = const Value.absent(),
+                Value<String?> deleteMode = const Value.absent(),
+                Value<int?> swipeSessionId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TransfersCompanion(
+                id: id,
+                deviceId: deviceId,
+                direction: direction,
+                mode: mode,
+                targetRootId: targetRootId,
+                targetPath: targetPath,
+                status: status,
+                pauseReason: pauseReason,
+                deleteMode: deleteMode,
+                swipeSessionId: swipeSessionId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String deviceId,
+                required TransferDirection direction,
+                required TransferMode mode,
+                Value<String?> targetRootId = const Value.absent(),
+                required String targetPath,
+                required TransferStatus status,
+                Value<TransferPauseReason?> pauseReason = const Value.absent(),
+                Value<String?> deleteMode = const Value.absent(),
+                Value<int?> swipeSessionId = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TransfersCompanion.insert(
+                id: id,
+                deviceId: deviceId,
+                direction: direction,
+                mode: mode,
+                targetRootId: targetRootId,
+                targetPath: targetPath,
+                status: status,
+                pauseReason: pauseReason,
+                deleteMode: deleteMode,
+                swipeSessionId: swipeSessionId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TransfersTable, TransferRow>(table),
+                  $$TransfersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                deviceId = false,
+                swipeSessionId = false,
+                transferFilesRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (transferFilesRefs) db.transferFiles,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (deviceId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.deviceId,
+                            referencedTable: $$TransfersTableReferences
+                                ._deviceIdTable(db),
+                            referencedColumn: $$TransfersTableReferences
+                                ._deviceIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+                        if (swipeSessionId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.swipeSessionId,
+                            referencedTable: $$TransfersTableReferences
+                                ._swipeSessionIdTable(db),
+                            referencedColumn: $$TransfersTableReferences
+                                ._swipeSessionIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (transferFilesRefs)
+                        await $_getPrefetchedDataByColumns<
+                          TransferRow,
+                          $TransfersTable,
+                          TransferFileRow,
+                          $TransferFilesTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TransfersTableReferences
+                              ._transferFilesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TransfersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).transferFilesRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'transfer_id',
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$TransfersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TransfersTable,
+      TransferRow,
+      $$TransfersTableFilterComposer,
+      $$TransfersTableOrderingComposer,
+      $$TransfersTableAnnotationComposer,
+      $$TransfersTableCreateCompanionBuilder,
+      $$TransfersTableUpdateCompanionBuilder,
+      (TransferRow, $$TransfersTableReferences),
+      TransferRow,
+      PrefetchHooks Function({
+        bool deviceId,
+        bool swipeSessionId,
+        bool transferFilesRefs,
+      })
+    >;
+typedef $$TransferFilesTableCreateCompanionBuilder =
+    TransferFilesCompanion Function({
+      Value<int> id,
+      required String transferId,
+      required int seq,
+      required String sourceFileId,
+      required String name,
+      required int sizeBytes,
+      required int sourceModifiedAtMs,
+      Value<int> bytesDone,
+      required TransferFileStatus status,
+      Value<String?> error,
+      Value<String?> targetFileId,
+      Value<String?> uploadId,
+      Value<String?> etag,
+      Value<int> attempts,
+      Value<DateTime?> nextRetryAt,
+      Value<String?> senderSha256,
+      Value<String?> receiverSha256,
+      Value<SourceOutcome?> sourceOutcome,
+      Value<String?> sourceError,
+    });
+typedef $$TransferFilesTableUpdateCompanionBuilder =
+    TransferFilesCompanion Function({
+      Value<int> id,
+      Value<String> transferId,
+      Value<int> seq,
+      Value<String> sourceFileId,
+      Value<String> name,
+      Value<int> sizeBytes,
+      Value<int> sourceModifiedAtMs,
+      Value<int> bytesDone,
+      Value<TransferFileStatus> status,
+      Value<String?> error,
+      Value<String?> targetFileId,
+      Value<String?> uploadId,
+      Value<String?> etag,
+      Value<int> attempts,
+      Value<DateTime?> nextRetryAt,
+      Value<String?> senderSha256,
+      Value<String?> receiverSha256,
+      Value<SourceOutcome?> sourceOutcome,
+      Value<String?> sourceError,
+    });
+
+final class $$TransferFilesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $TransferFilesTable, TransferFileRow> {
+  $$TransferFilesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TransfersTable _transferIdTable(_$AppDatabase db) =>
+      db.transfers.createAlias('transfer_files__transfer_id__transfers__id');
+
+  $$TransfersTableProcessedTableManager get transferId {
+    final $_column = $_itemColumn<String>('transfer_id')!;
+
+    final manager = $$TransfersTableTableManager(
+      $_db,
+      $_db.transfers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_transferIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$TransferFilesTableFilterComposer
+    extends Composer<_$AppDatabase, $TransferFilesTable> {
+  $$TransferFilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceFileId => $composableBuilder(
+    column: $table.sourceFileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytesDone => $composableBuilder(
+    column: $table.bytesDone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TransferFileStatus, TransferFileStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetFileId => $composableBuilder(
+    column: $table.targetFileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uploadId => $composableBuilder(
+    column: $table.uploadId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextRetryAt => $composableBuilder(
+    column: $table.nextRetryAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get senderSha256 => $composableBuilder(
+    column: $table.senderSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receiverSha256 => $composableBuilder(
+    column: $table.receiverSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SourceOutcome?, SourceOutcome, String>
+  get sourceOutcome => $composableBuilder(
+    column: $table.sourceOutcome,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get sourceError => $composableBuilder(
+    column: $table.sourceError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TransfersTableFilterComposer get transferId {
+    final $$TransfersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transferId,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableFilterComposer(
+            $db: $db,
+            $table: $db.transfers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransferFilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TransferFilesTable> {
+  $$TransferFilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceFileId => $composableBuilder(
+    column: $table.sourceFileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytesDone => $composableBuilder(
+    column: $table.bytesDone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetFileId => $composableBuilder(
+    column: $table.targetFileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uploadId => $composableBuilder(
+    column: $table.uploadId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextRetryAt => $composableBuilder(
+    column: $table.nextRetryAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get senderSha256 => $composableBuilder(
+    column: $table.senderSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get receiverSha256 => $composableBuilder(
+    column: $table.receiverSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceOutcome => $composableBuilder(
+    column: $table.sourceOutcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceError => $composableBuilder(
+    column: $table.sourceError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TransfersTableOrderingComposer get transferId {
+    final $$TransfersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transferId,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableOrderingComposer(
+            $db: $db,
+            $table: $db.transfers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransferFilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TransferFilesTable> {
+  $$TransferFilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceFileId => $composableBuilder(
+    column: $table.sourceFileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bytesDone =>
+      $composableBuilder(column: $table.bytesDone, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TransferFileStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<String> get targetFileId => $composableBuilder(
+    column: $table.targetFileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get uploadId =>
+      $composableBuilder(column: $table.uploadId, builder: (column) => column);
+
+  GeneratedColumn<String> get etag =>
+      $composableBuilder(column: $table.etag, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextRetryAt => $composableBuilder(
+    column: $table.nextRetryAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get senderSha256 => $composableBuilder(
+    column: $table.senderSha256,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get receiverSha256 => $composableBuilder(
+    column: $table.receiverSha256,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<SourceOutcome?, String> get sourceOutcome =>
+      $composableBuilder(
+        column: $table.sourceOutcome,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get sourceError => $composableBuilder(
+    column: $table.sourceError,
+    builder: (column) => column,
+  );
+
+  $$TransfersTableAnnotationComposer get transferId {
+    final $$TransfersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transferId,
+      referencedTable: $db.transfers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransfersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transfers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransferFilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TransferFilesTable,
+          TransferFileRow,
+          $$TransferFilesTableFilterComposer,
+          $$TransferFilesTableOrderingComposer,
+          $$TransferFilesTableAnnotationComposer,
+          $$TransferFilesTableCreateCompanionBuilder,
+          $$TransferFilesTableUpdateCompanionBuilder,
+          (TransferFileRow, $$TransferFilesTableReferences),
+          TransferFileRow,
+          PrefetchHooks Function({bool transferId})
+        > {
+  $$TransferFilesTableTableManager(_$AppDatabase db, $TransferFilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TransferFilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TransferFilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TransferFilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> transferId = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<String> sourceFileId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<int> sourceModifiedAtMs = const Value.absent(),
+                Value<int> bytesDone = const Value.absent(),
+                Value<TransferFileStatus> status = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<String?> targetFileId = const Value.absent(),
+                Value<String?> uploadId = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime?> nextRetryAt = const Value.absent(),
+                Value<String?> senderSha256 = const Value.absent(),
+                Value<String?> receiverSha256 = const Value.absent(),
+                Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+                Value<String?> sourceError = const Value.absent(),
+              }) => TransferFilesCompanion(
+                id: id,
+                transferId: transferId,
+                seq: seq,
+                sourceFileId: sourceFileId,
+                name: name,
+                sizeBytes: sizeBytes,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                bytesDone: bytesDone,
+                status: status,
+                error: error,
+                targetFileId: targetFileId,
+                uploadId: uploadId,
+                etag: etag,
+                attempts: attempts,
+                nextRetryAt: nextRetryAt,
+                senderSha256: senderSha256,
+                receiverSha256: receiverSha256,
+                sourceOutcome: sourceOutcome,
+                sourceError: sourceError,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String transferId,
+                required int seq,
+                required String sourceFileId,
+                required String name,
+                required int sizeBytes,
+                required int sourceModifiedAtMs,
+                Value<int> bytesDone = const Value.absent(),
+                required TransferFileStatus status,
+                Value<String?> error = const Value.absent(),
+                Value<String?> targetFileId = const Value.absent(),
+                Value<String?> uploadId = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime?> nextRetryAt = const Value.absent(),
+                Value<String?> senderSha256 = const Value.absent(),
+                Value<String?> receiverSha256 = const Value.absent(),
+                Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+                Value<String?> sourceError = const Value.absent(),
+              }) => TransferFilesCompanion.insert(
+                id: id,
+                transferId: transferId,
+                seq: seq,
+                sourceFileId: sourceFileId,
+                name: name,
+                sizeBytes: sizeBytes,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                bytesDone: bytesDone,
+                status: status,
+                error: error,
+                targetFileId: targetFileId,
+                uploadId: uploadId,
+                etag: etag,
+                attempts: attempts,
+                nextRetryAt: nextRetryAt,
+                senderSha256: senderSha256,
+                receiverSha256: receiverSha256,
+                sourceOutcome: sourceOutcome,
+                sourceError: sourceError,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TransferFilesTable, TransferFileRow>(table),
+                  $$TransferFilesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({transferId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (transferId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.transferId,
+                        referencedTable: $$TransferFilesTableReferences
+                            ._transferIdTable(db),
+                        referencedColumn: $$TransferFilesTableReferences
+                            ._transferIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$TransferFilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TransferFilesTable,
+      TransferFileRow,
+      $$TransferFilesTableFilterComposer,
+      $$TransferFilesTableOrderingComposer,
+      $$TransferFilesTableAnnotationComposer,
+      $$TransferFilesTableCreateCompanionBuilder,
+      $$TransferFilesTableUpdateCompanionBuilder,
+      (TransferFileRow, $$TransferFilesTableReferences),
+      TransferFileRow,
+      PrefetchHooks Function({bool transferId})
     >;
 
 class $AppDatabaseManager {
@@ -22231,4 +25591,8 @@ class $AppDatabaseManager {
       $$AiLabelStatusTableTableManager(_db, _db.aiLabelStatus);
   $$KnownDevicesTableTableManager get knownDevices =>
       $$KnownDevicesTableTableManager(_db, _db.knownDevices);
+  $$TransfersTableTableManager get transfers =>
+      $$TransfersTableTableManager(_db, _db.transfers);
+  $$TransferFilesTableTableManager get transferFiles =>
+      $$TransferFilesTableTableManager(_db, _db.transferFiles);
 }

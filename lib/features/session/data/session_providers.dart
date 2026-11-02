@@ -6,6 +6,7 @@ import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_repository.dart';
 import 'package:kfm/features/swipe/data/file_source_resolver.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/undo_service.dart';
@@ -59,6 +60,9 @@ UndoService undoService(Ref ref) => UndoService(
   favorites: ref.watch(favoritesRepositoryProvider),
   renames: ref.watch(renameBatchRepositoryProvider),
   renameRunner: ref.watch(renameRunnerProvider),
+  // N9: undo of a swipe send removes it while it is still queued.
+  cancelQueuedSend: (id) =>
+      ref.read(transfersRepositoryProvider).deleteQueuedFile(id),
 );
 
 /// Commit problems that aren't per file (shown as a snackbar).
