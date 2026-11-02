@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
@@ -27,6 +28,7 @@ class SelectionBar extends ConsumerWidget {
     }
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
+    final handed = handednessOf(ref);
     final controller = ref.read(selectionControllerProvider.notifier);
     final actions = [
       for (final a in ref.watch(selectionActionsProvider))
@@ -51,10 +53,15 @@ class SelectionBar extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: SafeArea(
         top: false,
+        // L4: count on the side away from the thumb, actions near it
+        // (physical sides, whatever the text direction).
         child: Padding(
-          padding: EdgeInsetsDirectional.only(start: spacing * 2),
+          padding: handed == Handedness.right
+              ? EdgeInsets.only(left: spacing * 2)
+              : EdgeInsets.only(right: spacing * 2),
           child: Row(
-            children: [
+            textDirection: TextDirection.ltr,
+            children: mirroredFor(handed, [
               Expanded(
                 child: Text(
                   l10n.selectionCount(
@@ -121,7 +128,7 @@ class SelectionBar extends ConsumerWidget {
                     ),
                 ],
               ),
-            ],
+            ]),
           ),
         ),
       ),

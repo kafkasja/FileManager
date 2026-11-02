@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
+import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
@@ -225,7 +227,8 @@ class _Section extends ConsumerWidget {
         itemBuilder: (context, i) {
           final item = items[i];
           final selected = state.selectedIds.contains(item.trashId);
-          return ListTile(
+          // L5: big text puts the badge under the name.
+          return AdaptiveListTile(
             selected: selected,
             leading: SizedBox.square(
               dimension: 48,
@@ -299,8 +302,10 @@ class _SelectionBar extends ConsumerWidget {
     return SafeArea(
       child: Padding(
         padding: EdgeInsetsDirectional.all(context.tokens.spacing),
+        // L4: Restore / Delete forever swap sides for left-handed use.
         child: Row(
-          children: [
+          textDirection: TextDirection.ltr,
+          children: mirroredFor(handednessOf(ref), [
             Expanded(
               child: FilledButton.icon(
                 onPressed: busy
@@ -327,7 +332,7 @@ class _SelectionBar extends ConsumerWidget {
                 label: Text(l10n.trashDeleteForever),
               ),
             ),
-          ],
+          ]),
         ),
       ),
     );

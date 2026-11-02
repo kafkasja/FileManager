@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -21,7 +22,7 @@ class FoldersSettingsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final value = ref.watch(foldersDropActionProvider).value ?? DropAction.move;
-    return ListTile(
+    return AdaptiveListTile(
       leading: const Icon(Icons.drive_file_move_outlined),
       title: Text(l10n.settingsDropAction),
       trailing: DropdownButton<DropAction>(

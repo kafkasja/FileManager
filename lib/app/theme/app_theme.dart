@@ -38,7 +38,7 @@ ColorScheme accentScheme(
 
 /// [seed] + [monochrome] pick the L1 color theme. Swipe colors stay semantic
 /// in [AppTokens] and never follow the accent. Text sizes come only from the
-/// text theme (L5 big text scales them).
+/// text theme; L5 scales them through `MediaQuery.textScaler`.
 ThemeData buildTheme(
   Brightness brightness, {
   Color seed = kDefaultSeed,

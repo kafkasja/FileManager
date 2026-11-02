@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -47,7 +48,8 @@ class BrowseSettingsSection extends ConsumerWidget {
           onChanged: (v) =>
               settings.write(AppSettings.browseHighlightBig, v).fireAndForget(),
         ),
-        ListTile(
+        // L5: the dropdown moves under the text at big sizes.
+        AdaptiveListTile(
           leading: const Icon(Icons.burst_mode_outlined),
           title: Text(l10n.settingsSameTimeWindow),
           subtitle: Text(l10n.settingsSameTimeWindowHelp),

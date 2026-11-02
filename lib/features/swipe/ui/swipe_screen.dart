@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/file_op_messages.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -589,9 +590,17 @@ class _DeckState extends ConsumerState<_Deck> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                l10n.swipeProgress(deck.swiped, deck.remaining),
-                style: Theme.of(context).textTheme.labelLarge,
+              // L5: one line that shrinks to fit at big text sizes, so the
+              // card keeps its share of the height.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    l10n.swipeProgress(deck.swiped, deck.remaining),
+                    style: Theme.of(context).textTheme.labelLarge,
+                    maxLines: 1,
+                  ),
+                ),
               ),
               if (peer == null) _RenamePill(sessionId: deck.session.id),
             ],
@@ -653,7 +662,11 @@ class _DeckState extends ConsumerState<_Deck> {
             spacing * 2,
             spacing * 2,
           ),
+          // L4: Undo sits on the side away from the swiping thumb
+          // (physical side, whatever the text direction).
           child: Row(
+            textDirection: TextDirection.ltr,
+            mainAxisAlignment: secondarySide(handednessOf(ref)),
             children: [
               // Hidden while the viewer is on top, so ✕ and undo are never
               // on screen together (S3).
@@ -968,7 +981,8 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
+    // L5: scrolls when big text doesn't fit.
+    child: SingleChildScrollView(
       padding: EdgeInsetsDirectional.all(context.tokens.spacing * 3),
       child: Column(
         mainAxisSize: MainAxisSize.min,
