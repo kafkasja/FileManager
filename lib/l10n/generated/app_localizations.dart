@@ -7094,6 +7094,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Throw test error'**
   String get devThrowTestError;
+
+  /// Settings → Appearance (L1): heading above the color theme swatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get themeColorLabel;
+
+  /// L1 color theme name (default); swatch tooltip and screen-reader label.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get accentBlue;
+
+  /// L1 color theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get accentGreen;
+
+  /// L1 color theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get accentPurple;
+
+  /// L1 color theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get accentOrange;
+
+  /// L1 color theme name: grayscale, no accent color.
+  ///
+  /// In en, this message translates to:
+  /// **'Mono'**
+  String get accentMono;
+
+  /// L1 color theme that follows the wallpaper colors (Android 12+ only).
+  ///
+  /// In en, this message translates to:
+  /// **'System colors'**
+  String get accentSystem;
 }
 
 class _AppLocalizationsDelegate

@@ -3231,5 +3231,19 @@
   "errorLogCleared": "Error log cleared",
   "errorLogClearFailed": "Couldn't clear the error log",
   "devThrowTestError": "Throw test error",
-  "@devThrowTestError": {"description": "Debug-only Developer tile (H5): throws an uncaught error to test the error log."}
+  "@devThrowTestError": {"description": "Debug-only Developer tile (H5): throws an uncaught error to test the error log."},
+  "themeColorLabel": "Color",
+  "@themeColorLabel": {"description": "Settings → Appearance (L1): heading above the color theme swatches."},
+  "accentBlue": "Blue",
+  "@accentBlue": {"description": "L1 color theme name (default); swatch tooltip and screen-reader label."},
+  "accentGreen": "Green",
+  "@accentGreen": {"description": "L1 color theme name."},
+  "accentPurple": "Purple",
+  "@accentPurple": {"description": "L1 color theme name."},
+  "accentOrange": "Orange",
+  "@accentOrange": {"description": "L1 color theme name."},
+  "accentMono": "Mono",
+  "@accentMono": {"description": "L1 color theme name: grayscale, no accent color."},
+  "accentSystem": "System colors",
+  "@accentSystem": {"description": "L1 color theme that follows the wallpaper colors (Android 12+ only)."}
 }

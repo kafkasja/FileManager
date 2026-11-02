@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   battery_plus
   connectivity_plus
+  dynamic_color
   flutter_secure_storage_windows
   nsd_windows
   permission_handler_windows
