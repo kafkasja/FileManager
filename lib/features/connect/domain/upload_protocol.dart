@@ -1,6 +1,8 @@
 import 'package:meta/meta.dart';
 
 /// Max body of one `PUT /v1/uploads/<id>/chunk` (N9 sends, N10 resumes).
+/// N1's 64 KB request limit exempts the chunk route, which enforces this
+/// itself (413 `too_large`).
 const int kTransferChunkBytes = 4 * 1024 * 1024;
 
 /// Free space a receiver keeps on top of the file (507 below it).
@@ -77,17 +79,61 @@ class CreateUploadDto {
   };
 }
 
-/// `{received}`: answer of create and chunk.
+/// `{received, size?}`: answer of create, chunk and (N10) the upload
+/// status route. [received] is what the server has durably stored.
 @immutable
 class UploadStatusDto {
-  const new(this.received);
+  const new(this.received, {this.size});
 
-  factory fromJson(Map<String, Object?> json) =>
-      UploadStatusDto(_int(json, 'received'));
+  factory fromJson(Map<String, Object?> json) {
+    final size = json['size'];
+    return UploadStatusDto(
+      _int(json, 'received'),
+      size: size is int ? size : null,
+    );
+  }
 
   final int received;
 
-  Map<String, Object?> toJson() => {'received': received};
+  /// The declared size (N10; null from an N9 server).
+  final int? size;
+
+  Map<String, Object?> toJson() => {'received': received, 'size': ?size};
+}
+
+/// `POST /v1/uploads/<id>/complete` body (N10: the sender's hash; N11
+/// makes the server check it).
+@immutable
+class CompleteUploadDto {
+  const new({this.sha256});
+
+  factory fromJson(Map<String, Object?> json) {
+    final sha = json['sha256'];
+    return CompleteUploadDto(sha256: sha is String ? sha : null);
+  }
+
+  final String? sha256;
+
+  Map<String, Object?> toJson() => {'sha256': ?sha256};
+}
+
+/// `GET /v1/files/<id>/sha256` answer (N10: the sender hash of a
+/// download).
+@immutable
+class FileSha256Dto {
+  const new(this.sha256);
+
+  factory fromJson(Map<String, Object?> json) {
+    final sha = _str(json, 'sha256');
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(sha)) {
+      throw const FormatException('bad sha256');
+    }
+    return FileSha256Dto(sha);
+  }
+
+  final String sha256;
+
+  Map<String, Object?> toJson() => {'sha256': sha256};
 }
 
 /// `POST /v1/uploads/<id>/complete` answer.

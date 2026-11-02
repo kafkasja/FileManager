@@ -95,6 +95,8 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     targetPath: t.targetPath,
     status: t.status,
     swipeSessionId: t.swipeSessionId,
+    pauseReason: t.pauseReason,
+    deviceTemporary: d.isTemporary,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
     files: List.unmodifiable(files),
@@ -115,12 +117,14 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     return row == null ? null : transferFileFromRow(row);
   }
 
-  /// Queued files of [deviceFingerprint]'s jobs, oldest job first, then in
-  /// `seq` order; [exclude] are already running.
+  /// Queued files of [deviceFingerprint]'s jobs that aren't paused, oldest
+  /// job first, then in `seq` order; [exclude] are already running, files
+  /// waiting for a retry after [now] are skipped (N10).
   Future<List<QueuedTransferFile>> nextQueued(
     String deviceFingerprint, {
     required int limit,
     Set<int> exclude = const {},
+    DateTime? now,
   }) async {
     final query =
         select(transferFiles).join([
@@ -136,7 +140,12 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
           ..where(
             transferFiles.status.equalsValue(TransferFileStatus.queued) &
                 knownDevices.publicKeyFingerprint.equals(deviceFingerprint) &
-                transferFiles.id.isNotIn(exclude),
+                transferFiles.id.isNotIn(exclude) &
+                transfers.pauseReason.isNull() &
+                (transferFiles.nextRetryAt.isNull() |
+                    transferFiles.nextRetryAt.isSmallerOrEqualValue(
+                      now ?? DateTime.now(),
+                    )),
           )
           ..orderBy([
             OrderingTerm.asc(transfers.createdAt),
@@ -228,6 +237,7 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
                     t.status.isInValues([
                       TransferStatus.queued,
                       TransferStatus.running,
+                      TransferStatus.paused,
                     ]),
               )
               ..limit(1))
@@ -268,17 +278,150 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
   Future<void> updateFile(int id, TransferFilesCompanion row) =>
       (update(transferFiles)..where((f) => f.id.equals(id))).write(row);
 
-  /// Recomputes the job's status from its files.
+  /// Recomputes the job's status from its files. A job with a pause reason
+  /// stays `paused` while anything is unfinished; once everything ended
+  /// the reason goes (N10).
   Future<void> refreshJob(String jobId, DateTime now) async {
+    final job = await (select(
+      transfers,
+    )..where((t) => t.id.equals(jobId))).getSingleOrNull();
+    if (job == null) return;
     final statuses = await (select(
       transferFiles,
     )..where((f) => f.transferId.equals(jobId))).map((f) => f.status).get();
+    final computed = jobStatusOf(statuses);
+    final unfinished =
+        computed == TransferStatus.queued || computed == TransferStatus.running;
+    final paused = job.pauseReason != null && unfinished;
     await (update(transfers)..where((t) => t.id.equals(jobId))).write(
       TransfersCompanion(
-        status: Value(jobStatusOf(statuses)),
+        status: Value(paused ? TransferStatus.paused : computed),
+        pauseReason: Value(paused ? job.pauseReason : null),
         updatedAt: Value(now),
       ),
     );
+  }
+
+  /// Pauses [jobId] with [reason] (N10) when it has unfinished files.
+  Future<void> pauseJob(
+    String jobId,
+    TransferPauseReason reason,
+    DateTime now,
+  ) async {
+    await (update(transfers)..where((t) => t.id.equals(jobId))).write(
+      TransfersCompanion(pauseReason: Value(reason)),
+    );
+    await refreshJob(jobId, now);
+  }
+
+  /// Every queued or running job of [deviceFingerprint] → paused with
+  /// [reason] (the device went away). Returns their ids.
+  Future<List<String>> pauseActiveOfDevice(
+    String deviceFingerprint,
+    TransferPauseReason reason,
+    DateTime now,
+  ) async {
+    final rows =
+        await (select(transfers).join([
+              innerJoin(
+                knownDevices,
+                knownDevices.id.equalsExp(transfers.deviceId),
+              ),
+            ])..where(
+              knownDevices.publicKeyFingerprint.equals(deviceFingerprint) &
+                  transfers.status.isInValues([
+                    TransferStatus.queued,
+                    TransferStatus.running,
+                  ]),
+            ))
+            .get();
+    final ids = [for (final r in rows) r.readTable(transfers).id];
+    for (final id in ids) {
+      await pauseJob(id, reason, now);
+    }
+    return ids;
+  }
+
+  /// Clears [jobId]'s pause (N10): its queued files may start at once and
+  /// their backoff series begins again.
+  Future<void> resumeJob(String jobId, DateTime now) async {
+    await (update(transfers)..where((t) => t.id.equals(jobId))).write(
+      const TransfersCompanion(pauseReason: Value(null)),
+    );
+    await (update(transferFiles)..where(
+          (f) =>
+              f.transferId.equals(jobId) &
+              f.status.equalsValue(TransferFileStatus.queued),
+        ))
+        .write(
+          const TransferFilesCompanion(
+            attempts: Value(0),
+            nextRetryAt: Value(null),
+          ),
+        );
+    await refreshJob(jobId, now);
+  }
+
+  /// Jobs of [deviceFingerprint] paused with [reason].
+  Future<List<String>> pausedJobsOf(
+    String deviceFingerprint,
+    TransferPauseReason reason,
+  ) async {
+    final rows =
+        await (select(transfers).join([
+              innerJoin(
+                knownDevices,
+                knownDevices.id.equalsExp(transfers.deviceId),
+              ),
+            ])..where(
+              knownDevices.publicKeyFingerprint.equals(deviceFingerprint) &
+                  transfers.status.equalsValue(TransferStatus.paused) &
+                  transfers.pauseReason.equalsValue(reason),
+            ))
+            .get();
+    return [for (final r in rows) r.readTable(transfers).id];
+  }
+
+  /// Devices with jobs waiting for them (N10 recovery), oldest job first:
+  /// `(fingerprint, temporary)`.
+  Future<List<({String fingerprint, bool temporary})>> waitingDevices() async {
+    final rows =
+        await (select(transfers).join([
+                innerJoin(
+                  knownDevices,
+                  knownDevices.id.equalsExp(transfers.deviceId),
+                ),
+              ])
+              ..where(
+                transfers.status.equalsValue(TransferStatus.paused) &
+                    transfers.pauseReason.equalsValue(
+                      TransferPauseReason.waitingForDevice,
+                    ),
+              )
+              ..orderBy([OrderingTerm.asc(transfers.createdAt)]))
+            .get();
+    final out = <({String fingerprint, bool temporary})>[];
+    for (final r in rows) {
+      final d = r.readTable(knownDevices);
+      if (out.any((o) => o.fingerprint == d.publicKeyFingerprint)) continue;
+      out.add((fingerprint: d.publicKeyFingerprint, temporary: d.isTemporary));
+    }
+    return out;
+  }
+
+  /// Ids of files that may still resume (their partials are kept).
+  Future<Set<int>> unfinishedFileIds() async {
+    final rows =
+        await (select(transferFiles)..where(
+              (f) => f.status.isInValues([
+                TransferFileStatus.queued,
+                TransferFileStatus.running,
+                TransferFileStatus.verifying,
+                TransferFileStatus.failed,
+              ]),
+            ))
+            .get();
+    return {for (final r in rows) r.id};
   }
 
   Future<String?> jobIdOfFile(int fileId) async {
@@ -324,7 +467,9 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     await refreshJob(jobId, now);
   }
 
-  /// Failed/cancelled files of [jobId] (or only [fileId]) → queued from 0.
+  /// Failed/cancelled files of [jobId] (or only [fileId]) → queued. N10:
+  /// a failed file resumes from what is left of its partial (the engine
+  /// re-checks it); a cancelled one has none.
   Future<void> requeue(String jobId, DateTime now, {int? fileId}) async {
     await (update(transferFiles)..where(
           (f) =>
@@ -338,12 +483,25 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
         .write(
           const TransferFilesCompanion(
             status: Value(TransferFileStatus.queued),
-            bytesDone: Value(0),
             error: Value(null),
-            uploadId: Value(null),
+            attempts: Value(0),
+            nextRetryAt: Value(null),
           ),
         );
+    await (update(transfers)..where((t) => t.id.equals(jobId))).write(
+      const TransfersCompanion(pauseReason: Value(null)),
+    );
     await refreshJob(jobId, now);
+  }
+
+  /// Files waiting for a backoff retry (N10).
+  Future<bool> hasRetryWaits() async {
+    final row =
+        await (select(transferFiles)
+              ..where((f) => f.nextRetryAt.isNotNull())
+              ..limit(1))
+            .getSingleOrNull();
+    return row != null;
   }
 
   Future<bool> hasRunning() async {
@@ -360,8 +518,10 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     return row != null;
   }
 
-  /// App start: files left `running` failed with [error].
-  Future<int> failRunning(String error, DateTime now) => transaction(() async {
+  /// App start (N10): files left `running` are queued again (their
+  /// partials resume) and their jobs wait for the device; every backoff
+  /// wait starts over. Returns the files recovered.
+  Future<int> recoverRunning(DateTime now) => transaction(() async {
     final running =
         await (select(transferFiles)..where(
               (f) => f.status.isInValues([
@@ -373,14 +533,13 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
     for (final f in running) {
       await updateFile(
         f.id,
-        TransferFilesCompanion(
-          status: const Value(TransferFileStatus.failed),
-          error: Value(error),
-        ),
+        const TransferFilesCompanion(status: Value(TransferFileStatus.queued)),
       );
     }
+    await (update(transferFiles)..where((f) => f.nextRetryAt.isNotNull()))
+        .write(const TransferFilesCompanion(nextRetryAt: Value(null)));
     for (final job in {for (final f in running) f.transferId}) {
-      await refreshJob(job, now);
+      await pauseJob(job, TransferPauseReason.waitingForDevice, now);
     }
     return running.length;
   });
@@ -438,6 +597,9 @@ TransferFile transferFileFromRow(TransferFileRow r) => TransferFile(
   targetFileId: r.targetFileId,
   uploadId: r.uploadId,
   attempts: r.attempts,
+  etag: r.etag,
+  nextRetryAt: r.nextRetryAt,
+  senderSha256: r.senderSha256,
 );
 
 /// Transfers for the UI isolate (TASK-N9): reads go to the DAO, every
@@ -485,6 +647,30 @@ class TransfersRepository {
         });
       });
 
+  /// Fields that don't change the job's status (uploadId, etag, hashes,
+  /// a restarted source's size).
+  Future<void> saveFile(int id, TransferFilesCompanion row) =>
+      _queue.enqueue(null, () => dao.updateFile(id, row));
+
+  Future<void> pauseJob(String jobId, TransferPauseReason reason) =>
+      _queue.enqueue(null, () => dao.pauseJob(jobId, reason, _clock()));
+
+  Future<List<String>> pauseActiveOfDevice(
+    String fingerprint,
+    TransferPauseReason reason,
+  ) async {
+    var ids = const <String>[];
+    await _queue.enqueue(null, () async {
+      ids = await dao.transaction(
+        () => dao.pauseActiveOfDevice(fingerprint, reason, _clock()),
+      );
+    });
+    return ids;
+  }
+
+  Future<void> resumeJob(String jobId) =>
+      _queue.enqueue(null, () => dao.resumeJob(jobId, _clock()));
+
   /// Latest value wins.
   Future<void> setProgress(int id, int bytesDone) => _queue.enqueue(
     'transfer_file.$id',
@@ -500,12 +686,13 @@ class TransfersRepository {
   Future<void> requeue(String jobId, {int? fileId}) =>
       _queue.enqueue(null, () => dao.requeue(jobId, _clock(), fileId: fileId));
 
-  Future<int> failRunning() async {
+  /// App start: see [TransfersDao.recoverRunning].
+  Future<int> recoverRunning() async {
     // Nothing to do on most starts: no write, no transaction.
-    if (!await dao.hasRunning()) return 0;
+    if (!await dao.hasRunning() && !await dao.hasRetryWaits()) return 0;
     var n = 0;
     await _queue.enqueue(null, () async {
-      n = await dao.failRunning(TransferErrors.interrupted, _clock());
+      n = await dao.recoverRunning(_clock());
     });
     return n;
   }

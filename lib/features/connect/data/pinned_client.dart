@@ -18,11 +18,14 @@ abstract interface class RemoteHttp {
   String? get bearerToken;
   set bearerToken(String? value);
 
-  /// JSON request; non-2xx → throws [RemoteApiException].
+  /// JSON request; non-2xx → throws [RemoteApiException]. [timeout]
+  /// defaults to [kDefaultRequestTimeout] (N10: a server-side hash takes
+  /// longer).
   Future<T> getJson<T>(
     String path, {
     required T Function(Map<String, Object?> json) decode,
     Map<String, String> query = const {},
+    Duration? timeout,
   });
 
   Future<T> postJson<T>(
@@ -157,12 +160,13 @@ final class PinnedClient implements FirstContactHttp {
     String path, {
     required T Function(Map<String, Object?> json) decode,
     Map<String, String> query = const {},
+    Duration? timeout,
   }) => _json(
     'GET',
     path,
     query: query,
     decode: decode,
-    timeout: kDefaultRequestTimeout,
+    timeout: timeout ?? kDefaultRequestTimeout,
   );
 
   @override

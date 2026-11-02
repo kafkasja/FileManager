@@ -6909,6 +6909,42 @@ abstract class AppLocalizations {
   /// **'Couldn’t transfer this file'**
   String get transferFailedGeneric;
 
+  /// No description provided for @transferPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get transferPause;
+
+  /// No description provided for @transferResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get transferResume;
+
+  /// No description provided for @transferReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get transferReconnect;
+
+  /// No description provided for @transferPausedByYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get transferPausedByYou;
+
+  /// No description provided for @transferRetrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying again soon'**
+  String get transferRetrying;
+
+  /// No description provided for @transferSourceChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The file changed while it was sent'**
+  String get transferSourceChanged;
+
   /// No description provided for @transferDownloadAction.
   ///
   /// In en, this message translates to:

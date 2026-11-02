@@ -148,13 +148,12 @@ Stream<ShareScope> shareScope(Ref ref, String clientFingerprint) {
   return out.stream;
 }
 
-/// Uploads of the current sharing run (N9). Leftover partials of a crashed
-/// run are deleted when it is first used.
+/// Uploads to this device (N9). N10: partials are loaded from their
+/// `.json` on first use and survive restarts and stop sharing.
 @Riverpod(keepAlive: true)
 UploadStore uploadStore(Ref ref) {
   final store = UploadStore(staging: transferStagingDir);
-  unawaited(store.purgeLeftovers());
-  ref.onDispose(() => unawaited(store.clear()));
+  ref.onDispose(store.stop);
   return store;
 }
 

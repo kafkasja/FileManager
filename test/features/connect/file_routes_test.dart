@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/background/serial_lock.dart';
@@ -23,6 +24,7 @@ import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/files_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
+import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:shelf/shelf.dart';
 
 import '../../core/files/fake_file_source.dart';
@@ -405,6 +407,20 @@ void main() {
       r = await call('GET', '${ApiRoutes.filePreview(id)}?max=4000');
       expect(r.statusCode, 404);
     });
+
+    test(
+      'sha256 (N10): the hash of the bytes; 403 outside the scope',
+      () async {
+        var r = await call('GET', ApiRoutes.fileSha256(id));
+        expect(r.statusCode, 200);
+        expect(
+          FileSha256Dto.fromJson(await json(r)).sha256,
+          crypto.sha256.convert(List.generate(12, (b) => b)).toString(),
+        );
+        r = await call('GET', ApiRoutes.fileSha256('path:$_root/Music/a.mp3'));
+        expect(r.statusCode, 403);
+      },
+    );
 
     test('content: full 200 with ETag and Accept-Ranges', () async {
       final r = await call('GET', ApiRoutes.fileContent(id));

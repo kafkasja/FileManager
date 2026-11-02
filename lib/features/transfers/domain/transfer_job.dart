@@ -2,7 +2,12 @@ import 'package:kfm/core/db/tables/transfers_table.dart';
 import 'package:meta/meta.dart';
 
 export 'package:kfm/core/db/tables/transfers_table.dart'
-    show TransferDirection, TransferFileStatus, TransferMode, TransferStatus;
+    show
+        TransferDirection,
+        TransferFileStatus,
+        TransferMode,
+        TransferPauseReason,
+        TransferStatus;
 
 /// Engine error codes stored in `transfer_files.error` next to
 /// `ApiErrorCode` wire codes and `FileOpFailure` names (TASK-N9).
@@ -21,6 +26,9 @@ abstract final class TransferErrors {
 
   /// The received byte count didn't match.
   static const incomplete = 'incomplete';
+
+  /// N10: the local file was edited mid-upload (it starts over).
+  static const sourceChanged = 'source_changed';
 }
 
 /// One file of a [TransferJob] (immutable snapshot of its row).
@@ -40,6 +48,9 @@ class TransferFile {
     this.targetFileId,
     this.uploadId,
     this.attempts = 0,
+    this.etag,
+    this.nextRetryAt,
+    this.senderSha256,
   });
 
   final int id;
@@ -54,7 +65,22 @@ class TransferFile {
   final String? error;
   final String? targetFileId;
   final String? uploadId;
+
+  /// Failed tries of the current backoff series (N10).
   final int attempts;
+
+  /// N10 download validator (`If-Range`).
+  final String? etag;
+
+  /// N10: a queued file waits for its next try until then.
+  final DateTime? nextRetryAt;
+
+  /// N10/N11: the sending side's SHA-256.
+  final String? senderSha256;
+
+  /// Queued again after a failure, waiting for its next try (N10).
+  bool get isRetrying =>
+      status == TransferFileStatus.queued && nextRetryAt != null;
 
   bool get isFinished => switch (status) {
     TransferFileStatus.done ||
@@ -82,6 +108,8 @@ class TransferJob {
     required this.files,
     this.targetRootId,
     this.swipeSessionId,
+    this.pauseReason,
+    this.deviceTemporary = false,
   });
 
   final String id;
@@ -94,6 +122,13 @@ class TransferJob {
   final String targetPath;
   final TransferStatus status;
   final int? swipeSessionId;
+
+  /// Set while [status] is `paused` (N10).
+  final TransferPauseReason? pauseReason;
+
+  /// The device was connected without "Remember" (no reconnect without a
+  /// code).
+  final bool deviceTemporary;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -115,6 +150,8 @@ class TransferJob {
 
   bool get isActive =>
       status == TransferStatus.running || status == TransferStatus.queued;
+
+  bool get isPaused => status == TransferStatus.paused;
 }
 
 /// The job status that follows from its files' statuses.
@@ -155,6 +192,8 @@ class TransferLive {
         switch (f.status) {
           TransferFileStatus.done => f.sizeBytes,
           TransferFileStatus.running => bytes[f.id] ?? f.bytesDone,
+          // A paused or retrying file keeps what it already has (N10).
+          TransferFileStatus.queued => f.bytesDone,
           _ => 0,
         },
   );

@@ -10,14 +10,16 @@ import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
-import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
+import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
-import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
+import 'package:kfm/features/transfers/data/chunked_uploader.dart';
+import 'package:kfm/features/transfers/data/resumable_downloader.dart';
+import 'package:kfm/features/transfers/data/transfer_run.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
@@ -27,102 +29,148 @@ import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
 String defaultDownloadFolder(String downloadsRoot, String peerName) =>
     '$downloadsRoot/${safeFolderName(peerName)}';
 
-/// A file ended because the user cancelled it.
-class _Cancelled implements Exception {
-  const new();
+/// Client partials untouched this long are deleted at start (N10).
+const Duration kStaleDownloadPartAge = Duration(days: 7);
+
+/// What a failed try means (N10 precedence).
+enum _Outcome {
+  /// The device is gone: the job waits for it, no attempt is counted.
+  connection,
+
+  /// The connection is fine, this request failed: backoff.
+  transient,
+
+  /// One side is out of space: the job pauses until Resume.
+  noSpace,
+
+  /// Nothing a retry fixes: the file fails (Retry restarts it).
+  permanent,
 }
 
-/// A file failed with an engine code ([TransferErrors]).
-class _Fail implements Exception {
-  const new(this.code);
+/// Pairing failures after which automatic reconnects stop until the next
+/// connection event (the other device said no, or doesn't know us).
+const Set<PairingFailure> _stopAutoReconnect = {
+  PairingFailure.declined,
+  PairingFailure.timedOut,
+  PairingFailure.notAllowed,
+  PairingFailure.keyChanged,
+  PairingFailure.cancelled,
+};
 
-  final String code;
-}
-
-/// One running file.
-class _Run {
-  new(this.file, this.job);
-
-  final TransferFile file;
-  final TransferJob job;
-  int bytes = 0;
-  bool cancelled = false;
-  String? uploadId;
-  Future<void> Function()? _onCancel;
-  final Stopwatch _clock = Stopwatch()..start();
-  final List<(int, int)> _samples = [];
-  int _persistedAtMs = 0;
-
-  Future<void> cancel() async {
-    if (cancelled) return;
-    cancelled = true;
-    await _onCancel?.call();
-  }
-
-  /// Bytes per second over the last 3 s.
-  double get speed {
-    if (_samples.length < 2) return 0;
-    final (t0, b0) = _samples.first;
-    final (t1, b1) = _samples.last;
-    return t1 <= t0 ? 0 : (b1 - b0) * 1000 / (t1 - t0);
-  }
-
-  void sample() {
-    final now = _clock.elapsedMilliseconds;
-    _samples.add((now, bytes));
-    while (_samples.length > 2 && now - _samples.first.$1 > 3000) {
-      _samples.removeAt(0);
-    }
-  }
-}
-
-/// Runs Wi-Fi transfers (TASK-N9) on the main isolate with chunked async
-/// I/O (never a whole file in memory). Up to [maxRunning] files at a time,
-/// only for the connected device (one connection at a time), files of a
-/// job in `seq` order, oldest job first. Progress: [live] at most every
-/// [liveInterval], `bytesDone` persisted at most every [persistInterval]
-/// (coalesced write). A failed file restarts from 0 on Retry (N10:
-/// resume). Remote calls go through the live connection's pinned client.
+/// Runs Wi-Fi transfers (TASK-N9/N10) on the main isolate with chunked
+/// async I/O (never a whole file in memory; hashes in worker isolates). Up
+/// to [maxRunning] files at a time, only for the connected device (one
+/// connection at a time), files of a job in `seq` order, oldest job first.
+///
+/// N10 resume rules, in this order:
+/// 1. The device is gone (no client, a 401, or a network error whose quick
+///    `GET /v1/session` probe fails) → the job is `paused(waitingForDevice)`
+///    without counting an attempt; it resumes on the next connection to
+///    that device (or a successful probe while still connected), and
+///    remembered devices are reconnected automatically with backoff.
+/// 2. The connection is fine but the request failed → the file retries
+///    after [retryBase] × 2ⁿ (capped at [retryCap]); after [maxAttempts]
+///    it fails with Retry.
+/// 3. Out of space → `paused(noSpace)` until Resume.
+/// 4. Pause → `paused(user)`; in-flight requests are aborted at once.
+/// Partials (the local `dl-*.part`, the server's upload) are kept for all
+/// four and deleted only on cancel, a permanent failure or completion.
 class TransferEngine {
   new({
     required this._repo,
     required this._devices,
-    required this._local,
+    required FileSource local,
     required this._http,
     required this._staging,
-    required this._preprocessor,
-    required this._addToIndex,
+    required TransferPreprocessor preprocessor,
+    required Future<void> Function(List<FileRef> files) addToIndex,
     this._onUnauthorized,
+    this._reconnect,
+    bool Function()? isForeground,
+    Future<bool> Function(RemoteHttp http)? probe,
+    Future<String> Function(PreparedSource p) hash = hashPrepared,
+    int chunkBytes = kTransferChunkBytes,
     this.maxRunning = 2,
     this.liveInterval = const Duration(milliseconds: 250),
     this.persistInterval = const Duration(seconds: 2),
+    this.retryBase = const Duration(seconds: 2),
+    this.retryCap = const Duration(seconds: 60),
+    this.maxAttempts = 10,
+    this.reconnectBase = const Duration(seconds: 5),
+    this.reconnectCap = const Duration(seconds: 60),
     Random? random,
-  }) : _random = random ?? Random.secure();
+  }) : _isForeground = isForeground ?? _always,
+       _probe = probe ?? _sessionProbe {
+    _downloader = ResumableDownloader(
+      local: local,
+      staging: _staging,
+      save: _repo.saveFile,
+      addToIndex: addToIndex,
+    );
+    _uploader = ChunkedUploader(
+      local: local,
+      preprocessor: preprocessor,
+      save: _repo.saveFile,
+      hash: hash,
+      chunkBytes: chunkBytes,
+      random: random,
+    );
+  }
 
   final TransfersRepository _repo;
   final KnownDevicesRepository _devices;
-  final FileSource _local;
 
   /// The live connection's client for that fingerprint, or null.
   final RemoteHttp? Function(String peerFingerprint) _http;
   final Future<Directory> Function() _staging;
-  final TransferPreprocessor _preprocessor;
-  final Future<void> Function(List<FileRef> files) _addToIndex;
   final void Function()? _onUnauthorized;
+
+  /// `KnownDeviceConnector.reconnect` (N6): returns once connected.
+  final Future<void> Function(String peerFingerprint)? _reconnect;
+  final bool Function() _isForeground;
+  final Future<bool> Function(RemoteHttp http) _probe;
+  late final ResumableDownloader _downloader;
+  late final ChunkedUploader _uploader;
+
   final int maxRunning;
   final Duration liveInterval;
   final Duration persistInterval;
-  final Random _random;
+  final Duration retryBase;
+  final Duration retryCap;
+  final int maxAttempts;
+  final Duration reconnectBase;
+  final Duration reconnectCap;
 
-  final Map<int, _Run> _running = {};
+  final Map<int, TransferRun> _running = {};
   final StreamController<TransferLive> _live = StreamController.broadcast();
+  final Set<Timer> _retryTimers = {};
   TransferLive _current = TransferLive.empty;
   Timer? _liveTimer;
+  Timer? _recoveryTimer;
   StreamSubscription<void>? _inserts;
   String? _connected;
+  bool _autoReconnect = false;
+  bool _reconnecting = false;
+  int _recoveryFailures = 0;
   bool _pumping = false;
   bool _pumpAgain = false;
   bool _disposed = false;
+
+  static bool _always() => true;
+
+  /// One quick `GET /v1/session`: is the link alive right now?
+  static Future<bool> _sessionProbe(RemoteHttp http) async {
+    try {
+      await http.getJson<void>(
+        ApiRoutes.session,
+        decode: (_) {},
+        timeout: const Duration(seconds: 5),
+      );
+      return true;
+    } on Object {
+      return false;
+    }
+  }
 
   /// Live bytes and speeds of running files.
   Stream<TransferLive> get live => _live.stream;
@@ -131,19 +179,36 @@ class TransferEngine {
   /// Files running right now.
   int get runningCount => _running.length;
 
-  /// App start: files left running fail (`interrupted`); new rows wake the
+  /// App start: files left running are queued again and their jobs wait
+  /// for the device (N10); stale client partials go; new rows wake the
   /// engine.
   Future<void> start() async {
-    await _repo.failRunning();
+    await _repo.recoverRunning();
+    await _purgeStaleParts();
     _inserts = _repo.dao.fileInserts().listen((_) => pump());
+    _scheduleRecovery();
     pump();
   }
 
-  /// The connected device changed ([peerFingerprint] null = none). Queued
-  /// files of that device start; running files of the old one fail on
-  /// their own (the client is closed).
-  void onConnection(String? peerFingerprint) {
+  /// The connected device changed ([peerFingerprint] null = none). The old
+  /// device's jobs wait for it (their running files stop, partials kept);
+  /// the new device's waiting jobs resume. [autoReconnect]: whether the
+  /// engine may reconnect by itself (not after the user's Disconnect or a
+  /// revoke).
+  void onConnection(String? peerFingerprint, {bool autoReconnect = false}) {
+    final previous = _connected;
     _connected = peerFingerprint;
+    _autoReconnect = peerFingerprint == null && autoReconnect;
+    if (previous != null && previous != peerFingerprint) {
+      unawaited(_deviceLost(previous));
+    }
+    if (peerFingerprint != null) {
+      _recoveryFailures = 0;
+      unawaited(_resumeWaiting(peerFingerprint));
+    }
+    _recoveryTimer?.cancel();
+    _recoveryTimer = null;
+    _scheduleRecovery();
     pump();
   }
 
@@ -211,12 +276,22 @@ class TransferEngine {
     sourceModifiedAtMs: f.modifiedAt.millisecondsSinceEpoch,
   );
 
-  /// Cancel: queued files end at once, running ones are aborted (their
-  /// partials deleted on both sides). Finished files stay.
+  /// Cancel: queued files end at once, running ones are aborted; every
+  /// partial of the job is deleted on both sides. Finished files stay.
   Future<void> cancelJob(String jobId) async {
+    final job = await _repo.dao.job(jobId);
     await _repo.cancelQueued(jobId);
     for (final r in _running.values.toList()) {
       if (r.job.id == jobId) await r.cancel();
+    }
+    if (job != null) {
+      for (final f in job.files) {
+        if (!_running.containsKey(f.id) &&
+            (f.status == TransferFileStatus.queued ||
+                f.status == TransferFileStatus.failed)) {
+          await _discardPartials(job, f);
+        }
+      }
     }
   }
 
@@ -224,18 +299,76 @@ class TransferEngine {
     final run = _running[fileId];
     if (run != null) {
       await run.cancel();
-    } else {
-      await _repo.cancelQueued(jobId, fileId: fileId);
+      return;
+    }
+    await _repo.cancelQueued(jobId, fileId: fileId);
+    final job = await _repo.dao.job(jobId);
+    final f = job?.files.where((f) => f.id == fileId).firstOrNull;
+    if (job != null && f != null) await _discardPartials(job, f);
+  }
+
+  /// Pause (N10): running files stop at once, their partials stay; the
+  /// job doesn't start again until [resumeJob], even after a reconnect.
+  Future<void> pauseJob(String jobId) async {
+    await _repo.pauseJob(jobId, TransferPauseReason.user);
+    for (final r in _running.values.toList()) {
+      if (r.job.id == jobId) await r.pause();
     }
   }
 
-  /// Failed and cancelled files start again from 0.
+  /// Continue (N10): from where each file stopped. Without a connection to
+  /// its device the job waits for it (and may reconnect by itself).
+  Future<void> resumeJob(String jobId) async {
+    final job = await _repo.dao.job(jobId);
+    if (job == null) return;
+    if (_connected == job.deviceFingerprint) {
+      await _repo.resumeJob(jobId);
+    } else {
+      await _repo.resumeJob(jobId);
+      await _repo.pauseJob(jobId, TransferPauseReason.waitingForDevice);
+      _scheduleRecovery();
+    }
+    pump();
+  }
+
+  /// "Reconnect" on a waiting job: N6's reconnect to [peerFingerprint]
+  /// (the accept prompt shows on the other device unless it always allows
+  /// us). Throws [PairingException] for the caller to show (rule 8).
+  Future<void> reconnect(String peerFingerprint) async {
+    final connect = _reconnect;
+    if (connect == null) {
+      throw const PairingException(PairingFailure.offline);
+    }
+    _reconnecting = true;
+    try {
+      await connect(peerFingerprint);
+    } finally {
+      _reconnecting = false;
+    }
+  }
+
+  /// Failed and cancelled files start again (a failed file resumes from
+  /// its partial when one is left).
   Future<void> retry(String jobId, {int? fileId}) async {
     await _repo.requeue(jobId, fileId: fileId);
     pump();
   }
 
-  Future<int> clearFinished() => _repo.clearFinished();
+  Future<int> clearFinished() async {
+    final finished = [
+      for (final j in await _repo.dao.jobs())
+        if (j.isFinished) j,
+    ];
+    final n = await _repo.clearFinished();
+    for (final j in finished) {
+      for (final f in j.files) {
+        if (f.status == TransferFileStatus.failed) {
+          await _discardPartials(j, f);
+        }
+      }
+    }
+    return n;
+  }
 
   /// Starts queued files of the connected device up to [maxRunning].
   void pump() {
@@ -259,11 +392,12 @@ class TransferEngine {
           fp,
           limit: free,
           exclude: _running.keys.toSet(),
+          now: _repo.now(),
         );
         for (final q in next) {
           if (_disposed || _running.length >= maxRunning) break;
           if (_running.containsKey(q.file.id)) continue;
-          final run = _Run(q.file, q.job);
+          final run = TransferRun(q.file, q.job, onProgress: _progress);
           _running[q.file.id] = run;
           unawaited(
             _runFile(run).whenComplete(() {
@@ -286,74 +420,170 @@ class TransferEngine {
     }
   }
 
-  Future<void> _runFile(_Run run) async {
+  Future<void> _runFile(TransferRun run) async {
     final f = run.file;
     final job = run.job;
+    run
+      ..bytes = f.bytesDone
+      ..confirmed = f.bytesDone;
     await _repo.setFile(
       f.id,
       job.id,
-      TransferFilesCompanion(
-        status: const Value(TransferFileStatus.running),
-        bytesDone: const Value(0),
-        error: const Value(null),
-        attempts: Value(f.attempts + 1),
+      const TransferFilesCompanion(
+        status: Value(TransferFileStatus.running),
+        error: Value(null),
+        nextRetryAt: Value(null),
       ),
     );
-    // Undone (a swipe send) between the pick and the status write.
-    if (await _repo.dao.file(f.id) == null) return;
+    // Undone (a swipe send) or paused between the pick and the write.
+    final now = await _repo.dao.job(job.id);
+    if (now == null || !now.files.any((x) => x.id == f.id)) return;
+    if (now.status == TransferStatus.paused) run.paused = true;
     _startLive();
     try {
+      if (run.paused) throw const TransferStopped();
+      final http =
+          _http(job.deviceFingerprint) ??
+          (throw const TransferFailure(TransferErrors.unavailable));
       final target = job.direction == TransferDirection.download
-          ? await _download(run)
-          : await _upload(run);
+          ? await _downloader.run(run, http)
+          : await _uploader.run(run, http);
       await _repo.setFile(
         f.id,
         job.id,
         TransferFilesCompanion(
           status: const Value(TransferFileStatus.done),
-          bytesDone: Value(run.bytes),
+          bytesDone: Value(run.confirmed),
           targetFileId: Value(target),
+          attempts: const Value(0),
         ),
       );
     } on Object catch (e, st) {
-      if (run.cancelled || e is _Cancelled) {
-        await _repo.setFile(
-          f.id,
-          job.id,
-          const TransferFilesCompanion(
-            status: Value(TransferFileStatus.cancelled),
-            bytesDone: Value(0),
-          ),
-        );
-        return;
-      }
-      final code = _codeOf(e);
-      if (code == ApiErrorCode.internal.wire) {
-        developer.log(
-          'transfer failed',
-          name: 'kfm.transfers',
-          error: e,
-          stackTrace: st,
-        );
-      }
+      await _onFailure(run, e, st);
+    }
+  }
+
+  Future<void> _onFailure(TransferRun run, Object e, StackTrace st) async {
+    final f = run.file;
+    final job = run.job;
+    if (run.cancelled) {
       await _repo.setFile(
         f.id,
         job.id,
-        TransferFilesCompanion(
-          status: const Value(TransferFileStatus.failed),
-          bytesDone: Value(run.bytes),
-          error: Value(code),
+        const TransferFilesCompanion(
+          status: Value(TransferFileStatus.cancelled),
+          bytesDone: Value(0),
         ),
       );
+      await _discardPartials(job, f, uploadId: run.uploadId);
+      return;
     }
+    if (run.paused) {
+      await _requeue(run);
+      return;
+    }
+    final code = _codeOf(e);
+    final outcome = await _classify(run, e);
+    switch (outcome) {
+      case _Outcome.connection:
+        await _requeue(run, error: code);
+        await _repo.pauseJob(job.id, TransferPauseReason.waitingForDevice);
+        _scheduleRecovery();
+      case _Outcome.noSpace:
+        await _requeue(run, error: code);
+        await _repo.pauseJob(job.id, TransferPauseReason.noSpace);
+      case _Outcome.transient:
+        final attempts = f.attempts + 1;
+        if (attempts >= maxAttempts) {
+          await _fail(run, code, attempts: attempts);
+          return;
+        }
+        final delay = _backoff(retryBase, retryCap, attempts - 1);
+        await _requeue(
+          run,
+          error: code,
+          attempts: attempts,
+          nextRetryAt: _repo.now().add(delay),
+        );
+        late final Timer t;
+        t = Timer(delay, () {
+          _retryTimers.remove(t);
+          pump();
+        });
+        _retryTimers.add(t);
+      case _Outcome.permanent:
+        if (code == ApiErrorCode.internal.wire) {
+          developer.log(
+            'transfer failed',
+            name: 'kfm.transfers',
+            error: e,
+            stackTrace: st,
+          );
+        }
+        await _fail(run, code);
+        await _discardPartials(job, f, uploadId: run.uploadId);
+    }
+  }
+
+  /// Back to `queued`, keeping what the other side has.
+  Future<void> _requeue(
+    TransferRun run, {
+    String? error,
+    int? attempts,
+    DateTime? nextRetryAt,
+  }) => _repo.setFile(
+    run.file.id,
+    run.job.id,
+    TransferFilesCompanion(
+      status: const Value(TransferFileStatus.queued),
+      bytesDone: Value(run.confirmed),
+      error: Value(error),
+      attempts: attempts == null ? const Value.absent() : Value(attempts),
+      nextRetryAt: Value(nextRetryAt),
+    ),
+  );
+
+  Future<void> _fail(TransferRun run, String code, {int? attempts}) =>
+      _repo.setFile(
+        run.file.id,
+        run.job.id,
+        TransferFilesCompanion(
+          status: const Value(TransferFileStatus.failed),
+          bytesDone: Value(run.confirmed),
+          error: Value(code),
+          attempts: attempts == null ? const Value(0) : Value(attempts),
+          nextRetryAt: const Value(null),
+        ),
+      );
+
+  /// Deletes [f]'s partial: the local part of a download, the other
+  /// device's upload (best effort, when connected).
+  Future<void> _discardPartials(
+    TransferJob job,
+    TransferFile f, {
+    String? uploadId,
+  }) async {
+    if (job.direction == TransferDirection.download) {
+      await _downloader.discard(f.id);
+      return;
+    }
+    final id = uploadId ?? f.uploadId;
+    if (id == null) return;
+    await _repo.saveFile(
+      f.id,
+      const TransferFilesCompanion(uploadId: Value(null), bytesDone: Value(0)),
+    );
+    final http = _http(job.deviceFingerprint);
+    if (http != null) unawaited(ChunkedUploader.discardRemote(http, id));
   }
 
   /// The stored error code of [e] (rule 8: every failure shows).
   String _codeOf(Object e) => switch (e) {
-    _Fail(:final code) => code,
+    TransferFailure(:final code) => code,
     RemoteApiException() => e.error.code,
     RemoteUnavailableException() ||
     IOException() ||
+    TimeoutException() ||
     StateError() => TransferErrors.unavailable,
     FileOpException(failure: FileOpFailure.noSpace) =>
       TransferErrors.noSpaceHere,
@@ -365,246 +595,198 @@ class TransferEngine {
     _ => ApiErrorCode.internal.wire,
   };
 
-  RemoteHttp _client(TransferJob job) =>
-      _http(job.deviceFingerprint) ??
-      (throw const _Fail(TransferErrors.unavailable));
-
-  /// Runs a remote call; a 401 ends the connection (N5).
-  Future<T> _remote<T>(Future<T> Function() call) async {
-    try {
-      return await call();
-    } on RemoteApiException catch (e) {
-      if (e.code == ApiErrorCode.unauthorized) _onUnauthorized?.call();
-      rethrow;
-    }
-  }
-
-  // ---- download ----
-
-  Future<String> _download(_Run run) async {
-    final f = run.file;
-    final job = run.job;
-    validateFileName(f.name);
-    final http = _client(job);
-    final serverId = parseRemoteFileId(f.sourceFileId).serverId;
-    final dir = await _staging();
-    final free = await _local.freeBytes(dir.path);
-    if (free != null && free < f.sizeBytes + kTransferSpaceMarginBytes) {
-      throw const _Fail(TransferErrors.noSpaceHere);
-    }
-    final part = File('${dir.path}/dl-${f.id}.part');
-    try {
-      final res = await _remote(
-        () => http.getStream(ApiRoutes.fileContent(serverId)),
-      );
-      if (run.cancelled) {
-        unawaited(res.listen(null).cancel());
-        throw const _Cancelled();
-      }
-      final expected = res.contentLength >= 0 ? res.contentLength : null;
-      final raf = await part.open(mode: FileMode.write);
-      try {
-        await _pipe(run, res, raf);
-      } finally {
-        await raf.close();
-      }
-      if (run.cancelled) throw const _Cancelled();
-      if (expected != null && run.bytes != expected) {
-        throw const _Fail(TransferErrors.incomplete);
-      }
-      final ref = await _local.importFile(
-        part,
-        targetFolder: job.targetPath,
-        name: f.name,
-      );
-      unawaited(
-        _addToIndex([ref]).catchError(
-          (Object e) => developer.log(
-            'downloaded file not indexed: $e',
-            name: 'kfm.transfers',
-          ),
-        ),
-      );
-      return ref.id;
-    } finally {
-      try {
-        if (await part.exists()) await part.delete();
-      } on FileSystemException catch (e) {
-        developer.log('partial not deleted: $e', name: 'kfm.transfers');
-      }
-    }
-  }
-
-  /// Streams [src] into [raf] (one write at a time; the source is paused
-  /// meanwhile). Cancel aborts the request.
-  Future<void> _pipe(_Run run, Stream<List<int>> src, RandomAccessFile raf) {
-    final done = Completer<void>();
-    var pending = Future<void>.value();
-    late final StreamSubscription<List<int>> sub;
-    void end([Object? error]) {
-      unawaited(
-        pending.then<void>((_) {}, onError: (Object _) {}).whenComplete(() {
-          if (done.isCompleted) return;
-          if (error != null) {
-            done.completeError(error);
-          } else {
-            done.complete();
-          }
-        }),
-      );
-    }
-
-    sub = src.listen(
-      (chunk) {
-        sub.pause();
-        pending = raf
-            .writeFrom(chunk)
-            .then<void>(
-              (_) {
-                _progress(run, run.bytes + chunk.length);
-                sub.resume();
-              },
-              onError: (Object e) {
-                unawaited(sub.cancel());
-                end(e);
-              },
-            );
-      },
-      onError: end,
-      onDone: end,
-      cancelOnError: true,
-    );
-    run._onCancel = () async {
-      await sub.cancel();
-      end(const _Cancelled());
-    };
-    // Cancelled while the request was opening.
-    if (run.cancelled) unawaited(run._onCancel!());
-    return done.future;
-  }
-
-  // ---- upload ----
-
-  Future<String> _upload(_Run run) async {
-    final f = run.file;
-    final job = run.job;
-    final http = _client(job);
-    final rootId = job.targetRootId;
-    if (rootId == null) throw _Fail(ApiErrorCode.forbiddenPath.wire);
-    final source = await _local.stat(f.sourceFileId);
-    if (source == null) throw const _Fail(TransferErrors.sourceGone);
-    final prepared = await _preprocessor.prepare(source, _local);
-    final uploadId = randomHexId(_random);
-    run.uploadId = uploadId;
-    var completed = false;
-    try {
-      if (run.cancelled) throw const _Cancelled();
-      await _remote(
-        () => http.postJson(
-          ApiRoutes.uploads,
-          CreateUploadDto(
-            uploadId: uploadId,
-            rootId: rootId,
-            path: job.targetPath,
-            name: f.name,
-            size: prepared.sizeBytes,
-          ).toJson(),
-          decode: UploadStatusDto.fromJson,
-        ),
-      );
-      var offset = 0;
-      final size = prepared.sizeBytes;
-      while (offset < size) {
-        if (run.cancelled) throw const _Cancelled();
-        final end = min(offset + kTransferChunkBytes, size);
-        final status = await _remote(
-          () => http.putStream(
-            ApiRoutes.uploadChunk(uploadId),
-            _counted(run, prepared.read(offset, end), offset),
-            end - offset,
-            decode: UploadStatusDto.fromJson,
-            query: {'offset': '$offset'},
-          ),
-        );
-        if (status.received != end) {
-          throw const _Fail(TransferErrors.incomplete);
-        }
-        offset = end;
-        _progress(run, offset);
-      }
-      if (run.cancelled) throw const _Cancelled();
-      final done = await _remote(
-        () => http.postJson(
-          ApiRoutes.uploadComplete(uploadId),
-          const <String, Object?>{},
-          decode: UploadCompletedDto.fromJson,
-          // Publishing a large file on the other device takes a while.
-          timeout: const Duration(minutes: 5),
-        ),
-      );
-      completed = true;
-      return done.finalId;
-    } finally {
-      if (!completed) {
-        // Best effort: N10's cleanup removes what is left.
-        unawaited(
-          http
-              .deleteJson<void>(ApiRoutes.upload(uploadId), decode: (_) {})
-              .then<void>((_) {}, onError: (Object _) {}),
-        );
-      }
-      try {
-        await prepared.cleanup();
-      } on Object catch (e) {
-        developer.log('prepared file not cleaned: $e', name: 'kfm.transfers');
-      }
-    }
-  }
-
-  /// [src] with progress from [base]; a cancel ends it with an error, which
-  /// aborts the request.
-  Stream<List<int>> _counted(_Run run, Stream<List<int>> src, int base) {
-    var sent = base;
-    late final StreamController<List<int>> out;
-    StreamSubscription<List<int>>? sub;
-    out = StreamController<List<int>>(
-      onListen: () {
-        // Cancelled in onCancel and by the run's cancel.
-        final s = src.listen(
-          (chunk) {
-            out.add(chunk);
-            sent += chunk.length;
-            _progress(run, sent);
-          },
-          onError: out.addError,
-          onDone: () => unawaited(out.close()),
-          cancelOnError: true,
-        );
-        sub = s;
-        run._onCancel = () async {
-          await s.cancel();
-          if (!out.isClosed) {
-            out.addError(const _Cancelled());
-            unawaited(out.close());
-          }
+  Future<_Outcome> _classify(TransferRun run, Object e) async {
+    switch (e) {
+      case TransferFailure(:final code):
+        return switch (code) {
+          TransferErrors.noSpaceHere => _Outcome.noSpace,
+          TransferErrors.unavailable => _Outcome.connection,
+          TransferErrors.incomplete ||
+          TransferErrors.sourceChanged => await _networkOutcome(run),
+          _ => _Outcome.permanent,
         };
-        if (run.cancelled) unawaited(run._onCancel!());
+      case RemoteApiException(:final code, :final status):
+        if (code == ApiErrorCode.unauthorized) {
+          _onUnauthorized?.call();
+          return _Outcome.connection;
+        }
+        if (code == ApiErrorCode.insufficientStorage) return _Outcome.noSpace;
+        // 410: the other device ended the stream (stop sharing, revoke).
+        if (code == ApiErrorCode.cancelled) return await _networkOutcome(run);
+        if (status >= 500 ||
+            code == ApiErrorCode.busy ||
+            code == ApiErrorCode.conflict ||
+            code == ApiErrorCode.tooManyAttempts) {
+          return _Outcome.transient;
+        }
+        return _Outcome.permanent;
+      case RemoteUnavailableException(:final reason):
+        if (reason == RemoteUnavailableReason.badResponse) {
+          return _Outcome.transient;
+        }
+        return await _networkOutcome(run);
+      case IOException() || TimeoutException() || StateError():
+        return await _networkOutcome(run);
+      case FileOpException(:final failure):
+        return switch (failure) {
+          FileOpFailure.noSpace => _Outcome.noSpace,
+          FileOpFailure.unavailable => _Outcome.transient,
+          _ => _Outcome.permanent,
+        };
+      default:
+        return _Outcome.permanent;
+    }
+  }
+
+  /// A network-type error: the device is gone unless a quick probe of the
+  /// live connection answers.
+  Future<_Outcome> _networkOutcome(TransferRun run) async {
+    final http = _http(run.job.deviceFingerprint);
+    if (http == null) return _Outcome.connection;
+    return await _probe(http) ? _Outcome.transient : _Outcome.connection;
+  }
+
+  static Duration _backoff(Duration base, Duration cap, int n) {
+    final ms = base.inMilliseconds * pow(2, min(n, 20));
+    return Duration(milliseconds: min(ms.toInt(), cap.inMilliseconds));
+  }
+
+  // ---- device lost / back ----
+
+  Future<void> _deviceLost(String fp) async {
+    try {
+      await _repo.pauseActiveOfDevice(fp, TransferPauseReason.waitingForDevice);
+    } on Object catch (e) {
+      developer.log('jobs not paused: $e', name: 'kfm.transfers');
+    }
+    for (final r in _running.values.toList()) {
+      if (r.job.deviceFingerprint == fp) await r.pause();
+    }
+    _scheduleRecovery();
+  }
+
+  Future<void> _resumeWaiting(String fp) async {
+    try {
+      final ids = await _repo.dao.pausedJobsOf(
+        fp,
+        TransferPauseReason.waitingForDevice,
+      );
+      for (final id in ids) {
+        await _repo.resumeJob(id);
+      }
+      if (ids.isNotEmpty) pump();
+    } on Object catch (e) {
+      developer.log('jobs not resumed: $e', name: 'kfm.transfers');
+    }
+  }
+
+  /// Ticks while jobs wait for a device: a probe while still connected, an
+  /// automatic reconnect (remembered devices, foreground) otherwise. No
+  /// timer runs while nothing waits.
+  void _scheduleRecovery() => unawaited(_maybeScheduleRecovery());
+
+  Future<void> _maybeScheduleRecovery() async {
+    if (_disposed || _recoveryTimer != null) return;
+    try {
+      if ((await _repo.dao.waitingDevices()).isEmpty) {
+        _recoveryFailures = 0;
+        return;
+      }
+    } on Object catch (e) {
+      developer.log('recovery not scheduled: $e', name: 'kfm.transfers');
+      return;
+    }
+    if (_disposed || _recoveryTimer != null) return;
+    _recoveryTimer = Timer(
+      _backoff(reconnectBase, reconnectCap, _recoveryFailures),
+      () {
+        _recoveryTimer = null;
+        unawaited(_recover());
       },
-      onPause: () => sub?.pause(),
-      onResume: () => sub?.resume(),
-      onCancel: () => sub?.cancel(),
     );
-    return out.stream;
+  }
+
+  Future<void> _recover() async {
+    if (_disposed) return;
+    final List<({String fingerprint, bool temporary})> waiting;
+    try {
+      waiting = await _repo.dao.waitingDevices();
+    } on Object catch (e) {
+      developer.log('recovery failed: $e', name: 'kfm.transfers');
+      return;
+    }
+    if (waiting.isEmpty) {
+      _recoveryFailures = 0;
+      return;
+    }
+    final fp = _connected;
+    if (fp != null) {
+      // One connection at a time: other devices wait for the user.
+      if (!waiting.any((w) => w.fingerprint == fp)) return;
+      final http = _http(fp);
+      if (http != null && await _probe(http)) {
+        _recoveryFailures = 0;
+        await _resumeWaiting(fp);
+        return;
+      }
+    } else {
+      final connect = _reconnect;
+      final target = waiting.where((w) => !w.temporary).firstOrNull;
+      if (!_autoReconnect || connect == null || target == null) return;
+      if (_isForeground() && !_reconnecting) {
+        _reconnecting = true;
+        try {
+          await connect(target.fingerprint);
+          // `onConnection` resumes its jobs.
+          _recoveryFailures = 0;
+          return;
+        } on PairingException catch (e) {
+          if (_stopAutoReconnect.contains(e.failure)) {
+            _autoReconnect = false;
+            return;
+          }
+        } on Object catch (e) {
+          developer.log('reconnect failed: $e', name: 'kfm.transfers');
+        } finally {
+          _reconnecting = false;
+        }
+      }
+      if (_connected != null) return;
+    }
+    _recoveryFailures++;
+    _scheduleRecovery();
+  }
+
+  /// Client parts without a file that may still resume, or untouched for
+  /// [kStaleDownloadPartAge], are deleted.
+  Future<void> _purgeStaleParts() async {
+    try {
+      final dir = await _staging();
+      if (!await dir.exists()) return;
+      final keep = await _repo.dao.unfinishedFileIds();
+      final now = DateTime.now();
+      await for (final e in dir.list()) {
+        final name = e.uri.pathSegments.last;
+        if (e is! File || !name.startsWith('dl-') || !name.endsWith('.part')) {
+          continue;
+        }
+        final id = int.tryParse(name.substring(3, name.length - 5));
+        final stale =
+            now.difference(await e.lastModified()) > kStaleDownloadPartAge;
+        if (id == null || !keep.contains(id) || stale) await e.delete();
+      }
+    } on Object catch (e) {
+      developer.log('stale parts not purged: $e', name: 'kfm.transfers');
+    }
   }
 
   // ---- progress ----
 
-  void _progress(_Run run, int bytes) {
-    run.bytes = bytes;
-    final now = run._clock.elapsedMilliseconds;
-    if (now - run._persistedAtMs >= persistInterval.inMilliseconds) {
-      run._persistedAtMs = now;
-      _repo.setProgress(run.file.id, bytes).fireAndForget();
+  void _progress(TransferRun run) {
+    final now = run.clock.elapsedMilliseconds;
+    if (now - run.persistedAtMs >= persistInterval.inMilliseconds) {
+      run.persistedAtMs = now;
+      _repo.setProgress(run.file.id, run.confirmed).fireAndForget();
     }
   }
 
@@ -633,9 +815,14 @@ class TransferEngine {
   Future<void> dispose() async {
     _disposed = true;
     _liveTimer?.cancel();
+    _recoveryTimer?.cancel();
+    for (final t in _retryTimers) {
+      t.cancel();
+    }
+    _retryTimers.clear();
     await _inserts?.cancel();
-    // Running files are left as they are: the next start marks them
-    // `interrupted`.
+    // Running files are left as they are: the next start queues them
+    // again and they resume.
     await _live.close();
   }
 }

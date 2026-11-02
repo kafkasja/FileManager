@@ -61,6 +61,9 @@ class FakeFileSource implements FileSource {
     return ref;
   }
 
+  /// The bytes stored for [id] (N10 tests), or null.
+  List<int>? bytesOf(String id) => _bytes[id];
+
   /// Adds an empty folder (and its parents).
   void addFolder(String path) => _addFolders(path);
 

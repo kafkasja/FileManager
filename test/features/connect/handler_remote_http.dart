@@ -98,6 +98,7 @@ class HandlerRemoteHttp implements FirstContactHttp {
     String path, {
     required T Function(Map<String, Object?> json) decode,
     Map<String, String> query = const {},
+    Duration? timeout,
   }) => _send('GET', path, null, decode);
 
   @override

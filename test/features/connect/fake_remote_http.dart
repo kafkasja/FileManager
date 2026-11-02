@@ -91,6 +91,7 @@ class FakeRemoteHttp implements RemoteHttp {
     String path, {
     required T Function(Map<String, Object?> json) decode,
     Map<String, String> query = const {},
+    Duration? timeout,
   }) => _call('GET', path, query, null, decode);
 
   @override

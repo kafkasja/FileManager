@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:kfm/core/background/file_hasher.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_query.dart';
@@ -23,6 +24,7 @@ import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/files_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
+import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shelf/shelf.dart';
 
@@ -66,6 +68,7 @@ class FileRoutesEnv {
     this.preview = photoManagerPreview,
     this.diskLength = fileLengthOnDisk,
     this.listBudget = const Duration(seconds: 5),
+    this.hashFile = hashFileRef,
   });
 
   final AllowListGuard guard;
@@ -87,6 +90,9 @@ class FileRoutesEnv {
 
   /// `GET /v1/files` stops after this and answers `truncated: true`.
   final Duration listBudget;
+
+  /// SHA-256 of a file, off the UI isolate (N10 `/sha256`).
+  final Future<String> Function(FileRef f, FileSource source) hashFile;
 }
 
 /// TASK-N7 server routes on the sharing device. Every route is wrapped in
@@ -146,6 +152,11 @@ List<ServerRoute> fileRoutes(FileRoutesEnv env) {
       'GET',
       '${ApiRoutes.fileIdPattern}/content',
       read((r) => _content(env, r), fileId),
+    ),
+    ServerRoute(
+      'GET',
+      '${ApiRoutes.fileIdPattern}/sha256',
+      read((r) => _sha256(env, r), fileId),
     ),
     ServerRoute(
       'POST',
@@ -499,6 +510,19 @@ Future<Response> _content(FileRoutesEnv env, Request r) async {
   if (range == null) return Response.ok(body, headers: headers);
   headers[HttpHeaders.contentRangeHeader] = 'bytes $start-${end - 1}/$size';
   return Response(206, body: body, headers: headers);
+}
+
+/// N10: the sender hash of a download (hashed in a worker isolate).
+Future<Response> _sha256(FileRoutesEnv env, Request r) async {
+  final file = _file(r);
+  try {
+    final hex = await env.hashFile(file.ref, env.source());
+    return jsonOk(FileSha256Dto(hex).toJson());
+  } on FileSystemException {
+    return apiError(ApiErrorCode.notFound);
+  } on FileOpException {
+    return apiError(ApiErrorCode.notFound);
+  }
 }
 
 Future<FileRef> _withDiskLength(FileRoutesEnv env, FileRef f) async {

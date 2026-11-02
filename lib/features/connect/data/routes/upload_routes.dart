@@ -48,6 +48,8 @@ bool isUploadChunkRequest(Request request) =>
 final RegExp _chunkPath = RegExp(r'^/v1/uploads/[^/]+/chunk$');
 
 /// TASK-N9 server routes: create → chunks → complete, or delete (cancel).
+/// N10: create is idempotent, `GET /v1/uploads/<id>` tells where to
+/// resume, and partials survive restarts and stop sharing (`UploadStore`).
 /// Every route is `guarded`: the target folder must be in a writable shared
 /// root of the caller's scope. An upload belongs to the client that made
 /// it; another client's id is 404. Partials stay in the private staging
@@ -56,12 +58,12 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
   final g = env.guard;
 
   /// The caller's own upload [id], or a 404 rejection.
-  UploadState own(GuardInput i) {
+  Future<UploadState> own(GuardInput i) async {
     final session = sessionOf(i.request);
     final id = routeParam(i.request, 'id');
     final u = session == null
         ? null
-        : env.uploads.lookup(id, session.clientFingerprint);
+        : await env.uploads.lookup(id, session.clientFingerprint);
     if (u == null) {
       throw const GuardRejection(ApiErrorCode.notFound, 'upload');
     }
@@ -88,7 +90,7 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
         (r) => _chunk(env, r),
         write: true,
         extract: (i) async {
-          final u = own(i);
+          final u = await own(i);
           final offset = int.tryParse(
             i.request.url.queryParameters['offset'] ?? '',
           );
@@ -104,8 +106,21 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
         (r) => _complete(env, r),
         write: true,
         extract: (i) async {
-          final u = own(i);
+          final u = await own(i);
           return [RootPathTarget(u.rootId, u.path, write: true)];
+        },
+      ),
+    ),
+    ServerRoute(
+      'GET',
+      ApiRoutes.uploadIdPattern,
+      g.guarded(
+        (r) => _status(env, r),
+        // Where to resume: readable while the root is read-only too.
+        write: false,
+        extract: (i) async {
+          final u = await own(i);
+          return [RootPathTarget(u.rootId, u.path)];
         },
       ),
     ),
@@ -118,7 +133,7 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
         // read-only.
         write: false,
         extract: (i) async {
-          final u = own(i);
+          final u = await own(i);
           return [RootPathTarget(u.rootId, u.path)];
         },
       ),
@@ -129,8 +144,24 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
 ClientSession _session(Request r) =>
     sessionOf(r) ?? (throw StateError('guarded route without a session'));
 
-UploadState? _upload(UploadRoutesEnv env, Request r) =>
+Future<UploadState?> _upload(UploadRoutesEnv env, Request r) =>
     env.uploads.lookup(routeParam(r, 'id'), _session(r).clientFingerprint);
+
+Response _statusOk(UploadState u, {int status = 200}) => Response(
+  status,
+  body: jsonEncode(UploadStatusDto(u.received, size: u.size).toJson()),
+  headers: const {
+    HttpHeaders.contentTypeHeader: 'application/json; charset=utf-8',
+    HttpHeaders.cacheControlHeader: 'no-store',
+  },
+);
+
+/// N10: where to resume (a chunk still being written isn't counted).
+Future<Response> _status(UploadRoutesEnv env, Request r) async {
+  final u = await _upload(env, r);
+  if (u == null) return apiError(ApiErrorCode.notFound);
+  return _statusOk(u);
+}
 
 Future<Response> _create(UploadRoutesEnv env, Request r) async {
   final target = guardedTargetsOf(r).single;
@@ -149,7 +180,21 @@ Future<Response> _create(UploadRoutesEnv env, Request r) async {
       PathGuard.isExcluded('${target.canonicalPath}/$name')) {
     return apiError(ApiErrorCode.invalidName);
   }
-  if (env.uploads.exists(body.uploadId)) {
+  final existing = await env.uploads.any(body.uploadId);
+  if (existing != null) {
+    // Another client's id: not revealed.
+    if (existing.ownerFingerprint != _session(r).clientFingerprint) {
+      return apiError(ApiErrorCode.notFound);
+    }
+    // N10: a repeated create (lost answer, resume) is idempotent.
+    if (existing.sameAs(
+      rootId: body.rootId,
+      path: body.path,
+      name: name,
+      size: body.size,
+    )) {
+      return _statusOk(existing);
+    }
     return apiError(ApiErrorCode.conflict);
   }
   final need = body.size + kTransferSpaceMarginBytes;
@@ -159,7 +204,7 @@ Future<Response> _create(UploadRoutesEnv env, Request r) async {
       (freeStaging != null && freeStaging < need)) {
     return apiError(ApiErrorCode.insufficientStorage);
   }
-  await env.uploads.create(
+  final u = await env.uploads.create(
     uploadId: body.uploadId,
     ownerFingerprint: _session(r).clientFingerprint,
     rootId: body.rootId,
@@ -167,31 +212,42 @@ Future<Response> _create(UploadRoutesEnv env, Request r) async {
     name: name,
     size: body.size,
   );
-  return Response(
-    201,
-    body: jsonEncode(const UploadStatusDto(0).toJson()),
-    headers: const {
-      HttpHeaders.contentTypeHeader: 'application/json; charset=utf-8',
-      HttpHeaders.cacheControlHeader: 'no-store',
-    },
-  );
+  return _statusOk(u, status: 201);
 }
 
 Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
   final target = guardedTargetsOf(r).single;
-  final u = _upload(env, r);
+  final u = await _upload(env, r);
   if (u == null) return apiError(ApiErrorCode.notFound);
   final offset = int.parse(r.url.queryParameters['offset']!);
   final length = r.contentLength;
   if (length == null || length > kTransferChunkBytes) {
     return apiError(ApiErrorCode.tooLarge);
   }
-  if (u.writing) return apiError(ApiErrorCode.busy);
+  // N10: a chunk of a dropped connection may still hang; the owner's new
+  // chunk ends it (cut back to `received`) and takes over.
+  final previous = u.writing;
+  if (previous != null) {
+    u.abortWrite?.call();
+    await previous;
+    if (u.writing != null) return apiError(ApiErrorCode.busy);
+  }
   if (offset != u.received) return apiError(ApiErrorCode.conflict);
   if (u.received + length > u.size) return apiError(ApiErrorCode.tooLarge);
-  u.writing = true;
-  final raf = await u.part.open(mode: FileMode.append);
+  // Free space is checked per chunk (other files on this device grow too).
+  final left = u.size - u.received + kTransferSpaceMarginBytes;
+  final freeTarget = await env.source().freeBytes(target.canonicalPath);
+  final freeStaging = await env.stagingFreeBytes();
+  if ((freeTarget != null && freeTarget < left) ||
+      (freeStaging != null && freeStaging < left)) {
+    return apiError(ApiErrorCode.insufficientStorage);
+  }
+  if (u.writing != null) return apiError(ApiErrorCode.busy);
+  final finished = Completer<void>();
+  u.writing = finished.future;
+  RandomAccessFile? raf;
   try {
+    raf = await u.part.open(mode: FileMode.append);
     final written = await _receive(
       env.sessions,
       _session(r).sessionId,
@@ -199,21 +255,28 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
       r.read(),
       raf,
       length,
+      onStart: (abort) => u.abortWrite = abort,
     );
     if (written != length) {
       await raf.truncate(u.received);
       return apiError(ApiErrorCode.cancelled);
     }
+    // Write order: the bytes are flushed (fsync) before the `.json`
+    // claims them.
     await raf.flush();
     u.received += written;
-    return jsonOk(UploadStatusDto(u.received).toJson());
+    await env.uploads.saveMeta(u);
+    return _statusOk(u);
   } on Object {
     // The client went away, or Disconnect / a scope edit cancelled it.
-    await raf.truncate(u.received);
+    await raf?.truncate(u.received);
     rethrow;
   } finally {
-    await raf.close();
-    u.writing = false;
+    await raf?.close();
+    u
+      ..writing = null
+      ..abortWrite = null;
+    finished.complete();
   }
 }
 
@@ -226,8 +289,9 @@ Future<int> _receive(
   String canonicalPath,
   Stream<List<int>> body,
   RandomAccessFile raf,
-  int length,
-) {
+  int length, {
+  required void Function(void Function() abort) onStart,
+}) {
   final done = Completer<int>();
   var n = 0;
   // At most one write runs (the stream is paused meanwhile); every end
@@ -275,20 +339,22 @@ Future<int> _receive(
     onDone: finish,
     cancelOnError: true,
   );
+  final hook = _CancelHook(sub, finish);
   unregister = sessions.registerStream(
     sessionId,
-    _CancelHook(sub, finish),
+    hook,
     canonicalPath: canonicalPath,
     write: true,
   );
+  onStart(() => unawaited(hook.cancel()));
   return done.future;
 }
 
 Future<Response> _complete(UploadRoutesEnv env, Request r) async {
   final target = guardedTargetsOf(r).single;
-  final u = _upload(env, r);
+  final u = await _upload(env, r);
   if (u == null) return apiError(ApiErrorCode.notFound);
-  if (u.writing) return apiError(ApiErrorCode.busy);
+  if (u.writing != null) return apiError(ApiErrorCode.busy);
   if (u.received != u.size) return apiError(ApiErrorCode.conflict);
   final FileRef out;
   try {
@@ -298,7 +364,10 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
       name: u.name,
     );
   } on FileOpException catch (e) {
-    await env.uploads.remove(u.uploadId);
+    // N10: out of space keeps the partial (Resume completes it later).
+    if (e.failure != FileOpFailure.noSpace) {
+      await env.uploads.remove(u.uploadId);
+    }
     return apiError(switch (e.failure) {
       FileOpFailure.noSpace => ApiErrorCode.insufficientStorage,
       FileOpFailure.permissionDenied => ApiErrorCode.forbiddenPath,
@@ -312,7 +381,7 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
 }
 
 Future<Response> _delete(UploadRoutesEnv env, Request r) async {
-  final u = _upload(env, r);
+  final u = await _upload(env, r);
   if (u == null) return apiError(ApiErrorCode.notFound);
   await env.uploads.remove(u.uploadId);
   return Response(204);

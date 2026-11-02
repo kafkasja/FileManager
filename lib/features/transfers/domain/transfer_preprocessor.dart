@@ -6,16 +6,23 @@ import 'package:meta/meta.dart';
 
 /// What an upload actually sends (TASK-N9): the original file, or a
 /// temporary copy (X2 strips location into one). [sizeBytes] and every
-/// later hash refer to these bytes.
+/// later hash refer to these bytes. N10 resumes an upload by reading from
+/// an offset again, so a preprocessor must produce the same bytes every
+/// time for the same source version.
 @immutable
 class PreparedSource {
   const new({
     required this.sizeBytes,
     required this.read,
     this.cleanup = _noop,
+    this.path,
   });
 
   final int sizeBytes;
+
+  /// A dart:io path with exactly these bytes, when there is one (N10
+  /// hashes it in a worker isolate; otherwise [read] is streamed there).
+  final String? path;
 
   /// Bytes `[start, end)`.
   final Stream<List<int>> Function(int start, int end) read;
@@ -51,10 +58,11 @@ class IdentityPreprocessor implements TransferPreprocessor {
 
   @override
   Future<PreparedSource> prepare(FileRef f, FileSource source) async {
-    final size = await diskLength(f) ?? f.sizeBytes;
+    final onDisk = await diskLength(f);
     return PreparedSource(
-      sizeBytes: size,
+      sizeBytes: onDisk ?? f.sizeBytes,
       read: (start, end) => source.openRead(f, start: start, end: end),
+      path: onDisk != null ? f.path : null,
     );
   }
 }

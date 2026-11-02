@@ -515,20 +515,20 @@ final class ShareScopeFamily extends $Family
   String toString() => r'shareScopeProvider';
 }
 
-/// Uploads of the current sharing run (N9). Leftover partials of a crashed
-/// run are deleted when it is first used.
+/// Uploads to this device (N9). N10: partials are loaded from their
+/// `.json` on first use and survive restarts and stop sharing.
 
 @ProviderFor(uploadStore)
 final uploadStoreProvider = UploadStoreProvider._();
 
-/// Uploads of the current sharing run (N9). Leftover partials of a crashed
-/// run are deleted when it is first used.
+/// Uploads to this device (N9). N10: partials are loaded from their
+/// `.json` on first use and survive restarts and stop sharing.
 
 final class UploadStoreProvider
     extends $FunctionalProvider<UploadStore, UploadStore, UploadStore>
     with $Provider<UploadStore> {
-  /// Uploads of the current sharing run (N9). Leftover partials of a crashed
-  /// run are deleted when it is first used.
+  /// Uploads to this device (N9). N10: partials are loaded from their
+  /// `.json` on first use and survive restarts and stop sharing.
   UploadStoreProvider._()
     : super(
         from: null,
@@ -562,7 +562,7 @@ final class UploadStoreProvider
   }
 }
 
-String _$uploadStoreHash() => r'e3c81d203bfa1867d6d77b6bceb27f1eee278ef8';
+String _$uploadStoreHash() => r'df3c1dbad59d843dd2078ec2f21f4d4829324c5d';
 
 /// Path canonicalisation + exclusions (N4).
 

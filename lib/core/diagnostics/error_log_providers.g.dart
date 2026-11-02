@@ -106,17 +106,20 @@ final class ErrorLogDbBridgeProvider
 
 String _$errorLogDbBridgeHash() => r'e48d4ee91a724875da8ba7f4bb710453c15636e9';
 
-/// Entries in the log, for Settings → About.
+/// Entries in the log, for Settings → About. Re-reads after every write or
+/// clear (the Settings tab stays mounted, so a rebuild alone never comes).
 
 @ProviderFor(errorLogCount)
 final errorLogCountProvider = ErrorLogCountProvider._();
 
-/// Entries in the log, for Settings → About.
+/// Entries in the log, for Settings → About. Re-reads after every write or
+/// clear (the Settings tab stays mounted, so a rebuild alone never comes).
 
 final class ErrorLogCountProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Entries in the log, for Settings → About.
+  /// Entries in the log, for Settings → About. Re-reads after every write or
+  /// clear (the Settings tab stays mounted, so a rebuild alone never comes).
   ErrorLogCountProvider._()
     : super(
         from: null,
@@ -142,7 +145,7 @@ final class ErrorLogCountProvider
   }
 }
 
-String _$errorLogCountHash() => r'cddc177e6add7b3b2ad69c4ec02755df3c23cfeb';
+String _$errorLogCountHash() => r'30e2f0ec52fc84dc9967dffe50c1d6a9b4bd2500';
 
 /// Device facts for the export header (no serial, Android ID or account).
 

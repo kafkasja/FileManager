@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/known_device_connector.dart';
 import 'package:kfm/features/connect/data/remembered_devices_service.dart';
@@ -47,4 +49,7 @@ RememberedDevicesService rememberedDevicesService(Ref ref) =>
         await ref.read(deviceIdentityRepositoryProvider).reset();
         ref.invalidate(deviceIdentityProvider);
       },
+      // Not awaited: removal and revocation never wait on file I/O.
+      removeUploads: (fp) async =>
+          unawaited(ref.read(uploadStoreProvider).removeOwner(fp)),
     );

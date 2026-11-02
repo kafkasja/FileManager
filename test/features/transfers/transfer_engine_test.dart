@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +10,7 @@ import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
+import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
@@ -28,9 +31,27 @@ import '../../core/files/fake_file_source.dart';
 final String _fp = 'ab' * 32;
 const _dl = '/storage/emulated/0/Download/Phone';
 
+/// Response headers of a fake content response.
+class _Headers implements HttpHeaders {
+  new(this._map);
+
+  final Map<String, String> _map;
+
+  @override
+  String? value(String name) => _map[name.toLowerCase()];
+
+  @override
+  Object? noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError(invocation.memberName.toString());
+}
+
 /// A content response the test feeds by hand (hold = an in-flight file).
 class _Held extends Stream<List<int>> implements HttpClientResponse {
-  new(this.contentLength);
+  new(
+    this.contentLength, {
+    this.statusCode = 200,
+    Map<String, String> headers = const {},
+  }) : headers = _Headers(headers);
 
   final StreamController<List<int>> c = StreamController<List<int>>();
   bool cancelled = false;
@@ -39,7 +60,10 @@ class _Held extends Stream<List<int>> implements HttpClientResponse {
   final int contentLength;
 
   @override
-  int get statusCode => 200;
+  final int statusCode;
+
+  @override
+  final HttpHeaders headers;
 
   @override
   StreamSubscription<List<int>> listen(
@@ -69,13 +93,20 @@ typedef _Call = ({
   Object? body,
 });
 
-/// The other device: per-prefix JSON answers, held content streams.
+String _etagOf(String serverId) => '"e-$serverId"';
+
+/// The other device: per-prefix JSON answers, held content streams, ranged
+/// content with an ETag.
 class _Http implements RemoteHttp {
   final List<_Call> calls = [];
   final Map<String, _Held> held = {};
+  final Set<String> heldUsed = {};
   final Map<String, List<int>> contents = {};
   final Map<String, ApiErrorCode> failContent = {};
-  Map<String, Object?> Function(_Call call)? json;
+
+  /// Request headers of every content request.
+  final List<Map<String, String>> contentHeaders = [];
+  FutureOr<Map<String, Object?>> Function(_Call call)? json;
 
   int running = 0;
   int maxRunning = 0;
@@ -95,7 +126,7 @@ class _Http implements RemoteHttp {
   ]) async {
     final call = (method: method, path: path, query: query, body: body);
     calls.add(call);
-    return decode(json?.call(call) ?? const {});
+    return decode(await json?.call(call) ?? const {});
   }
 
   @override
@@ -103,6 +134,7 @@ class _Http implements RemoteHttp {
     String path, {
     required T Function(Map<String, Object?> json) decode,
     Map<String, String> query = const {},
+    Duration? timeout,
   }) => _json('GET', path, null, decode, query);
 
   @override
@@ -139,22 +171,39 @@ class _Http implements RemoteHttp {
     Map<String, String> headers = const {},
   }) async {
     calls.add((method: 'GET', path: path, query: query, body: null));
+    contentHeaders.add(headers);
     final serverId = Uri.decodeComponent(path.split('/')[3]);
     if (failContent[serverId] case final code?) {
       throw RemoteApiException(code.status, ApiErrorDto(code.wire, ''));
     }
     running++;
     if (running > maxRunning) maxRunning = running;
-    final h = held[serverId];
+    // A held response answers the first request only.
+    final h = heldUsed.add(serverId) ? held[serverId] : null;
     if (h != null) {
       unawaited(h.c.done.whenComplete(() => running--));
       return h;
     }
     final bytes = contents[serverId] ?? const [];
-    final r = _Held(bytes.length);
+    final etag = _etagOf(serverId);
+    final range = headers[HttpHeaders.rangeHeader];
+    var start = 0;
+    if (range != null && headers[HttpHeaders.ifRangeHeader] == etag) {
+      start = int.parse(range.substring(6, range.length - 1));
+    }
+    final body = bytes.sublist(start);
+    final r = _Held(
+      body.length,
+      statusCode: start > 0 ? 206 : 200,
+      headers: {
+        'etag': etag,
+        if (start > 0)
+          'content-range': 'bytes $start-${bytes.length - 1}/${bytes.length}',
+      },
+    );
     unawaited(() async {
       await Future<void>.delayed(const Duration(milliseconds: 5));
-      r.c.add(bytes);
+      r.c.add(body);
       running--;
       await r.c.close();
     }());
@@ -163,6 +212,64 @@ class _Http implements RemoteHttp {
 
   @override
   void close() {}
+}
+
+/// A stateful upload server for [_Http.json]: create / status / chunk /
+/// complete / delete like N10's routes.
+class _UploadServer {
+  final Map<String, List<int>> uploads = {};
+  final Map<String, int> sizes = {};
+  final List<String> deleted = [];
+  final List<Map<String, Object?>> completes = [];
+
+  /// Called before each PUT is applied; may throw.
+  void Function(int putIndex, _Call call)? beforePut;
+  int puts = 0;
+
+  Map<String, Object?> handle(_Call c) {
+    final parts = c.path.split('/');
+    if (c.method == 'GET' && c.path == ApiRoutes.session) return const {};
+    if (c.method == 'GET' && c.path.endsWith('/sha256')) return const {};
+    if (c.method == 'POST' && c.path == ApiRoutes.uploads) {
+      final body = c.body! as Map<String, Object?>;
+      final id = body['uploadId']! as String;
+      uploads.putIfAbsent(id, () => []);
+      sizes[id] = body['size']! as int;
+      return {'received': uploads[id]!.length, 'size': sizes[id]};
+    }
+    final id = parts.length > 3 ? parts[3] : '';
+    if (!uploads.containsKey(id)) {
+      throw RemoteApiException(
+        404,
+        ApiErrorDto(ApiErrorCode.notFound.wire, ''),
+      );
+    }
+    if (c.method == 'GET') {
+      return {'received': uploads[id]!.length, 'size': sizes[id]};
+    }
+    if (c.method == 'DELETE') {
+      uploads.remove(id);
+      deleted.add(id);
+      return const {};
+    }
+    if (c.method == 'PUT') {
+      beforePut?.call(puts++, c);
+      final offset = int.parse(c.query['offset']!);
+      if (offset != uploads[id]!.length) {
+        throw RemoteApiException(
+          409,
+          ApiErrorDto(ApiErrorCode.conflict.wire, ''),
+        );
+      }
+      uploads[id]!.addAll(c.body! as List<int>);
+      return {'received': uploads[id]!.length};
+    }
+    if (c.method == 'POST' && c.path.endsWith('/complete')) {
+      completes.add(c.body! as Map<String, Object?>);
+      return {'finalId': 'ms:$id'};
+    }
+    return const {};
+  }
 }
 
 FileRef _remote(String serverId, {int size = 3, String? name}) => FileRef(
@@ -187,6 +294,34 @@ void main() {
   late TransferEngine engine;
   late List<List<FileRef>> indexed;
   RemoteHttp? connected;
+  var probeOk = true;
+  late List<String> reconnects;
+  Future<void> Function(String fp)? onReconnect;
+
+  TransferEngine newEngine({
+    TransferPreprocessor preprocessor = const IdentityPreprocessor(),
+    int chunkBytes = 4,
+  }) => TransferEngine(
+    repo: repo,
+    devices: devices,
+    local: local,
+    http: (fp) => fp == _fp ? connected : null,
+    staging: () async => staging,
+    preprocessor: preprocessor,
+    addToIndex: (f) async => indexed.add(f),
+    reconnect: (fp) async {
+      reconnects.add(fp);
+      await onReconnect?.call(fp);
+    },
+    probe: (_) async => probeOk,
+    chunkBytes: chunkBytes,
+    liveInterval: const Duration(milliseconds: 20),
+    persistInterval: Duration.zero,
+    retryBase: const Duration(milliseconds: 2),
+    retryCap: const Duration(milliseconds: 8),
+    reconnectBase: const Duration(milliseconds: 10),
+    reconnectCap: const Duration(milliseconds: 40),
+  );
 
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
@@ -196,18 +331,12 @@ void main() {
     local = FakeFileSource()..addFolder(_dl);
     http = _Http();
     connected = http;
+    probeOk = true;
+    reconnects = [];
+    onReconnect = null;
     indexed = [];
     staging = await Directory.systemTemp.createTemp('kfm_engine');
-    engine = TransferEngine(
-      repo: repo,
-      devices: devices,
-      local: local,
-      http: (fp) => fp == _fp ? connected : null,
-      staging: () async => staging,
-      preprocessor: const IdentityPreprocessor(),
-      addToIndex: (f) async => indexed.add(f),
-      liveInterval: const Duration(milliseconds: 20),
-    );
+    engine = newEngine();
     await engine.start();
     engine.onConnection(_fp);
   });
@@ -232,7 +361,8 @@ void main() {
       if (job != null && test(job)) return job;
       if (DateTime.now().isAfter(end)) {
         fail(
-          'timed out: ${job?.status} ${job?.files.map((f) => '${f.status.name}:${f.error}')}',
+          'timed out: ${job?.status} ${job?.pauseReason} '
+          '${job?.files.map((f) => '${f.status.name}:${f.error}')}',
         );
       }
       await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -242,6 +372,19 @@ void main() {
   List<String> parts() => [
     for (final e in staging.listSync()) e.uri.pathSegments.last,
   ];
+
+  Iterable<_Call> contentCalls() =>
+      http.calls.where((c) => c.path.endsWith('/content'));
+
+  Future<String> rememberDevice() async => (await devices.saveAfterPairing(
+    PairedPeer(
+      fingerprint: _fp,
+      peerDeviceId: 'p',
+      name: 'Phone',
+      platform: 'android',
+    ),
+    temporary: false,
+  )).id;
 
   group('downloads', () {
     test('2 at a time, seq order; all land in the folder; no partials '
@@ -258,8 +401,8 @@ void main() {
       final job = await until(id, (j) => j.status == TransferStatus.done);
       expect(http.maxRunning, 2);
       final order = [
-        for (final c in http.calls)
-          if (c.method == 'GET') Uri.decodeComponent(c.path.split('/')[3]),
+        for (final c in contentCalls())
+          Uri.decodeComponent(c.path.split('/')[3]),
       ];
       expect(order, ['ms:0', 'ms:1', 'ms:2', 'ms:3']);
       for (var i = 0; i < 4; i++) {
@@ -291,7 +434,7 @@ void main() {
         localFolder: _dl,
       );
       await until(id, (j) => j.files[0].status == TransferFileStatus.done);
-      http.held['ms:1']!.c.add([1, 2, 3, 4]);
+      final h1 = http.held['ms:1']!..c.add([1, 2, 3, 4]);
       await until(
         id,
         (j) =>
@@ -307,7 +450,7 @@ void main() {
         TransferFileStatus.cancelled,
         TransferFileStatus.cancelled,
       ]);
-      expect(http.held['ms:1']!.cancelled, isTrue);
+      expect(h1.cancelled, isTrue);
       expect(await local.stat('path:$_dl/ms0.jpg'), isNotNull);
       expect(await local.stat('path:$_dl/ms1.jpg'), isNull);
       // Let the cancelled runs clean up.
@@ -315,7 +458,7 @@ void main() {
       expect(parts(), isEmpty);
     });
 
-    test('a failure keeps going; Retry restarts from 0', () async {
+    test('a permanent failure keeps going; Retry starts it again', () async {
       http
         ..failContent['ms:0'] = ApiErrorCode.notFound
         ..contents['ms:0'] = [9, 9]
@@ -333,7 +476,7 @@ void main() {
       http.failContent.clear();
       await engine.retry(id);
       job = await until(id, (j) => j.status == TransferStatus.done);
-      expect(job.files[0].attempts, 2);
+      expect(job.files[0].attempts, 0);
       expect((await local.stat('path:$_dl/ms0.jpg'))?.sizeBytes, 2);
     });
 
@@ -356,38 +499,28 @@ void main() {
       expect(parts(), isEmpty);
     });
 
-    test('not enough space here: failed before anything is fetched', () async {
+    test('not enough space here: paused (noSpace) before anything is '
+        'fetched; Resume checks again', () async {
       local.freeBytesValue = 1000;
+      http.contents['ms:0'] = [1, 2, 3];
       final id = await engine.enqueueDownload(
         [_remote('ms:0')],
         peerFingerprint: _fp,
         peerName: 'Phone',
         localFolder: _dl,
       );
-      final job = await until(id, (j) => j.isFinished);
+      var job = await until(id, (j) => j.status == TransferStatus.paused);
+      expect(job.pauseReason, TransferPauseReason.noSpace);
       expect(job.files.single.error, TransferErrors.noSpaceHere);
-      expect(http.calls.where((c) => c.method == 'GET'), isEmpty);
-    });
-
-    test('the device leaves mid-file: failed, no crash', () async {
-      http.held['ms:0'] = _Held(10);
-      final id = await engine.enqueueDownload(
-        [_remote('ms:0', size: 10)],
-        peerFingerprint: _fp,
-        peerName: 'Phone',
-        localFolder: _dl,
-      );
-      await until(
-        id,
-        (j) => j.files.single.status == TransferFileStatus.running,
-      );
-      http.held['ms:0']!.c.addError(
-        const RemoteUnavailableException(RemoteUnavailableReason.network),
-      );
-      final job = await until(id, (j) => j.isFinished);
-      expect(job.files.single.error, TransferErrors.unavailable);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
-      expect(parts(), isEmpty);
+      expect(contentCalls(), isEmpty);
+      // A reconnect doesn't resume it.
+      engine.onConnection(_fp);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect((await repo.dao.job(id))!.status, TransferStatus.paused);
+      local.freeBytesValue = null;
+      await engine.resumeJob(id);
+      job = await until(id, (j) => j.status == TransferStatus.done);
+      expect(job.pauseReason, isNull);
     });
 
     test('queued while not connected; starts on the next connection', () async {
@@ -408,17 +541,278 @@ void main() {
     });
   });
 
-  group('uploads', () {
-    test('create → chunk → complete; the final id is stored', () async {
-      final f = local.addFile(
-        '/storage/emulated/0/DCIM/a.jpg',
-        bytes: [1, 2, 3, 4],
+  group('N10 pause and resume', () {
+    test('Pause stops the download at once and keeps the part; Resume asks '
+        'for the rest with Range + If-Range and appends it', () async {
+      final bytes = List<int>.generate(10, (i) => i + 1);
+      http
+        ..contents['ms:0'] = bytes
+        ..held['ms:0'] = _Held(10, headers: {'etag': _etagOf('ms:0')});
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0', size: 10)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
       );
-      http.json = (c) => switch (c.method) {
-        'PUT' => {'received': 4},
-        'POST' when c.path.endsWith('/complete') => {'finalId': 'ms:77'},
-        _ => {'received': 0},
+      await until(id, (j) => j.status == TransferStatus.running);
+      final h = http.held['ms:0']!;
+      h.c.add(bytes.sublist(0, 4));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      await engine.pauseJob(id);
+      var job = await until(
+        id,
+        (j) =>
+            j.status == TransferStatus.paused &&
+            j.files.single.status == TransferFileStatus.queued,
+      );
+      expect(h.cancelled, isTrue);
+      expect(job.pauseReason, TransferPauseReason.user);
+      expect(job.files.single.bytesDone, 4);
+      expect(job.files.single.etag, _etagOf('ms:0'));
+      final part = File('${staging.path}/dl-${job.files.single.id}.part');
+      expect(await part.readAsBytes(), bytes.sublist(0, 4));
+
+      await engine.resumeJob(id);
+      job = await until(id, (j) => j.status == TransferStatus.done);
+      expect(http.contentHeaders.last, {
+        HttpHeaders.rangeHeader: 'bytes=4-',
+        HttpHeaders.ifRangeHeader: _etagOf('ms:0'),
+      });
+      expect(
+        local.bytesOf('path:$_dl/ms0.jpg'),
+        bytes,
+        reason: 'the resumed part is stitched in order',
+      );
+      expect(parts(), isEmpty);
+    });
+
+    test('a changed file (another ETag) starts over from 0', () async {
+      final bytes = List<int>.generate(6, (i) => i + 1);
+      http
+        ..contents['ms:0'] = bytes
+        ..held['ms:0'] = _Held(6, headers: {'etag': '"old"'});
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0', size: 6)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await until(id, (j) => j.status == TransferStatus.running);
+      final h = http.held['ms:0']!;
+      h.c.add([9, 9, 9]);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      await engine.pauseJob(id);
+      await until(id, (j) => j.status == TransferStatus.paused);
+      await engine.resumeJob(id);
+      await until(id, (j) => j.status == TransferStatus.done);
+      // If-Range "old" doesn't match: the server sent everything (200).
+      expect(local.bytesOf('path:$_dl/ms0.jpg'), bytes);
+    });
+
+    test('the device leaves mid-file: the job waits for it (no attempt); '
+        'reconnecting resumes from the part', () async {
+      final bytes = List<int>.generate(8, (i) => i + 1);
+      http
+        ..contents['ms:0'] = bytes
+        ..held['ms:0'] = _Held(8, headers: {'etag': _etagOf('ms:0')});
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0', size: 8)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await until(id, (j) => j.status == TransferStatus.running);
+      final h = http.held['ms:0']!;
+      h.c.add(bytes.sublist(0, 3));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      connected = null;
+      engine.onConnection(null);
+      var job = await until(
+        id,
+        (j) =>
+            j.status == TransferStatus.paused &&
+            j.files.single.status == TransferFileStatus.queued,
+      );
+      expect(job.pauseReason, TransferPauseReason.waitingForDevice);
+      expect(job.files.single.attempts, 0);
+      expect(job.files.single.bytesDone, 3);
+      expect(parts(), isNotEmpty);
+      connected = http;
+      engine.onConnection(_fp);
+      job = await until(id, (j) => j.status == TransferStatus.done);
+      expect(local.bytesOf('path:$_dl/ms0.jpg'), bytes);
+    });
+
+    test('a network error while the probe fails waits for the device; the '
+        'same error with a healthy link backs off', () async {
+      http.held['ms:0'] = _Held(5);
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0', size: 5)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await until(id, (j) => j.status == TransferStatus.running);
+      probeOk = false;
+      (http.held['ms:0']!).c.addError(
+        const RemoteUnavailableException(RemoteUnavailableReason.network),
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.paused);
+      expect(job.pauseReason, TransferPauseReason.waitingForDevice);
+      expect(job.files.single.attempts, 0);
+      // The link comes back while still connected: the recovery probe
+      // resumes it.
+      http.contents['ms:0'] = [1, 2, 3, 4, 5];
+      probeOk = true;
+      await until(id, (j) => j.status == TransferStatus.done);
+    });
+
+    test('a paused-by-user job stays paused after a reconnect; a '
+        'paused-by-network job resumes', () async {
+      http
+        ..held['ms:0'] = _Held(4)
+        ..contents['ms:0'] = [1, 2, 3, 4]
+        ..contents['ms:1'] = [5, 6];
+      final mine = await engine.enqueueDownload(
+        [_remote('ms:0', size: 4)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await until(mine, (j) => j.status == TransferStatus.running);
+      await engine.pauseJob(mine);
+      await until(mine, (j) => j.status == TransferStatus.paused);
+      connected = null;
+      engine.onConnection(null);
+      final other = await engine.enqueueDownload(
+        [_remote('ms:1', size: 2)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await repo.pauseJob(other, TransferPauseReason.waitingForDevice);
+      connected = http;
+      engine.onConnection(_fp);
+      await until(other, (j) => j.status == TransferStatus.done);
+      final still = (await repo.dao.job(mine))!;
+      expect(still.status, TransferStatus.paused);
+      expect(still.pauseReason, TransferPauseReason.user);
+    });
+
+    test('500 again and again: 10 attempts with backoff, then failed with '
+        'Retry; nothing loops forever', () async {
+      http.failContent['ms:0'] = ApiErrorCode.internal;
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      final job = await until(id, (j) => j.isFinished);
+      expect(job.status, TransferStatus.failed);
+      expect(job.files.single.error, 'internal');
+      expect(job.files.single.attempts, 10);
+      expect(contentCalls(), hasLength(10));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(contentCalls(), hasLength(10));
+    });
+
+    test('restart: running files are queued again and wait for the device; '
+        'stale client parts go, live ones stay', () async {
+      connected = null;
+      engine.onConnection(null);
+      final d = await engine.deviceIdFor(_fp, 'Phone');
+      final id = await repo.createJob(
+        deviceId: d,
+        direction: TransferDirection.download,
+        targetPath: _dl,
+        files: [
+          (sourceFileId: 'x', name: 'x', sizeBytes: 9, sourceModifiedAtMs: 0),
+        ],
+      );
+      final fileId = (await repo.dao.job(id))!.files.single.id;
+      await repo.setFile(
+        fileId,
+        id,
+        const TransferFilesCompanion(
+          status: Value(TransferFileStatus.running),
+          bytesDone: Value(4),
+        ),
+      );
+      File('${staging.path}/dl-$fileId.part').writeAsBytesSync([1, 2, 3, 4]);
+      File('${staging.path}/dl-999.part').writeAsBytesSync([1]);
+      await engine.dispose();
+      engine = newEngine();
+      await engine.start();
+      final after = (await repo.dao.job(id))!;
+      expect(after.status, TransferStatus.paused);
+      expect(after.pauseReason, TransferPauseReason.waitingForDevice);
+      expect(after.files.single.status, TransferFileStatus.queued);
+      expect(after.files.single.bytesDone, 4);
+      expect(parts(), ['dl-$fileId.part']);
+    });
+
+    test('a remembered device is reconnected by itself after a lost link; '
+        'never after Disconnect', () async {
+      await rememberDevice();
+      connected = null;
+      engine.onConnection(null);
+      http.contents['ms:0'] = [1, 2];
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0', size: 2)],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await repo.pauseJob(id, TransferPauseReason.waitingForDevice);
+      // The user's Disconnect: no automatic reconnect.
+      engine.onConnection(null);
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(reconnects, isEmpty);
+      onReconnect = (fp) async {
+        connected = http;
+        engine.onConnection(fp);
       };
+      engine.onConnection(null, autoReconnect: true);
+      await until(id, (j) => j.status == TransferStatus.done);
+      expect(reconnects, [_fp]);
+    });
+
+    test('a declined automatic reconnect stops the automatic tries', () async {
+      await rememberDevice();
+      connected = null;
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await repo.pauseJob(id, TransferPauseReason.waitingForDevice);
+      onReconnect = (_) async =>
+          throw const PairingException(PairingFailure.declined);
+      engine.onConnection(null, autoReconnect: true);
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      expect(reconnects, [_fp]);
+    });
+  });
+
+  group('uploads', () {
+    late _UploadServer server;
+
+    setUp(() {
+      server = _UploadServer();
+      http.json = server.handle;
+    });
+
+    List<_Call> puts() => [
+      for (final c in http.calls)
+        if (c.method == 'PUT') c,
+    ];
+
+    test('create → chunks → complete; the final id and the sender hash are '
+        'stored', () async {
+      final bytes = [1, 2, 3, 4, 5, 6];
+      final f = local.addFile('/storage/emulated/0/DCIM/a.jpg', bytes: bytes);
       final id = await engine.enqueueUpload(
         [f],
         peerFingerprint: _fp,
@@ -427,30 +821,154 @@ void main() {
         path: 'sub',
       );
       final job = await until(id, (j) => j.status == TransferStatus.done);
-      expect(job.files.single.targetFileId, 'ms:77');
+      final file = job.files.single;
+      expect(file.targetFileId, 'ms:${file.uploadId}');
       final create = http.calls.firstWhere((c) => c.path == ApiRoutes.uploads);
       expect(create.body, containsPair('rootId', 'cam'));
       expect(create.body, containsPair('path', 'sub'));
       expect(create.body, containsPair('name', 'a.jpg'));
-      expect(create.body, containsPair('size', 4));
-      final put = http.calls.firstWhere((c) => c.method == 'PUT');
-      expect(put.body, [1, 2, 3, 4]);
-      expect(put.query, {'offset': '0'});
+      expect(create.body, containsPair('size', 6));
+      expect(puts().map((c) => c.query['offset']), ['0', '4']);
+      expect(server.uploads[file.uploadId], bytes);
+      final sha = sha256.convert(bytes).toString();
+      expect(file.senderSha256, sha);
+      expect(server.completes.single, {'sha256': sha});
       expect(http.calls.where((c) => c.method == 'DELETE'), isEmpty);
+    });
+
+    test('the link drops mid-upload: the job waits; after the reconnect it '
+        "continues from the server's received and the bytes match", () async {
+      final bytes = List<int>.generate(10, (i) => 10 + i);
+      final f = local.addFile('/storage/emulated/0/DCIM/a.jpg', bytes: bytes);
+      server.beforePut = (i, _) {
+        if (i == 1) {
+          connected = null;
+          engine.onConnection(null);
+          throw const RemoteUnavailableException(
+            RemoteUnavailableReason.network,
+          );
+        }
+      };
+      final id = await engine.enqueueUpload(
+        [f],
+        peerFingerprint: _fp,
+        peerName: 'PC',
+        rootId: 'cam',
+        path: '',
+      );
+      var job = await until(
+        id,
+        (j) =>
+            j.status == TransferStatus.paused &&
+            j.files.single.status == TransferFileStatus.queued,
+      );
+      expect(job.pauseReason, TransferPauseReason.waitingForDevice);
+      expect(job.files.single.bytesDone, 4);
+      final uploadId = job.files.single.uploadId;
+      expect(uploadId, isNotNull);
+      connected = http;
+      engine.onConnection(_fp);
+      job = await until(id, (j) => j.status == TransferStatus.done);
+      expect(
+        http.calls.where(
+          (c) => c.method == 'GET' && c.path == ApiRoutes.upload(uploadId!),
+        ),
+        isNotEmpty,
+      );
+      expect(puts().map((c) => c.query['offset']), ['0', '4', '4', '8']);
+      expect(server.uploads[uploadId], bytes);
+      expect(server.uploads, hasLength(1), reason: 'one upload, resumed');
+    });
+
+    test('409: the client re-syncs to the server offset; no corrupted '
+        'output', () async {
+      final bytes = [1, 2, 3, 4, 5, 6];
+      final f = local.addFile('/storage/emulated/0/DCIM/a.jpg', bytes: bytes);
+      server.beforePut = (i, c) {
+        // The first chunk arrived but its answer was lost: the server is
+        // already at 4 when the client sends offset 0 again.
+        if (i == 0) {
+          final id = c.path.split('/')[3];
+          server.uploads[id]!.addAll(bytes.sublist(0, 4));
+        }
+      };
+      final id = await engine.enqueueUpload(
+        [f],
+        peerFingerprint: _fp,
+        peerName: 'PC',
+        rootId: 'cam',
+        path: '',
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.done);
+      expect(server.uploads[job.files.single.uploadId], bytes);
+      expect(puts().map((c) => c.query['offset']), ['0', '4']);
+    });
+
+    test('507 pauses the job (noSpace); Resume continues', () async {
+      final f = local.addFile('/storage/emulated/0/DCIM/a.jpg');
+      var full = true;
+      server.beforePut = (_, _) {
+        if (full) {
+          throw RemoteApiException(
+            507,
+            ApiErrorDto(ApiErrorCode.insufficientStorage.wire, ''),
+          );
+        }
+      };
+      final id = await engine.enqueueUpload(
+        [f],
+        peerFingerprint: _fp,
+        peerName: 'PC',
+        rootId: 'cam',
+        path: '',
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.paused);
+      expect(job.pauseReason, TransferPauseReason.noSpace);
+      expect(job.files.single.error, 'insufficient_storage');
+      full = false;
+      await engine.resumeJob(id);
+      await until(id, (j) => j.status == TransferStatus.done);
+    });
+
+    test('a source edited mid-upload starts over from 0; nothing is '
+        'stitched', () async {
+      final f = local.addFile(
+        '/storage/emulated/0/DCIM/a.jpg',
+        bytes: [1, 2, 3, 4, 5, 6],
+        modifiedAt: DateTime.utc(2026),
+      );
+      final edited = [7, 7, 7, 7, 7, 7, 7];
+      server.beforePut = (i, _) {
+        if (i == 1) {
+          local.addFile(
+            '/storage/emulated/0/DCIM/a.jpg',
+            bytes: edited,
+            modifiedAt: DateTime.utc(2026, 2),
+          );
+        }
+      };
+      final id = await engine.enqueueUpload(
+        [f],
+        peerFingerprint: _fp,
+        peerName: 'PC',
+        rootId: 'cam',
+        path: '',
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.done);
+      final file = job.files.single;
+      expect(server.deleted, hasLength(1), reason: 'the old upload went');
+      expect(server.uploads[file.uploadId], edited);
+      expect(file.sizeBytes, 7);
+      expect(file.senderSha256, sha256.convert(edited).toString());
     });
 
     test('a refused upload (403) fails "forbidden_path" and the partial '
         'is deleted on the other device', () async {
       final f = local.addFile('/storage/emulated/0/DCIM/a.jpg');
-      http.json = (c) {
-        if (c.method == 'PUT') {
-          throw RemoteApiException(
-            403,
-            ApiErrorDto(ApiErrorCode.forbiddenPath.wire, ''),
-          );
-        }
-        return {'received': 0};
-      };
+      server.beforePut = (_, _) => throw RemoteApiException(
+        403,
+        ApiErrorDto(ApiErrorCode.forbiddenPath.wire, ''),
+      );
       final id = await engine.enqueueUpload(
         [f],
         peerFingerprint: _fp,
@@ -472,23 +990,11 @@ void main() {
       () async {
         final f = local.addFile('/storage/emulated/0/DCIM/a.jpg');
         var cleaned = false;
-        final stripped = TransferEngine(
-          repo: repo,
-          devices: devices,
-          local: local,
-          http: (fp) => http,
-          staging: () async => staging,
-          preprocessor: _Stripper(() => cleaned = true),
-          addToIndex: (_) async {},
-        )..onConnection(_fp);
-        addTearDown(stripped.dispose);
         await engine.dispose();
-        http.json = (c) => switch (c.method) {
-          'PUT' => {'received': 2},
-          'POST' when c.path.endsWith('/complete') => {'finalId': 'x'},
-          _ => {'received': 0},
-        };
-        final id = await stripped.enqueueUpload(
+        engine = newEngine(preprocessor: _Stripper(() => cleaned = true));
+        await engine.start();
+        engine.onConnection(_fp);
+        final id = await engine.enqueueUpload(
           [f],
           peerFingerprint: _fp,
           peerName: 'PC',
@@ -500,7 +1006,7 @@ void main() {
           (c) => c.path == ApiRoutes.uploads,
         );
         expect(create.body, containsPair('size', 2));
-        expect(http.calls.firstWhere((c) => c.method == 'PUT').body, [7, 7]);
+        expect(puts().single.body, [7, 7]);
         expect(cleaned, isTrue);
       },
     );
@@ -522,15 +1028,7 @@ void main() {
     });
 
     test('a remembered device stays; removing it removes its jobs', () async {
-      final d = await devices.saveAfterPairing(
-        PairedPeer(
-          fingerprint: _fp,
-          peerDeviceId: 'p',
-          name: 'Phone',
-          platform: 'android',
-        ),
-        temporary: false,
-      );
+      final d = await rememberDevice();
       connected = null;
       engine.onConnection(null);
       await engine.enqueueDownload(
@@ -539,34 +1037,10 @@ void main() {
         peerName: 'Phone',
         localFolder: _dl,
       );
-      expect(await repo.dao.countForDevice(d.id), 1);
-      await devices.remove(d.id);
+      expect(await repo.dao.countForDevice(d), 1);
+      await devices.remove(d);
       expect(await repo.dao.jobs(), isEmpty);
       expect(await db.select(db.transferFiles).get(), isEmpty);
-    });
-
-    test('restart: files left running are failed "interrupted"', () async {
-      connected = null;
-      engine.onConnection(null);
-      final d = await engine.deviceIdFor(_fp, 'Phone');
-      final id = await repo.createJob(
-        deviceId: d,
-        direction: TransferDirection.download,
-        targetPath: _dl,
-        files: [
-          (sourceFileId: 'x', name: 'x', sizeBytes: 1, sourceModifiedAtMs: 0),
-        ],
-      );
-      final job = (await repo.dao.job(id))!;
-      await repo.setFile(
-        job.files.single.id,
-        id,
-        const TransferFilesCompanion(status: Value(TransferFileStatus.running)),
-      );
-      expect(await repo.failRunning(), 1);
-      final after = (await repo.dao.job(id))!;
-      expect(after.status, TransferStatus.failed);
-      expect(after.files.single.error, TransferErrors.interrupted);
     });
   });
 
@@ -682,6 +1156,22 @@ void main() {
         expect(job.files.single.sourceFileId, remoteFileId(_fp, 'ms:5'));
       },
     );
+  });
+
+  test('sender hash of a download comes from the other device', () async {
+    final sha = sha256.convert(utf8.encode('x')).toString();
+    http
+      ..contents['ms:0'] = [1, 2]
+      ..json = (c) =>
+          c.path == ApiRoutes.fileSha256('ms:0') ? {'sha256': sha} : const {};
+    final id = await engine.enqueueDownload(
+      [_remote('ms:0', size: 2)],
+      peerFingerprint: _fp,
+      peerName: 'Phone',
+      localFolder: _dl,
+    );
+    final job = await until(id, (j) => j.status == TransferStatus.done);
+    expect(job.files.single.senderSha256, sha);
   });
 }
 

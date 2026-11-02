@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/widgets.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfers_dao.dart';
@@ -59,17 +61,37 @@ TransferEngine transferEngine(Ref ref) {
     preprocessor: ref.watch(transferPreprocessorProvider),
     addToIndex: (files) => ref.read(mediaIndexerProvider).addFiles(files),
     onUnauthorized: controller.reportUnauthorized,
+    reconnect: (fp) => ref.read(knownDeviceConnectorProvider).reconnect(fp),
+    isForeground: _inForeground,
   );
   ref
     ..listen(remoteConnectionControllerProvider, (_, next) {
-      engine.onConnection(switch (next) {
-        RemoteConnected(:final peerFingerprint) => peerFingerprint,
-        _ => null,
-      });
+      switch (next) {
+        case RemoteConnected(:final peerFingerprint):
+          engine.onConnection(peerFingerprint);
+        // N10: reconnect by itself after a lost link, the other device
+        // stopping, or an app start; never after Disconnect or a revoke.
+        case RemoteDisconnected(:final reason):
+          engine.onConnection(
+            null,
+            autoReconnect:
+                reason == DisconnectReason.networkLost ||
+                reason == DisconnectReason.remoteStopped,
+          );
+        case RemoteIdle():
+          engine.onConnection(null, autoReconnect: true);
+      }
     }, fireImmediately: true)
     ..onDispose(() => unawaited(engine.dispose()));
   unawaited(engine.start());
   return engine;
+}
+
+bool _inForeground() {
+  final s = WidgetsBinding.instance.lifecycleState;
+  return s == null ||
+      s == AppLifecycleState.resumed ||
+      s == AppLifecycleState.inactive;
 }
 
 /// Every job, newest first (Transfers page).

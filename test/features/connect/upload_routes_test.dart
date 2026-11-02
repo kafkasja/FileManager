@@ -37,6 +37,7 @@ void main() {
   late IssuedSession me;
   late IssuedSession other;
   late List<List<FileRef>> indexed;
+  late Handler Function(UploadStore store) rebuild;
 
   setUp(() async {
     staging = await Directory.systemTemp.createTemp('kfm_uploads');
@@ -52,7 +53,7 @@ void main() {
       source: () => files,
       paths: fakeGuard(existing: {_root, '$_root/DCIM', '$_root/Download'}),
     );
-    handler = buildSharePipeline(
+    rebuild = (store) => buildSharePipeline(
       served: [LocalAddress(InternetAddress('192.168.1.23'), 24, 'wlan0')],
       authenticate: authenticate(sessions),
       sizeLimitExempt: isUploadChunkRequest,
@@ -60,13 +61,14 @@ void main() {
         UploadRoutesEnv(
           guard: guard,
           sessions: sessions,
-          uploads: uploads,
+          uploads: store,
           source: () => files,
           addToIndex: (f) async => indexed.add(f),
           stagingFreeBytes: () async => null,
         ),
       ),
     );
+    handler = rebuild(uploads);
     me = sessions.issue(
       clientFingerprint: 'fp',
       clientDeviceId: 'd',
@@ -235,14 +237,16 @@ void main() {
     final delete = await call('DELETE', ApiRoutes.upload(_id), as: other);
     expect(delete.statusCode, 404);
     expect(await part(_id).exists(), isTrue);
-    // The same id can't be taken over either.
+    final status = await call('GET', ApiRoutes.upload(_id), as: other);
+    expect(status.statusCode, 404);
+    // The same id can't be taken over either (and isn't revealed).
     final again = await call(
       'POST',
       ApiRoutes.uploads,
       json: create(),
       as: other,
     );
-    expect(again.statusCode, 409);
+    expect(again.statusCode, 404);
   });
 
   test('offset must match; complete needs every byte; chunk cap', () async {
@@ -307,10 +311,130 @@ void main() {
     await body.close();
   });
 
-  test('stop sharing deletes every partial, leftovers too', () async {
+  test('clear deletes every partial, leftovers too', () async {
     await call('POST', ApiRoutes.uploads, json: create());
     File('${staging.path}/up-${'cd' * 16}.part').writeAsBytesSync([1]);
     await uploads.clear();
     expect(staging.listSync(), isEmpty);
+  });
+
+  group('N10 resume', () {
+    test('create is idempotent for its owner; other details are a '
+        'conflict', () async {
+      await call('POST', ApiRoutes.uploads, json: create());
+      await call('PUT', '${ApiRoutes.uploadChunk(_id)}?offset=0', bytes: [1]);
+      final again = await call('POST', ApiRoutes.uploads, json: create());
+      expect(again.statusCode, 200);
+      final st = UploadStatusDto.fromJson(await body(again));
+      expect(st.received, 1);
+      expect(st.size, 5);
+      final other = await call(
+        'POST',
+        ApiRoutes.uploads,
+        json: create(name: 'b.jpg'),
+      );
+      expect(other.statusCode, 409);
+    });
+
+    test('GET status tells where to resume; a restart reloads it from the '
+        '.json and cuts an unconfirmed tail', () async {
+      await call('POST', ApiRoutes.uploads, json: create());
+      await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=0',
+        bytes: [1, 2],
+      );
+      var r = await call('GET', ApiRoutes.upload(_id));
+      expect(r.statusCode, 200);
+      expect(UploadStatusDto.fromJson(await body(r)).received, 2);
+      final meta = jsonDecode(
+        File('${staging.path}/up-$_id.json').readAsStringSync(),
+      ) as Map<String, Object?>;
+      expect(meta['received'], 2);
+      expect(meta['ownerFingerprint'], 'fp');
+      // A crash after bytes were written but before the .json said so.
+      part(_id).writeAsBytesSync([1, 2, 9, 9], flush: true);
+      final reloaded = UploadStore(staging: () async => staging);
+      handler = rebuild(reloaded);
+      r = await call('GET', ApiRoutes.upload(_id));
+      expect(UploadStatusDto.fromJson(await body(r)).received, 2);
+      expect(part(_id).readAsBytesSync(), [1, 2]);
+      r = await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=2',
+        bytes: [3, 4, 5],
+      );
+      expect(UploadStatusDto.fromJson(await body(r)).received, 5);
+      r = await call('POST', ApiRoutes.uploadComplete(_id), json: const {});
+      expect(r.statusCode, 200);
+      expect(
+        files.bytesOf(UploadCompletedDto.fromJson(await body(r)).finalId),
+        [1, 2, 3, 4, 5],
+      );
+    });
+
+    test("the owner's new chunk ends a hanging one and takes over", () async {
+      await call('POST', ApiRoutes.uploads, json: create(size: 4));
+      final hanging = StreamController<List<int>>();
+      final first = call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=0',
+        stream: hanging.stream,
+        length: 4,
+      );
+      hanging.add([1, 2]);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final second = await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=0',
+        bytes: [1, 2, 3, 4],
+      );
+      expect(second.statusCode, 200);
+      expect(UploadStatusDto.fromJson(await body(second)).received, 4);
+      expect((await first).statusCode, 410);
+      expect(part(_id).readAsBytesSync(), [1, 2, 3, 4]);
+      await hanging.close();
+    });
+
+    test('stop sharing keeps partials; removing the owner or 7 days without '
+        'a chunk deletes them', () async {
+      await call('POST', ApiRoutes.uploads, json: create());
+      uploads.stop();
+      sessions.clear();
+      expect(await part(_id).exists(), isTrue);
+      await uploads.removeOwner('fp2');
+      expect(await part(_id).exists(), isTrue);
+      await uploads.removeOwner('fp');
+      expect(staging.listSync(), isEmpty);
+
+      final id2 = 'ef' * 16;
+      final store = UploadStore(staging: () async => staging);
+      await store.create(
+        uploadId: id2,
+        ownerFingerprint: 'fp',
+        rootId: 'cam',
+        path: '',
+        name: 'a.jpg',
+        size: 5,
+      );
+      final later = UploadStore(
+        staging: () async => staging,
+        clock: () => DateTime.now().add(const Duration(days: 8)),
+      );
+      await later.purgeStale();
+      expect(staging.listSync(), isEmpty);
+    });
+
+    test('free space is checked per chunk (507)', () async {
+      await call('POST', ApiRoutes.uploads, json: create());
+      files.freeBytesValue = 10;
+      final r = await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=0',
+        bytes: [1],
+      );
+      expect(r.statusCode, 507);
+      expect(part(_id).lengthSync(), 0);
+    });
   });
 }

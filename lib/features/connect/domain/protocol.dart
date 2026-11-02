@@ -71,6 +71,10 @@ abstract final class ApiRoutes {
   /// shelf_router paths of the routes above (server side).
   static const fileIdPattern = '/v1/files/<id>';
 
+  /// `GET /v1/files/<id>/sha256` (N10: the sender hash of a download).
+  static String fileSha256(String serverId) =>
+      '$files/${Uri.encodeComponent(serverId)}/sha256';
+
   // ---- N9 uploads (DTOs in upload_protocol.dart) ----
 
   /// `PUT /v1/uploads/<id>/chunk?offset=` (binary body).
@@ -81,7 +85,8 @@ abstract final class ApiRoutes {
   static String uploadComplete(String uploadId) =>
       '$uploads/${Uri.encodeComponent(uploadId)}/complete';
 
-  /// `DELETE /v1/uploads/<id>` (cancel; deletes the partial).
+  /// `DELETE /v1/uploads/<id>` (cancel; deletes the partial) and (N10)
+  /// `GET /v1/uploads/<id>` (`{received, size}`: where to resume).
   static String upload(String uploadId) =>
       '$uploads/${Uri.encodeComponent(uploadId)}';
 

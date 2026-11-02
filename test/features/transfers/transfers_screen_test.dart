@@ -67,6 +67,25 @@ void main() {
     expect(find.text('2 files · Waiting for PC'), findsOneWidget);
     expect(find.text('0 B of 4 KB'), findsOneWidget);
 
+    // N10: Pause → "Paused" with Resume; Resume without a connection
+    // waits for the device and offers Reconnect (remembered device).
+    await tester.tap(find.byKey(ValueKey('transfer-pause-$jobId')));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('2 files · Paused'), findsOneWidget);
+    expect(find.byKey(ValueKey('transfer-pause-$jobId')), findsNothing);
+    await tester.tap(find.byKey(ValueKey('transfer-resume-$jobId')));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('2 files · Waiting for PC'), findsOneWidget);
+    expect(find.text('Reconnect'), findsOneWidget);
+    expect(find.text('Resume'), findsNothing);
+    expect(find.text('Pause'), findsOneWidget);
+
     await tester.tap(find.byKey(ValueKey('transfer-cancel-$jobId')));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
@@ -85,5 +104,7 @@ void main() {
       find.text('No uploads yet. Select files and tap Send to device.'),
       findsOneWidget,
     );
+    // Let the engine's recovery tick find nothing waiting.
+    await tester.pump(const Duration(seconds: 6));
   });
 }

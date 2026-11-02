@@ -156,6 +156,8 @@ class ShareServerController extends _$ShareServerController {
     }
     final gen = ++_generation;
     state = const ShareServerState(status: ShareServerStatus.starting);
+    // N10: partials untouched for 7 days go (one folder, no walk).
+    unawaited(ref.read(uploadStoreProvider).purgeStale());
     final server = ref.read(shareServerProvider);
     try {
       final next = await server.start();
@@ -251,8 +253,9 @@ class ShareServerController extends _$ShareServerController {
     ref.read(acceptGateProvider).cancelAll();
     ref.read(clientSessionStoreProvider).clear();
     ref.read(shareScopeStoreProvider).clear();
-    // N9: unfinished uploads end; their partials are deleted.
-    unawaited(ref.read(uploadStoreProvider).clear());
+    // N9/N10: unfinished chunks end (their streams were cancelled with
+    // the sessions); the partials stay so the same client can resume.
+    ref.read(uploadStoreProvider).stop();
     await ref.read(shareServerProvider).stop();
     await background;
     state = ShareServerState.stopped;

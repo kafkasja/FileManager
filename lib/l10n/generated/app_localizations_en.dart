@@ -4915,6 +4915,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transferFailedGeneric => 'Couldn’t transfer this file';
 
   @override
+  String get transferPause => 'Pause';
+
+  @override
+  String get transferResume => 'Resume';
+
+  @override
+  String get transferReconnect => 'Reconnect';
+
+  @override
+  String get transferPausedByYou => 'Paused';
+
+  @override
+  String get transferRetrying => 'Trying again soon';
+
+  @override
+  String get transferSourceChanged => 'The file changed while it was sent';
+
+  @override
   String get transferDownloadAction => 'Download';
 
   @override

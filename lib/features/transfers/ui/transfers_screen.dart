@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/connect_screen.dart'
+    show pairingFailureMessage;
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
@@ -46,6 +49,7 @@ String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {
     'not_found' ||
     'notFound' => l10n.transferSourceGone,
     TransferErrors.incomplete || 'cancelled' => l10n.transferIncomplete,
+    TransferErrors.sourceChanged => l10n.transferSourceChanged,
     _ => l10n.transferFailedGeneric,
   };
 }
@@ -170,10 +174,20 @@ class _JobCard extends ConsumerWidget {
     final done = live.doneBytesOf(job);
     final download = job.direction == TransferDirection.download;
     final status = switch (job.status) {
-      TransferStatus.queued || TransferStatus.paused =>
-        connected
-            ? l10n.transferStatusQueued
-            : l10n.transferStatusWaitingFor(job.deviceName),
+      TransferStatus.paused => switch (job.pauseReason) {
+        TransferPauseReason.user => l10n.transferPausedByYou,
+        TransferPauseReason.noSpace =>
+          download
+              ? l10n.transferNoSpaceHere
+              : l10n.transferNoSpaceOn(job.deviceName),
+        _ => l10n.transferStatusWaitingFor(job.deviceName),
+      },
+      TransferStatus.queued when !connected => l10n.transferStatusWaitingFor(
+        job.deviceName,
+      ),
+      TransferStatus.queued when job.files.any((f) => f.isRetrying) =>
+        l10n.transferRetrying,
+      TransferStatus.queued => l10n.transferStatusQueued,
       TransferStatus.running => l10n.transferStatusRunning,
       TransferStatus.done => l10n.transferStatusDone,
       TransferStatus.failed => l10n.transferStatusFailed(job.failedCount),
@@ -194,6 +208,9 @@ class _JobCard extends ConsumerWidget {
           ),
         ),
     ];
+    // Waiting for the device: it continues by itself; Pause keeps it.
+    final waiting =
+        job.isPaused && job.pauseReason == TransferPauseReason.waitingForDevice;
     final retryable = job.files.any(
       (f) =>
           f.status == TransferFileStatus.failed ||
@@ -226,13 +243,31 @@ class _JobCard extends ConsumerWidget {
             Wrap(
               spacing: context.tokens.spacing,
               children: [
-                if (job.isActive)
+                if (job.isActive || waiting)
+                  TextButton(
+                    key: ValueKey('transfer-pause-${job.id}'),
+                    onPressed: () => unawaited(engine.pauseJob(job.id)),
+                    child: Text(l10n.transferPause),
+                  ),
+                if (job.isPaused && !waiting)
+                  TextButton(
+                    key: ValueKey('transfer-resume-${job.id}'),
+                    onPressed: () => unawaited(engine.resumeJob(job.id)),
+                    child: Text(l10n.transferResume),
+                  ),
+                if (waiting && !job.deviceTemporary && !connected)
+                  TextButton(
+                    key: ValueKey('transfer-reconnect-${job.id}'),
+                    onPressed: () => unawaited(_reconnect(context, ref)),
+                    child: Text(l10n.transferReconnect),
+                  ),
+                if (job.isActive || job.isPaused)
                   TextButton(
                     key: ValueKey('transfer-cancel-${job.id}'),
                     onPressed: () => unawaited(engine.cancelJob(job.id)),
                     child: Text(l10n.transferCancel),
                   ),
-                if (retryable && !job.isActive)
+                if (retryable && !job.isActive && !job.isPaused)
                   TextButton(
                     key: ValueKey('transfer-retry-${job.id}'),
                     onPressed: () => unawaited(engine.retry(job.id)),
@@ -248,6 +283,23 @@ class _JobCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// N6's reconnect; a failure shows why (rule 8).
+  Future<void> _reconnect(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    try {
+      await ref.read(transferEngineProvider).reconnect(job.deviceFingerprint);
+    } on PairingException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(pairingFailureMessage(l10n, e.failure, job.deviceName)),
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 }
 
@@ -270,6 +322,11 @@ class _FileRow extends ConsumerWidget {
     final engine = ref.read(transferEngineProvider);
     final f = file;
     final subtitle = switch (f.status) {
+      TransferFileStatus.queued when f.isRetrying => l10n.transferRetrying,
+      TransferFileStatus.queued when f.bytesDone > 0 => l10n.transferProgress(
+        formatBytes(f.bytesDone, locale: locale),
+        formatBytes(f.sizeBytes, locale: locale),
+      ),
       TransferFileStatus.queued => l10n.transferStatusQueued,
       TransferFileStatus.running ||
       TransferFileStatus.verifying => l10n.transferProgress(

@@ -112,6 +112,7 @@ class _UpstreamHttp implements RemoteHttp {
     String path, {
     required T Function(Map<String, Object?> json) decode,
     Map<String, String> query = const {},
+    Duration? timeout,
   }) => throw UnimplementedError();
 
   @override

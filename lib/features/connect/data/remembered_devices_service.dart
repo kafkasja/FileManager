@@ -13,6 +13,7 @@ class RememberedDevicesService {
     required this._disconnect,
     required this._stopSharing,
     required this._resetIdentity,
+    this._removeUploads,
   });
 
   final KnownDevicesRepository _repo;
@@ -26,6 +27,9 @@ class RememberedDevicesService {
 
   /// New key, cert, deviceId and root-id salt; invalidates the identity.
   final Future<void> Function() _resetIdentity;
+
+  /// N10: deletes that device's partial uploads to us.
+  final Future<void> Function(String fingerprint)? _removeUploads;
 
   /// Deletes the row and ends everything that device has with us at once:
   /// its live session (its next request gets 401), its shared folders, and
@@ -57,6 +61,7 @@ class RememberedDevicesService {
   Future<void> _revoke(String fp) async {
     _sessions.revokeByFingerprint(fp);
     _scopes.remove(fp);
+    await _removeUploads?.call(fp);
     if (_connectedPeer() == fp) await _disconnect();
   }
 }
