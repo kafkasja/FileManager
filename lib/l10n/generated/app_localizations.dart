@@ -8954,6 +8954,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{package} · version {version}'**
   String apkPackageLine(String package, String version);
+
+  /// X7 Settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get updatesSectionTitle;
+
+  /// X7 switch (off by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get updatesCheckSetting;
+
+  /// X7 switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a day KFM asks GitHub if there\'s a newer version. Nothing about you or your files is sent; GitHub sees your IP address like any website.'**
+  String get updatesCheckSettingHelp;
+
+  /// X7 manual check row (works with the switch off).
+  ///
+  /// In en, this message translates to:
+  /// **'Check now'**
+  String get updatesCheckNow;
+
+  /// X7 check-now subtitle before any check.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed version {version}'**
+  String updatesCurrentVersion(String version);
+
+  /// X7 while the request runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get updatesChecking;
+
+  /// X7 result.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date'**
+  String get updatesUpToDate;
+
+  /// X7 manual check: GitHub has no release (404).
+  ///
+  /// In en, this message translates to:
+  /// **'No releases found'**
+  String get updatesNoReleases;
+
+  /// X7 banner and result.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM {version} is available'**
+  String updatesAvailable(String version);
+
+  /// X7 Settings line after a failed check.
+  ///
+  /// In en, this message translates to:
+  /// **'Last check failed'**
+  String get updatesLastCheckFailed;
+
+  /// X7 manual check snackbar: offline/timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach GitHub. Check your connection.'**
+  String get updatesFailedOffline;
+
+  /// X7 manual check snackbar: 403/429 rate limit.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub is busy. Try again later.'**
+  String get updatesFailedBusy;
+
+  /// X7 manual check snackbar: other errors.
+  ///
+  /// In en, this message translates to:
+  /// **'Update check failed: {error}'**
+  String updatesFailed(String error);
+
+  /// X7 banner button: release notes sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get updatesWhatsNew;
+
+  /// X7 button: opens the release page in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get updatesDownload;
+
+  /// X7 banner close tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide until the next version'**
+  String get updatesDismiss;
+
+  /// X7 What's new sheet with an empty body.
+  ///
+  /// In en, this message translates to:
+  /// **'No release notes.'**
+  String get updatesNoNotes;
+
+  /// X7 snackbar: Download couldn't open the page.
+  ///
+  /// In en, this message translates to:
+  /// **'No browser app found'**
+  String get updatesNoBrowser;
+
+  /// X7 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the page: {error}'**
+  String updatesOpenFailed(String error);
 }
 
 class _AppLocalizationsDelegate

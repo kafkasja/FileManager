@@ -27,8 +27,9 @@
     <!-- Optional: skip trash/write confirmation dialogs (API 31+) -->
     <uses-permission android:name="android.permission.MANAGE_MEDIA"
         tools:ignore="ProtectedPermissions" />
-    <!-- Only for the user-confirmed AI model download + its Wi-Fi-only check
-         (TASK-C3). Labeling itself never uses the network. -->
+    <!-- Opt-in network only (rule 7): the user-confirmed AI model download +
+         its Wi-Fi-only check (TASK-C3; labeling itself never uses the network)
+         and the opt-in daily update check against GitHub Releases (TASK-X7). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Local Wi-Fi / hotspot sharing server (TASK-N1); never reaches the internet. -->

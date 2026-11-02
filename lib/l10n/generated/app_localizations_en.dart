@@ -6444,4 +6444,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String apkPackageLine(String package, String version) {
     return '$package · version $version';
   }
+
+  @override
+  String get updatesSectionTitle => 'Updates';
+
+  @override
+  String get updatesCheckSetting => 'Check for updates';
+
+  @override
+  String get updatesCheckSettingHelp =>
+      'Once a day KFM asks GitHub if there\'s a newer version. Nothing about you or your files is sent; GitHub sees your IP address like any website.';
+
+  @override
+  String get updatesCheckNow => 'Check now';
+
+  @override
+  String updatesCurrentVersion(String version) {
+    return 'Installed version $version';
+  }
+
+  @override
+  String get updatesChecking => 'Checking…';
+
+  @override
+  String get updatesUpToDate => 'You\'re up to date';
+
+  @override
+  String get updatesNoReleases => 'No releases found';
+
+  @override
+  String updatesAvailable(String version) {
+    return 'KFM $version is available';
+  }
+
+  @override
+  String get updatesLastCheckFailed => 'Last check failed';
+
+  @override
+  String get updatesFailedOffline =>
+      'Couldn\'t reach GitHub. Check your connection.';
+
+  @override
+  String get updatesFailedBusy => 'GitHub is busy. Try again later.';
+
+  @override
+  String updatesFailed(String error) {
+    return 'Update check failed: $error';
+  }
+
+  @override
+  String get updatesWhatsNew => 'What\'s new';
+
+  @override
+  String get updatesDownload => 'Download';
+
+  @override
+  String get updatesDismiss => 'Hide until the next version';
+
+  @override
+  String get updatesNoNotes => 'No release notes.';
+
+  @override
+  String get updatesNoBrowser => 'No browser app found';
+
+  @override
+  String updatesOpenFailed(String error) {
+    return 'Couldn\'t open the page: $error';
+  }
 }
