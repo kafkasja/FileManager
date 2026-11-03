@@ -9908,6 +9908,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} selected · {size}'**
   String desktopStatusSelected(int count, String size);
+
+  /// PL3: Sort toolbar button and panel title: the session's actions, newest first.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get desktopSortHistory;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing sorted yet'**
+  String get desktopSortHistoryEmpty;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo back to here'**
+  String get desktopSortUndoToHere;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {count} actions?'**
+  String desktopSortUndoManyTitle(int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'The newest {count} actions are undone one by one, back to the one you clicked.'**
+  String desktopSortUndoManyBody(int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {count}'**
+  String desktopSortUndoManyConfirm(int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Select files, then choose what to do with them'**
+  String get desktopSortSelectHint;
+
+  /// PL3: feedback after an action on several files, e.g. '→ Trash · 3 files'.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} · {count, plural, =1{1 file} other{{count} files}}'**
+  String desktopSortActed(String label, int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Large icons'**
+  String get desktopLayoutLargeIcons;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get desktopLayoutGrid;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get desktopLayoutDetails;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick look'**
+  String get desktopQuickLook;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get desktopClose;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get desktopPrevious;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get desktopNext;
+
+  /// PL3: Details Type column, e.g. 'JPG file'.
+  ///
+  /// In en, this message translates to:
+  /// **'{ext} file'**
+  String desktopTypeFile(String ext);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get desktopTypeUnknown;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get desktopTypeFolder;
+
+  /// PL3: Quick look header.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {size} · {date}'**
+  String desktopQuickLookTitle(String name, String size, String date);
+
+  /// PL3: Sort toolbar count of files still to sort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left'**
+  String desktopSortLeft(int count);
 }
 
 class _AppLocalizationsDelegate

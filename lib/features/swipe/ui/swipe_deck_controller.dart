@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -289,18 +290,24 @@ class SwipeDeckController extends _$SwipeDeckController {
     final dao = ref.read(mediaIndexDaoProvider);
     final repo = ref.read(swipeQueueRepositoryProvider);
     final generation = _generation;
+    // PL3: the desktop Sort grid acts on files in any order, so "after the
+    // latest action" would hide files above it: it always starts at the top
+    // and skips acted files by id.
+    final fromTop = ref.read(formFactorProvider).isDesktop;
     switch (open) {
       case null:
         _floor = await sources.mainFloor(session.id);
-        _resumeAt = await _resumePoint(session, floor: _floor);
+        _resumeAt = fromTop ? null : await _resumePoint(session, floor: _floor);
         _query = await _queryFor(FileFilter.decode(session.filterJson));
         _queue = IndexQueueSource(repo, dao, _query);
       case OpenSwipeSource(kind: SwipeSourceKind.filter, :final filter?):
-        _resumeAt = await _resumePoint(
-          session,
-          floor: open.openedAfterSeq,
-          cursorFallback: false,
-        );
+        _resumeAt = fromTop
+            ? null
+            : await _resumePoint(
+                session,
+                floor: open.openedAfterSeq,
+                cursorFallback: false,
+              );
         // Decision 5: skip-reviewed doesn't apply; an explicit value does.
         _query = toIndexQuery(
           filter,
@@ -701,13 +708,14 @@ class SwipeDeckController extends _$SwipeDeckController {
     return action == null ? null : problemForAction(action);
   }
 
-  /// Why [action] can't run right now (P2: deleted tag, unsupported type).
-  SwipeActionProblem? problemForAction(SwipeAction action) =>
+  /// Why [action] can't run right now (P2: deleted tag, unsupported type)
+  /// on [file] (default: the current file).
+  SwipeActionProblem? problemForAction(SwipeAction action, {FileRef? file}) =>
       SwipeActionDispatcher.problemFor(
         action,
         ref.read(tagsByIdProvider).value ?? const {},
         remote: _remoteRules(),
-        file: state.value?.current,
+        file: file ?? state.value?.current,
         knownDeviceIds: _known?.map((d) => d.id).toSet(),
       );
 
@@ -750,6 +758,67 @@ class SwipeDeckController extends _$SwipeDeckController {
     ref.read(deleteQueueProvider).maybeCommit(deck.session.id).ignore();
     if (rest.length < refillBelow && deck.hasMore) unawaited(_refill());
     return true;
+  }
+
+  /// PL3 (desktop Sort grid): applies [action] to each of [files] that is
+  /// in the deck, in deck order. Each file gets its own undo row through the
+  /// same dispatcher as a swipe (batched-delete rules unchanged). Files the
+  /// action can't run on are left in the deck; [ApplyManyResult.problem]
+  /// says why.
+  ApplyManyResult applyToFiles(Iterable<FileRef> files, SwipeAction action) {
+    final deck = state.value;
+    if (deck == null) return const ApplyManyResult(0);
+    final wanted = {for (final f in files) f.id};
+    final dispatcher = ref.read(swipeActionDispatcherProvider);
+    final done = <String>{};
+    SwipeActionProblem? problem;
+    FileRef? last;
+    for (final file in deck.upcoming) {
+      if (!wanted.contains(file.id)) continue;
+      final p = problemForAction(action, file: file);
+      if (p != null) {
+        problem ??= p;
+        continue;
+      }
+      dispatcher.dispatch(deck.session, file, action);
+      _acted.add(file.id);
+      if (_peer != null) _swipedRemote[file.id] = file;
+      done.add(file.id);
+      last = file;
+    }
+    if (done.isEmpty) return ApplyManyResult(0, problem: problem);
+    final rest = [
+      for (final f in deck.upcoming)
+        if (!done.contains(f.id)) f,
+    ];
+    final left = deck.remaining - done.length;
+    state = AsyncData(
+      deck.copyWith(
+        upcoming: rest,
+        swiped: deck.swiped + done.length,
+        remaining: left > 0 ? left : 0,
+      ),
+    );
+    if (deck.source == null && _peer == null && last != null) {
+      ref
+          .read(sessionRepositoryProvider)
+          .saveCursor(deck.session.id, deck.swiped + done.length, last.id);
+    }
+    // The batch check reads the undo log: let this batch's rows land first
+    // (one swipe at a time, the next swipe's check sees the earlier rows).
+    final deletes = ref.read(deleteQueueProvider);
+    ref
+        .read(dbWriteQueueProvider)
+        .flush()
+        .then((_) => deletes.maybeCommit(deck.session.id))
+        .ignore();
+    if (rest.length < refillBelow && deck.hasMore) unawaited(_refill());
+    return ApplyManyResult(done.length, problem: problem);
+  }
+
+  /// PL3: the grid scrolled to the end of the window: load the next one.
+  Future<void> loadMore() async {
+    if (state.value?.hasMore ?? false) await _refill();
   }
 
   /// Undoes the last action and shows its file again.
@@ -1053,4 +1122,16 @@ class SwipeDeckController extends _$SwipeDeckController {
     final left = total - acted;
     return left < 0 ? 0 : left;
   }
+}
+
+/// What [SwipeDeckController.applyToFiles] did.
+@immutable
+class ApplyManyResult {
+  const new(this.applied, {this.problem});
+
+  /// Files acted on (one undo row each).
+  final int applied;
+
+  /// Why some (or all) files were skipped; null = none were.
+  final SwipeActionProblem? problem;
 }

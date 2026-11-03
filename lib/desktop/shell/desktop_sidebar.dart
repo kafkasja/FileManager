@@ -84,8 +84,7 @@ class DesktopSidebar extends ConsumerWidget {
                     enabled: p.available,
                     onTap: () => openDesktopFolder(context, ref, p.path),
                   ),
-                if (places.isEmpty && !collapsed)
-                  _Hint(l10n.desktopNoPlaces),
+                if (places.isEmpty && !collapsed) _Hint(l10n.desktopNoPlaces),
                 if (!collapsed) _Header(l10n.desktopSidebarCollections),
                 if (collapsed) const Divider(),
                 SidebarItem(
@@ -131,9 +130,8 @@ class _Header extends StatelessWidget {
     padding: const EdgeInsetsDirectional.fromSTEB(12, 16, 12, 4),
     child: Text(
       text,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.labelMedium
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
 }
@@ -148,9 +146,8 @@ class _Hint extends StatelessWidget {
     padding: const EdgeInsetsDirectional.symmetric(horizontal: 12, vertical: 4),
     child: Text(
       text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.bodySmall
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
 }

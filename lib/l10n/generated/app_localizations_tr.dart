@@ -7052,4 +7052,79 @@ class AppLocalizationsTr extends AppLocalizations {
   String desktopStatusSelected(int count, String size) {
     return '$count seçili · $size';
   }
+
+  @override
+  String get desktopSortHistory => 'Geçmiş';
+
+  @override
+  String get desktopSortHistoryEmpty => 'Henüz bir şey ayıklanmadı';
+
+  @override
+  String get desktopSortUndoToHere => 'Buraya kadar geri al';
+
+  @override
+  String desktopSortUndoManyTitle(int count) {
+    return '$count işlem geri alınsın mı?';
+  }
+
+  @override
+  String desktopSortUndoManyBody(int count) {
+    return 'En yeni $count işlem, tıkladığınıza kadar tek tek geri alınır.';
+  }
+
+  @override
+  String desktopSortUndoManyConfirm(int count) {
+    return '$count geri al';
+  }
+
+  @override
+  String get desktopSortSelectHint =>
+      'Dosyaları seçin, sonra ne yapılacağını seçin';
+
+  @override
+  String desktopSortActed(String label, int count) {
+    return '$label · $count dosya';
+  }
+
+  @override
+  String get desktopLayoutLargeIcons => 'Büyük simgeler';
+
+  @override
+  String get desktopLayoutGrid => 'Izgara';
+
+  @override
+  String get desktopLayoutDetails => 'Ayrıntılar';
+
+  @override
+  String get desktopQuickLook => 'Hızlı bakış';
+
+  @override
+  String get desktopClose => 'Kapat';
+
+  @override
+  String get desktopPrevious => 'Önceki';
+
+  @override
+  String get desktopNext => 'Sonraki';
+
+  @override
+  String desktopTypeFile(String ext) {
+    return '$ext dosyası';
+  }
+
+  @override
+  String get desktopTypeUnknown => 'Dosya';
+
+  @override
+  String get desktopTypeFolder => 'Klasör';
+
+  @override
+  String desktopQuickLookTitle(String name, String size, String date) {
+    return '$name · $size · $date';
+  }
+
+  @override
+  String desktopSortLeft(int count) {
+    return '$count kaldı';
+  }
 }

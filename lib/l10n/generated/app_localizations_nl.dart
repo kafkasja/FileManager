@@ -7098,4 +7098,85 @@ class AppLocalizationsNl extends AppLocalizations {
   String desktopStatusSelected(int count, String size) {
     return '$count geselecteerd · $size';
   }
+
+  @override
+  String get desktopSortHistory => 'Geschiedenis';
+
+  @override
+  String get desktopSortHistoryEmpty => 'Nog niets gesorteerd';
+
+  @override
+  String get desktopSortUndoToHere => 'Tot hier ongedaan maken';
+
+  @override
+  String desktopSortUndoManyTitle(int count) {
+    return '$count acties ongedaan maken?';
+  }
+
+  @override
+  String desktopSortUndoManyBody(int count) {
+    return 'De nieuwste $count acties worden een voor een ongedaan gemaakt, tot en met de actie waarop je klikte.';
+  }
+
+  @override
+  String desktopSortUndoManyConfirm(int count) {
+    return '$count ongedaan maken';
+  }
+
+  @override
+  String get desktopSortSelectHint =>
+      'Selecteer bestanden en kies wat ermee moet gebeuren';
+
+  @override
+  String desktopSortActed(String label, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden',
+      one: '1 bestand',
+    );
+    return '$label · $_temp0';
+  }
+
+  @override
+  String get desktopLayoutLargeIcons => 'Grote pictogrammen';
+
+  @override
+  String get desktopLayoutGrid => 'Raster';
+
+  @override
+  String get desktopLayoutDetails => 'Details';
+
+  @override
+  String get desktopQuickLook => 'Snel bekijken';
+
+  @override
+  String get desktopClose => 'Sluiten';
+
+  @override
+  String get desktopPrevious => 'Vorige';
+
+  @override
+  String get desktopNext => 'Volgende';
+
+  @override
+  String desktopTypeFile(String ext) {
+    return '$ext-bestand';
+  }
+
+  @override
+  String get desktopTypeUnknown => 'Bestand';
+
+  @override
+  String get desktopTypeFolder => 'Map';
+
+  @override
+  String desktopQuickLookTitle(String name, String size, String date) {
+    return '$name · $size · $date';
+  }
+
+  @override
+  String desktopSortLeft(int count) {
+    return 'Nog $count';
+  }
 }

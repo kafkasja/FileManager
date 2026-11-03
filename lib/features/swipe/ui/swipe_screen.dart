@@ -9,8 +9,6 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
-import 'package:kfm/core/db/db_providers.dart';
-import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
@@ -30,8 +28,6 @@ import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/reviewed/ui/reviewed_badge.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
-import 'package:kfm/features/stats/data/stats_repository.dart';
-import 'package:kfm/features/stats/ui/session_summary_sheet.dart';
 import 'package:kfm/features/swipe/data/file_source_resolver.dart';
 import 'package:kfm/features/swipe/data/swipe_file_ops.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
@@ -44,6 +40,7 @@ import 'package:kfm/features/swipe/ui/swipe_buttons_row.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
+import 'package:kfm/features/swipe/ui/swipe_finish_flow.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_bar.dart';
@@ -141,7 +138,7 @@ class SwipeScreen extends ConsumerWidget {
                         ),
                       ),
                     )
-                  : () => _finish(context, ref, value),
+                  : () => finishSwipeSession(context, ref, value),
               child: Text(l10n.swipeDone),
             ),
           if (value != null && peer == null)
@@ -191,152 +188,6 @@ class SwipeScreen extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  Future<void> _finish(
-    BuildContext context,
-    WidgetRef ref,
-    SwipeDeckState deck,
-  ) async {
-    final l10n = context.l10n;
-    final remote = deck.session.isRemote;
-    final device = _deviceName(context);
-    // P3: an unapplied rename batch would be dropped: ask first.
-    final renameCount = remote
-        ? 0
-        : await ref.read(renameBatchCountProvider(deck.session.id).future);
-    if (!context.mounted) return;
-    if (renameCount > 0) {
-      final choice = await showDialog<_RenameChoice>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.renameBeforeFinishTitle(renameCount)),
-          content: Text(l10n.renameBeforeFinishBody),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, _RenameChoice.discard),
-              child: Text(l10n.renameDiscard),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, _RenameChoice.rename),
-              child: Text(l10n.renameOpen),
-            ),
-          ],
-        ),
-      );
-      if (!context.mounted || choice == null) return;
-      if (choice == _RenameChoice.rename) {
-        context.go(AppRoutes.renameBatch);
-        return;
-      }
-    }
-    final summary = await ref.read(
-      pendingDeleteSummaryProvider(deck.session.id).future,
-    );
-    if (!context.mounted) return;
-    final waiting = summary.queued + summary.failed;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.swipeFinishTitle),
-        content: Text(
-          remote
-              ? l10n.remoteSwipeFinishBody(waiting, device)
-              : deck.session.deleteMode == DeleteMode.permanent
-              ? l10n.swipeFinishPermanent(waiting)
-              : l10n.swipeFinishTrash(waiting),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.swipeFinishConfirm),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    final result = await ref
-        .read(swipeDeckForSourceProvider(deck.session.sourceId).notifier)
-        .finish();
-    if (!context.mounted) return;
-    if (!result.sessionEnded) {
-      final text = !remote
-          ? l10n.newSessionFailed
-          : result.commit.userCancelled
-          ? l10n.remoteSwipeDeclined(device)
-          : result.commit.sourceUnavailable
-          ? l10n.remoteSwipeWaiting(device)
-          : l10n.newSessionFailed;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-      return;
-    }
-    if (remote) {
-      // N8: the session on that device is over: back to where it started.
-      final locale = Localizations.localeOf(context).toLanguageTag();
-      final messenger = ScaffoldMessenger.of(context);
-      final count = result.commit.committed + summary.committed;
-      final size = formatBytes(
-        result.commit.bytes + summary.committedBytes,
-        locale: locale,
-      );
-      await Navigator.of(context).maybePop();
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.sessionSummaryTrash(count, size))),
-      );
-      return;
-    }
-    // H2: files the pending folder couldn't take weren't deleted.
-    final unavailable =
-        result.commit.folderUnavailable + summary.folderUnavailable;
-    if (unavailable > 0) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            persist: false,
-            content: Text(l10n.pendingUnavailableAfterDone(unavailable)),
-            action: SnackBarAction(
-              label: l10n.pendingUnavailableOptions,
-              onPressed: () => showPendingUnavailableSheet(context),
-            ),
-          ),
-        );
-      return;
-    }
-    // P8: the summary sheet (setting, on by default).
-    if (await ref
-        .read(settingsRepositoryProvider)
-        .read(AppSettings.statsShowSessionSummary)) {
-      final stats = await ref
-          .read(statsRepositoryProvider)
-          .forSession(deck.session.id);
-      if (!context.mounted) return;
-      if (stats.reviewed > 0) {
-        await showSessionSummary(context, stats);
-        return;
-      }
-    }
-    if (!context.mounted) return;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final count = result.commit.committed + summary.committed;
-    final size = formatBytes(
-      result.commit.bytes + summary.committedBytes,
-      locale: locale,
-    );
-    // Trash mode frees nothing yet: say where the files went.
-    final message = deck.session.deleteMode == DeleteMode.permanent
-        ? l10n.sessionSummary(count, size)
-        : l10n.sessionSummaryTrash(count, size);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -1135,8 +986,6 @@ class _UndoReturn extends StatelessWidget {
     );
   }
 }
-
-enum _RenameChoice { rename, discard }
 
 /// P3: "✎ N" while files wait in the rename batch; opens the screen.
 class _RenamePill extends ConsumerWidget {

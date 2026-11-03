@@ -126,8 +126,6 @@ Future<List<DesktopPlace>> desktopPlaces(Ref ref) async {
         DesktopPlace(r.path.replaceAll(r'\', '/'), available: r.available),
     ];
   }
-  final folders = await ref.watch(
-    browseFoldersProvider(IndexQuery.all).future,
-  );
+  final folders = await ref.watch(browseFoldersProvider(IndexQuery.all).future);
   return [for (final f in folders) DesktopPlace(f.path)];
 }

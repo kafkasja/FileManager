@@ -6,7 +6,10 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 /// Desktop keyboard shortcuts (TASK-PL3). Every one also has a visible
 /// button or menu entry (round 7: never keyboard-only).
 abstract final class DesktopKeys {
-  static const details = SingleActivator(LogicalKeyboardKey.keyI, control: true);
+  static const details = SingleActivator(
+    LogicalKeyboardKey.keyI,
+    control: true,
+  );
   static const find = SingleActivator(LogicalKeyboardKey.keyF, control: true);
   static const undo = SingleActivator(LogicalKeyboardKey.keyZ, control: true);
   static const selectAll = SingleActivator(

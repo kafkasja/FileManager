@@ -7035,4 +7035,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopStatusSelected(int count, String size) {
     return '$count selected · $size';
   }
+
+  @override
+  String get desktopSortHistory => 'History';
+
+  @override
+  String get desktopSortHistoryEmpty => 'Nothing sorted yet';
+
+  @override
+  String get desktopSortUndoToHere => 'Undo back to here';
+
+  @override
+  String desktopSortUndoManyTitle(int count) {
+    return 'Undo $count actions?';
+  }
+
+  @override
+  String desktopSortUndoManyBody(int count) {
+    return 'The newest $count actions are undone one by one, back to the one you clicked.';
+  }
+
+  @override
+  String desktopSortUndoManyConfirm(int count) {
+    return 'Undo $count';
+  }
+
+  @override
+  String get desktopSortSelectHint =>
+      'Select files, then choose what to do with them';
+
+  @override
+  String desktopSortActed(String label, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$label · $_temp0';
+  }
+
+  @override
+  String get desktopLayoutLargeIcons => 'Large icons';
+
+  @override
+  String get desktopLayoutGrid => 'Grid';
+
+  @override
+  String get desktopLayoutDetails => 'Details';
+
+  @override
+  String get desktopQuickLook => 'Quick look';
+
+  @override
+  String get desktopClose => 'Close';
+
+  @override
+  String get desktopPrevious => 'Previous';
+
+  @override
+  String get desktopNext => 'Next';
+
+  @override
+  String desktopTypeFile(String ext) {
+    return '$ext file';
+  }
+
+  @override
+  String get desktopTypeUnknown => 'File';
+
+  @override
+  String get desktopTypeFolder => 'Folder';
+
+  @override
+  String desktopQuickLookTitle(String name, String size, String date) {
+    return '$name · $size · $date';
+  }
+
+  @override
+  String desktopSortLeft(int count) {
+    return '$count left';
+  }
 }
