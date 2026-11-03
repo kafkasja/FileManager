@@ -3,6 +3,9 @@
   "appTitle": "Kaf's File Manager",
   "appTitleShort": "KFM",
   "tabSwipe": "Swipe",
+  "@tabSwipe": {
+    "description": "Bottom tab: the swipe-to-sort screen (verb used as a name)."
+  },
   "tabBrowse": "Browse",
   "tabTrash": "Trash",
   "tabSettings": "Settings",
@@ -64,6 +67,9 @@
   "thumbCacheTitle": "Thumbnail cache",
   "thumbCacheSizeUnknown": "Size unknown",
   "thumbCacheClear": "Clear",
+  "@thumbCacheClear": {
+    "description": "Clears the thumbnail cache."
+  },
   "settingsDeveloper": "Developer",
   "devIndexedFiles": "{count, plural, =1{1 file in the index} other{{count} files in the index}}",
   "@devIndexedFiles": {
@@ -81,8 +87,14 @@
   "swipeLookingForPhotos": "Looking for photos…",
   "swipeErrorGeneric": "Couldn't load your photos.",
   "swipeDone": "Done",
+  "@swipeDone": {
+    "description": "Button that ends the swipe session and commits pending deletes."
+  },
   "swipeFinishTitle": "Finish this session?",
   "swipeFinishConfirm": "Finish",
+  "@swipeFinishConfirm": {
+    "description": "Confirms ending the swipe session."
+  },
   "cancel": "Cancel",
   "undo": "Undo",
   "undoHistoryTitle": "Recent actions",
@@ -347,6 +359,9 @@
   "swipeActionTrash": "Move to trash",
   "swipeActionDelete": "Delete permanently",
   "swipeActionKeep": "Keep",
+  "@swipeActionKeep": {
+    "description": "Swipe action: keep the file where it is (opposite of trash)."
+  },
   "swipeActionNeedOne": "At least one direction needs an action",
   "swipeLayoutReset": "Reset to basic",
   "swipeLayoutResetTitle": "Reset swipes?",
@@ -551,6 +566,9 @@
   "barTrash": "Trash",
   "barDelete": "Delete",
   "barKeep": "Keep",
+  "@barKeep": {
+    "description": "Action bar button: keep the file (swipe action)."
+  },
   "barFavorite": "Favorite",
   "barRename": "Rename",
   "actionBarTitle": "Action bar",
@@ -700,10 +718,16 @@
   "settingsPresets": "Presets",
   "settingsPresetsHelp": "Saved swipe setups",
   "reviewedBadge": "Reviewed",
+  "@reviewedBadge": {
+    "description": "Badge on a file already sorted (reviewed) in this preset."
+  },
   "settingsShowReviewedBadge": "Show reviewed badge",
   "settingsShowReviewedBadgeHelp": "A small mark on files you already swiped before",
   "reviewedIncludeToggle": "Include files already reviewed here",
   "filterReviewed": "Reviewed",
+  "@filterReviewed": {
+    "description": "Filter chip: files already reviewed (sorted) in a preset."
+  },
   "filterReviewedOnly": "Reviewed",
   "filterNotReviewed": "Not reviewed",
   "reviewedInfoLine": "Reviewed in {preset} · {action} · {date}",
@@ -889,6 +913,9 @@
   "pendingUnavailableGrantAccess": "Allow All files access so KFM can use the folder",
   "pendingUnavailableWarning": "Deleting permanently can't be undone. These files won't go to the trash and can't be restored.",
   "pendingUnavailableKeep": "Keep",
+  "@pendingUnavailableKeep": {
+    "description": "Keep the pending trash file instead of deleting it."
+  },
   "pendingUnavailableDeleteOne": "Delete permanently",
   "pendingUnavailableDeleteAll": "{count, plural, =1{Delete 1 file permanently} other{Delete all {count} permanently}}",
   "@pendingUnavailableDeleteAll": {
@@ -1999,6 +2026,9 @@
   "similarSkip": "Skip",
   "similarNextGroup": "Next group",
   "similarKeep": "Keep",
+  "@similarKeep": {
+    "description": "Keep this photo of a group of look-alike photos."
+  },
   "similarRemove": "Remove",
   "similarSettingEnabled": "Find similar and blurry photos",
   "similarSettingEnabledHint": "Checks photos in the background while KFM is open",
@@ -2013,6 +2043,9 @@
   "groupsDocuments": "Documents",
   "groupsTrips": "Trips",
   "groupsPlaces": "Places",
+  "@groupsPlaces": {
+    "description": "Smart groups by photo location (towns, countries), not storage places."
+  },
   "smartGroupPlace": "Place {n}",
   "@smartGroupPlace": {
     "placeholders": {
@@ -3202,6 +3235,9 @@
   "transferSourceChanged": "The file changed while it was sent",
   "transferModeCopy": "Copy",
   "transferModeMove": "Move",
+  "@transferModeMove": {
+    "description": "Transfer mode: move = copy, verify, then remove the original."
+  },
   "transferMoveDownloadNote": "Each file is checked after it arrives; only then does its original go to the trash on {device}.",
   "@transferMoveDownloadNote": {"placeholders": {"device": {"type": "String"}}},
   "transferMoveToDevice": "Move to device",

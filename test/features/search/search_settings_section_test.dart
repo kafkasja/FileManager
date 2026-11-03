@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/features/search/data/search_vocabulary.dart';
@@ -32,10 +31,13 @@ Future<void> _pump(WidgetTester tester, AssetBundle bundle) async {
 }
 
 void main() {
-  testWidgets('"Also search in" is hidden with only terms_en.json', (
+  testWidgets('"Also search in" is hidden with only one term file', (
     tester,
   ) async {
-    await _pump(tester, rootBundle);
+    await _pump(
+      tester,
+      FixtureTermsBundle.langs({'en': 'assets/search/terms_en.json'}),
+    );
     expect(find.text('Also search in'), findsNothing);
     expect(find.byKey(const ValueKey('searchSecondaryLanguage')), findsNothing);
   });

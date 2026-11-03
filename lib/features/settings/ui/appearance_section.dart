@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app_info.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -59,7 +60,8 @@ class AppearanceSection extends ConsumerWidget {
         ),
         ListTile(title: Text(l10n.themeColorLabel)),
         const AccentSwatches(),
-        ListTile(
+        // L2: "Nederlands" at big text doesn't fit as a trailing dropdown.
+        AdaptiveListTile(
           title: Text(l10n.languageLabel),
           trailing: DropdownButton<String>(
             value: tags.contains(current) ? current : '',

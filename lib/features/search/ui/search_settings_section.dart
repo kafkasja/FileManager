@@ -31,35 +31,44 @@ class SearchSettingsSection extends ConsumerWidget {
             key: const ValueKey('searchSecondaryLanguage'),
             leading: const Icon(Icons.translate),
             title: Text(l10n.searchSettingsAlsoSearchIn),
-            subtitle: Text(l10n.searchSettingsAlsoSearchInHelp),
-            trailing: DropdownButton<String>(
-              // The main language counts as none; an unbundled stored value
-              // too (the dropdown needs its value among the items).
-              value: secondary != main && languages.contains(secondary)
-                  ? secondary
-                  : '',
-              onChanged: (v) {
-                if (v == null) return;
-                ref
-                    .read(settingsRepositoryProvider)
-                    .write(AppSettings.searchSecondaryLanguage, v)
-                    .fireAndForget();
-              },
-              items: [
-                DropdownMenuItem(
-                  value: '',
-                  child: Text(l10n.searchSettingsNone),
-                ),
-                for (final lang in languages)
-                  DropdownMenuItem(
-                    value: lang,
-                    enabled: lang != main,
-                    child: Text(
-                      lang == main
-                          ? l10n.searchSettingsAlreadyIncluded(_name(lang))
-                          : _name(lang),
+            // The dropdown sits under the help text, full width: "English
+            // (already included)" and longer translations don't fit as a
+            // trailing widget on a small phone (L2).
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.searchSettingsAlsoSearchInHelp),
+                DropdownButton<String>(
+                  isExpanded: true,
+                  // The main language counts as none; an unbundled stored value
+                  // too (the dropdown needs its value among the items).
+                  value: secondary != main && languages.contains(secondary)
+                      ? secondary
+                      : '',
+                  onChanged: (v) {
+                    if (v == null) return;
+                    ref
+                        .read(settingsRepositoryProvider)
+                        .write(AppSettings.searchSecondaryLanguage, v)
+                        .fireAndForget();
+                  },
+                  items: [
+                    DropdownMenuItem(
+                      value: '',
+                      child: Text(l10n.searchSettingsNone),
                     ),
-                  ),
+                    for (final lang in languages)
+                      DropdownMenuItem(
+                        value: lang,
+                        enabled: lang != main,
+                        child: Text(
+                          lang == main
+                              ? l10n.searchSettingsAlreadyIncluded(_name(lang))
+                              : _name(lang),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

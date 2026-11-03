@@ -50,6 +50,7 @@
         android:label="KFM"
         android:requestLegacyExternalStorage="true"
         android:enableOnBackInvokedCallback="true"
+        android:localeConfig="@xml/locales_config"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:fullBackupContent="@xml/backup_rules"

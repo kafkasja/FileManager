@@ -6,6 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_nl.dart';
+import 'app_localizations_tr.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +94,11 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('nl'),
+    Locale('tr'),
+  ];
 
   /// No description provided for @appTitle.
   ///
@@ -106,7 +112,7 @@ abstract class AppLocalizations {
   /// **'KFM'**
   String get appTitleShort;
 
-  /// No description provided for @tabSwipe.
+  /// Bottom tab: the swipe-to-sort screen (verb used as a name).
   ///
   /// In en, this message translates to:
   /// **'Swipe'**
@@ -376,7 +382,7 @@ abstract class AppLocalizations {
   /// **'Size unknown'**
   String get thumbCacheSizeUnknown;
 
-  /// No description provided for @thumbCacheClear.
+  /// Clears the thumbnail cache.
   ///
   /// In en, this message translates to:
   /// **'Clear'**
@@ -430,7 +436,7 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load your photos.'**
   String get swipeErrorGeneric;
 
-  /// No description provided for @swipeDone.
+  /// Button that ends the swipe session and commits pending deletes.
   ///
   /// In en, this message translates to:
   /// **'Done'**
@@ -442,7 +448,7 @@ abstract class AppLocalizations {
   /// **'Finish this session?'**
   String get swipeFinishTitle;
 
-  /// No description provided for @swipeFinishConfirm.
+  /// Confirms ending the swipe session.
   ///
   /// In en, this message translates to:
   /// **'Finish'**
@@ -1012,7 +1018,7 @@ abstract class AppLocalizations {
   /// **'Delete permanently'**
   String get swipeActionDelete;
 
-  /// No description provided for @swipeActionKeep.
+  /// Swipe action: keep the file where it is (opposite of trash).
   ///
   /// In en, this message translates to:
   /// **'Keep'**
@@ -1450,7 +1456,7 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get barDelete;
 
-  /// No description provided for @barKeep.
+  /// Action bar button: keep the file (swipe action).
   ///
   /// In en, this message translates to:
   /// **'Keep'**
@@ -1912,7 +1918,7 @@ abstract class AppLocalizations {
   /// **'Saved swipe setups'**
   String get settingsPresetsHelp;
 
-  /// No description provided for @reviewedBadge.
+  /// Badge on a file already sorted (reviewed) in this preset.
   ///
   /// In en, this message translates to:
   /// **'Reviewed'**
@@ -1936,7 +1942,7 @@ abstract class AppLocalizations {
   /// **'Include files already reviewed here'**
   String get reviewedIncludeToggle;
 
-  /// No description provided for @filterReviewed.
+  /// Filter chip: files already reviewed (sorted) in a preset.
   ///
   /// In en, this message translates to:
   /// **'Reviewed'**
@@ -2254,7 +2260,7 @@ abstract class AppLocalizations {
   /// **'Deleting permanently can\'t be undone. These files won\'t go to the trash and can\'t be restored.'**
   String get pendingUnavailableWarning;
 
-  /// No description provided for @pendingUnavailableKeep.
+  /// Keep the pending trash file instead of deleting it.
   ///
   /// In en, this message translates to:
   /// **'Keep'**
@@ -4467,7 +4473,7 @@ abstract class AppLocalizations {
   /// **'Next group'**
   String get similarNextGroup;
 
-  /// No description provided for @similarKeep.
+  /// Keep this photo of a group of look-alike photos.
   ///
   /// In en, this message translates to:
   /// **'Keep'**
@@ -4551,7 +4557,7 @@ abstract class AppLocalizations {
   /// **'Trips'**
   String get groupsTrips;
 
-  /// No description provided for @groupsPlaces.
+  /// Smart groups by photo location (towns, countries), not storage places.
   ///
   /// In en, this message translates to:
   /// **'Places'**
@@ -6957,7 +6963,7 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get transferModeCopy;
 
-  /// No description provided for @transferModeMove.
+  /// Transfer mode: move = copy, verify, then remove the original.
   ///
   /// In en, this message translates to:
   /// **'Move'**
@@ -9621,7 +9627,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'nl', 'tr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -9632,6 +9638,10 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'nl':
+      return AppLocalizationsNl();
+    case 'tr':
+      return AppLocalizationsTr();
   }
 
   throw FlutterError(
