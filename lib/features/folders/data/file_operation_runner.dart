@@ -13,6 +13,7 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
@@ -105,6 +106,7 @@ class FileOperationRunner {
     required this._lock,
     required this._deleteMode,
     required this._canSeeAllFiles,
+    this._onFinished,
   });
 
   final FileSource _source;
@@ -114,6 +116,10 @@ class FileOperationRunner {
   final SerialLock _lock;
   final Future<DeleteMode> Function() _deleteMode;
   final bool Function() _canSeeAllFiles;
+
+  /// Called after every [run] (also a failed one): Places' free space
+  /// refreshes.
+  final void Function()? _onFinished;
 
   Future<void> _indexTail = Future<void>.value();
 
@@ -165,6 +171,24 @@ class FileOperationRunner {
   /// [NotEnoughSpaceException] (nothing done) when a copy can't fit.
   /// [resolveCollision] is only asked for Move / Copy.
   Future<CompletedOperation> run(
+    FileOperation op, {
+    required CancelToken cancel,
+    required CollisionResolver resolveCollision,
+    void Function(OperationProgress)? onProgress,
+  }) async {
+    try {
+      return await _run(
+        op,
+        cancel: cancel,
+        resolveCollision: resolveCollision,
+        onProgress: onProgress,
+      );
+    } finally {
+      _onFinished?.call();
+    }
+  }
+
+  Future<CompletedOperation> _run(
     FileOperation op, {
     required CancelToken cancel,
     required CollisionResolver resolveCollision,
@@ -781,4 +805,5 @@ FileOperationRunner fileOperationRunner(Ref ref) => FileOperationRunner(
   ),
   canSeeAllFiles: () =>
       ref.read(storageAccessControllerProvider).value?.canSeeAllFiles ?? false,
+  onFinished: ref.read(placesSpaceRefreshProvider).request,
 );

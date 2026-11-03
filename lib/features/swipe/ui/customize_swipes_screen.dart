@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
+import 'package:kfm/features/presets/ui/active_preset_controller.dart';
 import 'package:kfm/features/presets/ui/save_preset_dialog.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -48,7 +49,8 @@ class _Body extends ConsumerWidget {
         Text(l10n.customizeSwipesIntro),
         SizedBox(height: spacing * 2),
         SwipeLayoutEditor(
-          // P6: keep this setup as a preset (doesn't switch to it).
+          // P6: keep this setup as a preset; X6 note: it becomes the
+          // active one (same session).
           beforeReset: Center(
             child: OutlinedButton.icon(
               icon: const Icon(Icons.bookmark_add_outlined),
@@ -72,6 +74,7 @@ class _Body extends ConsumerWidget {
       filterJson: session?.filterJson,
     );
     if (id == null) return;
+    await ref.read(activePresetControllerProvider.notifier).adoptCurrentAs(id);
     final saved = await ref.read(presetRepositoryProvider).byId(id);
     if (saved != null) {
       messenger.showSnackBar(

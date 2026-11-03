@@ -186,5 +186,45 @@ void main() {
       await indexer.scanRoot(sd);
       expect(await dao.byId('path:$sd/DCIM/old.jpg'), isNotNull);
     });
+
+    test('U2 (h) walkRootIfStale: walks a never-walked root, skips it once '
+        'walked after its mount, walks again after a later mount', () async {
+      await indexer.start();
+      source.addFile('$sd/notes.pdf', modifiedAt: DateTime.utc(2010));
+      final mount = DateTime.utc(2026, 11, 2, 11);
+      await indexer.walkRootIfStale(sd, mountedAt: mount);
+      expect(await dao.byId('path:$sd/notes.pdf'), isNotNull);
+
+      // Walked at 12:00 (the clock), mounted at 11:00: not stale.
+      source.addFile('$sd/later.pdf', modifiedAt: DateTime.utc(2010));
+      await indexer.walkRootIfStale(sd, mountedAt: mount);
+      expect(await dao.byId('path:$sd/later.pdf'), isNull);
+
+      // Re-inserted while KFM was closed.
+      await indexer.walkRootIfStale(
+        sd,
+        mountedAt: DateTime.utc(2026, 11, 2, 13),
+      );
+      expect(await dao.byId('path:$sd/later.pdf'), isNotNull);
+    });
+
+    test('U2 (h) walkRootIfStale does nothing without All files access, and '
+        'a media-only scanRoot is no walk', () async {
+      var all = false;
+      final limited = MediaIndexer(
+        dao: dao,
+        source: source,
+        settings: SettingsRepository(db, queue),
+        canSeeAllFiles: () => all,
+        clock: () => DateTime.utc(2026, 11, 2, 12),
+      );
+      addTearDown(limited.dispose);
+      source.addFile('$sd/notes.pdf', modifiedAt: DateTime.utc(2010));
+      await limited.walkRootIfStale(sd);
+      await limited.scanRoot(sd);
+      all = true;
+      await limited.walkRootIfStale(sd);
+      expect(await dao.byId('path:$sd/notes.pdf'), isNotNull);
+    });
   });
 }

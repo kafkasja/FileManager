@@ -20,6 +20,7 @@ VolumeInfo sdVolume({
   String uuid = '1234-ABCD',
   bool mounted = true,
   String description = 'SanDisk SD card',
+  DateTime? mountedAt,
 }) => VolumeInfo(
   uuid: uuid,
   isPrimary: false,
@@ -30,6 +31,7 @@ VolumeInfo sdVolume({
   rootPath: mounted ? '/storage/$uuid' : null,
   totalBytes: mounted ? 64 << 30 : null,
   freeBytes: mounted ? 12 << 30 : null,
+  mountedAt: mountedAt,
 );
 
 /// Scriptable [VolumesPlatform].

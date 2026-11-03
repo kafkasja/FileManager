@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/db/settings/setting_key.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
@@ -13,6 +14,21 @@ import 'package:kfm/core/index/media_change_source.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:kfm/core/index/media_store_counts.dart';
 import 'package:meta/meta.dart';
+
+/// U2 (h): volume root → when [MediaIndexer.scanRoot] last walked it with
+/// All files access (ms since epoch, UTC). Index-internal bookkeeping.
+final SettingKey<Map<String, int>> indexRootWalks =
+    SettingKey<Map<String, int>>(
+      'index.rootWalks',
+      const {},
+      decode: (j) => j is Map
+          ? {
+              for (final MapEntry(:key, :value) in j.entries)
+                if (key is String && value is int) key: value,
+            }
+          : const {},
+      encode: (v) => v,
+    );
 
 @immutable
 sealed class IndexStatus {
@@ -170,17 +186,46 @@ class MediaIndexer {
   /// U1: a volume was mounted: upsert what is under [rootPath] (its files
   /// keep old modified times, so an incremental scan would miss them).
   /// Never deletes; the daily full scan removes ids MediaStore re-numbered.
-  Future<void> scanRoot(String rootPath) => _serial(() async {
+  Future<void> scanRoot(String rootPath) => _serial(() => _scanRoot(rootPath));
+
+  /// U2 (h), app start: walks [rootPath] (like [scanRoot]) when it was never
+  /// walked with All files access, or last walked before [mountedAt] (a
+  /// card inserted while KFM was closed: its non-media files would wait for
+  /// the daily full scan). Without All files access it does nothing (media
+  /// on the card come in through MediaStore).
+  Future<void> walkRootIfStale(String rootPath, {DateTime? mountedAt}) =>
+      _serial(() async {
+        if (!_canSeeAllFiles()) return;
+        final walked = await _settings.read(indexRootWalks);
+        final last = switch (walked[rootPath]) {
+          final ms? => DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true),
+          null => null,
+        };
+        if (last != null && (mountedAt == null || !last.isBefore(mountedAt))) {
+          return;
+        }
+        await _scanRoot(rootPath);
+      });
+
+  Future<void> _scanRoot(String rootPath) async {
+    final startedAt = _clock().toUtc();
+    final walksAll = _canSeeAllFiles();
     final generation = await _settings.read(AppSettings.indexGeneration);
     final query = FileQuery(
       kinds: _allowedKinds(),
       rootPath: rootPath,
-      includeHidden: _canSeeAllFiles(),
+      includeHidden: walksAll,
     );
     await for (final page in _source.scan(query: query)) {
       await _dao.upsertBatch(page, generation, now: _clock());
     }
-  });
+    if (!walksAll) return;
+    // Read again: other roots may have been recorded meanwhile.
+    await _settings.write(indexRootWalks, {
+      ...await _settings.read(indexRootWalks),
+      rootPath: startedAt.millisecondsSinceEpoch,
+    });
+  }
 
   /// Files this app brought back (trash restore): back into the index now,
   /// since their modified time is old and an incremental scan skips them.

@@ -71,6 +71,30 @@ void main() {
       expect(volumes.listCalls - before, 1);
     });
 
+    test('refresh requests (file ops, local jobs) re-read free space once, '
+        'debounced', () async {
+      final refresh = PlacesSpaceRefresh();
+      addTearDown(refresh.dispose);
+      final seen = <DeviceStorage>[];
+      final sub = watchDeviceStorage(
+        volumes,
+        null,
+        debounce: const Duration(milliseconds: 50),
+        refreshes: refresh.requests,
+      ).listen(seen.add);
+      addTearDown(sub.cancel);
+      await pumpEventQueue();
+      final before = volumes.listCalls;
+      volumes.volumes = [internalVolume, sdVolume().copyFree(1 << 30)];
+      refresh
+        ..request()
+        ..request()
+        ..request();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(volumes.listCalls - before, 1);
+      expect(seen.last.volumes.last.freeBytes, 1 << 30);
+    });
+
     test(
       'a failed read is an error event; the next event reads again',
       () async {
@@ -248,6 +272,34 @@ void main() {
       expect(scanned, ['/storage/1234-ABCD', '/storage/1234-ABCD']);
     });
 
+    test('U2 (h): the baseline walks mounted direct-path places if stale; '
+        'SAF and internal ones are left alone', () async {
+      final walks = <(String, DateTime?)>[];
+      final mount = DateTime.utc(2026, 11, 3, 9);
+      final w = PlacesWatcher(
+        scanRoot: (r) async => scanned.add(r),
+        walkIfStale: (r, at) async => walks.add((r, at)),
+      );
+      addTearDown(w.dispose);
+      w.onPlaces(placesWith([internalVolume, sdVolume(mountedAt: mount)]));
+      await pumpEventQueue();
+      expect(walks, [('/storage/1234-ABCD', mount)]);
+      expect(scanned, isEmpty);
+      // Later lists don't walk again (attach uses scanRoot).
+      w.onPlaces(placesWith([internalVolume, sdVolume(mountedAt: mount)]));
+      await pumpEventQueue();
+      expect(walks, hasLength(1));
+
+      final saf = PlacesWatcher(
+        scanRoot: (r) async => scanned.add(r),
+        walkIfStale: (r, at) async => walks.add((r, at)),
+      );
+      addTearDown(saf.dispose);
+      saf.onPlaces(placesWith([internalVolume, sdVolume()], grant: 't'));
+      await pumpEventQueue();
+      expect(walks, hasLength(1));
+    });
+
     test('a remounted volume with an invalid grant loses it', () async {
       watcher.onPlaces(placesWith([internalVolume], grant: 't'));
       grantValid = false;
@@ -334,3 +386,17 @@ void main() {
 final _rootsProvider = FutureProvider<List<String>>(
   (ref) => pendingFolderRoots(ref, primaryRoot: '/storage/emulated/0'),
 );
+
+extension on VolumeInfo {
+  VolumeInfo copyFree(int free) => VolumeInfo(
+    uuid: uuid,
+    isPrimary: isPrimary,
+    isRemovable: isRemovable,
+    description: description,
+    state: state,
+    isMounted: isMounted,
+    rootPath: rootPath,
+    totalBytes: totalBytes,
+    freeBytes: free,
+  );
+}

@@ -393,6 +393,34 @@ class SessionRepository {
     );
   }
 
+  /// X6 note: "Save as preset…" from the current setup makes the new preset
+  /// active without a switch: the open local session (same layout, files
+  /// and undo history) now belongs to [presetId], and the setting follows,
+  /// in one transaction. No deletes are committed. Without an open session
+  /// only the setting changes.
+  Future<void> adoptIntoPreset(int presetId) async {
+    await flush();
+    await _queue.enqueue(
+      null,
+      () => _db.transaction(() async {
+        await (_db.update(_db.sessions)..where(
+              (s) =>
+                  s.isActive.equals(true) & s.sourceId.equals(kLocalSourceId),
+            ))
+            .write(
+              SessionsCompanion(
+                presetId: Value(presetId),
+                updatedAt: Value(_clock()),
+              ),
+            );
+        await _writeSetting(
+          AppSettings.activePresetId.name,
+          AppSettings.activePresetId.encodeToDb(presetId),
+        );
+      }),
+    );
+  }
+
   /// P6 editor Save: the preset's open session (active or paused) uses the
   /// setup just saved.
   Future<void> applyPresetToOpenSession(

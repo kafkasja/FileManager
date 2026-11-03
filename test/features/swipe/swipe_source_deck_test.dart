@@ -483,6 +483,105 @@ void main() {
     },
   );
 
+  group('X1 PHONE-TODO 20 (d): a swipe in the "Shared files" deck never '
+      'moves the main deck', () {
+    FilesSourceRequest shared(List<String> ids) => FilesSourceRequest(
+      origin: SwipeSourceOrigin.sharedIn,
+      title: 'Shared files',
+      fileIds: ids,
+    );
+
+    Future<void> expectMainAt(ProviderContainer c, String id) async {
+      expect(deck(c).source, isNull);
+      expect(current(c), id);
+      expect(deck(c).swiped, 2);
+      expect(deck(c).newFiles, 0);
+    }
+
+    test('an older shared file kept, Back to all files, restart', () async {
+      var c = await launch();
+      addTearDown(c.dispose);
+      final main = photos.reversed.toList();
+      await swipe(c, 2);
+      await open(c, shared([main[20], main[25]]));
+      await swipe(c, 2);
+      await controller(c).closeSource();
+      await expectMainAt(c, main[2]);
+      c = await restart(c);
+      await expectMainAt(c, main[2]);
+    });
+
+    test('restart while the shared deck is open, then Back', () async {
+      var c = await launch();
+      addTearDown(c.dispose);
+      final main = photos.reversed.toList();
+      await swipe(c, 2);
+      await open(c, shared([main[20], main[25]]));
+      await swipe(c, 1);
+      c = await restart(c);
+      expect(deck(c).source, isNotNull);
+      await controller(c).closeSource();
+      await expectMainAt(c, main[2]);
+      c = await restart(c);
+      await expectMainAt(c, main[2]);
+    });
+
+    test('a new photo shared from the gallery and kept: the main deck stays '
+        'and still offers it as new', () async {
+      var c = await launch();
+      addTearDown(c.dispose);
+      final main = photos.reversed.toList();
+      await swipe(c, 2);
+      final fresh = files
+          .addFile('/s/DCIM/new.jpg', modifiedAt: DateTime.now().toUtc())
+          .id;
+      await c.read(mediaIndexerProvider).incremental();
+      await open(c, shared([fresh]));
+      await swipe(c, 1);
+      await controller(c).closeSource();
+      expect(current(c), main[2]);
+      expect(deck(c).swiped, 2);
+      c = await restart(c);
+      expect(current(c), main[2]);
+      expect(deck(c).swiped, 2);
+      expect(deck(c).newFiles, 1);
+    });
+
+    test('Back to all files, then a main undo, then restart', () async {
+      var c = await launch();
+      addTearDown(c.dispose);
+      final main = photos.reversed.toList();
+      await swipe(c, 2);
+      await open(c, shared([main[20]]));
+      await swipe(c, 1);
+      await controller(c).closeSource();
+      // Undo is session-wide: it brings the shared keep's file back on top.
+      await controller(c).undo();
+      await flush(c);
+      expect(current(c), main[20]);
+      c = await restart(c);
+      await expectMainAt(c, main[2]);
+    });
+
+    test('undo in the shared deck, swipe again, Back', () async {
+      var c = await launch();
+      addTearDown(c.dispose);
+      final main = photos.reversed.toList();
+      await swipe(c, 2);
+      await open(c, shared([main[20]]));
+      await swipe(c, 1);
+      await controller(c).undo();
+      await swipe(c, 1);
+      await controller(c).closeSource();
+      await expectMainAt(c, main[2]);
+      // A main swipe after it is the resume point.
+      await swipe(c, 1);
+      c = await restart(c);
+      expect(current(c), main[3]);
+      expect(deck(c).newFiles, 0);
+    });
+  });
+
   test('a restart with a source open continues it at the next file', () async {
     var c = await launch();
     addTearDown(c.dispose);

@@ -6,7 +6,9 @@ import 'package:kfm/features/presets/domain/preset.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 
 /// P6 "Save as preset…": name + (when there is one) include the filter.
-/// Saves without switching. Returns the new id, or null when cancelled.
+/// Saves without switching (callers saving the current setup then call
+/// `ActivePresetController.adoptCurrentAs`). Returns the new id, or null
+/// when cancelled.
 Future<int?> showSavePresetDialog(
   BuildContext context, {
   required SwipeLayout layout,

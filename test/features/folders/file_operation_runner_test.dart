@@ -6,6 +6,7 @@ import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
+import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/folders/data/file_operation_runner.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -72,6 +73,19 @@ void main() {
         expect(row!.folderPath, '/s/DCIM/Holiday');
       },
     );
+
+    test('a finished operation asks Places to refresh free space', () async {
+      final h = await launchFolders(files);
+      var requests = 0;
+      final sub = h.c
+          .read(placesSpaceRefreshProvider)
+          .requests
+          .listen((_) => requests++);
+      addTearDown(sub.cancel);
+      await h.run(CopyOp([photos.first], '/s/DCIM/Holiday'));
+      await h.run(MoveOp(photos.skip(1).toList(), '/s/DCIM/Holiday'));
+      expect(requests, 2);
+    });
 
     test('declined consent moves nothing', () async {
       files.declineWriteAccess = true;

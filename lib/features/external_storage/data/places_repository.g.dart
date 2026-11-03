@@ -8,6 +8,55 @@ part of 'places_repository.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+
+@ProviderFor(placesSpaceRefresh)
+final placesSpaceRefreshProvider = PlacesSpaceRefreshProvider._();
+
+final class PlacesSpaceRefreshProvider
+    extends
+        $FunctionalProvider<
+          PlacesSpaceRefresh,
+          PlacesSpaceRefresh,
+          PlacesSpaceRefresh
+        >
+    with $Provider<PlacesSpaceRefresh> {
+  PlacesSpaceRefreshProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'placesSpaceRefreshProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$placesSpaceRefreshHash();
+
+  @$internal
+  @override
+  $ProviderElement<PlacesSpaceRefresh> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  PlacesSpaceRefresh create(Ref ref) {
+    return placesSpaceRefresh(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PlacesSpaceRefresh value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PlacesSpaceRefresh>(value),
+    );
+  }
+}
+
+String _$placesSpaceRefreshHash() =>
+    r'5cf93a966dfe3e3b4193b616f0426385baefbf72';
+
 /// The device's volumes and cameras, live. Empty off Android and Windows.
 
 @ProviderFor(deviceStorage)
@@ -50,7 +99,7 @@ final class DeviceStorageProvider
   }
 }
 
-String _$deviceStorageHash() => r'5e03c986af170989fedb51a384b707f74fbf5f13';
+String _$deviceStorageHash() => r'2085ce0246c87d23b0de464adc8238ea5815acb9';
 
 /// U1: SAF grants (volume uuid → tree URI).
 

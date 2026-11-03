@@ -115,6 +115,19 @@
             android:name=".ShareService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+        <!-- U2 (h): mount times of cards/USB drives, also while KFM is closed. -->
+        <receiver
+            android:name=".MountTimesReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+                <action android:name="android.intent.action.MEDIA_UNMOUNTED" />
+                <action android:name="android.intent.action.MEDIA_EJECT" />
+                <action android:name="android.intent.action.MEDIA_REMOVED" />
+                <action android:name="android.intent.action.MEDIA_BAD_REMOVAL" />
+                <data android:scheme="file" />
+            </intent-filter>
+        </receiver>
         <!-- B1 "Open with" for plain files; X5 reuses it. -->
         <provider
             android:name="androidx.core.content.FileProvider"

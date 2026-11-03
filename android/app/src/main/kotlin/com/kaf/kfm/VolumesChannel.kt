@@ -32,7 +32,8 @@ import java.util.concurrent.Executors
  * their live state. The only volume source of the app.
  *
  * `list` rows: `{uuid?, primary, removable, description, state, mounted, path?, totalBytes?,
- * freeBytes?, usbMassStorage}` (`usbMassStorage` = a USB mass-storage device is attached
+ * freeBytes?, usbMassStorage, mountedAtMs?}` (`mountedAtMs`: U2 (h), see [MountTimesReceiver];
+ * `usbMassStorage` = a USB mass-storage device is attached
  * now; Dart uses it to tell a USB drive from an SD card).
  *
  * Events (while listened): `{uuid?, state}` for every volume state change (API 30+
@@ -177,6 +178,7 @@ class VolumesChannel(
             "totalBytes" to total,
             "freeBytes" to free,
             "usbMassStorage" to usbAttached,
+            "mountedAtMs" to if (mounted) MountTimesReceiver.mountedAtMs(context, v.uuid, path) else null,
         )
     }
 

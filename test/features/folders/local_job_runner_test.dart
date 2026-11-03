@@ -41,12 +41,14 @@ void main() {
   late Set<String> unmounted;
   late List<FileRef> indexed;
   late LocalJobRunner runner;
+  var jobsEnded = 0;
 
   LocalJobRunner build({
     bool fat32 = false,
     int? fatMax,
     VolumeActivityTracker? tracker,
   }) => LocalJobRunner(
+    onJobEnded: () => jobsEnded++,
     dao: dao,
     files: s.router,
     crossPlace: s.router.crossPlace,
@@ -103,6 +105,7 @@ void main() {
         ),
       );
       expect(view.job.status, LocalJobStatus.done);
+      expect(jobsEnded, greaterThanOrEqualTo(1)); // Places' free space
       expect(moves.calls, hasLength(1));
       expect(moves.calls.single, hasLength(3));
       expect(moves.modes.single, DeleteMode.trash);
