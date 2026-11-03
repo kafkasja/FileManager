@@ -123,17 +123,25 @@ class ShareInChannel(
     @Suppress("DEPRECATION")
     private fun streamUris(intent: Intent): List<Uri> {
         val out = LinkedHashSet<Uri>()
-        if (intent.action == Intent.ACTION_SEND_MULTIPLE) {
+        val multiple = intent.action == Intent.ACTION_SEND_MULTIPLE
+        if (multiple) {
             intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let { out.addAll(it) }
         } else {
             intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { out.add(it) }
         }
+        // A text/link share (Chrome "Share page") has EXTRA_TEXT and no EXTRA_STREAM; the share
+        // sheet then puts its preview thumbnail into clipData. That's not a shared file: only
+        // read clipData for SEND_MULTIPLE or a SEND that carries a stream / isn't text.
         val clip = intent.clipData
-        if (clip != null) {
+        if (clip != null && (multiple || out.isNotEmpty() || !isTextShare(intent))) {
             for (i in 0 until clip.itemCount) clip.getItemAt(i).uri?.let { out.add(it) }
         }
         return out.filter { it.scheme == "content" || it.scheme == "file" }
     }
+
+    /** A single SEND carrying text (a link, a note) rather than a file. */
+    private fun isTextShare(intent: Intent): Boolean =
+        intent.hasExtra(Intent.EXTRA_TEXT) || intent.type?.startsWith("text/") == true
 
     private fun resolve(batchId: String, receivedAt: Long, index: Int, uri: Uri): Map<String, Any?> {
         mediaId(uri)?.let { return mapOf("kind" to "media", "id" to it, "uri" to uri.toString()) }

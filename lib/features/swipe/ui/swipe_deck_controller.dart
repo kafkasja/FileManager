@@ -269,7 +269,22 @@ class SwipeDeckController extends _$SwipeDeckController {
     final pending = launcher.takePending();
     if (pending != null) await launcher.attach(session.id, pending);
     final open = await sources.openFor(session.id);
-    _acted = await undo.actedFileIds(session.id);
+    // X1: a "Shared files" deck and the main deck don't use up each other's
+    // files: what was only kept/tagged in one is still offered by the other
+    // (and not counted there). Trashed/moved files stay skipped everywhere.
+    _acted = await undo.actedFileIds(
+      session.id,
+      detachedRanges: switch (open) {
+        null => await sources.closedRanges(
+          session.id,
+          origin: SwipeSourceOrigin.sharedIn,
+        ),
+        OpenSwipeSource(origin: SwipeSourceOrigin.sharedIn) => [
+          (0, open.openedAfterSeq),
+        ],
+        _ => const [],
+      },
+    );
     _presetKey = session.presetId ?? 0;
     final dao = ref.read(mediaIndexDaoProvider);
     final repo = ref.read(swipeQueueRepositoryProvider);

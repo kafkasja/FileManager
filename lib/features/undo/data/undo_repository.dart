@@ -209,19 +209,37 @@ class UndoRepository {
 
   /// File ids with a non-undone action in the session (the deck skips them),
   /// plus copies a `copyTo` swipe made (they are never offered either).
-  Future<Set<String>> actedFileIds(int sessionId) async {
+  ///
+  /// X1: an action whose seq lies in one of [detachedRanges] (`(after,
+  /// upTo]`, e.g. a closed "Shared files" source) doesn't count for its own
+  /// file unless it took the file away (trash, move): the main deck still
+  /// offers a shared file that was only kept or tagged there.
+  Future<Set<String>> actedFileIds(
+    int sessionId, {
+    List<(int, int)> detachedRanges = const [],
+  }) async {
     final t = _db.sessionActions;
     const created = CustomExpression<String>(
       r"json_extract(previous_state, '$.createdFileId')",
     );
     final rows =
         await (_db.selectOnly(t)
-              ..addColumns([t.fileId, t.actionType, created])
+              ..addColumns([t.fileId, t.actionType, t.seq, created])
               ..where(_inStack(t, sessionId)))
             .get();
+    bool detached(TypedResult r) {
+      final type = r.read(t.actionType);
+      if (type == SwipeActionType.trash.name ||
+          type == SwipeActionType.moveTo.name) {
+        return false;
+      }
+      final seq = r.read(t.seq)!;
+      return detachedRanges.any((range) => seq > range.$1 && seq <= range.$2);
+    }
+
     return {
       for (final r in rows) ...[
-        r.read(t.fileId)!,
+        if (!detached(r)) r.read(t.fileId)!,
         if (r.read(t.actionType) == SwipeActionType.copyTo.name)
           ?r.read(created),
       ],

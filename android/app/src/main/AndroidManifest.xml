@@ -57,11 +57,19 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
+        <!-- X1: exactly one MainActivity in one task. launchMode="singleTask" with the default
+             task affinity (the package): a share from another app (cold start or warm) and a
+             launcher/Recents tap all land in KFM's own task, and a running instance gets the
+             share via onNewIntent. Do NOT add taskAffinity="" (Flutter's template default):
+             with no affinity singleTask can't find the existing task, so a cold-start share
+             opened a second task and tapping the old launcher task in Recents started a second
+             MainActivity (two live instances, seen on the S22). Activity-result flows (D3 trash,
+             D5 restore, write consent, SAF pickers) still run on top of MainActivity in this
+             task; a share arriving while one is open clears it, which reports it as declined. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
