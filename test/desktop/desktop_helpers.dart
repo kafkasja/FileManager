@@ -40,6 +40,7 @@ Future<TestApp> pumpDesktopApp(
       formFactorProvider.overrideWithValue(FormFactor.desktop),
       // The fake file source has no disk folders to remove.
       emptyDirRemoverProvider.overrideWithValue((_) async => false),
+      subfolderListerProvider.overrideWithValue((_) async => const []),
       ...overrides,
     ],
   );

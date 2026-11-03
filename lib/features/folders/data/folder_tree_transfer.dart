@@ -25,6 +25,7 @@ class TreeTransferDone {
     required this.createdDirs,
     required this.removedDirs,
     required this.folderCount,
+    this.sourceDirs = const [],
   });
 
   final bool move;
@@ -40,6 +41,10 @@ class TreeTransferDone {
 
   /// How many folders were dragged / pasted (for the summary).
   final int folderCount;
+
+  /// Moves: every subfolder of the moved source trees, parents first (so
+  /// Undo brings back the empty ones too).
+  final List<String> sourceDirs;
 
   int get fileCount => ops.fold<int>(0, (n, o) => n + o.results.length);
 
@@ -64,6 +69,10 @@ class FolderIntoItselfException extends FileOpException {
 /// True when it was removed.
 typedef EmptyDirRemover = Future<bool> Function(String dir);
 
+/// Every folder below [dir] ('/'-separated, any depth, empty ones
+/// included); empty when it can't be listed.
+typedef SubfolderLister = Future<List<String>> Function(String dir);
+
 /// Copy / move of whole folders (TASK-PL3: folder drag & drop, Ctrl+C/X/V
 /// of folders), built on B4's [FileOperationRunner] so every file keeps
 /// B4's collision handling, progress, index updates and undo. The folder
@@ -71,18 +80,21 @@ typedef EmptyDirRemover = Future<bool> Function(String dir);
 /// already there with that name is merged into (file clashes ask, like
 /// B4), except a copy into its own parent, which gets a new name
 /// (`Holiday (1)`). Moves remove the source folders once they are empty.
-///
-/// Empty subfolders are not recreated (the file source lists files).
+/// Empty subfolders are recreated too (listed by [SubfolderLister]); Undo
+/// removes the ones it created and brings back a moved tree's.
 class FolderTreeTransfer {
   new({
     required this._source,
     required this._runner,
     EmptyDirRemover? removeEmptyDir,
-  }) : _removeEmptyDir = removeEmptyDir ?? removeEmptyIoDir;
+    SubfolderLister? listSubfolders,
+  }) : _removeEmptyDir = removeEmptyDir ?? removeEmptyIoDir,
+       _listSubfolders = listSubfolders ?? listIoSubfolders;
 
   final FileSource _source;
   final FileOperationRunner _runner;
   final EmptyDirRemover _removeEmptyDir;
+  final SubfolderLister _listSubfolders;
 
   /// Copies (or moves) [folders] and loose [files] into [target]. Throws
   /// [FolderIntoItselfException] (nothing done) for a folder dropped into
@@ -105,9 +117,9 @@ class FolderTreeTransfer {
         throw FolderIntoItselfException(from);
       }
     }
-    // (source folder, files inside) per dragged folder; moves into the
-    // folder's own parent are no-ops.
-    final trees = <(String, List<FileRef>)>[];
+    // (source folder, files inside, subfolders) per dragged folder; moves
+    // into the folder's own parent are no-ops.
+    final trees = <(String, List<FileRef>, List<String>)>[];
     for (final f in folders) {
       final from = _trim(f);
       if (move && _same(_parentOf(from), to)) continue;
@@ -118,7 +130,13 @@ class FolderTreeTransfer {
                 .toList())
           ...page,
       ];
-      trees.add((from, inside));
+      final subfolders = [
+        for (final d in await _listSubfolders(from))
+          if (d.length > from.length &&
+              d.toLowerCase().startsWith('${from.toLowerCase()}/'))
+            d,
+      ];
+      trees.add((from, inside, subfolders));
     }
     final loose = [
       for (final f in files)
@@ -172,7 +190,8 @@ class FolderTreeTransfer {
 
     var going = await runOp(loose, to);
     final removed = <String>[];
-    for (final (from, inside) in trees) {
+    final sourceDirs = <String>[];
+    for (final (from, inside, subfolders) in trees) {
       if (!going) break;
       final root = await _makeRoot(
         to,
@@ -187,6 +206,11 @@ class FolderTreeTransfer {
             : '';
         (groups['$root$rel'] ??= []).add(f);
       }
+      // Empty subfolders come along as folders without files.
+      for (final d in subfolders) {
+        groups.putIfAbsent('$root${d.substring(from.length)}', () => []);
+      }
+      if (move) sourceDirs.addAll(subfolders);
       // Parents first, so every group's folder exists before its files.
       final dirs = groups.keys.toList()..sort((a, b) => a.length - b.length);
       for (final dir in dirs) {
@@ -205,6 +229,9 @@ class FolderTreeTransfer {
       createdDirs: List.unmodifiable(created),
       removedDirs: List.unmodifiable(removed),
       folderCount: folders.length,
+      sourceDirs: List.unmodifiable(
+        sourceDirs..sort((a, b) => a.length - b.length),
+      ),
     );
   }
 
@@ -228,8 +255,12 @@ class FolderTreeTransfer {
       for (final dir in back) {
         await _ensureDir(dir, created: <String>[]);
       }
-      // Folders that had no files left either way.
+      // Folders that had no files left either way, and the empty
+      // subfolders of the moved trees.
       for (final dir in done.removedDirs.reversed) {
+        await _ensureDir(dir, created: <String>[]);
+      }
+      for (final dir in done.sourceDirs) {
         await _ensureDir(dir, created: <String>[]);
       }
     }
@@ -333,6 +364,26 @@ Future<bool> removeEmptyIoDir(String dir) async {
   }
 }
 
+/// [SubfolderLister] on the real file system: every folder below [dir]
+/// (links not followed), '/'-separated like [dir].
+Future<List<String>> listIoSubfolders(String dir) async {
+  final out = <String>[];
+  try {
+    await for (final e in Directory(
+      dir,
+    ).list(recursive: true, followLinks: false)) {
+      if (e is Directory) out.add(e.path.replaceAll(r'\', '/'));
+    }
+  } on FileSystemException {
+    // Unreadable: the files still go; only empty folders are missed.
+  }
+  return out..sort((a, b) => a.length - b.length);
+}
+
+/// How subfolders are listed (tests: the fake file source has no disk).
+@riverpod
+SubfolderLister subfolderLister(Ref ref) => listIoSubfolders;
+
 /// How emptied folders are removed (tests: the fake file source has no
 /// disk).
 @riverpod
@@ -343,4 +394,5 @@ FolderTreeTransfer folderTreeTransfer(Ref ref) => FolderTreeTransfer(
   source: ref.watch(fileSourceProvider),
   runner: ref.watch(fileOperationRunnerProvider),
   removeEmptyDir: ref.watch(emptyDirRemoverProvider),
+  listSubfolders: ref.watch(subfolderListerProvider),
 );

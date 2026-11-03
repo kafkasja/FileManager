@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,11 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/background/cancel_token.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_browse_screen.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
+import 'package:kfm/features/folders/data/file_operation_runner.dart';
 import 'package:kfm/features/folders/data/folder_tree_transfer.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 
@@ -168,5 +171,97 @@ void main() {
     expect(out.undone, 2);
     expect(_paths(app).where((p) => p.contains('Trip (1)')), isEmpty);
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('FolderTreeTransfer: empty subfolders are recreated on copy and '
+      'move; Undo removes them / brings them back', (tester) async {
+    final app = await pumpDesktopApp(tester, files: _library());
+    final removed = <String>[];
+    final transfer = FolderTreeTransfer(
+      source: app.container.read(fileSourceProvider),
+      runner: app.container.read(fileOperationRunnerProvider),
+      removeEmptyDir: (dir) async {
+        removed.add(dir);
+        return true;
+      },
+      listSubfolders: (dir) async => [
+        if (dir == '/s/DCIM/Trip') ...[
+          '/s/DCIM/Trip/day2',
+          '/s/DCIM/Trip/empty',
+          '/s/DCIM/Trip/empty/deeper',
+        ],
+      ],
+    );
+    final copy = await _drive(
+      tester,
+      transfer.transfer(
+        folders: ['/s/DCIM/Trip'],
+        files: const [],
+        target: '/s/Other',
+        move: false,
+        cancel: CancelToken(),
+        resolveCollision: _keepBoth,
+      ),
+    );
+    expect(copy.createdDirs, [
+      '/s/Other/Trip',
+      '/s/Other/Trip/day2',
+      '/s/Other/Trip/empty',
+      '/s/Other/Trip/empty/deeper',
+    ]);
+    expect(copy.sourceDirs, isEmpty);
+    await _drive(tester, transfer.undo(copy, cancel: CancelToken()));
+    // Created folders are removed deepest first.
+    expect(removed, [
+      '/s/Other/Trip/empty/deeper',
+      '/s/Other/Trip/empty',
+      '/s/Other/Trip/day2',
+      '/s/Other/Trip',
+    ]);
+
+    // (The fake remover leaves the copies in place: move elsewhere.)
+    removed.clear();
+    app.files.addFolder('/s/Moved');
+    final files = app.files;
+    final move = await _drive(
+      tester,
+      transfer.transfer(
+        folders: ['/s/DCIM/Trip'],
+        files: const [],
+        target: '/s/Moved',
+        move: true,
+        cancel: CancelToken(),
+        resolveCollision: _keepBoth,
+      ),
+    );
+    expect(move.createdDirs, contains('/s/Moved/Trip/empty/deeper'));
+    expect(move.removedDirs, ['/s/DCIM/Trip']);
+    expect(move.sourceDirs, [
+      '/s/DCIM/Trip/day2',
+      '/s/DCIM/Trip/empty',
+      '/s/DCIM/Trip/empty/deeper',
+    ]);
+    files.calls.clear();
+    await _drive(tester, transfer.undo(move, cancel: CancelToken()));
+    expect(
+      files.calls,
+      containsAll([
+        'createFolder /s/DCIM/Trip empty',
+        'createFolder /s/DCIM/Trip/empty deeper',
+      ]),
+    );
+    expect(_paths(app), contains('/s/DCIM/Trip/day2/t2.jpg'));
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  test('listIoSubfolders lists every folder below, empty ones too', () async {
+    final dir = Directory.systemTemp.createTempSync('kfm_tree');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    Directory('${dir.path}/a/b').createSync(recursive: true);
+    Directory('${dir.path}/c').createSync();
+    File('${dir.path}/a/f.txt').writeAsStringSync('x');
+    final root = dir.path.replaceAll(r'\', '/');
+    expect(await listIoSubfolders(root), ['$root/a', '$root/c', '$root/a/b']);
+    expect(await listIoSubfolders('$root/missing'), isEmpty);
   });
 }

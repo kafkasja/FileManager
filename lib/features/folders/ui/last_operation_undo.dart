@@ -130,6 +130,7 @@ class LastOperationUndo extends _$LastOperationUndo {
             createdDirs: done.createdDirs,
             removedDirs: done.removedDirs,
             folderCount: done.folderCount,
+            sourceDirs: done.sourceDirs,
           ),
         );
       default:

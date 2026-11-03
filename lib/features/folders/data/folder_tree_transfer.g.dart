@@ -8,6 +8,53 @@ part of 'folder_tree_transfer.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// How subfolders are listed (tests: the fake file source has no disk).
+
+@ProviderFor(subfolderLister)
+final subfolderListerProvider = SubfolderListerProvider._();
+
+/// How subfolders are listed (tests: the fake file source has no disk).
+
+final class SubfolderListerProvider
+    extends
+        $FunctionalProvider<SubfolderLister, SubfolderLister, SubfolderLister>
+    with $Provider<SubfolderLister> {
+  /// How subfolders are listed (tests: the fake file source has no disk).
+  SubfolderListerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'subfolderListerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$subfolderListerHash();
+
+  @$internal
+  @override
+  $ProviderElement<SubfolderLister> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SubfolderLister create(Ref ref) {
+    return subfolderLister(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SubfolderLister value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SubfolderLister>(value),
+    );
+  }
+}
+
+String _$subfolderListerHash() => r'15ada9964cca79dcad22f23842765474aa220cb0';
+
 /// How emptied folders are removed (tests: the fake file source has no
 /// disk).
 
@@ -104,4 +151,4 @@ final class FolderTreeTransferProvider
 }
 
 String _$folderTreeTransferHash() =>
-    r'134590dd4c761adc167493913142159554a89c47';
+    r'd1a3d5898e263fb541f0699f4ebae5ac78a9d34f';
