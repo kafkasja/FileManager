@@ -10,6 +10,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
+import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/external_storage/data/places_watcher.dart';
 import 'package:kfm/features/privacy/data/privacy_providers.dart';
@@ -81,6 +82,9 @@ class _AppState extends ConsumerState<App> {
       ..watch(startupMaintenanceProvider)
       // X2: delete stripped copies (shares, uploads) of earlier runs.
       ..watch(privacyStartupCleanupProvider)
+      // X3: resumes cloud uploads only when a destination and unfinished
+      // rows exist (two queries; no cloud channel call otherwise).
+      ..watch(cloudResumeProvider)
       // X1: delete shared-in copies older than 7 days.
       ..watch(shareInCleanupProvider)
       // N6: forget temporary remembered devices after 7 days.

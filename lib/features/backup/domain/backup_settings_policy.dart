@@ -107,6 +107,8 @@ const Set<String> excludedBackupSettings = {
   'aiLabels.paused',
   'aiLabels.cardDismissed',
   'external.safGrants',
+  // X3: a per-device note (cloud grants live in the DB, never exported).
+  'cloud.gpsNoteDismissed',
   // X7: a network opt-in (chosen per device) and its cache.
   'updates.checkEnabled',
   'updates.lastCheckAt',

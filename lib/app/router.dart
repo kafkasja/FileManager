@@ -8,6 +8,7 @@ import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
 import 'package:kfm/features/browse/ui/collection_screen.dart';
+import 'package:kfm/features/cloud/ui/cloud_settings_screen.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart';
 import 'package:kfm/features/connect/ui/remembered_devices_screen.dart';
 import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
@@ -88,6 +89,9 @@ abstract final class AppRoutes {
   static const customizeSwipes = '/settings/swipes';
   static const renameBatch = '/swipe/rename';
   static const presets = '/settings/presets';
+
+  /// X3: cloud destinations.
+  static const cloudSettings = '/settings/cloud';
   static const stats = '/settings/stats';
 
   /// C3: the AI model details screen (shown before any download).
@@ -379,6 +383,10 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'ai-models',
                     builder: (context, state) => const AiModelsDetailsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'cloud',
+                    builder: (context, state) => const CloudSettingsScreen(),
                   ),
                   GoRoute(
                     path: 'presets',

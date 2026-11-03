@@ -9068,6 +9068,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t open the page: {error}'**
   String updatesOpenFailed(String error);
+
+  /// X3 Settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud'**
+  String get cloudSettingsTitle;
+
+  /// X3 Settings row and screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud destinations'**
+  String get cloudDestinations;
+
+  /// X3 Settings row subtitle without destinations.
+  ///
+  /// In en, this message translates to:
+  /// **'Save files into a folder of your cloud app'**
+  String get cloudDestinationsNone;
+
+  /// X3 Settings row subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder} other{{count} folders}}'**
+  String cloudDestinationsCount(int count);
+
+  /// X3 destinations screen intro.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM saves files into a folder of your cloud app (Google Drive, OneDrive, Dropbox…). The cloud app uploads them; KFM never signs in anywhere.'**
+  String get cloudHowItWorks;
+
+  /// X3 destinations screen, empty list.
+  ///
+  /// In en, this message translates to:
+  /// **'No cloud folders yet'**
+  String get cloudEmpty;
+
+  /// X3 button: opens the system folder picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Add cloud folder'**
+  String get cloudAdd;
+
+  /// X3 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name}'**
+  String cloudAdded(String name);
+
+  /// X3 snackbar: the grant could not be persisted.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t keep access to that folder'**
+  String get cloudAddFailed;
+
+  /// X3 destination menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get cloudRename;
+
+  /// X3 destination menu and dialog button.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get cloudRemove;
+
+  /// X3 remove dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String cloudRemoveTitle(String name);
+
+  /// X3 remove dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM won\'t save files here any more. Files already in the cloud stay there.'**
+  String get cloudRemoveConfirm;
+
+  /// X3 remove dialog checkbox (off by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Also forget which files were uploaded here'**
+  String get cloudForgetUploads;
+
+  /// X3 chip: the folder permission was lost.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs reconnecting'**
+  String get cloudNeedsReconnecting;
+
+  /// X3 destination menu: pick the folder again.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get cloudReconnect;
+
+  /// X3 help text.
+  ///
+  /// In en, this message translates to:
+  /// **'If your cloud app isn\'t listed in the folder picker, it doesn\'t let other apps save into its folders.'**
+  String get cloudNoFolderPicking;
+
+  /// X3 status of a copy: handed to the cloud app (it uploads later).
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {name}'**
+  String cloudSavedToFolder(String name);
+
+  /// X3 status of a move whose copy was checked.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified in {name}'**
+  String cloudVerified(String name);
+
+  /// X3 status.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {reason}'**
+  String cloudFailed(String reason);
+
+  /// X3 status of a queued file.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get cloudWaiting;
+
+  /// X3 status while copying.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving to {name}…'**
+  String cloudUploading(String name);
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t verify the copy — original kept'**
+  String get cloudVerifyFailed;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the copy back — original kept'**
+  String get cloudVerifyUnavailable;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cloudCancelled;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination removed'**
+  String get cloudDestinationRemovedError;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is gone'**
+  String get cloudSourceGone;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The file changed while it was copied'**
+  String get cloudSourceChanged;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'This file can\'t be saved to the cloud'**
+  String get cloudUnsupported;
+
+  /// X3 failure reason (X2 option on).
+  ///
+  /// In en, this message translates to:
+  /// **'Location couldn\'t be removed, so it wasn\'t uploaded'**
+  String get cloudLocationNotRemoved;
+
+  /// X3 outcome reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The cloud copy is missing — original kept'**
+  String get cloudCopyMissing;
+
+  /// X3 failure reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The cloud app is out of space'**
+  String get cloudNoSpace;
+
+  /// X3 failure reason (other errors).
+  ///
+  /// In en, this message translates to:
+  /// **'The cloud app didn\'t accept the file'**
+  String get cloudWriteError;
+
+  /// X3 one-time note on the destinations screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos are uploaded without their location because KFM can\'t read it.'**
+  String get cloudGpsNote;
+
+  /// X3 GPS note / move dialog button: asks for the location permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get cloudGpsAllow;
+
+  /// X3 dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Move without location?'**
+  String get cloudGpsMoveTitle;
+
+  /// X3 dialog before moving photos without the media location permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Location data may be removed from the cloud copy, and the original will be deleted.'**
+  String get cloudGpsMoveWarning;
+
+  /// X3 dialog button.
+  ///
+  /// In en, this message translates to:
+  /// **'Move anyway'**
+  String get cloudGpsMoveAnyway;
+
+  /// X3 tab on the Transfers page.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud'**
+  String get cloudTransfersSection;
+
+  /// X3 Transfers tab, empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing saved to the cloud in the last 7 days'**
+  String get cloudTransfersEmpty;
+
+  /// X3 group in the Move/Copy folder picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud'**
+  String get cloudPickerGroup;
+
+  /// X3 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Saving 1 file to {name}…} other{Saving {count} files to {name}…}}'**
+  String cloudStartedCopy(int count, String name);
+
+  /// X3 snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moving 1 file to {name}…} other{Moving {count} files to {name}…}}'**
+  String cloudStartedMove(int count, String name);
+
+  /// X3 snackbar: only camera or remote files were picked.
+  ///
+  /// In en, this message translates to:
+  /// **'These files can\'t be saved to the cloud'**
+  String get cloudNothingToSend;
+
+  /// X3 snackbar at the end of a move job.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 original was kept} other{{count} originals were kept}}'**
+  String cloudOriginalsKept(int count);
+
+  /// X3 snackbar at the end of a move job.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved 1 file} other{Moved {count} files}}'**
+  String cloudOriginalsDeleted(int count);
+
+  /// X3 button: delete the originals of verified moves.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete originals'**
+  String get cloudDeleteOriginals;
+
+  /// X3 move row whose original is still there.
+  ///
+  /// In en, this message translates to:
+  /// **'Original not deleted'**
+  String get cloudOriginalNotDeleted;
+
+  /// X3 button.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get cloudRetry;
 }
 
 class _AppLocalizationsDelegate

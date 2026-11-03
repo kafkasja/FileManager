@@ -36,6 +36,23 @@ class FilesChannel {
           .where((e) => e is Map)
           .map((e) => _row(e as Map<Object?, Object?>));
 
+  /// X3: cloud copy progress (CloudSaf.kt).
+  static const cloudProgressName = 'com.kaf.kfm/files/progress';
+
+  /// X3: `(jobKey, bytes)` of running cloud copies, at most every 250 ms.
+  static Stream<({String jobKey, int bytes})> cloudProgress([
+    EventChannel? channel,
+  ]) => (channel ?? const EventChannel(cloudProgressName))
+      .receiveBroadcastStream()
+      .where((e) => e is Map)
+      .map((e) {
+        final m = e as Map<Object?, Object?>;
+        return (
+          jobKey: m['jobKey']! as String,
+          bytes: (m['bytes']! as num).toInt(),
+        );
+      });
+
   final MethodChannel _channel;
 
   Future<int> sdkInt() async => (await _invoke<int>('sdkInt'))!;
@@ -188,6 +205,62 @@ class FilesChannel {
 
   Future<bool> releaseTree(String uri) async =>
       (await _invoke<bool>('releaseTree', {'uri': uri})) ?? false;
+
+  /// X3: the provider authority and display name of a picked tree.
+  Future<({String? authority, String? name})> cloudTreeLabel(
+    String tree,
+  ) async {
+    final m = await _invoke<Map<Object?, Object?>>('cloudTreeLabel', {
+      'tree': tree,
+    });
+    return (authority: m?['authority'] as String?, name: m?['name'] as String?);
+  }
+
+  /// X3: creates [name] at the root of [tree]; returns the document URI.
+  Future<String> cloudCreate(String tree, String name, String? mime) async =>
+      (await _invoke<String>('cloudCreate', {
+        'tree': tree,
+        'name': name,
+        'mime': mime,
+      }))!;
+
+  /// X3: streams [source] (content URI or path) into [doc]; the SHA-256 and
+  /// length of the bytes read. Deletes [doc] when it fails.
+  Future<({String sha256, int bytes})> cloudCopy({
+    required String source,
+    required String doc,
+    required String jobKey,
+  }) async => _hashResult(
+    await _invoke<Map<Object?, Object?>>('cloudCopy', {
+      'source': source,
+      'doc': doc,
+      'jobKey': jobKey,
+    }),
+  );
+
+  /// X3: SHA-256 and length of [doc], read back through its provider.
+  Future<({String sha256, int bytes})> cloudHash(String doc) async =>
+      _hashResult(
+        await _invoke<Map<Object?, Object?>>('cloudHash', {'doc': doc}),
+      );
+
+  /// X3: the document's size; null when it is gone.
+  Future<int?> cloudStat(String doc) async =>
+      (await _invoke<num>('cloudStat', {'doc': doc}))?.toInt();
+
+  Future<void> cloudDelete(String doc) =>
+      _invoke<bool>('cloudDelete', {'doc': doc});
+
+  Future<void> cloudCancel(String jobKey) =>
+      _invoke<bool>('cloudCancel', {'jobKey': jobKey});
+
+  static ({String sha256, int bytes}) _hashResult(Map<Object?, Object?>? m) {
+    if (m == null) throw const FilesChannelException('IO', 'no result');
+    return (
+      sha256: m['sha256']! as String,
+      bytes: (m['bytes']! as num).toInt(),
+    );
+  }
 
   /// X6: the system "Save as" picker. Null = cancelled.
   Future<String?> createDocument(String name, String mime) =>

@@ -334,6 +334,13 @@ abstract final class AppSettings {
     defaultValue: false,
   );
 
+  /// X3: the one-time "Photos are uploaded without their location" note on
+  /// the cloud destinations screen was dismissed.
+  static final SettingKey<bool> cloudGpsNoteDismissed = SettingKey.boolean(
+    'cloud.gpsNoteDismissed',
+    defaultValue: false,
+  );
+
   /// X7. Opt-in network: daily GitHub release check (rule 7: off).
   static final SettingKey<bool> updateCheckEnabled = SettingKey.boolean(
     'updates.checkEnabled',

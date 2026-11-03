@@ -3,6 +3,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/backup/ui/backup_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
+import 'package:kfm/features/cloud/ui/cloud_settings_section.dart';
 import 'package:kfm/features/connect/ui/connect_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
 import 'package:kfm/features/privacy/ui/privacy_settings_section.dart';
@@ -83,6 +84,12 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 550,
       titleBuilder: (c) => c.l10n.storageOverviewTitle,
       builder: (_) => const StorageOverviewSection(),
+    ),
+    // X3: hidden power feature; nothing runs until a folder is added.
+    SettingsSection(
+      order: 570,
+      titleBuilder: (c) => c.l10n.cloudSettingsTitle,
+      builder: (_) => const CloudSettingsSection(),
     ),
     SettingsSection(
       order: 600,

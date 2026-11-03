@@ -72,6 +72,8 @@ class FilesChannel(
     private val safDocuments = SafDocuments(activity)
     /** X5: APK info + hand-off to the system installer. */
     private val apk = ApkSupport(activity.applicationContext)
+    /** X3: writes into cloud apps' folders, on its own executor. */
+    private val cloud = CloudSaf(activity.applicationContext, messenger)
 
     /** N7: Files-table changes (non-media files) while the share server runs. */
     private val changesChannel = EventChannel(messenger, "kfm/files_changes")
@@ -108,6 +110,7 @@ class FilesChannel(
         channel.setMethodCallHandler(null)
         safTrees.dispose()
         safDocuments.dispose()
+        cloud.dispose()
         stopObservingFiles()
         changesSink = null
         changesChannel.setStreamHandler(null)
@@ -143,6 +146,10 @@ class FilesChannel(
         }
         if (safDocuments.handles(call.method)) {
             safDocuments.onMethodCall(call, result)
+            return
+        }
+        if (cloud.handles(call.method)) {
+            cloud.onMethodCall(call, result)
             return
         }
         when (call.method) {

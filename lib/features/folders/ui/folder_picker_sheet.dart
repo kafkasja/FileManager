@@ -20,11 +20,15 @@ import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
+import 'package:kfm/features/cloud/data/cloud_providers.dart';
+import 'package:kfm/features/cloud/domain/cloud_destination.dart';
+import 'package:kfm/features/cloud/ui/cloud_labels.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/external_storage/domain/storage_place.dart';
 import 'package:kfm/features/external_storage/ui/place_browser_screen.dart';
 import 'package:kfm/features/external_storage/ui/place_labels.dart';
 import 'package:kfm/features/external_storage/ui/saf_grant_flow.dart';
+import 'package:kfm/features/folders/domain/move_target.dart';
 
 /// What the picked folder is for: sets the default title and the label of
 /// the "… here" button in the All folders section.
@@ -40,12 +44,43 @@ Future<String?> showFolderPicker(
   String? disabledFolder,
   String? title,
   FolderPickerMode mode = FolderPickerMode.choose,
-}) => showModalBottomSheet<String>(
+}) async {
+  final picked = await showModalBottomSheet<MoveTarget>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _FolderPicker(
+      disabledFolder: disabledFolder,
+      title: title,
+      mode: mode,
+      includeCloud: false,
+    ),
+  );
+  return switch (picked) {
+    FolderTarget(:final path) => path,
+    _ => null,
+  };
+}
+
+/// B4's Move/Copy target (TASK-X3): the same sheet plus a "Cloud" group of
+/// the active cloud destinations, shown only when at least one exists.
+/// [showFolderPicker] (P2 swipe actions, archives, presets) never lists
+/// cloud destinations.
+Future<MoveTarget?> showMoveTargetPicker(
+  BuildContext context, {
+  String? disabledFolder,
+  FolderPickerMode mode = FolderPickerMode.move,
+  bool includeCloud = true,
+}) => showModalBottomSheet<MoveTarget>(
   context: context,
   isScrollControlled: true,
   showDragHandle: true,
-  builder: (_) =>
-      _FolderPicker(disabledFolder: disabledFolder, title: title, mode: mode),
+  builder: (_) => _FolderPicker(
+    disabledFolder: disabledFolder,
+    title: null,
+    mode: mode,
+    includeCloud: includeCloud,
+  ),
 );
 
 const _maxRecent = 5;
@@ -99,11 +134,15 @@ class _FolderPicker extends ConsumerStatefulWidget {
     required this.disabledFolder,
     required this.title,
     required this.mode,
+    required this.includeCloud,
   });
 
   final String? disabledFolder;
   final String? title;
   final FolderPickerMode mode;
+
+  /// X3: list active cloud destinations (B4 Move/Copy only).
+  final bool includeCloud;
 
   @override
   ConsumerState<_FolderPicker> createState() => _FolderPickerState();
@@ -199,8 +238,23 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
               p.rootPath != null)
             p,
       ];
+      // X3: only read when asked for (never for P2's swipe picker).
+      final clouds = widget.includeCloud
+          ? ref.watch(activeCloudDestinationsProvider).value ??
+                const <CloudDestination>[]
+          : const <CloudDestination>[];
       children = [
         newFolder,
+        if (clouds.isNotEmpty) ...[
+          _Header(l10n.cloudPickerGroup),
+          for (final d in clouds)
+            ListTile(
+              key: ValueKey('picker-cloud-${d.id}'),
+              leading: Icon(cloudProviderIcon(d.provider)),
+              title: Text(d.label),
+              onTap: () => Navigator.of(context).pop(CloudTarget(d.id)),
+            ),
+        ],
         if (recent.isNotEmpty) ...[
           _Header(l10n.folderPickerRecent),
           for (final path in recent) folder(path),
@@ -333,7 +387,7 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
         .read(settingsRepositoryProvider)
         .write(AppSettings.swipeRecentTargets, jsonEncode(next))
         .fireAndForget();
-    if (mounted) Navigator.of(context).pop(path);
+    if (mounted) Navigator.of(context).pop(FolderTarget(path));
   }
 
   /// Creates the folder inside the folder being shown (or the default

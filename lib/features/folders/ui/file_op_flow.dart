@@ -14,9 +14,11 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/cloud/ui/cloud_send_flow.dart';
 import 'package:kfm/features/folders/data/file_operation_runner.dart';
 import 'package:kfm/features/folders/data/folder_ops.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
+import 'package:kfm/features/folders/domain/move_target.dart';
 import 'package:kfm/features/folders/ui/collision_dialog.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
 import 'package:kfm/features/folders/ui/last_operation_undo.dart';
@@ -62,13 +64,30 @@ Future<void> moveOrCopyFiles(
 }) async {
   if (files.isEmpty) return;
   final folders = {for (final f in files) f.folderPath};
-  final target = await showFolderPicker(
+  final picked = await showMoveTargetPicker(
     context,
     mode: copy ? FolderPickerMode.copy : FolderPickerMode.move,
     // Same-folder move is a no-op.
     disabledFolder: !copy && folders.length == 1 ? folders.single : null,
   );
-  if (target == null || !context.mounted) return;
+  if (picked == null || !context.mounted) return;
+  final String target;
+  switch (picked) {
+    case CloudTarget(:final destinationId):
+      // X3: into a cloud app's folder (copy, or copy → verify → delete).
+      await startCloudJobFlow(
+        context,
+        ref,
+        files,
+        destinationId,
+        move: !copy,
+        fromSelection: fromSelection,
+      );
+      return;
+    case FolderTarget(:final path):
+      target = path;
+  }
+  if (!context.mounted) return;
   // U2: another place (SD card, USB drive) → a verified local job.
   if (needsLocalJob(ref, files, target)) {
     await startLocalJobFlow(

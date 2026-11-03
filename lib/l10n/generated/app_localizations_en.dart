@@ -6511,4 +6511,212 @@ class AppLocalizationsEn extends AppLocalizations {
   String updatesOpenFailed(String error) {
     return 'Couldn\'t open the page: $error';
   }
+
+  @override
+  String get cloudSettingsTitle => 'Cloud';
+
+  @override
+  String get cloudDestinations => 'Cloud destinations';
+
+  @override
+  String get cloudDestinationsNone =>
+      'Save files into a folder of your cloud app';
+
+  @override
+  String cloudDestinationsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders',
+      one: '1 folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudHowItWorks =>
+      'KFM saves files into a folder of your cloud app (Google Drive, OneDrive, Dropbox…). The cloud app uploads them; KFM never signs in anywhere.';
+
+  @override
+  String get cloudEmpty => 'No cloud folders yet';
+
+  @override
+  String get cloudAdd => 'Add cloud folder';
+
+  @override
+  String cloudAdded(String name) {
+    return 'Added $name';
+  }
+
+  @override
+  String get cloudAddFailed => 'Couldn\'t keep access to that folder';
+
+  @override
+  String get cloudRename => 'Rename';
+
+  @override
+  String get cloudRemove => 'Remove';
+
+  @override
+  String cloudRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get cloudRemoveConfirm =>
+      'KFM won\'t save files here any more. Files already in the cloud stay there.';
+
+  @override
+  String get cloudForgetUploads => 'Also forget which files were uploaded here';
+
+  @override
+  String get cloudNeedsReconnecting => 'Needs reconnecting';
+
+  @override
+  String get cloudReconnect => 'Reconnect';
+
+  @override
+  String get cloudNoFolderPicking =>
+      'If your cloud app isn\'t listed in the folder picker, it doesn\'t let other apps save into its folders.';
+
+  @override
+  String cloudSavedToFolder(String name) {
+    return 'Saved to $name';
+  }
+
+  @override
+  String cloudVerified(String name) {
+    return 'Verified in $name';
+  }
+
+  @override
+  String cloudFailed(String reason) {
+    return 'Failed: $reason';
+  }
+
+  @override
+  String get cloudWaiting => 'Waiting';
+
+  @override
+  String cloudUploading(String name) {
+    return 'Saving to $name…';
+  }
+
+  @override
+  String get cloudVerifyFailed => 'Couldn\'t verify the copy — original kept';
+
+  @override
+  String get cloudVerifyUnavailable =>
+      'Couldn\'t read the copy back — original kept';
+
+  @override
+  String get cloudCancelled => 'Cancelled';
+
+  @override
+  String get cloudDestinationRemovedError => 'Destination removed';
+
+  @override
+  String get cloudSourceGone => 'The file is gone';
+
+  @override
+  String get cloudSourceChanged => 'The file changed while it was copied';
+
+  @override
+  String get cloudUnsupported => 'This file can\'t be saved to the cloud';
+
+  @override
+  String get cloudLocationNotRemoved =>
+      'Location couldn\'t be removed, so it wasn\'t uploaded';
+
+  @override
+  String get cloudCopyMissing => 'The cloud copy is missing — original kept';
+
+  @override
+  String get cloudNoSpace => 'The cloud app is out of space';
+
+  @override
+  String get cloudWriteError => 'The cloud app didn\'t accept the file';
+
+  @override
+  String get cloudGpsNote =>
+      'Photos are uploaded without their location because KFM can\'t read it.';
+
+  @override
+  String get cloudGpsAllow => 'Allow';
+
+  @override
+  String get cloudGpsMoveTitle => 'Move without location?';
+
+  @override
+  String get cloudGpsMoveWarning =>
+      'Location data may be removed from the cloud copy, and the original will be deleted.';
+
+  @override
+  String get cloudGpsMoveAnyway => 'Move anyway';
+
+  @override
+  String get cloudTransfersSection => 'Cloud';
+
+  @override
+  String get cloudTransfersEmpty =>
+      'Nothing saved to the cloud in the last 7 days';
+
+  @override
+  String get cloudPickerGroup => 'Cloud';
+
+  @override
+  String cloudStartedCopy(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Saving $count files to $name…',
+      one: 'Saving 1 file to $name…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cloudStartedMove(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moving $count files to $name…',
+      one: 'Moving 1 file to $name…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudNothingToSend => 'These files can\'t be saved to the cloud';
+
+  @override
+  String cloudOriginalsKept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count originals were kept',
+      one: '1 original was kept',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cloudOriginalsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moved $count files',
+      one: 'Moved 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudDeleteOriginals => 'Delete originals';
+
+  @override
+  String get cloudOriginalNotDeleted => 'Original not deleted';
+
+  @override
+  String get cloudRetry => 'Retry';
 }

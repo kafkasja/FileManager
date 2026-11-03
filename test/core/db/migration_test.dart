@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/db/tables/cloud_destinations_table.dart';
+import 'package:kfm/core/db/tables/cloud_items_table.dart';
 import 'package:kfm/core/db/tables/local_jobs_table.dart';
 import 'package:kfm/core/db/tables/share_offers_table.dart';
 import 'package:kfm/core/db/tables/transfers_table.dart';
@@ -21,6 +23,7 @@ import 'generated/schema_v19.dart' as v19;
 import 'generated/schema_v20.dart' as v20;
 import 'generated/schema_v21.dart' as v21;
 import 'generated/schema_v22.dart' as v22;
+import 'generated/schema_v23.dart' as v23;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -59,7 +62,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 23; from++) {
+  for (var from = 1; from < 24; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -1091,6 +1094,83 @@ void main() {
       await db.into(db.shareOffers).insert(offer('o'));
       await db.delete(db.knownDevices).go();
       expect(await db.select(db.shareOffers).get(), hasLength(1));
+    });
+  });
+
+  test('v23 -> v24 adds empty cloud tables + indexes; data intact', () async {
+    final schema = await verifier.schemaAt(23);
+    final raw = v23.DatabaseAtV23(schema.newConnection());
+    await raw.customStatement(
+      'INSERT INTO settings (key, value) VALUES (?, ?)',
+      ['themeMode', '"dark"'],
+    );
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    expect((await db.select(db.settings).get()).single.value, '"dark"');
+    expect(await db.select(db.cloudDestinations).get(), isEmpty);
+    expect(await db.select(db.cloudItems).get(), isEmpty);
+    final names = [
+      for (final r
+          in await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type = 'index'",
+              )
+              .get())
+        r.read<String>('name'),
+    ];
+    expect(names, containsAll(['ci_status', 'ci_on_cloud_file']));
+  });
+
+  group('cloud tables (v24)', () {
+    late AppDatabase db;
+
+    setUp(() async {
+      db = AppDatabase(DatabaseConnection(await verifier.startAt(23)));
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+    });
+    tearDown(() => db.close());
+
+    Future<int> dest(String location) => db
+        .into(db.cloudDestinations)
+        .insert(
+          CloudDestinationsCompanion.insert(
+            label: 'Drive',
+            providerGuess: CloudProviderGuess.googleDrive,
+            location: location,
+            addedAt: DateTime.utc(2026),
+          ),
+        );
+
+    CloudItemsCompanion item(int destId, String fileId) =>
+        CloudItemsCompanion.insert(
+          fileId: fileId,
+          name: 'a.jpg',
+          destinationId: destId,
+          mode: CloudItemMode.copy,
+          status: CloudItemStatus.queued,
+          sizeBytes: 3,
+          sourceModifiedAtMs: 1,
+          createdAt: DateTime.utc(2026),
+        );
+
+    test('location is unique; (file, destination) is unique', () async {
+      final d = await dest('content://t');
+      await expectLater(dest('content://t'), throwsA(anything));
+      await db.into(db.cloudItems).insert(item(d, 'ms:1'));
+      await expectLater(
+        db.into(db.cloudItems).insert(item(d, 'ms:1')),
+        throwsA(anything),
+      );
+    });
+
+    test('an item needs an existing destination (FK)', () async {
+      await expectLater(
+        db.into(db.cloudItems).insert(item(99, 'ms:1')),
+        throwsA(anything),
+      );
     });
   });
 }

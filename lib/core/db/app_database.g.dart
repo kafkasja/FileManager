@@ -18011,6 +18011,1329 @@ class ShareOfferFilesCompanion extends UpdateCompanion<ShareOfferFileRow> {
   }
 }
 
+class $CloudDestinationsTable extends CloudDestinations
+    with TableInfo<$CloudDestinationsTable, CloudDestinationRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CloudDestinationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 60,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<CloudProviderGuess, String>
+  providerGuess =
+      GeneratedColumn<String>(
+        'provider_guess',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<CloudProviderGuess>(
+        $CloudDestinationsTable.$converterproviderGuess,
+      );
+  static const VerificationMeta _locationMeta = const VerificationMeta(
+    'location',
+  );
+  @override
+  late final GeneratedColumn<String> location = GeneratedColumn<String>(
+    'location',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _removedAtMeta = const VerificationMeta(
+    'removedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> removedAt = GeneratedColumn<DateTime>(
+    'removed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    label,
+    providerGuess,
+    location,
+    addedAt,
+    removedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cloud_destinations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CloudDestinationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('location')) {
+      context.handle(
+        _locationMeta,
+        location.isAcceptableOrUnknown(data['location']!, _locationMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_locationMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    if (data.containsKey('removed_at')) {
+      context.handle(
+        _removedAtMeta,
+        removedAt.isAcceptableOrUnknown(data['removed_at']!, _removedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CloudDestinationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CloudDestinationRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      providerGuess: $CloudDestinationsTable.$converterproviderGuess.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}provider_guess'],
+        )!,
+      ),
+      location: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+      removedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}removed_at'],
+      ),
+    );
+  }
+
+  @override
+  $CloudDestinationsTable createAlias(String alias) {
+    return $CloudDestinationsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<CloudProviderGuess, String, String>
+  $converterproviderGuess = const EnumNameConverter<CloudProviderGuess>(
+    CloudProviderGuess.values,
+  );
+}
+
+class CloudDestinationRow extends DataClass
+    implements Insertable<CloudDestinationRow> {
+  final int id;
+
+  /// "Drive › Photos"; the user can rename it. 1–60 chars.
+  final String label;
+  final CloudProviderGuess providerGuess;
+
+  /// Android tree URI | Windows path | iOS bookmark (base64). Unique: adding
+  /// the same folder again re-activates the removed row instead.
+  final String location;
+  final DateTime addedAt;
+
+  /// Set when removed; null = active.
+  final DateTime? removedAt;
+  const CloudDestinationRow({
+    required this.id,
+    required this.label,
+    required this.providerGuess,
+    required this.location,
+    required this.addedAt,
+    this.removedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['label'] = Variable<String>(label);
+    {
+      map['provider_guess'] = Variable<String>(
+        $CloudDestinationsTable.$converterproviderGuess.toSql(providerGuess),
+      );
+    }
+    map['location'] = Variable<String>(location);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    if (!nullToAbsent || removedAt != null) {
+      map['removed_at'] = Variable<DateTime>(removedAt);
+    }
+    return map;
+  }
+
+  CloudDestinationsCompanion toCompanion(bool nullToAbsent) {
+    return CloudDestinationsCompanion(
+      id: Value(id),
+      label: Value(label),
+      providerGuess: Value(providerGuess),
+      location: Value(location),
+      addedAt: Value(addedAt),
+      removedAt: removedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(removedAt),
+    );
+  }
+
+  factory CloudDestinationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CloudDestinationRow(
+      id: serializer.fromJson<int>(json['id']),
+      label: serializer.fromJson<String>(json['label']),
+      providerGuess: $CloudDestinationsTable.$converterproviderGuess.fromJson(
+        serializer.fromJson<String>(json['providerGuess']),
+      ),
+      location: serializer.fromJson<String>(json['location']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+      removedAt: serializer.fromJson<DateTime?>(json['removedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'label': serializer.toJson<String>(label),
+      'providerGuess': serializer.toJson<String>(
+        $CloudDestinationsTable.$converterproviderGuess.toJson(providerGuess),
+      ),
+      'location': serializer.toJson<String>(location),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+      'removedAt': serializer.toJson<DateTime?>(removedAt),
+    };
+  }
+
+  CloudDestinationRow copyWith({
+    int? id,
+    String? label,
+    CloudProviderGuess? providerGuess,
+    String? location,
+    DateTime? addedAt,
+    Value<DateTime?> removedAt = const Value.absent(),
+  }) => CloudDestinationRow(
+    id: id ?? this.id,
+    label: label ?? this.label,
+    providerGuess: providerGuess ?? this.providerGuess,
+    location: location ?? this.location,
+    addedAt: addedAt ?? this.addedAt,
+    removedAt: removedAt.present ? removedAt.value : this.removedAt,
+  );
+  CloudDestinationRow copyWithCompanion(CloudDestinationsCompanion data) {
+    return CloudDestinationRow(
+      id: data.id.present ? data.id.value : this.id,
+      label: data.label.present ? data.label.value : this.label,
+      providerGuess: data.providerGuess.present
+          ? data.providerGuess.value
+          : this.providerGuess,
+      location: data.location.present ? data.location.value : this.location,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      removedAt: data.removedAt.present ? data.removedAt.value : this.removedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CloudDestinationRow(')
+          ..write('id: $id, ')
+          ..write('label: $label, ')
+          ..write('providerGuess: $providerGuess, ')
+          ..write('location: $location, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('removedAt: $removedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, label, providerGuess, location, addedAt, removedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CloudDestinationRow &&
+          other.id == this.id &&
+          other.label == this.label &&
+          other.providerGuess == this.providerGuess &&
+          other.location == this.location &&
+          other.addedAt == this.addedAt &&
+          other.removedAt == this.removedAt);
+}
+
+class CloudDestinationsCompanion extends UpdateCompanion<CloudDestinationRow> {
+  final Value<int> id;
+  final Value<String> label;
+  final Value<CloudProviderGuess> providerGuess;
+  final Value<String> location;
+  final Value<DateTime> addedAt;
+  final Value<DateTime?> removedAt;
+  const CloudDestinationsCompanion({
+    this.id = const Value.absent(),
+    this.label = const Value.absent(),
+    this.providerGuess = const Value.absent(),
+    this.location = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.removedAt = const Value.absent(),
+  });
+  CloudDestinationsCompanion.insert({
+    this.id = const Value.absent(),
+    required String label,
+    required CloudProviderGuess providerGuess,
+    required String location,
+    required DateTime addedAt,
+    this.removedAt = const Value.absent(),
+  }) : label = Value(label),
+       providerGuess = Value(providerGuess),
+       location = Value(location),
+       addedAt = Value(addedAt);
+  static Insertable<CloudDestinationRow> custom({
+    Expression<int>? id,
+    Expression<String>? label,
+    Expression<String>? providerGuess,
+    Expression<String>? location,
+    Expression<DateTime>? addedAt,
+    Expression<DateTime>? removedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (label != null) 'label': label,
+      if (providerGuess != null) 'provider_guess': providerGuess,
+      if (location != null) 'location': location,
+      if (addedAt != null) 'added_at': addedAt,
+      if (removedAt != null) 'removed_at': removedAt,
+    });
+  }
+
+  CloudDestinationsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? label,
+    Value<CloudProviderGuess>? providerGuess,
+    Value<String>? location,
+    Value<DateTime>? addedAt,
+    Value<DateTime?>? removedAt,
+  }) {
+    return CloudDestinationsCompanion(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      providerGuess: providerGuess ?? this.providerGuess,
+      location: location ?? this.location,
+      addedAt: addedAt ?? this.addedAt,
+      removedAt: removedAt ?? this.removedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (providerGuess.present) {
+      map['provider_guess'] = Variable<String>(
+        $CloudDestinationsTable.$converterproviderGuess.toSql(
+          providerGuess.value,
+        ),
+      );
+    }
+    if (location.present) {
+      map['location'] = Variable<String>(location.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (removedAt.present) {
+      map['removed_at'] = Variable<DateTime>(removedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CloudDestinationsCompanion(')
+          ..write('id: $id, ')
+          ..write('label: $label, ')
+          ..write('providerGuess: $providerGuess, ')
+          ..write('location: $location, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('removedAt: $removedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CloudItemsTable extends CloudItems
+    with TableInfo<$CloudItemsTable, CloudItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CloudItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _destinationIdMeta = const VerificationMeta(
+    'destinationId',
+  );
+  @override
+  late final GeneratedColumn<int> destinationId = GeneratedColumn<int>(
+    'destination_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cloud_destinations (id)',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<CloudItemMode, String> mode =
+      GeneratedColumn<String>(
+        'mode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<CloudItemMode>($CloudItemsTable.$convertermode);
+  @override
+  late final GeneratedColumnWithTypeConverter<CloudItemStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<CloudItemStatus>($CloudItemsTable.$converterstatus);
+  static const VerificationMeta _remoteUriMeta = const VerificationMeta(
+    'remoteUri',
+  );
+  @override
+  late final GeneratedColumn<String> remoteUri = GeneratedColumn<String>(
+    'remote_uri',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceModifiedAtMsMeta =
+      const VerificationMeta('sourceModifiedAtMs');
+  @override
+  late final GeneratedColumn<int> sourceModifiedAtMs = GeneratedColumn<int>(
+    'source_modified_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
+  @override
+  late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
+    'sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _uploadedAtMsMeta = const VerificationMeta(
+    'uploadedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> uploadedAtMs = GeneratedColumn<int>(
+    'uploaded_at_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SourceOutcome?, String>
+  sourceOutcome = GeneratedColumn<String>(
+    'source_outcome',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<SourceOutcome?>($CloudItemsTable.$convertersourceOutcomen);
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    fileId,
+    name,
+    destinationId,
+    mode,
+    status,
+    remoteUri,
+    sizeBytes,
+    sourceModifiedAtMs,
+    sha256,
+    uploadedAtMs,
+    error,
+    attempts,
+    sourceOutcome,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cloud_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CloudItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('destination_id')) {
+      context.handle(
+        _destinationIdMeta,
+        destinationId.isAcceptableOrUnknown(
+          data['destination_id']!,
+          _destinationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_destinationIdMeta);
+    }
+    if (data.containsKey('remote_uri')) {
+      context.handle(
+        _remoteUriMeta,
+        remoteUri.isAcceptableOrUnknown(data['remote_uri']!, _remoteUriMeta),
+      );
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('source_modified_at_ms')) {
+      context.handle(
+        _sourceModifiedAtMsMeta,
+        sourceModifiedAtMs.isAcceptableOrUnknown(
+          data['source_modified_at_ms']!,
+          _sourceModifiedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceModifiedAtMsMeta);
+    }
+    if (data.containsKey('sha256')) {
+      context.handle(
+        _sha256Meta,
+        sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta),
+      );
+    }
+    if (data.containsKey('uploaded_at_ms')) {
+      context.handle(
+        _uploadedAtMsMeta,
+        uploadedAtMs.isAcceptableOrUnknown(
+          data['uploaded_at_ms']!,
+          _uploadedAtMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {fileId, destinationId},
+  ];
+  @override
+  CloudItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CloudItemRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      destinationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}destination_id'],
+      )!,
+      mode: $CloudItemsTable.$convertermode.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}mode'],
+        )!,
+      ),
+      status: $CloudItemsTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      remoteUri: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_uri'],
+      ),
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      sourceModifiedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_modified_at_ms'],
+      )!,
+      sha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sha256'],
+      ),
+      uploadedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}uploaded_at_ms'],
+      ),
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      sourceOutcome: $CloudItemsTable.$convertersourceOutcomen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}source_outcome'],
+        ),
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CloudItemsTable createAlias(String alias) {
+    return $CloudItemsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<CloudItemMode, String, String> $convertermode =
+      const EnumNameConverter<CloudItemMode>(CloudItemMode.values);
+  static JsonTypeConverter2<CloudItemStatus, String, String> $converterstatus =
+      const EnumNameConverter<CloudItemStatus>(CloudItemStatus.values);
+  static JsonTypeConverter2<SourceOutcome, String, String>
+  $convertersourceOutcome = const EnumNameConverter<SourceOutcome>(
+    SourceOutcome.values,
+  );
+  static JsonTypeConverter2<SourceOutcome?, String?, String?>
+  $convertersourceOutcomen = JsonTypeConverter2.asNullable(
+    $convertersourceOutcome,
+  );
+}
+
+class CloudItemRow extends DataClass implements Insertable<CloudItemRow> {
+  final int id;
+
+  /// FileRef.id at hand-off time (re-keyed by X4 on idChanges).
+  final String fileId;
+
+  /// Display name of the file at hand-off time (the Transfers list).
+  final String name;
+
+  /// No cascade: destinations are soft-deleted (Hard rule 4).
+  final int destinationId;
+  final CloudItemMode mode;
+  final CloudItemStatus status;
+
+  /// Document URI / synced-folder path; set right after createDocument so
+  /// a restart can delete a partial document. Null while queued.
+  final String? remoteUri;
+
+  /// Local file's size and modified time (epoch **ms**, same unit as
+  /// media_index.modifiedAtMs) at hand-off time. X4 compares both.
+  final int sizeBytes;
+  final int sourceModifiedAtMs;
+
+  /// SHA-256 of the bytes written (source side); verified moves also match
+  /// the read-back hash.
+  final String? sha256;
+
+  /// Epoch ms when the status became handedToProvider/verified.
+  final int? uploadedAtMs;
+  final String? error;
+  final int attempts;
+
+  /// Moves: what happened to the original (N11 outcome); null = not yet.
+  final SourceOutcome? sourceOutcome;
+  final DateTime createdAt;
+  const CloudItemRow({
+    required this.id,
+    required this.fileId,
+    required this.name,
+    required this.destinationId,
+    required this.mode,
+    required this.status,
+    this.remoteUri,
+    required this.sizeBytes,
+    required this.sourceModifiedAtMs,
+    this.sha256,
+    this.uploadedAtMs,
+    this.error,
+    required this.attempts,
+    this.sourceOutcome,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['file_id'] = Variable<String>(fileId);
+    map['name'] = Variable<String>(name);
+    map['destination_id'] = Variable<int>(destinationId);
+    {
+      map['mode'] = Variable<String>(
+        $CloudItemsTable.$convertermode.toSql(mode),
+      );
+    }
+    {
+      map['status'] = Variable<String>(
+        $CloudItemsTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || remoteUri != null) {
+      map['remote_uri'] = Variable<String>(remoteUri);
+    }
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs);
+    if (!nullToAbsent || sha256 != null) {
+      map['sha256'] = Variable<String>(sha256);
+    }
+    if (!nullToAbsent || uploadedAtMs != null) {
+      map['uploaded_at_ms'] = Variable<int>(uploadedAtMs);
+    }
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    map['attempts'] = Variable<int>(attempts);
+    if (!nullToAbsent || sourceOutcome != null) {
+      map['source_outcome'] = Variable<String>(
+        $CloudItemsTable.$convertersourceOutcomen.toSql(sourceOutcome),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CloudItemsCompanion toCompanion(bool nullToAbsent) {
+    return CloudItemsCompanion(
+      id: Value(id),
+      fileId: Value(fileId),
+      name: Value(name),
+      destinationId: Value(destinationId),
+      mode: Value(mode),
+      status: Value(status),
+      remoteUri: remoteUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteUri),
+      sizeBytes: Value(sizeBytes),
+      sourceModifiedAtMs: Value(sourceModifiedAtMs),
+      sha256: sha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sha256),
+      uploadedAtMs: uploadedAtMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uploadedAtMs),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+      attempts: Value(attempts),
+      sourceOutcome: sourceOutcome == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceOutcome),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CloudItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CloudItemRow(
+      id: serializer.fromJson<int>(json['id']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+      name: serializer.fromJson<String>(json['name']),
+      destinationId: serializer.fromJson<int>(json['destinationId']),
+      mode: $CloudItemsTable.$convertermode.fromJson(
+        serializer.fromJson<String>(json['mode']),
+      ),
+      status: $CloudItemsTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      remoteUri: serializer.fromJson<String?>(json['remoteUri']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      sourceModifiedAtMs: serializer.fromJson<int>(json['sourceModifiedAtMs']),
+      sha256: serializer.fromJson<String?>(json['sha256']),
+      uploadedAtMs: serializer.fromJson<int?>(json['uploadedAtMs']),
+      error: serializer.fromJson<String?>(json['error']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      sourceOutcome: $CloudItemsTable.$convertersourceOutcomen.fromJson(
+        serializer.fromJson<String?>(json['sourceOutcome']),
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'fileId': serializer.toJson<String>(fileId),
+      'name': serializer.toJson<String>(name),
+      'destinationId': serializer.toJson<int>(destinationId),
+      'mode': serializer.toJson<String>(
+        $CloudItemsTable.$convertermode.toJson(mode),
+      ),
+      'status': serializer.toJson<String>(
+        $CloudItemsTable.$converterstatus.toJson(status),
+      ),
+      'remoteUri': serializer.toJson<String?>(remoteUri),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'sourceModifiedAtMs': serializer.toJson<int>(sourceModifiedAtMs),
+      'sha256': serializer.toJson<String?>(sha256),
+      'uploadedAtMs': serializer.toJson<int?>(uploadedAtMs),
+      'error': serializer.toJson<String?>(error),
+      'attempts': serializer.toJson<int>(attempts),
+      'sourceOutcome': serializer.toJson<String?>(
+        $CloudItemsTable.$convertersourceOutcomen.toJson(sourceOutcome),
+      ),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CloudItemRow copyWith({
+    int? id,
+    String? fileId,
+    String? name,
+    int? destinationId,
+    CloudItemMode? mode,
+    CloudItemStatus? status,
+    Value<String?> remoteUri = const Value.absent(),
+    int? sizeBytes,
+    int? sourceModifiedAtMs,
+    Value<String?> sha256 = const Value.absent(),
+    Value<int?> uploadedAtMs = const Value.absent(),
+    Value<String?> error = const Value.absent(),
+    int? attempts,
+    Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+    DateTime? createdAt,
+  }) => CloudItemRow(
+    id: id ?? this.id,
+    fileId: fileId ?? this.fileId,
+    name: name ?? this.name,
+    destinationId: destinationId ?? this.destinationId,
+    mode: mode ?? this.mode,
+    status: status ?? this.status,
+    remoteUri: remoteUri.present ? remoteUri.value : this.remoteUri,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+    sha256: sha256.present ? sha256.value : this.sha256,
+    uploadedAtMs: uploadedAtMs.present ? uploadedAtMs.value : this.uploadedAtMs,
+    error: error.present ? error.value : this.error,
+    attempts: attempts ?? this.attempts,
+    sourceOutcome: sourceOutcome.present
+        ? sourceOutcome.value
+        : this.sourceOutcome,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  CloudItemRow copyWithCompanion(CloudItemsCompanion data) {
+    return CloudItemRow(
+      id: data.id.present ? data.id.value : this.id,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      name: data.name.present ? data.name.value : this.name,
+      destinationId: data.destinationId.present
+          ? data.destinationId.value
+          : this.destinationId,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      status: data.status.present ? data.status.value : this.status,
+      remoteUri: data.remoteUri.present ? data.remoteUri.value : this.remoteUri,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      sourceModifiedAtMs: data.sourceModifiedAtMs.present
+          ? data.sourceModifiedAtMs.value
+          : this.sourceModifiedAtMs,
+      sha256: data.sha256.present ? data.sha256.value : this.sha256,
+      uploadedAtMs: data.uploadedAtMs.present
+          ? data.uploadedAtMs.value
+          : this.uploadedAtMs,
+      error: data.error.present ? data.error.value : this.error,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      sourceOutcome: data.sourceOutcome.present
+          ? data.sourceOutcome.value
+          : this.sourceOutcome,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CloudItemRow(')
+          ..write('id: $id, ')
+          ..write('fileId: $fileId, ')
+          ..write('name: $name, ')
+          ..write('destinationId: $destinationId, ')
+          ..write('mode: $mode, ')
+          ..write('status: $status, ')
+          ..write('remoteUri: $remoteUri, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('sha256: $sha256, ')
+          ..write('uploadedAtMs: $uploadedAtMs, ')
+          ..write('error: $error, ')
+          ..write('attempts: $attempts, ')
+          ..write('sourceOutcome: $sourceOutcome, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    fileId,
+    name,
+    destinationId,
+    mode,
+    status,
+    remoteUri,
+    sizeBytes,
+    sourceModifiedAtMs,
+    sha256,
+    uploadedAtMs,
+    error,
+    attempts,
+    sourceOutcome,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CloudItemRow &&
+          other.id == this.id &&
+          other.fileId == this.fileId &&
+          other.name == this.name &&
+          other.destinationId == this.destinationId &&
+          other.mode == this.mode &&
+          other.status == this.status &&
+          other.remoteUri == this.remoteUri &&
+          other.sizeBytes == this.sizeBytes &&
+          other.sourceModifiedAtMs == this.sourceModifiedAtMs &&
+          other.sha256 == this.sha256 &&
+          other.uploadedAtMs == this.uploadedAtMs &&
+          other.error == this.error &&
+          other.attempts == this.attempts &&
+          other.sourceOutcome == this.sourceOutcome &&
+          other.createdAt == this.createdAt);
+}
+
+class CloudItemsCompanion extends UpdateCompanion<CloudItemRow> {
+  final Value<int> id;
+  final Value<String> fileId;
+  final Value<String> name;
+  final Value<int> destinationId;
+  final Value<CloudItemMode> mode;
+  final Value<CloudItemStatus> status;
+  final Value<String?> remoteUri;
+  final Value<int> sizeBytes;
+  final Value<int> sourceModifiedAtMs;
+  final Value<String?> sha256;
+  final Value<int?> uploadedAtMs;
+  final Value<String?> error;
+  final Value<int> attempts;
+  final Value<SourceOutcome?> sourceOutcome;
+  final Value<DateTime> createdAt;
+  const CloudItemsCompanion({
+    this.id = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.destinationId = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.status = const Value.absent(),
+    this.remoteUri = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.sourceModifiedAtMs = const Value.absent(),
+    this.sha256 = const Value.absent(),
+    this.uploadedAtMs = const Value.absent(),
+    this.error = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.sourceOutcome = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  CloudItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required String fileId,
+    required String name,
+    required int destinationId,
+    required CloudItemMode mode,
+    required CloudItemStatus status,
+    this.remoteUri = const Value.absent(),
+    required int sizeBytes,
+    required int sourceModifiedAtMs,
+    this.sha256 = const Value.absent(),
+    this.uploadedAtMs = const Value.absent(),
+    this.error = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.sourceOutcome = const Value.absent(),
+    required DateTime createdAt,
+  }) : fileId = Value(fileId),
+       name = Value(name),
+       destinationId = Value(destinationId),
+       mode = Value(mode),
+       status = Value(status),
+       sizeBytes = Value(sizeBytes),
+       sourceModifiedAtMs = Value(sourceModifiedAtMs),
+       createdAt = Value(createdAt);
+  static Insertable<CloudItemRow> custom({
+    Expression<int>? id,
+    Expression<String>? fileId,
+    Expression<String>? name,
+    Expression<int>? destinationId,
+    Expression<String>? mode,
+    Expression<String>? status,
+    Expression<String>? remoteUri,
+    Expression<int>? sizeBytes,
+    Expression<int>? sourceModifiedAtMs,
+    Expression<String>? sha256,
+    Expression<int>? uploadedAtMs,
+    Expression<String>? error,
+    Expression<int>? attempts,
+    Expression<String>? sourceOutcome,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (fileId != null) 'file_id': fileId,
+      if (name != null) 'name': name,
+      if (destinationId != null) 'destination_id': destinationId,
+      if (mode != null) 'mode': mode,
+      if (status != null) 'status': status,
+      if (remoteUri != null) 'remote_uri': remoteUri,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (sourceModifiedAtMs != null)
+        'source_modified_at_ms': sourceModifiedAtMs,
+      if (sha256 != null) 'sha256': sha256,
+      if (uploadedAtMs != null) 'uploaded_at_ms': uploadedAtMs,
+      if (error != null) 'error': error,
+      if (attempts != null) 'attempts': attempts,
+      if (sourceOutcome != null) 'source_outcome': sourceOutcome,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  CloudItemsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? fileId,
+    Value<String>? name,
+    Value<int>? destinationId,
+    Value<CloudItemMode>? mode,
+    Value<CloudItemStatus>? status,
+    Value<String?>? remoteUri,
+    Value<int>? sizeBytes,
+    Value<int>? sourceModifiedAtMs,
+    Value<String?>? sha256,
+    Value<int?>? uploadedAtMs,
+    Value<String?>? error,
+    Value<int>? attempts,
+    Value<SourceOutcome?>? sourceOutcome,
+    Value<DateTime>? createdAt,
+  }) {
+    return CloudItemsCompanion(
+      id: id ?? this.id,
+      fileId: fileId ?? this.fileId,
+      name: name ?? this.name,
+      destinationId: destinationId ?? this.destinationId,
+      mode: mode ?? this.mode,
+      status: status ?? this.status,
+      remoteUri: remoteUri ?? this.remoteUri,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      sourceModifiedAtMs: sourceModifiedAtMs ?? this.sourceModifiedAtMs,
+      sha256: sha256 ?? this.sha256,
+      uploadedAtMs: uploadedAtMs ?? this.uploadedAtMs,
+      error: error ?? this.error,
+      attempts: attempts ?? this.attempts,
+      sourceOutcome: sourceOutcome ?? this.sourceOutcome,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (destinationId.present) {
+      map['destination_id'] = Variable<int>(destinationId.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(
+        $CloudItemsTable.$convertermode.toSql(mode.value),
+      );
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $CloudItemsTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (remoteUri.present) {
+      map['remote_uri'] = Variable<String>(remoteUri.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (sourceModifiedAtMs.present) {
+      map['source_modified_at_ms'] = Variable<int>(sourceModifiedAtMs.value);
+    }
+    if (sha256.present) {
+      map['sha256'] = Variable<String>(sha256.value);
+    }
+    if (uploadedAtMs.present) {
+      map['uploaded_at_ms'] = Variable<int>(uploadedAtMs.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (sourceOutcome.present) {
+      map['source_outcome'] = Variable<String>(
+        $CloudItemsTable.$convertersourceOutcomen.toSql(sourceOutcome.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CloudItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('fileId: $fileId, ')
+          ..write('name: $name, ')
+          ..write('destinationId: $destinationId, ')
+          ..write('mode: $mode, ')
+          ..write('status: $status, ')
+          ..write('remoteUri: $remoteUri, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('sourceModifiedAtMs: $sourceModifiedAtMs, ')
+          ..write('sha256: $sha256, ')
+          ..write('uploadedAtMs: $uploadedAtMs, ')
+          ..write('error: $error, ')
+          ..write('attempts: $attempts, ')
+          ..write('sourceOutcome: $sourceOutcome, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -18060,6 +19383,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ShareOfferFilesTable shareOfferFiles = $ShareOfferFilesTable(
     this,
   );
+  late final $CloudDestinationsTable cloudDestinations =
+      $CloudDestinationsTable(this);
+  late final $CloudItemsTable cloudItems = $CloudItemsTable(this);
   late final Index miKindDate = Index(
     'mi_kind_date',
     'CREATE INDEX mi_kind_date ON media_index (kind, sort_date_ms)',
@@ -18184,6 +19510,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'share_offer_files_upload',
     'CREATE INDEX share_offer_files_upload ON share_offer_files (upload_id)',
   );
+  late final Index ciStatus = Index(
+    'ci_status',
+    'CREATE INDEX ci_status ON cloud_items (status)',
+  );
+  late final Index ciOnCloudFile = Index(
+    'ci_on_cloud_file',
+    'CREATE INDEX ci_on_cloud_file ON cloud_items (file_id) WHERE status IN (\'handedToProvider\', \'verified\')',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -18222,6 +19556,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localJobFiles,
     shareOffers,
     shareOfferFiles,
+    cloudDestinations,
+    cloudItems,
     miKindDate,
     miKindSize,
     miFolderDate,
@@ -18253,6 +19589,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ljfStatus,
     shareOffersStatus,
     shareOfferFilesUpload,
+    ciStatus,
+    ciOnCloudFile,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -30538,6 +31876,850 @@ typedef $$ShareOfferFilesTableProcessedTableManager =
       ShareOfferFileRow,
       PrefetchHooks Function({bool offerId})
     >;
+typedef $$CloudDestinationsTableCreateCompanionBuilder =
+    CloudDestinationsCompanion Function({
+      Value<int> id,
+      required String label,
+      required CloudProviderGuess providerGuess,
+      required String location,
+      required DateTime addedAt,
+      Value<DateTime?> removedAt,
+    });
+typedef $$CloudDestinationsTableUpdateCompanionBuilder =
+    CloudDestinationsCompanion Function({
+      Value<int> id,
+      Value<String> label,
+      Value<CloudProviderGuess> providerGuess,
+      Value<String> location,
+      Value<DateTime> addedAt,
+      Value<DateTime?> removedAt,
+    });
+
+final class $$CloudDestinationsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $CloudDestinationsTable,
+          CloudDestinationRow
+        > {
+  $$CloudDestinationsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$CloudItemsTable, List<CloudItemRow>>
+  _cloudItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.cloudItems,
+    aliasName: 'cloud_destinations__id__cloud_items__destination_id',
+  );
+
+  $$CloudItemsTableProcessedTableManager get cloudItemsRefs {
+    final manager = $$CloudItemsTableTableManager(
+      $_db,
+      $_db.cloudItems,
+    ).filter((f) => f.destinationId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_cloudItemsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CloudDestinationsTableFilterComposer
+    extends Composer<_$AppDatabase, $CloudDestinationsTable> {
+  $$CloudDestinationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<CloudProviderGuess, CloudProviderGuess, String>
+  get providerGuess => $composableBuilder(
+    column: $table.providerGuess,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get location => $composableBuilder(
+    column: $table.location,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get removedAt => $composableBuilder(
+    column: $table.removedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> cloudItemsRefs(
+    Expression<bool> Function($$CloudItemsTableFilterComposer f) f,
+  ) {
+    final $$CloudItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.cloudItems,
+      getReferencedColumn: (t) => t.destinationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CloudItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.cloudItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CloudDestinationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CloudDestinationsTable> {
+  $$CloudDestinationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get providerGuess => $composableBuilder(
+    column: $table.providerGuess,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get location => $composableBuilder(
+    column: $table.location,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get removedAt => $composableBuilder(
+    column: $table.removedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CloudDestinationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CloudDestinationsTable> {
+  $$CloudDestinationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<CloudProviderGuess, String>
+  get providerGuess => $composableBuilder(
+    column: $table.providerGuess,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get location =>
+      $composableBuilder(column: $table.location, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get removedAt =>
+      $composableBuilder(column: $table.removedAt, builder: (column) => column);
+
+  Expression<T> cloudItemsRefs<T extends Object>(
+    Expression<T> Function($$CloudItemsTableAnnotationComposer a) f,
+  ) {
+    final $$CloudItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.cloudItems,
+      getReferencedColumn: (t) => t.destinationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CloudItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cloudItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CloudDestinationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CloudDestinationsTable,
+          CloudDestinationRow,
+          $$CloudDestinationsTableFilterComposer,
+          $$CloudDestinationsTableOrderingComposer,
+          $$CloudDestinationsTableAnnotationComposer,
+          $$CloudDestinationsTableCreateCompanionBuilder,
+          $$CloudDestinationsTableUpdateCompanionBuilder,
+          (CloudDestinationRow, $$CloudDestinationsTableReferences),
+          CloudDestinationRow,
+          PrefetchHooks Function({bool cloudItemsRefs})
+        > {
+  $$CloudDestinationsTableTableManager(
+    _$AppDatabase db,
+    $CloudDestinationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CloudDestinationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CloudDestinationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CloudDestinationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<CloudProviderGuess> providerGuess = const Value.absent(),
+                Value<String> location = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<DateTime?> removedAt = const Value.absent(),
+              }) => CloudDestinationsCompanion(
+                id: id,
+                label: label,
+                providerGuess: providerGuess,
+                location: location,
+                addedAt: addedAt,
+                removedAt: removedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String label,
+                required CloudProviderGuess providerGuess,
+                required String location,
+                required DateTime addedAt,
+                Value<DateTime?> removedAt = const Value.absent(),
+              }) => CloudDestinationsCompanion.insert(
+                id: id,
+                label: label,
+                providerGuess: providerGuess,
+                location: location,
+                addedAt: addedAt,
+                removedAt: removedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CloudDestinationsTable, CloudDestinationRow>(
+                    table,
+                  ),
+                  $$CloudDestinationsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({cloudItemsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (cloudItemsRefs) db.cloudItems],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (cloudItemsRefs)
+                    await $_getPrefetchedDataByColumns<
+                      CloudDestinationRow,
+                      $CloudDestinationsTable,
+                      CloudItemRow,
+                      $CloudItemsTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$CloudDestinationsTableReferences
+                          ._cloudItemsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CloudDestinationsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).cloudItemsRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'destination_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CloudDestinationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CloudDestinationsTable,
+      CloudDestinationRow,
+      $$CloudDestinationsTableFilterComposer,
+      $$CloudDestinationsTableOrderingComposer,
+      $$CloudDestinationsTableAnnotationComposer,
+      $$CloudDestinationsTableCreateCompanionBuilder,
+      $$CloudDestinationsTableUpdateCompanionBuilder,
+      (CloudDestinationRow, $$CloudDestinationsTableReferences),
+      CloudDestinationRow,
+      PrefetchHooks Function({bool cloudItemsRefs})
+    >;
+typedef $$CloudItemsTableCreateCompanionBuilder = CloudItemsCompanion Function({
+  Value<int> id,
+  required String fileId,
+  required String name,
+  required int destinationId,
+  required CloudItemMode mode,
+  required CloudItemStatus status,
+  Value<String?> remoteUri,
+  required int sizeBytes,
+  required int sourceModifiedAtMs,
+  Value<String?> sha256,
+  Value<int?> uploadedAtMs,
+  Value<String?> error,
+  Value<int> attempts,
+  Value<SourceOutcome?> sourceOutcome,
+  required DateTime createdAt,
+});
+typedef $$CloudItemsTableUpdateCompanionBuilder = CloudItemsCompanion Function({
+  Value<int> id,
+  Value<String> fileId,
+  Value<String> name,
+  Value<int> destinationId,
+  Value<CloudItemMode> mode,
+  Value<CloudItemStatus> status,
+  Value<String?> remoteUri,
+  Value<int> sizeBytes,
+  Value<int> sourceModifiedAtMs,
+  Value<String?> sha256,
+  Value<int?> uploadedAtMs,
+  Value<String?> error,
+  Value<int> attempts,
+  Value<SourceOutcome?> sourceOutcome,
+  Value<DateTime> createdAt,
+});
+
+final class $$CloudItemsTableReferences
+    extends BaseReferences<_$AppDatabase, $CloudItemsTable, CloudItemRow> {
+  $$CloudItemsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CloudDestinationsTable _destinationIdTable(_$AppDatabase db) => db
+      .cloudDestinations
+      .createAlias('cloud_items__destination_id__cloud_destinations__id');
+
+  $$CloudDestinationsTableProcessedTableManager get destinationId {
+    final $_column = $_itemColumn<int>('destination_id')!;
+
+    final manager = $$CloudDestinationsTableTableManager(
+      $_db,
+      $_db.cloudDestinations,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_destinationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CloudItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $CloudItemsTable> {
+  $$CloudItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<CloudItemMode, CloudItemMode, String>
+  get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<CloudItemStatus, CloudItemStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get remoteUri => $composableBuilder(
+    column: $table.remoteUri,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get uploadedAtMs => $composableBuilder(
+    column: $table.uploadedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SourceOutcome?, SourceOutcome, String>
+  get sourceOutcome => $composableBuilder(
+    column: $table.sourceOutcome,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CloudDestinationsTableFilterComposer get destinationId {
+    final $$CloudDestinationsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.destinationId,
+      referencedTable: $db.cloudDestinations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CloudDestinationsTableFilterComposer(
+            $db: $db,
+            $table: $db.cloudDestinations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CloudItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CloudItemsTable> {
+  $$CloudItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteUri => $composableBuilder(
+    column: $table.remoteUri,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get uploadedAtMs => $composableBuilder(
+    column: $table.uploadedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceOutcome => $composableBuilder(
+    column: $table.sourceOutcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CloudDestinationsTableOrderingComposer get destinationId {
+    final $$CloudDestinationsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.destinationId,
+      referencedTable: $db.cloudDestinations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CloudDestinationsTableOrderingComposer(
+            $db: $db,
+            $table: $db.cloudDestinations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CloudItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CloudItemsTable> {
+  $$CloudItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<CloudItemMode, String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<CloudItemStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteUri =>
+      $composableBuilder(column: $table.remoteUri, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<int> get sourceModifiedAtMs => $composableBuilder(
+    column: $table.sourceModifiedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sha256 =>
+      $composableBuilder(column: $table.sha256, builder: (column) => column);
+
+  GeneratedColumn<int> get uploadedAtMs => $composableBuilder(
+    column: $table.uploadedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SourceOutcome?, String> get sourceOutcome =>
+      $composableBuilder(
+        column: $table.sourceOutcome,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$CloudDestinationsTableAnnotationComposer get destinationId {
+    final $$CloudDestinationsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.destinationId,
+          referencedTable: $db.cloudDestinations,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CloudDestinationsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.cloudDestinations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$CloudItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CloudItemsTable,
+          CloudItemRow,
+          $$CloudItemsTableFilterComposer,
+          $$CloudItemsTableOrderingComposer,
+          $$CloudItemsTableAnnotationComposer,
+          $$CloudItemsTableCreateCompanionBuilder,
+          $$CloudItemsTableUpdateCompanionBuilder,
+          (CloudItemRow, $$CloudItemsTableReferences),
+          CloudItemRow,
+          PrefetchHooks Function({bool destinationId})
+        > {
+  $$CloudItemsTableTableManager(_$AppDatabase db, $CloudItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CloudItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CloudItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CloudItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> destinationId = const Value.absent(),
+                Value<CloudItemMode> mode = const Value.absent(),
+                Value<CloudItemStatus> status = const Value.absent(),
+                Value<String?> remoteUri = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<int> sourceModifiedAtMs = const Value.absent(),
+                Value<String?> sha256 = const Value.absent(),
+                Value<int?> uploadedAtMs = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => CloudItemsCompanion(
+                id: id,
+                fileId: fileId,
+                name: name,
+                destinationId: destinationId,
+                mode: mode,
+                status: status,
+                remoteUri: remoteUri,
+                sizeBytes: sizeBytes,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                sha256: sha256,
+                uploadedAtMs: uploadedAtMs,
+                error: error,
+                attempts: attempts,
+                sourceOutcome: sourceOutcome,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String fileId,
+                required String name,
+                required int destinationId,
+                required CloudItemMode mode,
+                required CloudItemStatus status,
+                Value<String?> remoteUri = const Value.absent(),
+                required int sizeBytes,
+                required int sourceModifiedAtMs,
+                Value<String?> sha256 = const Value.absent(),
+                Value<int?> uploadedAtMs = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<SourceOutcome?> sourceOutcome = const Value.absent(),
+                required DateTime createdAt,
+              }) => CloudItemsCompanion.insert(
+                id: id,
+                fileId: fileId,
+                name: name,
+                destinationId: destinationId,
+                mode: mode,
+                status: status,
+                remoteUri: remoteUri,
+                sizeBytes: sizeBytes,
+                sourceModifiedAtMs: sourceModifiedAtMs,
+                sha256: sha256,
+                uploadedAtMs: uploadedAtMs,
+                error: error,
+                attempts: attempts,
+                sourceOutcome: sourceOutcome,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CloudItemsTable, CloudItemRow>(table),
+                  $$CloudItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({destinationId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (destinationId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.destinationId,
+                        referencedTable: $$CloudItemsTableReferences
+                            ._destinationIdTable(db),
+                        referencedColumn: $$CloudItemsTableReferences
+                            ._destinationIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CloudItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CloudItemsTable,
+      CloudItemRow,
+      $$CloudItemsTableFilterComposer,
+      $$CloudItemsTableOrderingComposer,
+      $$CloudItemsTableAnnotationComposer,
+      $$CloudItemsTableCreateCompanionBuilder,
+      $$CloudItemsTableUpdateCompanionBuilder,
+      (CloudItemRow, $$CloudItemsTableReferences),
+      CloudItemRow,
+      PrefetchHooks Function({bool destinationId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -30607,4 +32789,8 @@ class $AppDatabaseManager {
       $$ShareOffersTableTableManager(_db, _db.shareOffers);
   $$ShareOfferFilesTableTableManager get shareOfferFiles =>
       $$ShareOfferFilesTableTableManager(_db, _db.shareOfferFiles);
+  $$CloudDestinationsTableTableManager get cloudDestinations =>
+      $$CloudDestinationsTableTableManager(_db, _db.cloudDestinations);
+  $$CloudItemsTableTableManager get cloudItems =>
+      $$CloudItemsTableTableManager(_db, _db.cloudItems);
 }

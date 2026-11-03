@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/cloud/data/cloud_providers.dart';
+import 'package:kfm/features/cloud/ui/cloud_transfers_section.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
@@ -33,6 +35,19 @@ class TransferSection {
 
 @Riverpod(keepAlive: true)
 List<TransferSection> transferSections(Ref ref) => [
+  ..._always,
+  // X3: only when something went to a cloud folder in the last 7 days.
+  if (ref.watch(
+    cloudRecentItemsProvider.select((v) => v.value?.isNotEmpty ?? false),
+  ))
+    TransferSection(
+      id: 'cloud',
+      label: (context) => context.l10n.cloudTransfersSection,
+      builder: (_) => const CloudTransfersSection(),
+    ),
+];
+
+final List<TransferSection> _always = [
   // U2: copies and moves between places on this device.
   TransferSection(
     id: 'local',

@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:kfm/core/db/tables/ai_labels_table.dart';
+import 'package:kfm/core/db/tables/cloud_destinations_table.dart';
+import 'package:kfm/core/db/tables/cloud_items_table.dart';
 import 'package:kfm/core/db/tables/image_signals_table.dart';
 import 'package:kfm/core/db/tables/known_devices_table.dart';
 import 'package:kfm/core/db/tables/local_jobs_table.dart';
@@ -68,6 +70,8 @@ part 'app_database.g.dart';
     LocalJobFiles,
     ShareOffers,
     ShareOfferFiles,
+    CloudDestinations,
+    CloudItems,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -88,7 +92,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -272,6 +276,13 @@ class AppDatabase extends _$AppDatabase {
         if (from >= 19) {
           await m.addColumn(knownDevices, knownDevices.autoAcceptFiles);
         }
+      }
+      if (from < 24) {
+        // TASK-X3
+        await m.createTable(cloudDestinations);
+        await m.createTable(cloudItems);
+        await m.createIndex(ciStatus);
+        await m.createIndex(ciOnCloudFile);
       }
     },
     beforeOpen: (details) async {
