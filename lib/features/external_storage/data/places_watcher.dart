@@ -50,10 +50,12 @@ class UsbFormatHelp extends ExternalNotice {
 /// Reacts to place changes: notices, an index scan of each newly mounted
 /// root (now and once more after [rescanDelay], when the system media
 /// scanner has caught up), and re-validation of the SAF grant of a
-/// remounted volume.
+/// remounted volume. U2 (h): the first list (app start) walks each mounted
+/// direct-path place that wasn't walked since it was mounted.
 class PlacesWatcher {
   new({
     required this._scanRoot,
+    this._walkIfStale,
     this._validateGrant,
     this._dropGrant,
     this._isEjecting,
@@ -63,6 +65,8 @@ class PlacesWatcher {
   });
 
   final Future<void> Function(String rootPath) _scanRoot;
+  final Future<void> Function(String rootPath, DateTime? mountedAt)?
+  _walkIfStale;
   final Future<bool> Function(String treeUri)? _validateGrant;
   final Future<void> Function(String uuid)? _dropGrant;
 
@@ -88,7 +92,10 @@ class PlacesWatcher {
     };
     final before = _present;
     _present = now;
-    if (before == null) return;
+    if (before == null) {
+      _walkStale(now.values);
+      return;
+    }
     for (final p in now.values) {
       if (before.containsKey(p.id)) continue;
       _attachCount++;
@@ -133,6 +140,17 @@ class PlacesWatcher {
 
   void _scan(String root) => unawaited(_scanRoot(root));
 
+  void _walkStale(Iterable<StoragePlace> places) {
+    final walk = _walkIfStale;
+    if (walk == null) return;
+    for (final p in places) {
+      final root = p.rootPath;
+      // SAF-only places aren't walked by path (U1).
+      if (root == null || p.access != AccessMethod.directPath) continue;
+      unawaited(walk(root, p.mountedAt));
+    }
+  }
+
   Future<void> _revalidate(String uuid, String tree) async {
     final validate = _validateGrant;
     final drop = _dropGrant;
@@ -176,6 +194,8 @@ PlacesWatcher placesWatcher(Ref ref) {
   final watcher = PlacesWatcher(
     // Failures land on the indexer's status (IndexFailed).
     scanRoot: indexer.scanRoot,
+    walkIfStale: (root, mountedAt) =>
+        indexer.walkRootIfStale(root, mountedAt: mountedAt),
     validateGrant: grants?.isValid,
     dropGrant: grants?.drop,
     isEjecting: (id) => ref.read(volumeActivityTrackerProvider).isEjecting(id),

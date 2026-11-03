@@ -15,6 +15,7 @@ class VolumeInfo {
     this.totalBytes,
     this.freeBytes,
     this.usbMassStorage = false,
+    this.mountedAt,
   });
 
   factory fromRow(Map<Object?, Object?> r) {
@@ -31,6 +32,10 @@ class VolumeInfo {
       totalBytes: integer(r['totalBytes']),
       freeBytes: integer(r['freeBytes']),
       usbMassStorage: r['usbMassStorage'] == true,
+      mountedAt: switch (integer(r['mountedAtMs'])) {
+        final ms? => DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true),
+        null => null,
+      },
     );
   }
 
@@ -54,6 +59,10 @@ class VolumeInfo {
   /// A USB mass-storage device was attached when the list was read.
   final bool usbMassStorage;
 
+  /// U2 (h): when it was mounted (`MountTimesReceiver.kt`; the boot time
+  /// when no mount was recorded). Null when unmounted or unknown.
+  final DateTime? mountedAt;
+
   @override
   bool operator ==(Object other) =>
       other is VolumeInfo &&
@@ -66,7 +75,8 @@ class VolumeInfo {
       other.rootPath == rootPath &&
       other.totalBytes == totalBytes &&
       other.freeBytes == freeBytes &&
-      other.usbMassStorage == usbMassStorage;
+      other.usbMassStorage == usbMassStorage &&
+      other.mountedAt == mountedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -80,6 +90,7 @@ class VolumeInfo {
     totalBytes,
     freeBytes,
     usbMassStorage,
+    mountedAt,
   );
 }
 

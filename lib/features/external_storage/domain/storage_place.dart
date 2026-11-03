@@ -31,6 +31,7 @@ class StoragePlace {
     this.freeBytes,
     this.needsPermission = false,
     this.isUnsupported = false,
+    this.mountedAt,
   });
 
   /// [kInternalPlaceId], the volume uuid (e.g. `1234-ABCD`) or
@@ -59,6 +60,9 @@ class StoragePlace {
   /// mtp: the camera couldn't be opened (another app holds it, or the
   /// phone doesn't allow it).
   final bool isUnsupported;
+
+  /// U2 (h): when the volume was mounted (see `VolumeInfo.mountedAt`).
+  final DateTime? mountedAt;
 
   bool get isRemovable => kind != PlaceKind.internal;
 
@@ -96,6 +100,7 @@ class StoragePlace {
     freeBytes: freeBytes == null ? this.freeBytes : freeBytes(),
     needsPermission: needsPermission ?? this.needsPermission,
     isUnsupported: isUnsupported ?? this.isUnsupported,
+    mountedAt: mountedAt,
   );
 
   @override
@@ -111,7 +116,8 @@ class StoragePlace {
       other.totalBytes == totalBytes &&
       other.freeBytes == freeBytes &&
       other.needsPermission == needsPermission &&
-      other.isUnsupported == isUnsupported;
+      other.isUnsupported == isUnsupported &&
+      other.mountedAt == mountedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -126,6 +132,7 @@ class StoragePlace {
     freeBytes,
     needsPermission,
     isUnsupported,
+    mountedAt,
   );
 
   @override
@@ -177,6 +184,7 @@ List<StoragePlace> buildPlaces({
         treeUri: direct ? null : safGrants[id],
         totalBytes: v.totalBytes,
         freeBytes: v.freeBytes,
+        mountedAt: v.mountedAt,
       ),
     );
   }

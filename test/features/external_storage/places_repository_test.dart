@@ -248,6 +248,34 @@ void main() {
       expect(scanned, ['/storage/1234-ABCD', '/storage/1234-ABCD']);
     });
 
+    test('U2 (h): the baseline walks mounted direct-path places if stale; '
+        'SAF and internal ones are left alone', () async {
+      final walks = <(String, DateTime?)>[];
+      final mount = DateTime.utc(2026, 11, 3, 9);
+      final w = PlacesWatcher(
+        scanRoot: (r) async => scanned.add(r),
+        walkIfStale: (r, at) async => walks.add((r, at)),
+      );
+      addTearDown(w.dispose);
+      w.onPlaces(placesWith([internalVolume, sdVolume(mountedAt: mount)]));
+      await pumpEventQueue();
+      expect(walks, [('/storage/1234-ABCD', mount)]);
+      expect(scanned, isEmpty);
+      // Later lists don't walk again (attach uses scanRoot).
+      w.onPlaces(placesWith([internalVolume, sdVolume(mountedAt: mount)]));
+      await pumpEventQueue();
+      expect(walks, hasLength(1));
+
+      final saf = PlacesWatcher(
+        scanRoot: (r) async => scanned.add(r),
+        walkIfStale: (r, at) async => walks.add((r, at)),
+      );
+      addTearDown(saf.dispose);
+      saf.onPlaces(placesWith([internalVolume, sdVolume()], grant: 't'));
+      await pumpEventQueue();
+      expect(walks, hasLength(1));
+    });
+
     test('a remounted volume with an invalid grant loses it', () async {
       watcher.onPlaces(placesWith([internalVolume], grant: 't'));
       grantValid = false;
