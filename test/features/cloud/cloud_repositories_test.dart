@@ -15,7 +15,7 @@ FileRef _file(String id, {int size = 3}) => FileRef(
   name: '$id.jpg',
   kind: FileKind.image,
   sizeBytes: size,
-  modifiedAt: DateTime.utc(2026, 1, 1),
+  modifiedAt: DateTime.utc(2026),
   folderPath: '/storage/emulated/0/DCIM',
   origin: FileOrigin.local,
 );

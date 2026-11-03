@@ -20,7 +20,7 @@ import 'fake_cloud.dart';
 
 /// N11's real implementation, recording its calls.
 class _CountingMove implements VerifiedMove {
-  _CountingMove(this._inner);
+  new(this._inner);
 
   final VerifiedMove _inner;
   final List<List<VerifiedOriginal>> calls = [];

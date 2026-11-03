@@ -86,8 +86,7 @@ void main() {
   ) async {
     final app = await pump(tester);
     trees.nextPick = 'content://drive/tree/p';
-    final router = app.container.read(routerProvider);
-    router.go(AppRoutes.cloudSettings);
+    app.container.read(routerProvider).go(AppRoutes.cloudSettings);
     await tester.pumpAndSettle();
     expect(find.text('No cloud folders yet'), findsOneWidget);
 

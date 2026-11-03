@@ -7,7 +7,7 @@ import 'package:kfm/features/cloud/domain/cloud_writer.dart';
 /// A cloud app's folder in memory. [read] resolves a source (URI or path)
 /// to its bytes.
 class FakeCloudWriter implements CloudDestinationWriter {
-  FakeCloudWriter(this.read);
+  new(this.read);
 
   final List<int>? Function(String source) read;
 
