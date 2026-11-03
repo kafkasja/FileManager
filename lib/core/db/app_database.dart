@@ -33,8 +33,8 @@ import 'package:sqlite3/common.dart' show CommonDatabase;
 
 part 'app_database.g.dart';
 
-/// The one on-device database. Tables are owned by the tasks listed in
-/// `tasks/_CONVENTIONS.md` → Database tables; see CLAUDE.md → Adding a table.
+/// The one on-device database. A new table gets its own file under
+/// `tables/`, a `schemaVersion` bump and an `onUpgrade` step.
 @DriftDatabase(
   tables: [
     Settings,
