@@ -6378,6 +6378,98 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get backupSettingThemeMode => 'Theme';
+
+  @override
+  String get backupSettingThemeAccent => 'Colour theme';
+
+  @override
+  String get backupSettingLeftHanded => 'Left-handed mode';
+
+  @override
+  String get backupSettingTextSize => 'Text size';
+
+  @override
+  String get backupSettingLanguage => 'Language';
+
+  @override
+  String get backupSettingBigFileThreshold => 'Big file size';
+
+  @override
+  String get backupSettingPendingRetention => 'Keep deleted files for';
+
+  @override
+  String get backupSettingSameTimeWindow => 'Same-time window';
+
+  @override
+  String get backupSettingBrowseSort => 'Sort files by';
+
+  @override
+  String get backupSettingBrowseSortDescending => 'Sort direction';
+
+  @override
+  String get backupSettingBrowseShowSizes => 'Show file sizes';
+
+  @override
+  String get backupSettingBrowseHighlightBig => 'Highlight big files';
+
+  @override
+  String get backupSettingSearchSecondLanguage => 'Second search language';
+
+  @override
+  String get backupSettingSwipeLayout => 'Basic swipe directions';
+
+  @override
+  String get backupSettingDeleteMode => 'Delete mode';
+
+  @override
+  String get backupSettingHaptics => 'Vibration feedback';
+
+  @override
+  String get backupSettingSwipeButtons => 'Swipe buttons';
+
+  @override
+  String get backupSettingSessionSummary => 'Session summary';
+
+  @override
+  String get backupSettingBasicIncludeReviewed =>
+      'Show reviewed files in Basic';
+
+  @override
+  String get backupSettingReviewedBadge => 'Reviewed badge';
+
+  @override
+  String get backupSettingActivePreset => 'Active preset';
+
+  @override
+  String get backupSettingActionBar => 'Action bar';
+
+  @override
+  String get backupSettingFoldersDropAction => 'Drop on a folder';
+
+  @override
+  String get backupSettingSimilarEnabled => 'Similar photos';
+
+  @override
+  String get backupSettingSimilarStrictness => 'Similar photos strictness';
+
+  @override
+  String get backupSettingSimilarBlur => 'Blurry photo threshold';
+
+  @override
+  String get backupSettingSimilarScreenshots =>
+      'Include screenshots in similar photos';
+
+  @override
+  String get backupSettingAiWifiOnly => 'Download models on Wi-Fi only';
+
+  @override
+  String get backupSettingStripLocation => 'Remove location when sharing';
+
+  @override
+  String get backupSettingOther => 'Other setting';
+
+  @override
   String get apkInstall => 'Install';
 
   @override

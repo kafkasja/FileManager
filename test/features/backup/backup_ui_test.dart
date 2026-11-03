@@ -8,10 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/data/backup_service.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
+import 'package:kfm/features/backup/domain/backup_settings_policy.dart';
 import 'package:kfm/features/backup/ui/backup_section.dart';
+import 'package:kfm/features/backup/ui/backup_setting_labels.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 import 'backup_test_utils.dart';
@@ -187,5 +190,37 @@ void main() {
     final fileTags = await tester.runAsync(() => db.select(db.fileTags).get());
     expect(fileTags!.single.fileId, 'x1');
     expect(find.byKey(const ValueKey('backup-undo')), findsOneWidget);
+  });
+
+  testWidgets('import preview names settings, never raw keys', (tester) async {
+    final backup = BackupCodec.encode(
+      BackupData(
+        createdAt: DateTime.utc(2026),
+        appVersion: '0.1.0',
+        dbSchema: 23,
+        settings: {
+          AppSettings.hapticsEnabled.name: false,
+          AppSettings.swipeButtonsMode.name: true,
+        },
+        tags: const [],
+        presets: const [],
+        files: const [],
+      ),
+    );
+    await pumpSection(tester, _FakeDocs(backup));
+    await tapAndSettle(tester, find.byKey(const ValueKey('backup-import')));
+    await tapAndSettle(tester, find.text('2 settings change').last);
+    expect(find.text('Vibration feedback'), findsOneWidget);
+    expect(find.text('Swipe buttons'), findsOneWidget);
+    expect(find.text(AppSettings.hapticsEnabled.name), findsNothing);
+    expect(find.text(AppSettings.swipeButtonsMode.name), findsNothing);
+  });
+
+  test('every backed-up setting has a label', () {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect([
+      for (final s in backupSettings)
+        if (backupSettingLabelOrNull(l10n, s.name) == null) s.name,
+    ], isEmpty);
   });
 }

@@ -6,6 +6,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/domain/import_plan.dart';
+import 'package:kfm/features/backup/ui/backup_setting_labels.dart';
 import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
 
 /// What an import would change (TASK-X6). Pops `true` once applied;
@@ -189,7 +190,10 @@ class _ImportPreviewScreenState extends ConsumerState<ImportPreviewScreen> {
             title: Text(l10n.backupPreviewSettings(plan.settingChanges.length)),
             children: [
               for (final s in plan.settingChanges)
-                ListTile(dense: true, title: Text(s.name)),
+                ListTile(
+                  dense: true,
+                  title: Text(backupSettingLabel(l10n, s.name)),
+                ),
             ],
           ),
         if (plan.unmatched.isNotEmpty)

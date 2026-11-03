@@ -411,9 +411,9 @@ class BackupService {
   /// these tables since is lost too) and forgets that import.
   ///
   /// Like [apply], returns the preset to switch to (0 = Basic) when the
-  /// restored active preset differs from the open swipe session's. With a
-  /// session open, `presets.active` is set to that session's preset (what
-  /// the caller's switch starts from).
+  /// restored active preset differs from the open swipe session's (see
+  /// [undoPresetTarget]: callers switch first). `presets.active` becomes
+  /// the restored preset; paused sessions of removed presets are closed.
   Future<int?> undoLastImport() async {
     int? switchTo;
     await _queue.enqueue(null, () async {
@@ -422,36 +422,83 @@ class BackupService {
     return switchTo;
   }
 
+  /// The preset an undo returns to: the pre-import active preset when the
+  /// snapshot has it, else Basic (0); `exists` = it exists right now (an
+  /// imported preset never does; one deleted since the import comes back
+  /// with the undo). Null when there is nothing to undo.
+  ///
+  /// The caller switches there before [undoLastImport] (that switch can be
+  /// blocked by queued deletes, and then nothing is undone).
+  Future<({int presetId, bool exists})?> undoPresetTarget() async {
+    await _queue.flush();
+    final target = await _undoTarget();
+    if (target == null) return null;
+    final id = _restoredPreset(await _readSnapshot(target));
+    final exists =
+        id == 0 ||
+        await (_db.select(
+              _db.presets,
+            )..where((p) => p.id.equals(id))).getSingleOrNull() !=
+            null;
+    return (presetId: id, exists: exists);
+  }
+
+  static Future<_Snapshot> _readSnapshot(File file) async =>
+      _Snapshot.fromJson(switch (jsonDecode(await file.readAsString())) {
+        final Map<String, Object?> j => j,
+        _ => throw const FormatException('bad snapshot'),
+      });
+
+  /// The snapshot's `presets.active` when that preset is in the snapshot
+  /// (a snapshot taken while the setting pointed at a deleted preset must
+  /// not bring that id back), else 0.
+  static int _restoredPreset(_Snapshot snap) {
+    final row = snap.settings
+        .where((r) => r.key == AppSettings.activePresetId.name)
+        .firstOrNull;
+    final id = switch (row == null ? 0 : _jsonOrNull(row.value)) {
+      final int id => id,
+      _ => 0,
+    };
+    return snap.presets.any((p) => p.id == id) ? id : 0;
+  }
+
   Future<int?> _undo() async {
     final target = await _undoTarget();
     if (target == null) throw StateError('no import to undo');
-    final snap = _Snapshot.fromJson(switch (jsonDecode(
-      await target.readAsString(),
-    )) {
-      final Map<String, Object?> j => j,
-      _ => throw const FormatException('bad snapshot'),
-    });
+    final snap = await _readSnapshot(target);
     final active = AppSettings.activePresetId.name;
     final layoutKey = AppSettings.swipeLayoutCurrent.name;
+    final restored = _restoredPreset(snap);
+    final keptPresets = {for (final p in snap.presets) p.id};
     int? switchTo;
     await _db.transaction(() async {
       final session = await _activeLocalSession();
-      var settings = snap.settings;
-      if (session != null) {
-        final row = settings.where((r) => r.key == active).firstOrNull;
-        final restored = switch (row == null ? 0 : _jsonOrNull(row.value)) {
-          final int id => id,
-          _ => 0,
-        };
-        final open = session.presetId ?? 0;
-        if (restored != open) switchTo = restored;
-        // The open session's preset stays active until the caller switches.
-        settings = [
-          for (final r in settings)
-            if (r.key != active) r,
-          SettingRow(key: active, value: jsonEncode(open)),
-        ];
-      }
+      final open = session == null ? null : session.presetId ?? 0;
+      if (open != null && restored != open) switchTo = restored;
+      // The setting never names a preset the undo removes. An open session
+      // on another preset is the caller's to switch (normally it already
+      // did: then open == restored).
+      final hadRow = snap.settings.any((r) => r.key == active);
+      final settings = [
+        for (final r in snap.settings)
+          if (r.key != active) r,
+        if (hadRow || open != null)
+          SettingRow(key: active, value: jsonEncode(restored)),
+      ];
+      // Paused sessions of presets the undo removes would come back on a
+      // later switch to that id: close them (paused sessions never hold
+      // queued deletes, like PresetRepository.delete).
+      final now = _clock();
+      await (_db.update(_db.sessions)..where(
+            (s) =>
+                s.sourceId.equals(kLocalSourceId) &
+                s.isActive.equals(false) &
+                s.endedAt.isNull() &
+                s.presetId.isNotNull() &
+                s.presetId.isNotIn(keptPresets),
+          ))
+          .write(SessionsCompanion(endedAt: Value(now), updatedAt: Value(now)));
       await _db.delete(_db.fileTags).go();
       await _db.delete(_db.favorites).go();
       await _db.delete(_db.reviewedLabels).go();

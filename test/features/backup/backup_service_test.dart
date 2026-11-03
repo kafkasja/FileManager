@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide isNull;
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
@@ -404,8 +404,10 @@ void main() {
         .write(const SessionsCompanion(isActive: Value(false)));
     await openSession(b, presetId: preset.id);
     await b.settings.write(AppSettings.activePresetId, preset.id);
+    expect(await b.service.undoPresetTarget(), (presetId: 0, exists: true));
     expect(await b.service.undoLastImport(), 0);
-    expect(await b.settings.read(AppSettings.activePresetId), preset.id);
+    // Never a preset the undo removed (X6 follow-up).
+    expect(await b.settings.read(AppSettings.activePresetId), 0);
     expect(
       SwipeLayout.decode((await sessionRow(b, session)).layout),
       SwipeLayout.basic,
@@ -425,6 +427,38 @@ void main() {
     await b.settings.write(AppSettings.activePresetId, 99);
     expect(await b.service.undoLastImport(), isNull);
     expect(await b.settings.read(AppSettings.activePresetId), 0);
+  });
+
+  test('undo never restores an active preset the snapshot lacks', () async {
+    await seedA();
+    await seedB();
+    // A dangling setting (the emulator's state after the old bug).
+    await b.settings.write(AppSettings.activePresetId, 77);
+    final data = await b.service.decode(await a.service.exportJson());
+    await b.service.apply(
+      await b.service.plan(data, importedSuffix: 'imported'),
+      applySettings: true,
+    );
+    expect(await b.service.undoPresetTarget(), (presetId: 0, exists: true));
+    expect(await b.service.undoLastImport(), isNull);
+    expect(await b.settings.read(AppSettings.activePresetId), 0);
+  });
+
+  test("undo closes the removed presets' paused sessions", () async {
+    await seedA();
+    await seedB();
+    final data = await b.service.decode(await a.service.exportJson());
+    await b.service.apply(
+      await b.service.plan(data, importedSuffix: 'imported'),
+      applySettings: true,
+    );
+    final preset = await b.db.select(b.db.presets).getSingle();
+    final paused = await openSession(b, presetId: preset.id);
+    await b.db
+        .update(b.db.sessions)
+        .write(const SessionsCompanion(isActive: Value(false)));
+    await b.service.undoLastImport();
+    expect((await sessionRow(b, paused)).endedAt, isNotNull);
   });
 
   test('without an open session the active preset is written', () async {
