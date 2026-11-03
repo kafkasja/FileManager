@@ -4257,5 +4257,11 @@
   "backupSettingDesktopBrowseLayout": "PC Browse view",
   "@backupSettingDesktopBrowseLayout": {"description": "X6 import preview: the desktop Browse layout setting."},
   "backupSettingDesktopBrowseSort": "PC Browse sort",
-  "@backupSettingDesktopBrowseSort": {"description": "X6 import preview: the desktop Browse sort setting."}
+  "@backupSettingDesktopBrowseSort": {"description": "X6 import preview: the desktop Browse sort setting."},
+  "ejectWindowsInUse": "{label} is still in use by another program. Close it and try again.",
+  "@ejectWindowsInUse": {"description": "PL1: Windows refused to eject a drive because a file is open.", "placeholders": {"label": {"type": "String"}}},
+  "ejectWindowsFailed": "Windows couldn't eject {label}",
+  "@ejectWindowsFailed": {"description": "PL1: ejecting a drive failed for another reason.", "placeholders": {"label": {"type": "String"}}},
+  "desktopSystemDrive": "Local disk ({drive})",
+  "@desktopSystemDrive": {"description": "PL1: the Windows system drive in the sidebar, e.g. 'Local disk (C:)'.", "placeholders": {"drive": {"type": "String"}}}
 }

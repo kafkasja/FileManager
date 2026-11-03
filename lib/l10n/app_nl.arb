@@ -1703,5 +1703,8 @@
   "desktopSortFavorite": "Favoriet",
   "desktopSortTag": "Tag…",
   "backupSettingDesktopBrowseLayout": "Weergave van Bladeren op pc",
-  "backupSettingDesktopBrowseSort": "Sortering van Bladeren op pc"
+  "backupSettingDesktopBrowseSort": "Sortering van Bladeren op pc",
+  "ejectWindowsInUse": "{label} wordt nog gebruikt door een ander programma. Sluit het en probeer het opnieuw.",
+  "ejectWindowsFailed": "Windows kon {label} niet uitwerpen",
+  "desktopSystemDrive": "Lokale schijf ({drive})"
 }

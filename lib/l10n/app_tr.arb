@@ -1703,5 +1703,8 @@
   "desktopSortFavorite": "Favori",
   "desktopSortTag": "Etiket…",
   "backupSettingDesktopBrowseLayout": "PC'de Gözat görünümü",
-  "backupSettingDesktopBrowseSort": "PC'de Gözat sıralaması"
+  "backupSettingDesktopBrowseSort": "PC'de Gözat sıralaması",
+  "ejectWindowsInUse": "{label} hâlâ başka bir program tarafından kullanılıyor. Programı kapatıp tekrar deneyin.",
+  "ejectWindowsFailed": "Windows {label} sürücüsünü çıkaramadı",
+  "desktopSystemDrive": "Yerel disk ({drive})"
 }

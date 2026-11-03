@@ -10328,6 +10328,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PC Browse sort'**
   String get backupSettingDesktopBrowseSort;
+
+  /// PL1: Windows refused to eject a drive because a file is open.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} is still in use by another program. Close it and try again.'**
+  String ejectWindowsInUse(String label);
+
+  /// PL1: ejecting a drive failed for another reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows couldn\'t eject {label}'**
+  String ejectWindowsFailed(String label);
+
+  /// PL1: the Windows system drive in the sidebar, e.g. 'Local disk (C:)'.
+  ///
+  /// In en, this message translates to:
+  /// **'Local disk ({drive})'**
+  String desktopSystemDrive(String drive);
 }
 
 class _AppLocalizationsDelegate

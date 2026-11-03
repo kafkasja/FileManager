@@ -241,4 +241,74 @@ void main() {
     await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
   });
+
+  testWidgets('PL1: a platform that ejects directly (Windows) ejects without '
+      'the settings hand-off', (tester) async {
+    final volumes = FakeVolumes([internalVolume, sdVolume()])
+      ..ejectsDirectly = true;
+    addTearDown(volumes.close);
+    final app = await pumpApp(
+      tester,
+      files: FakeFileSource(),
+      overrides: [
+        volumesPlatformProvider.overrideWithValue(volumes),
+        mtpPlatformProvider.overrideWithValue(null),
+      ],
+    );
+    await _openBrowse(tester);
+    await tester.tap(find.byKey(const ValueKey('eject-1234-ABCD')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('eject-open-settings')), findsNothing);
+    expect(volumes.ejected, [_sd]);
+    expect(volumes.settingsOpened, 0);
+    VolumeActivity activity() =>
+        app.container.read(volumeActivityTrackerProvider);
+    expect(activity().isEjecting('1234-ABCD'), isTrue);
+
+    volumes
+      ..volumes = [internalVolume]
+      ..emit(const VolumeStateChanged(uuid: null, state: 'changed'));
+    await tester.pump(const Duration(milliseconds: 1100));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('SanDisk SD card can be safely removed'), findsOneWidget);
+    expect(activity().isEjecting('1234-ABCD'), isFalse);
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('PL1: a refused direct eject cancels it and says the drive is '
+      'in use', (tester) async {
+    final volumes = FakeVolumes([internalVolume, sdVolume()])
+      ..ejectsDirectly = true
+      ..ejectError = VolumeEjectError.inUse;
+    addTearDown(volumes.close);
+    final app = await pumpApp(
+      tester,
+      files: FakeFileSource(),
+      overrides: [
+        volumesPlatformProvider.overrideWithValue(volumes),
+        mtpPlatformProvider.overrideWithValue(null),
+      ],
+    );
+    await _openBrowse(tester);
+    await tester.tap(find.byKey(const ValueKey('eject-1234-ABCD')));
+    await tester.pumpAndSettle();
+    expect(volumes.ejected, [_sd]);
+    expect(
+      find.text(
+        'SanDisk SD card is still in use by another program. '
+        'Close it and try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      app.container
+          .read(volumeActivityTrackerProvider)
+          .isEjecting('1234-ABCD'),
+      isFalse,
+    );
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+  });
 }

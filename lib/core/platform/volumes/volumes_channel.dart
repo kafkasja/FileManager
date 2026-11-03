@@ -15,6 +15,8 @@ class VolumeInfo {
     this.totalBytes,
     this.freeBytes,
     this.usbMassStorage = false,
+    this.isFixed = false,
+    this.bus,
   });
 
   factory fromRow(Map<Object?, Object?> r) {
@@ -54,6 +56,14 @@ class VolumeInfo {
   /// A USB mass-storage device was attached when the list was read.
   final bool usbMassStorage;
 
+  /// Windows (PL1): a non-system drive that stays in the PC (second disk,
+  /// network drive): a place like internal storage, never ejected.
+  final bool isFixed;
+
+  /// Windows (PL1): the disk's bus (`usb`, `sd`, …) when known; decides the
+  /// place kind before the description does.
+  final String? bus;
+
   @override
   bool operator ==(Object other) =>
       other is VolumeInfo &&
@@ -66,7 +76,9 @@ class VolumeInfo {
       other.rootPath == rootPath &&
       other.totalBytes == totalBytes &&
       other.freeBytes == freeBytes &&
-      other.usbMassStorage == usbMassStorage;
+      other.usbMassStorage == usbMassStorage &&
+      other.isFixed == isFixed &&
+      other.bus == bus;
 
   @override
   int get hashCode => Object.hash(
@@ -80,6 +92,8 @@ class VolumeInfo {
     totalBytes,
     freeBytes,
     usbMassStorage,
+    isFixed,
+    bus,
   );
 }
 
@@ -103,7 +117,18 @@ class UsbMassStorageAttached extends VolumeEvent {
   const new();
 }
 
-/// The volume list and its live changes (Android: [VolumesChannel]).
+/// Why [VolumesPlatform.eject] didn't eject.
+enum VolumeEjectError {
+  /// Another program still has files open on the volume.
+  inUse,
+
+  /// The device can't be ejected.
+  notEjectable,
+  failed,
+}
+
+/// The volume list and its live changes (Android: [VolumesChannel],
+/// Windows: `WindowsVolumes`).
 abstract interface class VolumesPlatform {
   Future<List<VolumeInfo>> list();
 
@@ -116,6 +141,14 @@ abstract interface class VolumesPlatform {
   /// U3: opens the system storage screen (where the user taps Eject).
   /// Returns the settings action that opened.
   Future<String?> openStorageSettings();
+
+  /// U3 on Windows: the app ejects the volume itself ([eject]) instead of
+  /// handing off to [openStorageSettings].
+  bool get ejectsDirectly;
+
+  /// Ejects the volume at [rootPath]; null when it was ejected. Only when
+  /// [ejectsDirectly].
+  Future<VolumeEjectError?> eject(String rootPath);
 }
 
 /// Typed wrapper around `com.kaf.kfm/volumes` (+ `/events`).
@@ -146,6 +179,14 @@ class VolumesChannel implements VolumesPlatform {
   @override
   Future<int> sdkInt() async =>
       _sdk ??= await _channel.invokeMethod<int>('sdkInt') ?? 0;
+
+  /// Android apps can't unmount volumes.
+  @override
+  bool get ejectsDirectly => false;
+
+  @override
+  Future<VolumeEjectError?> eject(String rootPath) =>
+      throw UnsupportedError('Android ejects in the system settings');
 
   /// One platform stream for every listener: each `receiveBroadcastStream()`
   /// call replaces the channel's message handler, so a second one would

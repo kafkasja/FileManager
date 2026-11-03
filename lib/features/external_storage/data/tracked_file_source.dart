@@ -31,6 +31,9 @@ class TrackedFileSource implements FileSource, FileSourceDecorator {
   final String Function(FileRef f) _placeOfFile;
   final String Function(String folder) _placeOfFolder;
 
+  /// The place [f] is on, as this source counts it (U3's reader cleanup).
+  String placeOfFile(FileRef f) => _placeOfFile(f);
+
   Future<T> _files<T>(Iterable<FileRef> files, Future<T> Function() op) =>
       _tracker.runAll({for (final f in files) _placeOfFile(f)}, op);
 

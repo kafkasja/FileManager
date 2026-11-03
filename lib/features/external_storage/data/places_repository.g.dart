@@ -8,12 +8,12 @@ part of 'places_repository.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The device's volumes and cameras, live. Empty off Android.
+/// The device's volumes and cameras, live. Empty off Android and Windows.
 
 @ProviderFor(deviceStorage)
 final deviceStorageProvider = DeviceStorageProvider._();
 
-/// The device's volumes and cameras, live. Empty off Android.
+/// The device's volumes and cameras, live. Empty off Android and Windows.
 
 final class DeviceStorageProvider
     extends
@@ -23,7 +23,7 @@ final class DeviceStorageProvider
           Stream<DeviceStorage>
         >
     with $FutureModifier<DeviceStorage>, $StreamProvider<DeviceStorage> {
-  /// The device's volumes and cameras, live. Empty off Android.
+  /// The device's volumes and cameras, live. Empty off Android and Windows.
   DeviceStorageProvider._()
     : super(
         from: null,
@@ -198,4 +198,4 @@ final class UnmountedRootsProvider
   }
 }
 
-String _$unmountedRootsHash() => r'96d9f405da3613353feacacaf9c273f077f41252';
+String _$unmountedRootsHash() => r'027734fa3926410ffb6180f2f701d32eb3cc903c';

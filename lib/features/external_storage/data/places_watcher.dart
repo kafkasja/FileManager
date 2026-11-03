@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/volumes/volumes_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/features/external_storage/data/eject_watch.dart';
@@ -60,6 +61,7 @@ class PlacesWatcher {
     this._onEjected,
     this.formatHelpDelay = const Duration(seconds: 5),
     this.rescanDelay = const Duration(seconds: 30),
+    this.scanOnStart = false,
   });
 
   final Future<void> Function(String rootPath) _scanRoot;
@@ -71,6 +73,12 @@ class PlacesWatcher {
   final void Function(String placeId)? _onEjected;
   final Duration formatHelpDelay;
   final Duration rescanDelay;
+
+  /// PL1 (Windows): also scan the removable places already there in the
+  /// first list. Windows has no media scanner that indexed a stick plugged
+  /// in while KFM was closed (its old files would escape an incremental
+  /// scan). The scan only upserts.
+  final bool scanOnStart;
 
   final _notices = StreamController<ExternalNotice>.broadcast();
   final _timers = <Timer>{};
@@ -88,7 +96,14 @@ class PlacesWatcher {
     };
     final before = _present;
     _present = now;
-    if (before == null) return;
+    if (before == null) {
+      if (scanOnStart) {
+        for (final p in now.values) {
+          if (p.rootPath case final root?) _scan(root);
+        }
+      }
+      return;
+    }
     for (final p in now.values) {
       if (before.containsKey(p.id)) continue;
       _attachCount++;
@@ -176,6 +191,7 @@ PlacesWatcher placesWatcher(Ref ref) {
   final watcher = PlacesWatcher(
     // Failures land on the indexer's status (IndexFailed).
     scanRoot: indexer.scanRoot,
+    scanOnStart: isWindowsHost,
     validateGrant: grants?.isValid,
     dropGrant: grants?.drop,
     isEjecting: (id) => ref.read(volumeActivityTrackerProvider).isEjecting(id),

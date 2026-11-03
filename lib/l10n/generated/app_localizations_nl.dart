@@ -7380,4 +7380,19 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupSettingDesktopBrowseSort => 'Sortering van Bladeren op pc';
+
+  @override
+  String ejectWindowsInUse(String label) {
+    return '$label wordt nog gebruikt door een ander programma. Sluit het en probeer het opnieuw.';
+  }
+
+  @override
+  String ejectWindowsFailed(String label) {
+    return 'Windows kon $label niet uitwerpen';
+  }
+
+  @override
+  String desktopSystemDrive(String drive) {
+    return 'Lokale schijf ($drive)';
+  }
 }

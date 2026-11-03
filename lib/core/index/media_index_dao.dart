@@ -94,6 +94,22 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
 
   static final _removableRoot = RegExp('^/storage/[^/]+');
 
+  /// PL1: the drive roots (`C:`, `E:`…) that have indexed rows on Windows.
+  Future<Set<String>> indexedDriveRoots() async {
+    final drive = mediaIndex.folderPath.substr(1, 2).upper();
+    final rows =
+        await (selectOnly(mediaIndex, distinct: true)
+              ..addColumns([drive])
+              ..where(mediaIndex.folderPath.like('_:%')))
+            .get();
+    return {
+      for (final r in rows)
+        if (r.read(drive) case final d? when _driveRoot.hasMatch(d)) d,
+    };
+  }
+
+  static final _driveRoot = RegExp(r'^[A-Z]:$');
+
   Future<IndexPage> page(
     IndexQuery q, {
     IndexCursor? after,

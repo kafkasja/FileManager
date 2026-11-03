@@ -7,6 +7,9 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 String placeLabel(AppLocalizations l10n, StoragePlace place) {
   final label = place.label.trim();
   return switch (place.kind) {
+    // PL1: a second disk / network drive on Windows keeps its own name.
+    PlaceKind.internal when place.id != kInternalPlaceId && label.isNotEmpty =>
+      label,
     PlaceKind.internal => l10n.externalInternal,
     PlaceKind.camera => l10n.externalCameraLabel(
       label.isEmpty ? l10n.externalGeneric : label,

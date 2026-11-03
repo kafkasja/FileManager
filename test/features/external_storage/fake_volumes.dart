@@ -63,6 +63,18 @@ class FakeVolumes implements VolumesPlatform {
     return 'android.settings.INTERNAL_STORAGE_SETTINGS';
   }
 
+  @override
+  bool ejectsDirectly = false;
+
+  final List<String> ejected = [];
+  VolumeEjectError? ejectError;
+
+  @override
+  Future<VolumeEjectError?> eject(String rootPath) async {
+    ejected.add(rootPath);
+    return ejectError;
+  }
+
   void emit(VolumeEvent e) => _events.add(e);
 
   Future<void> close() => _events.close();

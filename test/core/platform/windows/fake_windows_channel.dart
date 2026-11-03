@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -132,5 +133,32 @@ class FakeWindowsChannel implements WindowsChannel {
   Future<bool> networkIsPublic() async {
     _check('networkIsPublic');
     return false;
+  }
+
+  /// What [listDrives] answers.
+  List<WindowsDrive> drives = [];
+
+  /// Paths [ejectDrive] was called with; [ejectError] is its answer.
+  final List<String> ejected = [];
+  DriveEjectError? ejectError;
+
+  final _events = StreamController<WindowsEvent>.broadcast();
+
+  @override
+  Stream<WindowsEvent> get events => _events.stream;
+
+  void emit(WindowsEvent e) => _events.add(e);
+
+  @override
+  Future<List<WindowsDrive>> listDrives() async {
+    _check('listDrives');
+    return List.of(drives);
+  }
+
+  @override
+  Future<DriveEjectError?> ejectDrive(String path) async {
+    _check('ejectDrive');
+    ejected.add(path);
+    return ejectError;
   }
 }

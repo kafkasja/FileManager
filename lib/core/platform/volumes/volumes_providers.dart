@@ -1,17 +1,24 @@
 import 'dart:io';
 
 import 'package:kfm/core/index/media_index_dao.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/volumes/mtp_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_channel.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
+import 'package:kfm/core/platform/windows/windows_volumes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'volumes_providers.g.dart';
 
-/// U1: the volume list. Null off Android (and in tests unless overridden):
-/// then there are no places and nothing is treated as detached.
+/// U1: the volume list (Android volumes, Windows drive letters). Null
+/// elsewhere (and in tests unless overridden): then there are no places
+/// and nothing is treated as detached.
 @Riverpod(keepAlive: true)
-VolumesPlatform? volumesPlatform(Ref ref) =>
-    Platform.isAndroid ? VolumesChannel() : null;
+VolumesPlatform? volumesPlatform(Ref ref) {
+  if (Platform.isAndroid) return VolumesChannel();
+  if (isWindowsHost) return WindowsVolumes(ref.watch(windowsChannelProvider));
+  return null;
+}
 
 /// U1: cameras over USB. Null off Android.
 @Riverpod(keepAlive: true)
@@ -31,13 +38,19 @@ Set<String> detachedRoots(Set<String> indexedRoots, List<VolumeInfo> volumes) {
   };
 }
 
+/// U1: volume roots with indexed rows that could go away: `/storage/<id>`
+/// on Android, every drive letter on Windows (the mounted ones drop out in
+/// [detachedRoots]).
+Future<Set<String>> indexedRemovableRoots(MediaIndexDao dao) =>
+    isWindowsHost ? dao.indexedDriveRoots() : dao.indexedVolumeRoots();
+
 /// U1: [detachedRoots] from a fresh volume list (the indexer's `keepRoots`,
 /// so a scan never deletes the rows of a card that's only away).
 Future<Set<String>> readDetachedRoots(
   MediaIndexDao dao,
   VolumesPlatform volumes,
 ) async {
-  final indexed = await dao.indexedVolumeRoots();
+  final indexed = await indexedRemovableRoots(dao);
   if (indexed.isEmpty) return const {};
   return detachedRoots(indexed, await volumes.list());
 }
@@ -54,3 +67,12 @@ Future<List<String>> readDirectPathRemovableRoots(
       if (!v.isPrimary && v.isMounted && v.uuid != null) ?v.rootPath,
   ];
 }
+
+/// PL1: roots of the mounted removable drives on Windows (USB sticks, SD
+/// cards, USB disks). Full scans walk them next to the index roots.
+Future<List<String>> readMountedRemovableRoots(VolumesPlatform volumes) async =>
+    [
+      for (final v in await volumes.list())
+        if (!v.isPrimary && !v.isFixed && v.isRemovable && v.isMounted)
+          ?v.rootPath,
+    ];

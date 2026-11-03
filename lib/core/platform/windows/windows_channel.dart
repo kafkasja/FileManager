@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
@@ -61,6 +63,133 @@ class BinRestoreResult {
   final String? message;
 }
 
+/// One drive letter ([WindowsChannel.listDrives]). CD drives and empty card
+/// reader slots aren't listed.
+@immutable
+class WindowsDrive {
+  const new({
+    required this.path,
+    required this.isSystem,
+    required this.type,
+    required this.isRemovable,
+    required this.isMounted,
+    this.uuid,
+    this.label = '',
+    this.fileSystem = '',
+    this.bus = 'other',
+    this.totalBytes,
+    this.freeBytes,
+  });
+
+  factory fromRow(Map<Object?, Object?> r) {
+    String str(Object? v) => v is String ? v : '';
+    int? integer(Object? v) => v is int ? v : null;
+    return WindowsDrive(
+      path: str(r['path']).toUpperCase(),
+      isSystem: r['system'] == true,
+      type: str(r['type']),
+      isRemovable: r['removable'] == true,
+      isMounted: r['mounted'] == true,
+      uuid: switch (r['uuid']) {
+        final String u when u.isNotEmpty => u,
+        _ => null,
+      },
+      label: str(r['label']),
+      fileSystem: str(r['fileSystem']),
+      bus: switch (r['bus']) {
+        final String b when b.isNotEmpty => b,
+        _ => 'other',
+      },
+      totalBytes: integer(r['totalBytes']),
+      freeBytes: integer(r['freeBytes']),
+    );
+  }
+
+  /// `E:` (KFM's form of a drive root).
+  final String path;
+
+  /// The drive Windows runs from.
+  final bool isSystem;
+
+  /// `removable`, `fixed` or `remote`.
+  final String type;
+
+  /// Can be ejected: a removable drive, or a fixed one on USB/SD/FireWire.
+  final bool isRemovable;
+  final bool isMounted;
+
+  /// Volume serial number `ABCD-1234`; null for network drives.
+  final String? uuid;
+  final String label;
+  final String fileSystem;
+
+  /// `usb`, `sd`, `firewire`, `internal`, `virtual` or `other`.
+  final String bus;
+  final int? totalBytes;
+  final int? freeBytes;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WindowsDrive &&
+      other.path == path &&
+      other.isSystem == isSystem &&
+      other.type == type &&
+      other.isRemovable == isRemovable &&
+      other.isMounted == isMounted &&
+      other.uuid == uuid &&
+      other.label == label &&
+      other.fileSystem == fileSystem &&
+      other.bus == bus &&
+      other.totalBytes == totalBytes &&
+      other.freeBytes == freeBytes;
+
+  @override
+  int get hashCode => Object.hash(
+    path,
+    isSystem,
+    type,
+    isRemovable,
+    isMounted,
+    uuid,
+    label,
+    fileSystem,
+    bus,
+    totalBytes,
+    freeBytes,
+  );
+}
+
+/// Why [WindowsChannel.ejectDrive] didn't eject.
+enum DriveEjectError {
+  /// A program (maybe Explorer) still has a file open on it.
+  inUse,
+
+  /// Not a device Windows can eject (an internal disk).
+  notEjectable,
+  failed,
+}
+
+/// Sleep / wake ([WindowsChannel.events]).
+enum PowerState { suspend, resume }
+
+/// Something the native side reports by itself (`WM_DEVICECHANGE`,
+/// `WM_POWERBROADCAST`).
+@immutable
+sealed class WindowsEvent {
+  const new();
+}
+
+/// A volume arrived or went away: read [WindowsChannel.listDrives] again.
+class VolumesChanged extends WindowsEvent {
+  const new();
+}
+
+class PowerChanged extends WindowsEvent {
+  const new(this.state);
+
+  final PowerState state;
+}
+
 /// Thrown when the native side isn't there (the C++ channel isn't built
 /// yet, or a test without a fake) or answers with a platform error.
 class WindowsChannelException implements Exception {
@@ -119,6 +248,15 @@ class WindowsChannelException implements Exception {
 ///   thumbnail (missing HEIF codec…).
 /// - `networkIsPublic` → bool: `INetworkListManager` → any connected
 ///   network with category `NLM_NETWORK_CATEGORY_PUBLIC`.
+/// - `listDrives` → `[{path: "E:", system, type, removable, mounted, uuid?,
+///   label?, fileSystem?, bus?, totalBytes?, freeBytes?}]`
+///   (`GetLogicalDrives`, `GetDriveTypeW`, `GetVolumeInformationW`,
+///   `IOCTL_STORAGE_QUERY_PROPERTY` for the bus).
+/// - `ejectDrive {path}` → `{ok, error?}`: `CM_Request_Device_EjectW` on the
+///   disk's parent device; `error` ∈ `inUse`, `notEjectable`, `failed`.
+///
+/// Calls from the native side (`events`): `volumesChanged` (a volume
+/// arrived / was removed) and `power {state: suspend|resume}`.
 class WindowsChannel {
   new({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(name);
@@ -126,6 +264,21 @@ class WindowsChannel {
   static const name = 'com.kaf.kfm/windows';
 
   final MethodChannel _channel;
+
+  late final StreamController<WindowsEvent> _events =
+      StreamController<WindowsEvent>.broadcast(
+        onListen: () => _channel.setMethodCallHandler(_onNativeCall),
+      );
+
+  /// Native drive and power events. The handler is installed on the first
+  /// listen and stays (one channel instance per app).
+  Stream<WindowsEvent> get events => _events.stream;
+
+  Future<Object?> _onNativeCall(MethodCall call) async {
+    final event = parseWindowsEvent(call.method, call.arguments);
+    if (event != null) _events.add(event);
+    return null;
+  }
 
   Future<T?> _call<T>(String method, [Object? args]) async {
     try {
@@ -225,4 +378,38 @@ class WindowsChannel {
 
   Future<bool> networkIsPublic() async =>
       await _call<bool>('networkIsPublic') ?? false;
+
+  Future<List<WindowsDrive>> listDrives() async {
+    final raw = await _call<List<Object?>>('listDrives') ?? const [];
+    return [
+      for (final r in raw.whereType<Map<Object?, Object?>>())
+        WindowsDrive.fromRow(r),
+    ];
+  }
+
+  /// Null when Windows ejected the drive.
+  Future<DriveEjectError?> ejectDrive(String path) async {
+    final raw =
+        await _call<Map<Object?, Object?>>('ejectDrive', {
+          'path': toNative(path),
+        }) ??
+        const {};
+    if (raw['ok'] == true) return null;
+    return DriveEjectError.values.firstWhere(
+      (e) => e.name == raw['error'],
+      orElse: () => DriveEjectError.failed,
+    );
+  }
 }
+
+@visibleForTesting
+WindowsEvent? parseWindowsEvent(String method, Object? args) =>
+    switch (method) {
+      'volumesChanged' => const VolumesChanged(),
+      'power' => switch (args) {
+        {'state': 'suspend'} => const PowerChanged(PowerState.suspend),
+        {'state': 'resume'} => const PowerChanged(PowerState.resume),
+        _ => null,
+      },
+      _ => null,
+    };

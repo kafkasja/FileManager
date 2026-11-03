@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/desktop/shell/desktop_drives.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_navigation.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
@@ -97,6 +98,8 @@ class DesktopSidebar extends ConsumerWidget {
                     ),
                   ),
                 if (places.isEmpty && !collapsed) _Hint(l10n.desktopNoPlaces),
+                // PL1: drives (system, other disks, USB sticks with Eject).
+                DesktopDriveItems(collapsed: collapsed),
                 if (!collapsed) _Header(l10n.desktopSidebarCollections),
                 if (collapsed) const Divider(),
                 _droppable(
@@ -187,6 +190,7 @@ class SidebarItem extends StatefulWidget {
     this.enabled = true,
     this.tooltip,
     this.iconColor,
+    this.trailing,
     super.key,
   });
 
@@ -198,6 +202,9 @@ class SidebarItem extends StatefulWidget {
   final bool enabled;
   final String? tooltip;
   final Color? iconColor;
+
+  /// A small button after the label (PL1: Eject); hidden when collapsed.
+  final Widget? trailing;
 
   @override
   State<SidebarItem> createState() => _SidebarItemState();
@@ -267,6 +274,14 @@ class _SidebarItemState extends State<SidebarItem> {
       ),
     );
     final tip = widget.collapsed ? widget.label : widget.tooltip;
-    return tip == null ? row : Tooltip(message: tip, child: row);
+    final body = tip == null ? row : Tooltip(message: tip, child: row);
+    final trailing = widget.trailing;
+    if (trailing == null || widget.collapsed) return body;
+    return Row(
+      children: [
+        Expanded(child: body),
+        trailing,
+      ],
+    );
   }
 }

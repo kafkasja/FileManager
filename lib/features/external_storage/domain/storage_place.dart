@@ -170,7 +170,7 @@ List<StoragePlace> buildPlaces({
       StoragePlace(
         id: id,
         label: v.description,
-        kind: placeKindOf(v),
+        kind: v.isFixed ? PlaceKind.internal : placeKindOf(v),
         access: direct ? AccessMethod.directPath : AccessMethod.saf,
         isMounted: v.isMounted,
         rootPath: v.rootPath,
@@ -204,6 +204,8 @@ final _usbWord = RegExp(r'\busb\b', caseSensitive: false);
 /// mass-storage device makes it a USB drive.
 PlaceKind placeKindOf(VolumeInfo v) {
   if (v.isPrimary) return PlaceKind.internal;
+  if (v.bus == 'sd') return PlaceKind.sdCard;
+  if (v.bus == 'usb') return PlaceKind.usbDrive;
   if (_usbWord.hasMatch(v.description)) return PlaceKind.usbDrive;
   if (_sdWord.hasMatch(v.description)) return PlaceKind.sdCard;
   if (v.usbMassStorage) return PlaceKind.usbDrive;

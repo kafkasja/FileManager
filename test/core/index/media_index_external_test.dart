@@ -70,6 +70,15 @@ void main() {
       expect(await dao.indexedVolumeRoots(), {sd, '${sd}0'});
     });
 
+    test('PL1: indexedDriveRoots lists the drive letters with rows', () async {
+      await dao.upsertBatch([
+        ref(10, folder: 'C:/Users/me/Pictures'),
+        ref(11, folder: 'e:/DCIM'),
+        ref(12, folder: 'E:'),
+      ], 1);
+      expect(await dao.indexedDriveRoots(), {'C:', 'E:'});
+    });
+
     test('deleteOlderThanGeneration keeps rows under keepUnder', () async {
       final removed = await dao.deleteOlderThanGeneration(
         2,

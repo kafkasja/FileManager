@@ -208,7 +208,60 @@ final class FileSourceProvider
   }
 }
 
-String _$fileSourceHash() => r'd592d5d9906c47c08a22edcae09306769a8478a7';
+String _$fileSourceHash() => r'08625faf076b00d46fc20c9f01da8d3b050ca41d';
+
+/// Kept current from `placesProvider` without rebuilding the file source.
+
+@ProviderFor(windowsPlaceLocator)
+final windowsPlaceLocatorProvider = WindowsPlaceLocatorProvider._();
+
+/// Kept current from `placesProvider` without rebuilding the file source.
+
+final class WindowsPlaceLocatorProvider
+    extends
+        $FunctionalProvider<
+          WindowsPlaceLocator,
+          WindowsPlaceLocator,
+          WindowsPlaceLocator
+        >
+    with $Provider<WindowsPlaceLocator> {
+  /// Kept current from `placesProvider` without rebuilding the file source.
+  WindowsPlaceLocatorProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'windowsPlaceLocatorProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$windowsPlaceLocatorHash();
+
+  @$internal
+  @override
+  $ProviderElement<WindowsPlaceLocator> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  WindowsPlaceLocator create(Ref ref) {
+    return windowsPlaceLocator(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WindowsPlaceLocator value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WindowsPlaceLocator>(value),
+    );
+  }
+}
+
+String _$windowsPlaceLocatorHash() =>
+    r'01862e67dc4dfb406bbd4899d5e791b7f40465f5';
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
 /// Windows: the Pictures known folder (its profile path; the channel's

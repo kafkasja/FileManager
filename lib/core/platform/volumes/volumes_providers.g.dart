@@ -8,14 +8,16 @@ part of 'volumes_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// U1: the volume list. Null off Android (and in tests unless overridden):
-/// then there are no places and nothing is treated as detached.
+/// U1: the volume list (Android volumes, Windows drive letters). Null
+/// elsewhere (and in tests unless overridden): then there are no places
+/// and nothing is treated as detached.
 
 @ProviderFor(volumesPlatform)
 final volumesPlatformProvider = VolumesPlatformProvider._();
 
-/// U1: the volume list. Null off Android (and in tests unless overridden):
-/// then there are no places and nothing is treated as detached.
+/// U1: the volume list (Android volumes, Windows drive letters). Null
+/// elsewhere (and in tests unless overridden): then there are no places
+/// and nothing is treated as detached.
 
 final class VolumesPlatformProvider
     extends
@@ -25,8 +27,9 @@ final class VolumesPlatformProvider
           VolumesPlatform?
         >
     with $Provider<VolumesPlatform?> {
-  /// U1: the volume list. Null off Android (and in tests unless overridden):
-  /// then there are no places and nothing is treated as detached.
+  /// U1: the volume list (Android volumes, Windows drive letters). Null
+  /// elsewhere (and in tests unless overridden): then there are no places
+  /// and nothing is treated as detached.
   VolumesPlatformProvider._()
     : super(
         from: null,
@@ -60,7 +63,7 @@ final class VolumesPlatformProvider
   }
 }
 
-String _$volumesPlatformHash() => r'84a77ba59f8dc7d2e0720130357a85ee5a8f4bab';
+String _$volumesPlatformHash() => r'75272bfb48083b2314859a430336ae0ef67120d9';
 
 /// U1: cameras over USB. Null off Android.
 

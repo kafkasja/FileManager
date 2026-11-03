@@ -7326,4 +7326,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupSettingDesktopBrowseSort => 'PC\'de Gözat sıralaması';
+
+  @override
+  String ejectWindowsInUse(String label) {
+    return '$label hâlâ başka bir program tarafından kullanılıyor. Programı kapatıp tekrar deneyin.';
+  }
+
+  @override
+  String ejectWindowsFailed(String label) {
+    return 'Windows $label sürücüsünü çıkaramadı';
+  }
+
+  @override
+  String desktopSystemDrive(String drive) {
+    return 'Yerel disk ($drive)';
+  }
 }

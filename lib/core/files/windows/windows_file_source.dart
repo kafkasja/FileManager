@@ -26,12 +26,22 @@ class WindowsFileSource implements FileSource {
     required this._indexRoots,
     this._walker = walkFiles,
     this._tempLedger,
+    this._removableRoots,
   });
 
   final WindowsChannel _channel;
 
   /// What a scan without `rootPath` walks (`WindowsIndexRoots.current`).
   final Future<List<String>> Function() _indexRoots;
+
+  /// U1 on Windows: roots of mounted removable drives. Full scans walk them
+  /// next to the index roots (like Android's SD cards), so their rows stay.
+  final Future<List<String>> Function()? _removableRoots;
+
+  Future<List<String>> _scanRoots() async => outermostRoots([
+    ...await _indexRoots(),
+    ...?await _removableRoots?.call(),
+  ]);
   final Stream<List<FileRef>> Function(WalkOptions options) _walker;
   final Future<TempFileLedger?>? _tempLedger;
 
@@ -51,7 +61,7 @@ class WindowsFileSource implements FileSource {
   @override
   Stream<List<FileRef>> scan({FileQuery query = FileQuery.all}) async* {
     final roots = query.rootPath == null
-        ? outermostRoots(await _indexRoots())
+        ? await _scanRoots()
         : [normalizeWindowsPath(query.rootPath!)];
     for (final root in roots) {
       // An unplugged drive or a removed folder: skipped, not an error, when
@@ -394,7 +404,7 @@ class WindowsFileSource implements FileSource {
   /// under an index root (the bin also holds other apps' deletes).
   @override
   Future<List<TrashedItem>> listTrashed() async {
-    final roots = await _indexRoots();
+    final roots = await _scanRoots();
     final List<BinItem> bin;
     try {
       bin = await _channel.listBin();

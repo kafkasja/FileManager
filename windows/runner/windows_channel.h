@@ -31,6 +31,12 @@ class WindowsChannel {
   // Call from the window procedure for [kRunOnPlatformThreadMessage].
   static void RunPosted(LPARAM lparam);
 
+  // WM_DEVICECHANGE: a volume arrived or went away → Dart `volumesChanged`.
+  void OnDeviceChange(WPARAM wparam, LPARAM lparam);
+
+  // WM_POWERBROADCAST: sleep / wake → Dart `power {state}`.
+  void OnPowerBroadcast(WPARAM wparam);
+
  private:
   class WorkerPool;
   using Result =

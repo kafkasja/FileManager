@@ -63,6 +63,15 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     WindowsChannel::RunPosted(lparam);
     return 0;
   }
+  // Drive and power events for Dart (TASK-PL1); the messages go on to
+  // Flutter and the default handling as usual.
+  if (windows_channel_) {
+    if (message == WM_DEVICECHANGE) {
+      windows_channel_->OnDeviceChange(wparam, lparam);
+    } else if (message == WM_POWERBROADCAST) {
+      windows_channel_->OnPowerBroadcast(wparam);
+    }
+  }
   // Minimum window size 800x600 (logical pixels).
   if (message == WM_GETMINMAXINFO) {
     UINT dpi = ::GetDpiForWindow(hwnd);

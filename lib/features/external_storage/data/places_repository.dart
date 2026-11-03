@@ -109,7 +109,7 @@ Stream<DeviceStorage> watchDeviceStorage(
   return controller.stream;
 }
 
-/// The device's volumes and cameras, live. Empty off Android.
+/// The device's volumes and cameras, live. Empty off Android and Windows.
 @Riverpod(keepAlive: true)
 Stream<DeviceStorage> deviceStorage(Ref ref) {
   final volumes = ref.watch(volumesPlatformProvider);
@@ -147,7 +147,7 @@ Future<List<StoragePlace>> places(Ref ref) async {
 Future<Set<String>> unmountedRoots(Ref ref) async {
   final device = await ref.watch(deviceStorageProvider.future);
   if (ref.watch(volumesPlatformProvider) == null) return const {};
-  final indexed = await ref.watch(mediaIndexDaoProvider).indexedVolumeRoots();
+  final indexed = await indexedRemovableRoots(ref.watch(mediaIndexDaoProvider));
   return detachedRoots(indexed, device.volumes);
 }
 

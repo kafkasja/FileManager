@@ -1,6 +1,13 @@
 #include "windows_channel.h"
 
 #include <flutter/standard_method_codec.h>
+// clang-format off
+#include <windows.h>
+#include <winioctl.h>
+#include <setupapi.h>
+#include <cfgmgr32.h>
+#include <dbt.h>
+// clang-format on
 #include <knownfolders.h>
 #include <netlistmgr.h>
 #include <objbase.h>
@@ -11,7 +18,9 @@
 #include <wrl/client.h>
 
 #include <condition_variable>
+#include <cstdio>
 #include <cstring>
+#include <cwctype>
 #include <deque>
 #include <map>
 #include <mutex>
@@ -810,6 +819,291 @@ EncodableValue NetworkIsPublic() {
   return EncodableValue(false);
 }
 
+
+// ---- drives (U1/U3 on Windows) ----
+
+// GUID_DEVINTERFACE_DISK, defined here so no initguid/devguid dance is
+// needed.
+const GUID kDiskInterface = {0x53f56307, 0xb6bf, 0x11d0,
+                             {0x94, 0xf2, 0x00, 0xa0, 0xc9, 0x1e, 0xfb, 0x8b}};
+
+// RAII for CreateFileW handles.
+struct Handle {
+  HANDLE h = INVALID_HANDLE_VALUE;
+  explicit Handle(HANDLE value) : h(value) {}
+  ~Handle() {
+    if (h != INVALID_HANDLE_VALUE) ::CloseHandle(h);
+  }
+  Handle(const Handle&) = delete;
+  Handle& operator=(const Handle&) = delete;
+  bool ok() const { return h != INVALID_HANDLE_VALUE; }
+};
+
+// `\\.\E:` opened without read/write access: enough for the storage IOCTLs
+// and never blocks an eject (closed right away).
+HANDLE OpenVolumeDevice(wchar_t letter) {
+  wchar_t dev[] = L"\\\\.\\?:";
+  dev[4] = letter;
+  return ::CreateFileW(dev, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                       OPEN_EXISTING, 0, nullptr);
+}
+
+const char* BusName(STORAGE_BUS_TYPE bus) {
+  switch (bus) {
+    case BusTypeUsb:
+      return "usb";
+    case BusTypeSd:
+    case BusTypeMmc:
+      return "sd";
+    case BusType1394:
+      return "firewire";
+    case BusTypeSata:
+    case BusTypeAta:
+    case BusTypeNvme:
+    case BusTypeRAID:
+    case BusTypeSas:
+    case BusTypeScsi:
+      return "internal";
+    case BusTypeFileBackedVirtual:
+    case BusTypeVirtual:
+      return "virtual";
+    default:
+      return "other";
+  }
+}
+
+// Bus type of the disk behind [letter]; false when the IOCTL fails.
+bool QueryBus(wchar_t letter, STORAGE_BUS_TYPE* bus, bool* removable_media) {
+  Handle h(OpenVolumeDevice(letter));
+  if (!h.ok()) return false;
+  STORAGE_PROPERTY_QUERY query = {};
+  query.PropertyId = StorageDeviceProperty;
+  query.QueryType = PropertyStandardQuery;
+  BYTE buffer[1024] = {};
+  DWORD returned = 0;
+  if (!::DeviceIoControl(h.h, IOCTL_STORAGE_QUERY_PROPERTY, &query,
+                         sizeof(query), buffer, sizeof(buffer), &returned,
+                         nullptr) ||
+      returned < sizeof(STORAGE_DEVICE_DESCRIPTOR) - 1) {
+    return false;
+  }
+  const auto* desc = reinterpret_cast<STORAGE_DEVICE_DESCRIPTOR*>(buffer);
+  *bus = desc->BusType;
+  *removable_media = desc->RemovableMedia != FALSE;
+  return true;
+}
+
+bool DeviceNumberOf(HANDLE h, STORAGE_DEVICE_NUMBER* out) {
+  DWORD returned = 0;
+  return ::DeviceIoControl(h, IOCTL_STORAGE_GET_DEVICE_NUMBER, nullptr, 0, out,
+                           sizeof(*out), &returned, nullptr) != FALSE;
+}
+
+wchar_t SystemLetter() {
+  wchar_t system_dir[MAX_PATH] = {};
+  ::GetSystemWindowsDirectoryW(system_dir, MAX_PATH);
+  return static_cast<wchar_t>(::towupper(system_dir[0]));
+}
+
+// Removable media, or a disk on USB / SD / FireWire (USB hard disks report
+// DRIVE_FIXED). Never the system drive.
+bool IsEjectable(wchar_t letter, UINT type, bool has_bus,
+                 STORAGE_BUS_TYPE bus) {
+  if (letter == SystemLetter()) return false;
+  return type == DRIVE_REMOVABLE ||
+         (has_bus && (bus == BusTypeUsb || bus == BusTypeSd ||
+                      bus == BusTypeMmc || bus == BusType1394));
+}
+
+// The drive letters present, in order.
+EncodableValue ListDrives() {
+  wchar_t system_letter = SystemLetter();
+  DWORD mask = ::GetLogicalDrives();
+  EncodableList out;
+  for (int i = 0; i < 26; i++) {
+    if (!(mask & (1u << i))) continue;
+    wchar_t letter = static_cast<wchar_t>(L'A' + i);
+    wchar_t root[] = L"?:\\";
+    root[0] = letter;
+    UINT type = ::GetDriveTypeW(root);
+    if (type == DRIVE_NO_ROOT_DIR || type == DRIVE_UNKNOWN ||
+        type == DRIVE_CDROM) {
+      continue;
+    }
+    EncodableMap row;
+    std::string path(1, static_cast<char>(letter));
+    path += ":";
+    row[EncodableValue("path")] = EncodableValue(path);
+    row[EncodableValue("system")] = EncodableValue(letter == system_letter);
+    if (type == DRIVE_REMOTE) {
+      // Network drives: listed (so index rows on them never look detached)
+      // but not queried: a disconnected share can block for seconds.
+      row[EncodableValue("type")] = EncodableValue("remote");
+      row[EncodableValue("mounted")] = EncodableValue(true);
+      out.push_back(EncodableValue(std::move(row)));
+      continue;
+    }
+    // A card reader slot without a card: no volume, not a place.
+    UINT old_mode = ::SetErrorMode(SEM_FAILCRITICALERRORS);
+    wchar_t label[MAX_PATH + 1] = {};
+    wchar_t fs[MAX_PATH + 1] = {};
+    DWORD serial = 0;
+    BOOL has_volume = ::GetVolumeInformationW(root, label, MAX_PATH + 1,
+                                              &serial, nullptr, nullptr, fs,
+                                              MAX_PATH + 1);
+    ULARGE_INTEGER free_bytes = {}, total_bytes = {};
+    BOOL has_space =
+        has_volume && ::GetDiskFreeSpaceExW(root, &free_bytes, &total_bytes,
+                                            nullptr);
+    ::SetErrorMode(old_mode);
+    if (!has_volume) continue;
+    STORAGE_BUS_TYPE bus = BusTypeUnknown;
+    bool removable_media = false;
+    bool has_bus = QueryBus(letter, &bus, &removable_media);
+    bool removable = IsEjectable(letter, type, has_bus, bus);
+    char uuid[16] = {};
+    snprintf(uuid, sizeof(uuid), "%04X-%04X",
+             static_cast<unsigned>(serial >> 16),
+             static_cast<unsigned>(serial & 0xFFFF));
+    row[EncodableValue("type")] =
+        EncodableValue(type == DRIVE_REMOVABLE ? "removable" : "fixed");
+    row[EncodableValue("removable")] = EncodableValue(removable);
+    row[EncodableValue("mounted")] = EncodableValue(true);
+    row[EncodableValue("uuid")] = EncodableValue(std::string(uuid));
+    row[EncodableValue("label")] = EncodableValue(Utf8(label));
+    row[EncodableValue("fileSystem")] = EncodableValue(Utf8(fs));
+    row[EncodableValue("bus")] =
+        EncodableValue(has_bus ? BusName(bus) : "other");
+    if (has_space) {
+      row[EncodableValue("totalBytes")] =
+          EncodableValue(static_cast<int64_t>(total_bytes.QuadPart));
+      row[EncodableValue("freeBytes")] =
+          EncodableValue(static_cast<int64_t>(free_bytes.QuadPart));
+    }
+    out.push_back(EncodableValue(std::move(row)));
+  }
+  return EncodableValue(std::move(out));
+}
+
+// The disk device node behind [letter] (matched by storage device number
+// over every present disk interface).
+DEVINST DiskDevInstFor(wchar_t letter) {
+  STORAGE_DEVICE_NUMBER wanted = {};
+  {
+    Handle h(OpenVolumeDevice(letter));
+    if (!h.ok() || !DeviceNumberOf(h.h, &wanted)) return 0;
+  }
+  HDEVINFO info = ::SetupDiGetClassDevsW(
+      &kDiskInterface, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+  if (info == INVALID_HANDLE_VALUE) return 0;
+  DEVINST found = 0;
+  SP_DEVICE_INTERFACE_DATA iface = {};
+  iface.cbSize = sizeof(iface);
+  for (DWORD i = 0; ::SetupDiEnumDeviceInterfaces(info, nullptr,
+                                                  &kDiskInterface, i, &iface);
+       i++) {
+    DWORD size = 0;
+    ::SetupDiGetDeviceInterfaceDetailW(info, &iface, nullptr, 0, &size,
+                                       nullptr);
+    if (size == 0) continue;
+    std::vector<BYTE> buffer(size);
+    auto* detail =
+        reinterpret_cast<SP_DEVICE_INTERFACE_DETAIL_DATA_W*>(buffer.data());
+    detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+    SP_DEVINFO_DATA dev = {};
+    dev.cbSize = sizeof(dev);
+    if (!::SetupDiGetDeviceInterfaceDetailW(info, &iface, detail, size,
+                                            nullptr, &dev)) {
+      continue;
+    }
+    Handle disk(::CreateFileW(detail->DevicePath, 0,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                              OPEN_EXISTING, 0, nullptr));
+    STORAGE_DEVICE_NUMBER number = {};
+    if (disk.ok() && DeviceNumberOf(disk.h, &number) &&
+        number.DeviceType == wanted.DeviceType &&
+        number.DeviceNumber == wanted.DeviceNumber) {
+      found = dev.DevInst;
+      break;
+    }
+  }
+  ::SetupDiDestroyDeviceInfoList(info);
+  return found;
+}
+
+const char* VetoName(PNP_VETO_TYPE veto) {
+  switch (veto) {
+    case PNP_VetoOutstandingOpen:
+    case PNP_VetoDevice:
+    case PNP_VetoDriver:
+    case PNP_VetoIllegalDeviceRequest:
+      return "inUse";
+    case PNP_VetoNonDisableable:
+    case PNP_VetoLegacyDevice:
+    case PNP_VetoLegacyDriver:
+      return "notEjectable";
+    default:
+      return "failed";
+  }
+}
+
+// `ejectDrive {path: "E:"}` → `{ok, error?}`. Asks Plug and Play to eject
+// the disk's parent device (the USB stick / card reader). Windows shows its
+// own "Safe to remove" / "in use" message (no veto buffer is passed).
+EncodableValue EjectDrive(const std::wstring& path) {
+  EncodableMap out;
+  if (path.empty() || !::iswalpha(path[0])) {
+    throw ChannelError("BAD_ARGS", "ejectDrive needs a drive like E:");
+  }
+  wchar_t letter = static_cast<wchar_t>(::towupper(path[0]));
+  // Only what the drive list offers as removable: never ask Plug and Play
+  // to remove the system disk or an internal one.
+  {
+    wchar_t root[] = L"?:\\";
+    root[0] = letter;
+    STORAGE_BUS_TYPE bus = BusTypeUnknown;
+    bool removable_media = false;
+    bool has_bus = QueryBus(letter, &bus, &removable_media);
+    if (!IsEjectable(letter, ::GetDriveTypeW(root), has_bus, bus)) {
+      out[EncodableValue("ok")] = EncodableValue(false);
+      out[EncodableValue("error")] = EncodableValue("notEjectable");
+      return EncodableValue(std::move(out));
+    }
+  }
+  // Pending writes reach the device before it goes away.
+  {
+    wchar_t dev[] = L"\\\\.\\?:";
+    dev[4] = letter;
+    Handle volume(::CreateFileW(dev, GENERIC_READ | GENERIC_WRITE,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                OPEN_EXISTING, 0, nullptr));
+    if (volume.ok()) ::FlushFileBuffers(volume.h);
+  }
+  DEVINST disk = DiskDevInstFor(letter);
+  DEVINST parent = 0;
+  if (disk == 0 || ::CM_Get_Parent(&parent, disk, 0) != CR_SUCCESS) {
+    out[EncodableValue("ok")] = EncodableValue(false);
+    out[EncodableValue("error")] = EncodableValue("notEjectable");
+    return EncodableValue(std::move(out));
+  }
+  PNP_VETO_TYPE veto = PNP_VetoTypeUnknown;
+  CONFIGRET cr = CR_FAILURE;
+  // A file just closed can still be held for a moment: try a few times.
+  for (int attempt = 0; attempt < 3; attempt++) {
+    veto = PNP_VetoTypeUnknown;
+    cr = ::CM_Request_Device_EjectW(parent, &veto, nullptr, 0, 0);
+    if (cr == CR_SUCCESS && veto == PNP_VetoTypeUnknown) break;
+    ::Sleep(500);
+  }
+  bool ok = cr == CR_SUCCESS && veto == PNP_VetoTypeUnknown;
+  out[EncodableValue("ok")] = EncodableValue(ok);
+  if (!ok) {
+    out[EncodableValue("error")] =
+        EncodableValue(veto == PNP_VetoTypeUnknown ? "failed" : VetoName(veto));
+  }
+  return EncodableValue(std::move(out));
+}
+
 }  // namespace
 
 // ---- worker pool ----
@@ -954,7 +1248,40 @@ void WindowsChannel::HandleCall(
     Run(*quick_, result, [path, size] { return Thumbnail(path, size); });
   } else if (method == "networkIsPublic") {
     Run(*quick_, result, [] { return NetworkIsPublic(); });
+  } else if (method == "listDrives") {
+    Run(*quick_, result, [] { return ListDrives(); });
+  } else if (method == "ejectDrive") {
+    auto path = StringArg(args, "path");
+    Run(*quick_, result, [path] { return EjectDrive(path); });
   } else {
     result->NotImplemented();
+  }
+}
+
+void WindowsChannel::OnDeviceChange(WPARAM wparam, LPARAM lparam) {
+  if (wparam != DBT_DEVICEARRIVAL && wparam != DBT_DEVICEREMOVECOMPLETE) {
+    return;
+  }
+  const auto* header = reinterpret_cast<const DEV_BROADCAST_HDR*>(lparam);
+  if (!header || header->dbch_devicetype != DBT_DEVTYP_VOLUME) return;
+  if (channel_) channel_->InvokeMethod("volumesChanged", nullptr);
+}
+
+void WindowsChannel::OnPowerBroadcast(WPARAM wparam) {
+  const char* state = nullptr;
+  switch (wparam) {
+    case PBT_APMSUSPEND:
+      state = "suspend";
+      break;
+    case PBT_APMRESUMEAUTOMATIC:
+      state = "resume";
+      break;
+    default:
+      return;
+  }
+  if (channel_) {
+    channel_->InvokeMethod(
+        "power", std::make_unique<EncodableValue>(EncodableMap{
+                     {EncodableValue("state"), EncodableValue(state)}}));
   }
 }

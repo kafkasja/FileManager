@@ -146,17 +146,61 @@ FileSource fileSource(Ref ref) {
     // PL1: dart:io + the Recycle Bin channel. No pending folder (the bin
     // takes every kind), no SAF/MTP places.
     final roots = ref.watch(windowsIndexRootsProvider);
+    final volumes = ref.watch(volumesPlatformProvider);
     final windows = WindowsFileSource(
       channel: ref.watch(windowsChannelProvider),
       indexRoots: roots.current,
       tempLedger: ref.watch(tempFileLedgerProvider.future),
+      // U1: full scans walk mounted USB sticks / SD cards too.
+      removableRoots: volumes == null
+          ? null
+          : () => readMountedRemovableRoots(volumes),
     );
     ref.onDispose(windows.dispose);
-    return windows;
+    // U3: calls on a removable drive are counted for Eject.
+    final drives = ref.watch(windowsPlaceLocatorProvider);
+    return TrackedFileSource(
+      inner: windows,
+      tracker: ref.watch(volumeActivityTrackerProvider.notifier),
+      placeOfFile: (f) => drives.placeOf(f.folderPath),
+      placeOfFolder: drives.placeOf,
+    );
   }
   throw UnsupportedError(
     'FileSource not implemented for ${Platform.operatingSystem} yet (PL2)',
   );
+}
+
+/// PL1: which U1 place a Windows path is on, by drive letter: a removable
+/// drive's place id, [kInternalPlaceId] for everything else (system and
+/// fixed drives aren't ejected, so they aren't tracked).
+class WindowsPlaceLocator {
+  const new(this._removableByRoot);
+
+  /// Upper-case drive root (`E:`) → place id.
+  final Map<String, String> Function() _removableByRoot;
+
+  String placeOf(String path) {
+    if (path.length < 2 || path[1] != ':') return kInternalPlaceId;
+    return _removableByRoot()[path.substring(0, 2).toUpperCase()] ??
+        kInternalPlaceId;
+  }
+}
+
+/// Kept current from `placesProvider` without rebuilding the file source.
+@Riverpod(keepAlive: true)
+WindowsPlaceLocator windowsPlaceLocator(Ref ref) {
+  var byRoot = const <String, String>{};
+  ref.listen(placesProvider, (_, next) {
+    if (next.value case final places?) {
+      byRoot = {
+        for (final p in places)
+          if (p.isRemovable && p.rootPath != null)
+            p.rootPath!.toUpperCase(): p.id,
+      };
+    }
+  }, fireImmediately: true);
+  return WindowsPlaceLocator(() => byRoot);
 }
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).

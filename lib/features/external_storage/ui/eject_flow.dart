@@ -9,13 +9,16 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/volumes/volumes_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/features/external_storage/data/eject_watch.dart';
+import 'package:kfm/features/external_storage/data/tracked_file_source.dart';
 import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/external_storage/domain/storage_place.dart';
 import 'package:kfm/features/external_storage/ui/place_labels.dart';
 import 'package:kfm/features/folders/data/local_job_providers.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
+import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// U3: Eject on a removable place. Android apps can't unmount volumes, so
 /// KFM finishes (or pauses) its own work on the place, closes its readers
@@ -74,7 +77,13 @@ Future<void> ejectPlace(
   }
 
   // 4. Writes are already durable (dart:io flush + close, SAF close/fsync).
-  //    Hand off to the system's Eject.
+  //    Windows (PL1): the app ejects the drive itself.
+  final volumes = ref.read(volumesPlatformProvider);
+  if (volumes != null && volumes.ejectsDirectly) {
+    await ejectDirectly(ref, place, volumes, messenger, l10n);
+    return;
+  }
+  //    Android: hand off to the system's Eject.
   final go = await _showHint(context, place);
   if (go != true || !context.mounted) {
     tracker.cancelEject(id);
@@ -109,9 +118,48 @@ Future<void> openEjectSettings(
   }
 }
 
+/// PL1: ejects [place] through [volumes] (Windows shows its own "Safe to
+/// remove"). Success is confirmed by U1's place events (`PlaceEjected`); a
+/// refusal cancels the eject and says why.
+@visibleForTesting
+Future<void> ejectDirectly(
+  WidgetRef ref,
+  StoragePlace place,
+  VolumesPlatform volumes,
+  ScaffoldMessengerState messenger,
+  AppLocalizations l10n,
+) async {
+  final watch = ref.read(ejectWatchProvider)..start(place);
+  VolumeEjectError? error;
+  try {
+    final root = place.rootPath;
+    if (root == null) throw StateError('no root for ${place.id}');
+    error = await volumes.eject(root);
+  } on Object catch (e, st) {
+    developer.log('eject failed', name: 'kfm.eject', error: e, stackTrace: st);
+    error = VolumeEjectError.failed;
+  }
+  if (error == null) return;
+  watch.stop(place.id);
+  ref.read(volumeActivityTrackerProvider.notifier).cancelEject(place.id);
+  final label = placeLabel(l10n, place);
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(switch (error) {
+        VolumeEjectError.inUse => l10n.ejectWindowsInUse(label),
+        VolumeEjectError.notEjectable ||
+        VolumeEjectError.failed => l10n.ejectWindowsFailed(label),
+      }),
+    ),
+  );
+}
+
 Future<void> _closeReaders(WidgetRef ref, String placeId) async {
-  final placeOf =
-      routingOf(ref.read(fileSourceProvider))?.placeOfFile ?? placeIdOf;
+  final fs = ref.read(fileSourceProvider);
+  final placeOf = switch (fs) {
+    final TrackedFileSource t => t.placeOfFile,
+    _ => routingOf(fs)?.placeOfFile ?? placeIdOf,
+  };
   bool onPlace(FileRef f) => placeOf(f) == placeId;
   if (ref.exists(videoControllerPoolProvider)) {
     await ref.read(videoControllerPoolProvider).disposeWhere(onPlace);
