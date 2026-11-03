@@ -44,6 +44,7 @@ import 'package:kfm/features/swipe/ui/swipe_buttons_row.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
+import 'package:kfm/features/swipe/ui/swipe_keyboard_shortcuts.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_bar.dart';
@@ -644,114 +645,130 @@ class _DeckState extends ConsumerState<_Deck> {
       );
     }
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsetsDirectional.only(top: spacing),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // L5: one line that shrinks to fit at big text sizes, so the
-              // card keeps its share of the height.
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    l10n.swipeProgress(deck.swiped, deck.remaining),
-                    style: Theme.of(context).textTheme.labelLarge,
-                    maxLines: 1,
+    return SwipeKeyboardShortcuts(
+      layout: deck.session.layout,
+      onSwipe: (d) {
+        if (current == null || ref.read(viewerOpenProvider)) return;
+        if (!_cardController.flyOff(d) &&
+            deck.session.layout.actionFor(d) != null) {
+          SwipeFeedback.blocked(context, ref, d);
+        }
+      },
+      onUndo: () => _undoFromSemantics().ignore(),
+      onOpen: () {
+        if (current != null && !ref.read(viewerOpenProvider)) {
+          openViewer(context, current).ignore();
+        }
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsetsDirectional.only(top: spacing),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // L5: one line that shrinks to fit at big text sizes, so the
+                // card keeps its share of the height.
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      l10n.swipeProgress(deck.swiped, deck.remaining),
+                      style: Theme.of(context).textTheme.labelLarge,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
-              ),
-              if (peer == null) _RenamePill(sessionId: deck.session.id),
-            ],
+                if (peer == null) _RenamePill(sessionId: deck.session.id),
+              ],
+            ),
           ),
-        ),
-        _PendingDeleteBanner(sessionId: deck.session.id),
-        if (deck.newFiles > 0)
-          ActionChip(
-            avatar: const Icon(Icons.fiber_new_outlined),
-            label: Text(l10n.newFilesChip(deck.newFiles)),
-            onPressed: () => ref
-                .read(SwipeDeckScope.providerOf(context).notifier)
-                .showNewFiles()
-                .ignore(),
-          ),
-        Expanded(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              body,
-              // L3: one-time hint the first time the action bar shows; over
-              // the card's bottom edge so big text doesn't squeeze the card.
-              if (current != null &&
-                  !tutorial &&
-                  deck.session.layout.actionBar.isNotEmpty &&
-                  (ref.watch(actionBarEnabledProvider).value ?? false))
+          _PendingDeleteBanner(sessionId: deck.session.id),
+          if (deck.newFiles > 0)
+            ActionChip(
+              avatar: const Icon(Icons.fiber_new_outlined),
+              label: Text(l10n.newFilesChip(deck.newFiles)),
+              onPressed: () => ref
+                  .read(SwipeDeckScope.providerOf(context).notifier)
+                  .showNewFiles()
+                  .ignore(),
+            ),
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                body,
+                // L3: one-time hint the first time the action bar shows; over
+                // the card's bottom edge so big text doesn't squeeze the card.
+                if (current != null &&
+                    !tutorial &&
+                    deck.session.layout.actionBar.isNotEmpty &&
+                    (ref.watch(actionBarEnabledProvider).value ?? false))
+                  Align(
+                    alignment: AlignmentDirectional.bottomCenter,
+                    child: FeatureHint(
+                      id: HintIds.actionBar,
+                      text: l10n.hintActionBar,
+                    ),
+                  ),
+                // Above the card area, so the last swipe's label still shows
+                // on the "All done" screen.
                 Align(
-                  alignment: AlignmentDirectional.bottomCenter,
-                  child: FeatureHint(
-                    id: HintIds.actionBar,
-                    text: l10n.hintActionBar,
+                  alignment: AlignmentDirectional.topCenter,
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.only(top: spacing * 4),
+                    child: SwipeToast(controller: _toast),
                   ),
                 ),
-              // Above the card area, so the last swipe's label still shows
-              // on the "All done" screen.
-              Align(
-                alignment: AlignmentDirectional.topCenter,
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(top: spacing * 4),
-                  child: SwipeToast(controller: _toast),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        _Precache(upcoming: deck.upcoming),
-        // P9: buttons instead of (or next to) swiping.
-        if (current != null &&
-            (ref.watch(swipeButtonsModeProvider).value ?? false) &&
-            !ref.watch(viewerOpenProvider))
-          SwipeButtonsRow(
-            layout: deck.session.layout,
-            deleteMode: deck.session.deleteMode,
-            controller: _cardController,
-            tags: ref.watch(tagsByIdProvider).value ?? const {},
+          _Precache(upcoming: deck.upcoming),
+          // P9: buttons instead of (or next to) swiping.
+          if (current != null &&
+              (ref.watch(swipeButtonsModeProvider).value ?? false) &&
+              !ref.watch(viewerOpenProvider))
+            SwipeButtonsRow(
+              layout: deck.session.layout,
+              deleteMode: deck.session.deleteMode,
+              controller: _cardController,
+              tags: ref.watch(tagsByIdProvider).value ?? const {},
+            ),
+          // P4: optional extra buttons (only while there is a file to act on).
+          if (current != null)
+            SwipeActionBar(
+              layout: deck.session.layout,
+              deleteMode: deck.session.deleteMode,
+              onApply: _onApplied,
+              onBlocked: (p) => SwipeFeedback.explain(context, p),
+              problemOf: ref
+                  .read(SwipeDeckScope.providerOf(context).notifier)
+                  .problemForAction,
+            ),
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(
+              spacing * 2,
+              0,
+              spacing * 2,
+              spacing * 2,
+            ),
+            // L4: Undo sits on the side away from the swiping thumb
+            // (physical side, whatever the text direction).
+            child: Row(
+              textDirection: TextDirection.ltr,
+              mainAxisAlignment: secondarySide(handednessOf(ref)),
+              children: [
+                // Hidden while the viewer is on top, so ✕ and undo are never
+                // on screen together (S3).
+                if (!ref.watch(viewerOpenProvider))
+                  UndoButton(key: widget.undoKey, sessionId: deck.session.id)
+                else
+                  const SizedBox(height: 48),
+              ],
+            ),
           ),
-        // P4: optional extra buttons (only while there is a file to act on).
-        if (current != null)
-          SwipeActionBar(
-            layout: deck.session.layout,
-            deleteMode: deck.session.deleteMode,
-            onApply: _onApplied,
-            onBlocked: (p) => SwipeFeedback.explain(context, p),
-            problemOf: ref
-                .read(SwipeDeckScope.providerOf(context).notifier)
-                .problemForAction,
-          ),
-        Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(
-            spacing * 2,
-            0,
-            spacing * 2,
-            spacing * 2,
-          ),
-          // L4: Undo sits on the side away from the swiping thumb
-          // (physical side, whatever the text direction).
-          child: Row(
-            textDirection: TextDirection.ltr,
-            mainAxisAlignment: secondarySide(handednessOf(ref)),
-            children: [
-              // Hidden while the viewer is on top, so ✕ and undo are never
-              // on screen together (S3).
-              if (!ref.watch(viewerOpenProvider))
-                UndoButton(key: widget.undoKey, sessionId: deck.session.id)
-              else
-                const SizedBox(height: 48),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
