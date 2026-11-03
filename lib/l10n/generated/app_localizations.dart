@@ -10341,6 +10341,30 @@ abstract class AppLocalizations {
   /// **'Local disk ({drive})'**
   String desktopSystemDrive(String drive);
 
+  /// PL1: a USB drive without a volume label, e.g. 'USB drive (E:)'.
+  ///
+  /// In en, this message translates to:
+  /// **'USB drive ({drive})'**
+  String driveUsbUnnamed(String drive);
+
+  /// PL1: an SD card (card reader) without a volume label, e.g. 'SD card (E:)'.
+  ///
+  /// In en, this message translates to:
+  /// **'SD card ({drive})'**
+  String driveSdUnnamed(String drive);
+
+  /// PL1: another removable drive without a volume label, e.g. 'Removable disk (E:)'.
+  ///
+  /// In en, this message translates to:
+  /// **'Removable disk ({drive})'**
+  String driveRemovableUnnamed(String drive);
+
+  /// PL1: a mapped network drive, e.g. 'Network drive (Z:)'.
+  ///
+  /// In en, this message translates to:
+  /// **'Network drive ({drive})'**
+  String driveNetworkUnnamed(String drive);
+
   /// PL3: desktop Sort presets dropdown button; name = the active preset (or Basic).
   ///
   /// In en, this message translates to:

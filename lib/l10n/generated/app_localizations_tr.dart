@@ -7332,6 +7332,26 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String driveUsbUnnamed(String drive) {
+    return 'USB bellek ($drive)';
+  }
+
+  @override
+  String driveSdUnnamed(String drive) {
+    return 'SD kart ($drive)';
+  }
+
+  @override
+  String driveRemovableUnnamed(String drive) {
+    return 'Çıkarılabilir disk ($drive)';
+  }
+
+  @override
+  String driveNetworkUnnamed(String drive) {
+    return 'Ağ sürücüsü ($drive)';
+  }
+
+  @override
   String desktopSortPreset(String name) {
     return 'Hazır ayar: $name';
   }

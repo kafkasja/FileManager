@@ -7322,6 +7322,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String driveUsbUnnamed(String drive) {
+    return 'USB drive ($drive)';
+  }
+
+  @override
+  String driveSdUnnamed(String drive) {
+    return 'SD card ($drive)';
+  }
+
+  @override
+  String driveRemovableUnnamed(String drive) {
+    return 'Removable disk ($drive)';
+  }
+
+  @override
+  String driveNetworkUnnamed(String drive) {
+    return 'Network drive ($drive)';
+  }
+
+  @override
   String desktopSortPreset(String name) {
     return 'Preset: $name';
   }

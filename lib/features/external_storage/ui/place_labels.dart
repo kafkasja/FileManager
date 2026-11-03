@@ -6,6 +6,20 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 /// The name of [place] in the UI.
 String placeLabel(AppLocalizations l10n, StoragePlace place) {
   final label = place.label.trim();
+  // PL1: a Windows drive without a volume label is described as just
+  // its letter ("E:"); name it by kind instead.
+  if (place.id != kInternalPlaceId && _bareDrive.hasMatch(label)) {
+    final drive = label.toUpperCase();
+    return switch (place.kind) {
+      PlaceKind.usbDrive => l10n.driveUsbUnnamed(drive),
+      PlaceKind.sdCard => l10n.driveSdUnnamed(drive),
+      // Network drives are keyed by their letter (no volume serial).
+      PlaceKind.internal when place.id.toUpperCase() == drive =>
+        l10n.driveNetworkUnnamed(drive),
+      PlaceKind.internal => l10n.desktopSystemDrive(drive),
+      _ => l10n.driveRemovableUnnamed(drive),
+    };
+  }
   return switch (place.kind) {
     // PL1: a second disk / network drive on Windows keeps its own name.
     PlaceKind.internal when place.id != kInternalPlaceId && label.isNotEmpty =>
@@ -20,6 +34,8 @@ String placeLabel(AppLocalizations l10n, StoragePlace place) {
     _ => label,
   };
 }
+
+final _bareDrive = RegExp(r'^[A-Za-z]:$');
 
 /// "12.3 GB free of 64 GB", a camera's state, or null.
 String? placeSubtitle(AppLocalizations l10n, StoragePlace place) {
