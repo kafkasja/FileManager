@@ -1,0 +1,72 @@
+# TASK-PL1 packaging: on a version tag, test and build the Windows app and
+# attach an unsigned portable zip to the tag's GitHub Release.
+# Updating = replacing the folder; user data stays in %APPDATA%\Kaf\KFM.
+name: Release (Windows)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      # Includes the @TestOn('windows') WindowsFileSource contract tests.
+      - name: Test
+        run: flutter test test/
+
+      - name: Build
+        run: flutter build windows --release
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          $name = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { "dev-$($env:GITHUB_SHA.Substring(0, 7))" }
+          $zip = "KFM-windows-x64-$name.zip"
+          $src = "build\windows\x64\runner\Release"
+          if (-not (Test-Path "$src\KFM.exe")) { throw "KFM.exe missing in $src" }
+          # The zip holds one KFM folder (KFM.exe + DLLs + data\).
+          New-Item -ItemType Directory -Force dist\KFM | Out-Null
+          Copy-Item -Recurse "$src\*" dist\KFM
+          Compress-Archive -Path dist\KFM -DestinationPath "dist\$zip"
+          "ZIP=dist\$zip" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Keep the zip as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kfm-windows
+          path: ${{ env.ZIP }}
+
+      - name: Attach to the release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP }}
+          fail_on_unmatched_files: true
+          append_body: true
+          body: |
+            Windows: unzip anywhere and run `KFM\KFM.exe` (Windows 10 1809 or newer, 64-bit).
+
+            The app isn't signed yet, so Windows SmartScreen may say "Windows protected your PC".
+            Click **More info → Run anyway**. To update, replace the KFM folder; your data stays
+            in `%APPDATA%\Kaf\KFM`.
