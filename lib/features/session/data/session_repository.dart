@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/db/tables/pending_deletes_table.dart';
 import 'package:kfm/core/utils/debouncer.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/presets/domain/preset.dart';
@@ -135,7 +136,9 @@ class SessionRepository {
     await _queue.flush();
     return await _db.transaction(() async {
       final existing = await active();
-      if (existing != null) return existing;
+      if (existing != null) {
+        return await _basicIfPresetMissing(existing) ?? existing;
+      }
       final presetKey = AppSettings.activePresetId.decodeFromDb(
         await _setting(AppSettings.activePresetId.name) ?? '0',
       );
@@ -189,6 +192,65 @@ class SessionRepository {
           );
       return (await _byId(id))!;
     });
+  }
+
+  /// The active [session]'s preset was deleted under it (X6 follow-up: a
+  /// backup undo whose switch didn't happen): back to Basic. The session
+  /// resumes Basic's paused one when it holds no queued deletes and is
+  /// closed; otherwise it becomes Basic's session itself (layout, no
+  /// filter) and a paused Basic session is closed (paused sessions never
+  /// hold queued deletes). Null when the preset exists. Runs inside
+  /// [getOrCreateActive]'s transaction.
+  Future<Session?> _basicIfPresetMissing(Session session) async {
+    final presetId = session.presetId;
+    if (presetId == null) return null;
+    final preset = await (_db.select(
+      _db.presets,
+    )..where((p) => p.id.equals(presetId))).getSingleOrNull();
+    if (preset != null) return null;
+    final now = _clock();
+    await _writeSetting(AppSettings.activePresetId.name, '0');
+    final paused = await _pausedRow(null);
+    final count = _db.pendingDeletes.id.count();
+    final queued =
+        await (_db.selectOnly(_db.pendingDeletes)
+              ..addColumns([count])
+              ..where(
+                _db.pendingDeletes.sessionId.equals(session.id) &
+                    _db.pendingDeletes.status.isInValues([
+                      PendingDeleteStatus.queued,
+                      PendingDeleteStatus.committing,
+                    ]),
+              ))
+            .map((r) => r.read(count) ?? 0)
+            .getSingle();
+    Future<void> mark(int id, {required bool active}) =>
+        (_db.update(_db.sessions)..where((s) => s.id.equals(id))).write(
+          SessionsCompanion(
+            isActive: Value(active),
+            endedAt: active ? const Value.absent() : Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+    if (paused != null && queued == 0) {
+      await mark(session.id, active: false);
+      await mark(paused.id, active: true);
+      return (await _byId(paused.id))!;
+    }
+    if (paused != null) await mark(paused.id, active: false);
+    await (_db.update(
+      _db.sessions,
+    )..where((s) => s.id.equals(session.id))).write(
+      SessionsCompanion(
+        presetId: const Value(null),
+        layout: Value(
+          _layoutOrBasic(await _setting(AppSettings.swipeLayoutCurrent.name)),
+        ),
+        filter: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+    return (await _byId(session.id))!;
   }
 
   /// Debounced: ten swipes in a second become one UPDATE.

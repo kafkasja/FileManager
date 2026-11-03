@@ -8847,6 +8847,186 @@ abstract class AppLocalizations {
   /// **'Couldn\'t undo the import: {error}'**
   String backupUndoFailed(String error);
 
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get backupSettingThemeMode;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour theme'**
+  String get backupSettingThemeAccent;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Left-handed mode'**
+  String get backupSettingLeftHanded;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get backupSettingTextSize;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get backupSettingLanguage;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Big file size'**
+  String get backupSettingBigFileThreshold;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep deleted files for'**
+  String get backupSettingPendingRetention;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Same-time window'**
+  String get backupSettingSameTimeWindow;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort files by'**
+  String get backupSettingBrowseSort;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort direction'**
+  String get backupSettingBrowseSortDescending;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show file sizes'**
+  String get backupSettingBrowseShowSizes;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight big files'**
+  String get backupSettingBrowseHighlightBig;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Second search language'**
+  String get backupSettingSearchSecondLanguage;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic swipe directions'**
+  String get backupSettingSwipeLayout;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete mode'**
+  String get backupSettingDeleteMode;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration feedback'**
+  String get backupSettingHaptics;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe buttons'**
+  String get backupSettingSwipeButtons;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Session summary'**
+  String get backupSettingSessionSummary;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show reviewed files in Basic'**
+  String get backupSettingBasicIncludeReviewed;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed badge'**
+  String get backupSettingReviewedBadge;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Active preset'**
+  String get backupSettingActivePreset;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Action bar'**
+  String get backupSettingActionBar;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop on a folder'**
+  String get backupSettingFoldersDropAction;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar photos'**
+  String get backupSettingSimilarEnabled;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar photos strictness'**
+  String get backupSettingSimilarStrictness;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Blurry photo threshold'**
+  String get backupSettingSimilarBlur;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Include screenshots in similar photos'**
+  String get backupSettingSimilarScreenshots;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Download models on Wi-Fi only'**
+  String get backupSettingAiWifiOnly;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove location when sharing'**
+  String get backupSettingStripLocation;
+
+  /// X6 import preview: the name of a setting the backup changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Other setting'**
+  String get backupSettingOther;
+
   /// X5 info sheet button: hand the APK to Android's installer.
   ///
   /// In en, this message translates to:

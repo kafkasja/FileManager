@@ -130,10 +130,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     if (mounted) setState(() => _busy = true);
     String text;
     try {
-      final switchTo = await container
-          .read(backupServiceProvider)
-          .undoLastImport();
-      await syncSwipeAfterBackup(container, switchTo);
+      await undoImportAndSync(container);
       text = l10n.backupUndone;
     } on Object catch (e) {
       text = l10n.backupUndoFailed(e.toString());

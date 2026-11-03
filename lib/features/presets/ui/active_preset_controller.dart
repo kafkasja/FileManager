@@ -19,11 +19,16 @@ class ActivePresetController extends _$ActivePresetController {
   /// [presetId] null = Basic.
   Future<void> switchTo(int? presetId) async {
     final target = presetId ?? 0;
-    final current = await ref.read(activePresetIdProvider.future);
-    if (current == target) return;
+    final sessions = ref.read(sessionRepositoryProvider);
+    final settings = ref.read(settingsRepositoryProvider);
+    if (await _current() == target) {
+      if (await settings.read(AppSettings.activePresetId) != target) {
+        await settings.write(AppSettings.activePresetId, target);
+      }
+      return;
+    }
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final sessions = ref.read(sessionRepositoryProvider);
       final deletes = ref.read(deleteQueueProvider);
       final active = await sessions.active();
       if (active != null) {
@@ -39,9 +44,7 @@ class ActivePresetController extends _$ActivePresetController {
           toPresetId: presetId,
         );
       } else {
-        await ref
-            .read(settingsRepositoryProvider)
-            .write(AppSettings.activePresetId, target);
+        await settings.write(AppSettings.activePresetId, target);
       }
     });
     if (!ref.mounted) return;
@@ -51,9 +54,25 @@ class ActivePresetController extends _$ActivePresetController {
       ..invalidate(swipeLayoutControllerProvider);
   }
 
+  /// The preset the deck is on: the open local session's, else the
+  /// setting. Read from the database, not from activePresetIdProvider's
+  /// cached value: that stream is paused while nothing watches it (e.g. on
+  /// Settings) and lags behind queued writes, so a backup undo right after
+  /// an import saw "already there" and skipped the switch (X6 follow-up).
+  Future<int> _current() async {
+    final sessions = ref.read(sessionRepositoryProvider);
+    await sessions.flush();
+    final open = await sessions.active();
+    return open == null
+        ? await ref
+              .read(settingsRepositoryProvider)
+              .read(AppSettings.activePresetId)
+        : open.presetId ?? 0;
+  }
+
   /// Deletes a preset; the active one switches to Basic first.
   Future<void> delete(int presetId) async {
-    if (await ref.read(activePresetIdProvider.future) == presetId) {
+    if (await _current() == presetId) {
       await switchTo(null);
       if (state.hasError) return;
     }
