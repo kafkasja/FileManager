@@ -38,9 +38,14 @@ class CloudTransfersSection extends ConsumerWidget {
         ),
       );
     }
+    // Rows of removed destinations aren't offered: the grant is gone, so
+    // their copies can't be checked any more.
     final left = [
       for (final r in rows)
-        if (cloudOriginalLeft(r) && !(runner?.inRunningJob(r.id) ?? false)) r,
+        if (cloudOriginalLeft(r) &&
+            (dests[r.destinationId]?.isActive ?? false) &&
+            !(runner?.inRunningJob(r.id) ?? false))
+          r,
     ];
     return ListView(
       padding: EdgeInsetsDirectional.all(spacing),
@@ -144,7 +149,8 @@ class _CloudRowTile extends ConsumerWidget {
               ),
             )
           : row.status == CloudItemStatus.failed &&
-                row.error != CloudItemErrors.destinationRemoved
+                CloudItemErrors.reasonOf(row.error) !=
+                    CloudItemErrors.destinationRemoved
           ? IconButton(
               key: ValueKey('cloud-retry-${row.id}'),
               tooltip: l10n.cloudRetry,

@@ -29,8 +29,20 @@ class FakeCloudWriter implements CloudDestinationWriter {
   /// The next write fails with this.
   CloudWriteFailure? failWrite;
 
-  /// When set, writes wait for it (cancel tests).
+  /// Deleting a document fails (a provider that refuses).
+  bool failDeletes = false;
+
+  /// A failed or cancelled write deletes its own partial (Kotlin's best
+  /// effort); false = it is left for the runner.
+  bool selfCleanup = true;
+
+  /// Whether the folder's grant is still held: deletes need it.
+  bool Function()? grantHeld;
+
+  /// When set, writes wait for it (cancel tests); with [gateOnly] only
+  /// writes of those sources do.
   Completer<void>? gate;
+  Set<String>? gateOnly;
   final Set<String> _cancelled = {};
   int _next = 0;
 
@@ -53,20 +65,20 @@ class FakeCloudWriter implements CloudDestinationWriter {
   }) async {
     calls.add('write $remoteUri');
     final g = gate;
-    if (g != null) await g.future;
+    if (g != null && (gateOnly?.contains(source) ?? true)) await g.future;
     if (_cancelled.remove(jobKey)) {
-      docs.remove(remoteUri);
+      if (selfCleanup) docs.remove(remoteUri);
       throw const CloudWriteException(CloudWriteFailure.cancelled);
     }
     final f = failWrite;
     if (f != null) {
       failWrite = null;
-      docs.remove(remoteUri);
+      if (selfCleanup) docs.remove(remoteUri);
       throw CloudWriteException(f);
     }
     final bytes = read(source);
     if (bytes == null) {
-      docs.remove(remoteUri);
+      if (selfCleanup) docs.remove(remoteUri);
       throw const CloudWriteException(CloudWriteFailure.notFound);
     }
     docs[remoteUri] = List.of(bytes);
@@ -99,6 +111,10 @@ class FakeCloudWriter implements CloudDestinationWriter {
   @override
   Future<void> deleteDocument(String remoteUri) async {
     calls.add('delete $remoteUri');
+    if (failDeletes) throw const CloudWriteException(CloudWriteFailure.io);
+    if (!(grantHeld?.call() ?? true)) {
+      throw const CloudWriteException(CloudWriteFailure.permission);
+    }
     docs.remove(remoteUri);
   }
 

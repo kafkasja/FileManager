@@ -47,8 +47,11 @@ Future<void> startCloudJobFlow(
   var copyOnly = !move;
   final settings = ref.read(settingsRepositoryProvider);
   final media = readable.any((f) => f.isMedia);
+  // X2's decision is taken once, here: the job keeps it even if the
+  // setting changes while it runs (the warning below was about it).
+  final strip = await settings.read(AppSettings.privacyStripLocation);
   if (media) {
-    if (await settings.read(AppSettings.privacyStripLocation)) {
+    if (strip) {
       // X2: the copies lose their location; a move would delete the only
       // files that have it.
       if (!copyOnly) {
@@ -87,6 +90,7 @@ Future<void> startCloudJobFlow(
         destinationId: destinationId,
         mode: copyOnly ? CloudItemMode.copy : CloudItemMode.move,
         deleteMode: deleteMode,
+        stripLocation: strip,
       ),
     );
   } on Object catch (e) {

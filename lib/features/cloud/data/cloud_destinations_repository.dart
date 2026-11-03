@@ -6,6 +6,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/tables/cloud_items_table.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/features/cloud/domain/cloud_destination.dart';
+import 'package:meta/meta.dart';
 
 /// The system tree picker and persisted grants, as X3 needs them (Android:
 /// U1's `SafTrees.kt` plus `CloudSaf.kt`'s label lookup).
@@ -180,41 +181,79 @@ class CloudDestinationsRepository {
 
   /// Soft delete (Hard rule 4): `removedAt` is set, its waiting uploads
   /// fail ("destination removed"), with [forgetUploads] its `cloud_items`
-  /// are deleted; then the grant is released (a failure there is only
-  /// logged).
-  Future<void> remove(int id, {required bool forgetUploads}) async {
-    final location = await _write(
-      () => _db.transaction(() async {
-        final row = await (_db.select(
-          _db.cloudDestinations,
-        )..where((d) => d.id.equals(id))).getSingleOrNull();
-        if (row == null) return null;
-        await (_db.update(_db.cloudDestinations)..where((d) => d.id.equals(id)))
-            .write(CloudDestinationsCompanion(removedAt: Value(_now())));
-        await (_db.update(_db.cloudItems)..where(
-              (i) =>
-                  i.destinationId.equals(id) &
-                  i.status.isInValues(const [
-                    CloudItemStatus.queued,
-                    CloudItemStatus.uploading,
-                  ]),
-            ))
-            .write(
-              const CloudItemsCompanion(
-                status: Value(CloudItemStatus.failed),
-                error: Value(CloudItemErrors.destinationRemoved),
+  /// are deleted. The grant is **not** released here: the runner first
+  /// stops a running copy and deletes partial documents, then calls
+  /// [releaseGrant] ([remove] does both when no runner exists).
+  Future<CloudRemoval> markRemoved(int id, {required bool forgetUploads}) =>
+      _write(
+        () => _db.transaction(() async {
+          final row = await (_db.select(
+            _db.cloudDestinations,
+          )..where((d) => d.id.equals(id))).getSingleOrNull();
+          if (row == null) return const CloudRemoval(null, [], []);
+          await (_db.update(_db.cloudDestinations)
+                ..where((d) => d.id.equals(id)))
+              .write(CloudDestinationsCompanion(removedAt: Value(_now())));
+          final active =
+              await (_db.select(_db.cloudItems)..where(
+                    (i) =>
+                        i.destinationId.equals(id) &
+                        i.status.isInValues(const [
+                          CloudItemStatus.queued,
+                          CloudItemStatus.uploading,
+                        ]),
+                  ))
+                  .get();
+          await (_db.update(
+            _db.cloudItems,
+          )..where((i) => i.id.isIn([for (final r in active) r.id]))).write(
+            const CloudItemsCompanion(
+              status: Value(CloudItemStatus.failed),
+              error: Value(CloudItemErrors.destinationRemoved),
+            ),
+          );
+          // Rows with a document keep it marked until the runner deleted
+          // it (a crash in between leaves the truth on the row).
+          for (final r in active) {
+            if (r.remoteUri == null) continue;
+            await (_db.update(
+              _db.cloudItems,
+            )..where((i) => i.id.equals(r.id))).write(
+              CloudItemsCompanion(
+                error: Value(
+                  CloudItemErrors.withLeftover(
+                    CloudItemErrors.destinationRemoved,
+                  ),
+                ),
               ),
             );
-        if (forgetUploads) {
-          await (_db.delete(
-            _db.cloudItems,
-          )..where((i) => i.destinationId.equals(id))).go();
-        }
-        return row.location;
-      }),
-    );
-    if (location != null) await _release(location);
+          }
+          if (forgetUploads) {
+            await (_db.delete(
+              _db.cloudItems,
+            )..where((i) => i.destinationId.equals(id))).go();
+          }
+          return CloudRemoval(
+            row.location,
+            [for (final r in active) r.id],
+            [
+              for (final r in active)
+                if (r.remoteUri case final uri?) (id: r.id, uri: uri),
+            ],
+          );
+        }),
+      );
+
+  /// [markRemoved], then the grant is released (a failure there is only
+  /// logged). For callers without a runner (off Android, tests).
+  Future<void> remove(int id, {required bool forgetUploads}) async {
+    final r = await markRemoved(id, forgetUploads: forgetUploads);
+    if (r.location case final location?) await releaseGrant(location);
   }
+
+  /// Releases a removed destination's grant unless another feature holds
+  /// it (U1). Failures are only logged.
+  Future<void> releaseGrant(String location) => _release(location);
 
   Future<void> _release(String uri) async {
     final platform = _platform;
@@ -252,6 +291,18 @@ class CloudDestinationsRepository {
   Future<CloudAddOutcome> reconnect(CloudDestination d) => addFromPicker();
 }
 
+/// What [CloudDestinationsRepository.markRemoved] did: the destination's
+/// grant [location] (null = no such destination), the rows it failed, and
+/// the documents those rows were writing (partials to delete).
+@immutable
+class CloudRemoval {
+  const new(this.location, this.failedIds, this.partials);
+
+  final String? location;
+  final List<int> failedIds;
+  final List<({int id, String uri})> partials;
+}
+
 /// Error codes stored in `cloud_items.error`.
 abstract final class CloudItemErrors {
   static const destinationRemoved = 'destinationRemoved';
@@ -265,4 +316,21 @@ abstract final class CloudItemErrors {
   static const locationNotRemoved = 'locationNotRemoved';
   static const copyMissing = 'copyMissing';
   static const interrupted = 'interrupted';
+
+  /// Suffix of an error whose document couldn't be deleted (the row keeps
+  /// its `remote_uri`; start-up retries the delete).
+  static const _leftover = '|left';
+
+  static String withLeftover(String? reason) {
+    final r = reason ?? interrupted;
+    return hasLeftover(r) ? r : '$r$_leftover';
+  }
+
+  static bool hasLeftover(String? code) =>
+      code != null && code.endsWith(_leftover);
+
+  /// [code] without the leftover mark.
+  static String? reasonOf(String? code) => hasLeftover(code)
+      ? code!.substring(0, code.length - _leftover.length)
+      : code;
 }

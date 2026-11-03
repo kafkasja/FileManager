@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
@@ -32,10 +33,13 @@ class CloudLocationNotRemoved implements Exception {
   const new();
 }
 
+/// [stripLocation] is the job's X2 decision taken when it started (null:
+/// no job in memory, e.g. after a restart; the preparer reads the setting).
 typedef CloudSourcePreparer = Future<CloudSource> Function(
   FileRef file,
-  int itemId,
-);
+  int itemId, {
+  bool? stripLocation,
+});
 
 /// Ids whose bytes the runner can read (MediaStore, paths, U2's SAF
 /// places). MTP cameras and remote devices aren't offered.
@@ -45,8 +49,11 @@ bool cloudCanRead(FileRef f) =>
     f.id.startsWith('saf:');
 
 /// The file as it is.
-Future<CloudSource> plainCloudSource(FileRef f, int itemId) async =>
-    CloudSource(source: f.uri);
+Future<CloudSource> plainCloudSource(
+  FileRef f,
+  int itemId, {
+  bool? stripLocation,
+}) async => CloudSource(source: f.uri);
 
 /// One user request: files to one destination.
 @immutable
@@ -56,6 +63,7 @@ class CloudJobRequest {
     required this.destinationId,
     required this.mode,
     this.deleteMode = DeleteMode.trash,
+    this.stripLocation,
   });
 
   final List<FileRef> files;
@@ -65,6 +73,11 @@ class CloudJobRequest {
   /// Moves: the delete mode of this job (D1 at start, or "Use trash
   /// instead"). Kept in memory only; after a restart it is trash.
   final DeleteMode deleteMode;
+
+  /// X2 "Remove location" as it was when the user started the job (and
+  /// answered its warning); a later change of the setting doesn't apply
+  /// to this job. Null = read the setting per file.
+  final bool? stripLocation;
 }
 
 /// A started job: its `cloud_items` ids and its end.
@@ -85,17 +98,23 @@ class CloudMoveSummary {
   final int kept;
 }
 
+typedef _VerifiedEntry = ({
+  VerifiedOriginal original,
+  String remoteUri,
+  int bytes,
+});
+
 class _Job {
-  new(this.mode, this.deleteMode, this.pending);
+  new(this.mode, this.deleteMode, this.pending, {required this.stripLocation});
 
   final CloudItemMode mode;
   final DeleteMode deleteMode;
+  final bool? stripLocation;
   final Set<int> pending;
   final Completer<CloudMoveSummary?> done = Completer<CloudMoveSummary?>();
 
   /// itemId → original + the document whose bytes were verified.
-  final Map<int, ({VerifiedOriginal original, String remoteUri, int bytes})>
-  verified = {};
+  final Map<int, _VerifiedEntry> verified = {};
 }
 
 /// X3's own upload runner (not N9's transfer kinds): one file at a time,
@@ -103,8 +122,12 @@ class _Job {
 /// N11's [compareCopy] → `verified`, and at the job's end one
 /// [VerifiedMove.deleteOriginals] call for all its verified originals.
 ///
+/// Documents: a row's `remote_uri` is only cleared after its document was
+/// deleted; a delete that fails leaves the URI and a leftover mark on the
+/// error (retried at start-up), never a silent orphan.
+///
 /// Created lazily (Hard rule 1): nothing here runs until [start] or
-/// [resume] is called.
+/// [resume] is called (it only listens to F3's `idChanges`).
 class CloudUploadRunner {
   new({
     required this._items,
@@ -115,7 +138,9 @@ class CloudUploadRunner {
     CloudSourcePreparer? prepare,
     DateTime Function()? now,
   }) : _prepare = prepare ?? plainCloudSource,
-       _now = now ?? DateTime.now;
+       _now = now ?? DateTime.now {
+    _idSub = _files.idChanges.listen(_onIdChange);
+  }
 
   final CloudItemsRepository _items;
   final CloudDestinationsRepository _destinations;
@@ -131,10 +156,19 @@ class CloudUploadRunner {
       StreamController<Map<int, int>>.broadcast();
   final Map<int, int> _bytes = {};
   StreamSubscription<({String jobKey, int bytes})>? _progressSub;
+  late final StreamSubscription<FileIdChange> _idSub;
+
+  /// Old file id → the file under its new id (this session's renames and
+  /// moves), so originals held in memory are found again.
+  final Map<String, FileRef> _movedIds = {};
 
   Future<void>? _recovered;
   Future<void>? _loop;
   int? _current;
+  Completer<void>? _currentDone;
+
+  /// "Delete originals" calls run one after another.
+  Future<void> _deleting = Future<void>.value();
 
   /// The running copy's key: unique per attempt, so a late cancel never
   /// hits a later retry of the same item.
@@ -151,16 +185,48 @@ class CloudUploadRunner {
     (j) => j.pending.contains(itemId) || j.verified.containsKey(itemId),
   );
 
-  /// Start-up recovery, once: `uploading` rows back to `queued`, their
-  /// partial documents deleted ("not found" is fine).
+  bool _busy(int itemId) => _current == itemId || inRunningJob(itemId);
+
+  void _onIdChange(FileIdChange c) {
+    _movedIds[c.oldId] = c.newRef;
+    _items.rekey(c.oldId, c.newRef.id).fireAndForget();
+  }
+
+  /// [f] under its latest id this session.
+  FileRef _follow(FileRef f) {
+    var cur = f;
+    for (var i = 0; i < 32; i++) {
+      final next = _movedIds[cur.id];
+      if (next == null) break;
+      cur = next;
+    }
+    return cur;
+  }
+
+  String _followId(String id) {
+    var cur = id;
+    for (var i = 0; i < 32; i++) {
+      final next = _movedIds[cur];
+      if (next == null) break;
+      cur = next.id;
+    }
+    return cur;
+  }
+
+  /// Start-up recovery, once: `uploading` rows back to `queued` (their
+  /// partial documents are deleted before they are written again), and
+  /// documents that couldn't be deleted earlier are tried again.
   Future<void> _recover() => _recovered ??= () async {
-    final partials = await _items.resetInterrupted();
-    for (final uri in partials) {
-      try {
-        await _writer.deleteDocument(uri);
-      } on Object catch (e) {
-        developer.log('partial not deleted: $e', name: 'kfm.cloud');
+    await _items.resetInterrupted();
+    for (final r in await _items.leftovers()) {
+      final uri = r.remoteUri;
+      if (uri == null) continue;
+      // A removed destination's grant is gone: nothing can be deleted
+      // there any more (the row keeps saying so).
+      if (!((await _destinations.byId(r.destinationId))?.isActive ?? false)) {
+        continue;
       }
+      if (await _tryDelete(uri)) await _items.clearDocument(r.id, uri);
     }
   }();
 
@@ -172,26 +238,36 @@ class CloudUploadRunner {
 
   /// Queues [req]'s files and starts the loop. [CloudJobHandle.done]
   /// completes when the job's files are finished: with a summary for a
-  /// move whose originals were handled, else null.
+  /// move whose originals were handled, else null. Files another running
+  /// job (or the running copy) holds stay with it.
   Future<CloudJobHandle> start(CloudJobRequest req) async {
     await _recover();
     final files = req.files.where(cloudCanRead).toList();
     if (files.isEmpty) {
       return CloudJobHandle(const [], Future.value());
     }
-    final ids = await _items.enqueue(files, req.destinationId, req.mode);
-    final mine = {
-      for (final id in ids)
-        if (!inRunningJob(id)) id,
-    };
+    final r = await _items.enqueue(
+      files,
+      req.destinationId,
+      req.mode,
+      busy: _busy,
+    );
+    final mine = {...r.queued};
+    // An old cancel of a re-queued row must not fail this attempt.
+    _cancelRequested.removeAll(mine);
     if (mine.isEmpty) {
       _kick();
-      return CloudJobHandle(ids, Future.value());
+      return CloudJobHandle(r.ids, Future.value());
     }
-    final job = _Job(req.mode, req.deleteMode, mine);
+    final job = _Job(
+      req.mode,
+      req.deleteMode,
+      mine,
+      stripLocation: req.stripLocation,
+    );
     _jobs.add(job);
     _kick();
-    return CloudJobHandle(ids, job.done.future);
+    return CloudJobHandle(r.ids, job.done.future);
   }
 
   /// Cancels one file: a waiting one fails at once, a running copy stops
@@ -203,20 +279,45 @@ class CloudUploadRunner {
       if (_currentKey case final key?) await _writer.cancel(key);
       return;
     }
-    if (await _items.markFailed(itemId, CloudItemErrors.cancelled)) {
-      await _settle(itemId);
-    }
+    final failed = await _items.markFailed(itemId, CloudItemErrors.cancelled);
+    // Only the running copy reads the flag (and clears it when it ends).
+    if (_current != itemId) _cancelRequested.remove(itemId);
+    if (failed) await _settle(itemId);
   }
 
-  /// A removed destination's running copy stops (its rows already failed
-  /// in the remove transaction).
-  Future<void> onDestinationRemoved(int destinationId) async {
+  /// Removes a destination (Settings): its waiting rows fail, a copy
+  /// running into it is stopped **before** its grant is released (so the
+  /// partial document can still be deleted), partial documents are
+  /// deleted, then the grant goes and the jobs of the failed rows end.
+  Future<void> removeDestination(
+    int destinationId, {
+    required bool forgetUploads,
+  }) async {
+    final removal = await _destinations.markRemoved(
+      destinationId,
+      forgetUploads: forgetUploads,
+    );
     final id = _current;
-    if (id == null) return;
-    final row = await _items.byId(id);
-    if (row?.destinationId == destinationId) {
+    final done = _currentDone;
+    if (id != null && done != null && removal.failedIds.contains(id)) {
       _cancelRequested.add(id);
       if (_currentKey case final key?) await _writer.cancel(key);
+      await done.future;
+    }
+    for (final p in removal.partials) {
+      final deleted = await _tryDelete(p.uri);
+      if (forgetUploads) continue; // the rows are gone; only logged
+      if (deleted) {
+        await _items.clearDocument(p.id, p.uri);
+      } else {
+        await _items.recordLeftover(p.id, p.uri);
+      }
+    }
+    if (removal.location case final location?) {
+      await _destinations.releaseGrant(location);
+    }
+    for (final failed in removal.failedIds) {
+      await _settle(failed);
     }
   }
 
@@ -261,30 +362,92 @@ class CloudUploadRunner {
       skip.add(row.id);
       _current = row.id;
       _currentKey = 'ci-${row.id}-${++_attempt}';
+      final done = _currentDone = Completer<void>();
       try {
         await _process(row);
       } on Object catch (e, st) {
         // Never leave a row uploading because of a bug: it fails, the
-        // original stays.
+        // original stays (and so does any document it holds).
         developer.log(
           'cloud item ${row.id} failed: $e',
           name: 'kfm.cloud',
           stackTrace: st,
         );
-        await _items.markFailed(row.id, e.toString(), keepRemoteUri: true);
+        await _items.markFailed(row.id, e.toString());
       } finally {
         _current = null;
         _currentKey = null;
+        _currentDone = null;
         _bytes.remove(row.id);
         _progress.add(Map.unmodifiable(_bytes));
         _cancelRequested.remove(row.id);
+        done.complete();
       }
       await _settle(row.id);
     }
+    await _sweep();
   }
 
-  Future<void> _fail(int id, String error, {bool keepRemoteUri = false}) =>
-      _items.markFailed(id, error, keepRemoteUri: keepRemoteUri);
+  /// Jobs never wait for rows that finished elsewhere (removed
+  /// destination, forgotten rows, a cancel race): their pending ids that
+  /// aren't queued/uploading any more are settled.
+  Future<void> _sweep() async {
+    final pending = {for (final j in _jobs) ...j.pending};
+    if (pending.isEmpty) return;
+    final rows = {for (final r in await _items.byIds(pending)) r.id: r};
+    for (final id in pending) {
+      if (id == _current) continue;
+      final status = rows[id]?.status;
+      if (status == CloudItemStatus.queued ||
+          status == CloudItemStatus.uploading) {
+        continue;
+      }
+      await _settle(id);
+    }
+  }
+
+  Future<void> _fail(int id, String error) => _items.markFailed(id, error);
+
+  /// Deletes a document; false (logged) when the provider refused. A
+  /// document that is gone already counts as deleted.
+  Future<bool> _tryDelete(String uri) async {
+    try {
+      await _writer.deleteDocument(uri);
+      return true;
+    } on Object catch (e) {
+      developer.log('cloud copy not deleted: $e', name: 'kfm.cloud');
+      return false;
+    }
+  }
+
+  /// The attempt failed with [error]: its document [uri] is deleted
+  /// first; if that fails the row keeps the URI and says so.
+  Future<void> _failWith(int id, String error, {String? uri}) async {
+    if (uri == null) {
+      await _fail(id, error);
+      return;
+    }
+    if (await _tryDelete(uri)) {
+      if (!await _items.markFailed(id, error, documentRemoved: true)) {
+        await _items.clearDocument(id, uri);
+      }
+    } else if (!await _items.markFailed(
+      id,
+      CloudItemErrors.withLeftover(error),
+    )) {
+      await _items.recordLeftover(id, uri);
+    }
+  }
+
+  /// The row ended without this attempt (cancelled, destination removed):
+  /// its new document goes.
+  Future<void> _discard(int id, String uri) async {
+    if (await _tryDelete(uri)) {
+      await _items.clearDocument(id, uri);
+    } else {
+      await _items.recordLeftover(id, uri);
+    }
+  }
 
   Future<void> _process(CloudItemRow row) async {
     final dest = await _destinations.byId(row.destinationId);
@@ -329,56 +492,76 @@ class CloudUploadRunner {
       await _fail(row.id, CloudItemErrors.cancelled);
       return;
     }
+    // A document of an earlier attempt (Retry, restart, kept unverified
+    // copy) goes first, so it is never orphaned as "name (1)".
+    if (row.remoteUri case final stale?) {
+      if (!await _tryDelete(stale)) {
+        await _fail(
+          row.id,
+          CloudItemErrors.withLeftover(CloudWriteFailure.io.name),
+        );
+        return;
+      }
+      await _items.clearRemoteUri(row.id);
+    }
 
     final CloudSource source;
     try {
-      source = await _prepare(file, row.id);
+      source = await _prepare(
+        file,
+        row.id,
+        stripLocation: _jobOf(row.id)?.stripLocation,
+      );
     } on CloudLocationNotRemoved {
       await _fail(row.id, CloudItemErrors.locationNotRemoved);
       return;
     }
     String? remoteUri;
     try {
-      remoteUri = await _writer.create(dest.location, file.name, file.mimeType);
-      if (!await _items.markUploading(row.id, remoteUri)) {
-        await _dropDocument(remoteUri);
+      // A crash between createDocument and markUploading can leave one
+      // empty document unrecorded (no URI exists before create returns).
+      final uri = remoteUri = await _writer.create(
+        dest.location,
+        file.name,
+        file.mimeType,
+      );
+      if (!await _items.markUploading(row.id, uri)) {
+        await _discard(row.id, uri);
         return;
       }
       if (_cancelRequested.contains(row.id)) {
-        await _dropDocument(remoteUri);
-        await _fail(row.id, CloudItemErrors.cancelled);
+        await _failWith(row.id, CloudItemErrors.cancelled, uri: uri);
         return;
       }
       final written = await _writer.write(
         source: source.source,
-        remoteUri: remoteUri,
+        remoteUri: uri,
         jobKey: _currentKey!,
       );
       final expected = source.sizeBytes ?? file.sizeBytes;
       final at = _now().millisecondsSinceEpoch;
       if (_cancelRequested.contains(row.id)) {
         // Cancelled after the last chunk: the copy goes, nothing else.
-        await _dropDocument(remoteUri);
-        await _fail(row.id, CloudItemErrors.cancelled);
+        await _failWith(row.id, CloudItemErrors.cancelled, uri: uri);
+        return;
+      }
+      // The bytes read must be the whole file as it was stat'ed (else it
+      // changed while copying): copies and moves alike.
+      if (written.bytes != expected) {
+        await _failWith(row.id, CloudItemErrors.sourceChanged, uri: uri);
         return;
       }
       if (row.mode == CloudItemMode.copy) {
         if (!await _items.markHandedToProvider(row.id, written.sha256, at)) {
-          await _dropDocument(remoteUri); // cancelled / removed meanwhile
+          await _discard(row.id, uri); // cancelled / removed meanwhile
         }
         return;
       }
-      // Move: the bytes read must be the whole file as it was stat'ed
-      // (else it changed while copying), and the read-back must match.
-      if (written.bytes != expected) {
-        await _dropDocument(remoteUri);
-        await _fail(row.id, CloudItemErrors.sourceChanged);
-        return;
-      }
+      // Move: the read-back must match.
       CloudWriteResult? back;
       Object? backError;
       try {
-        back = await _writer.readBack(remoteUri);
+        back = await _writer.readBack(uri);
       } on Object catch (e) {
         backError = e;
       }
@@ -392,43 +575,40 @@ class CloudUploadRunner {
             );
       switch (result) {
         case final Verified _ when _cancelRequested.contains(row.id):
-          await _dropDocument(remoteUri);
-          await _fail(row.id, CloudItemErrors.cancelled);
+          await _failWith(row.id, CloudItemErrors.cancelled, uri: uri);
         case final Verified proof:
           if (!await _items.markVerified(row.id, proof.sha256, at)) {
-            await _dropDocument(remoteUri);
+            await _discard(row.id, uri);
             return;
           }
           _jobOf(row.id)?.verified[row.id] = (
             original: VerifiedOriginal(
-              original: file,
+              original: _follow(file),
               proof: proof,
               modifiedAtMsAtCopy: modifiedAtMs,
             ),
-            remoteUri: remoteUri,
+            remoteUri: uri,
             bytes: written.bytes,
           );
         case Mismatch():
           // The copy is bad: deleted, the original stays.
-          await _dropDocument(remoteUri);
-          await _fail(row.id, CloudItemErrors.verify);
+          await _failWith(row.id, CloudItemErrors.verify, uri: uri);
         case VerifyUnavailable():
-          // Nothing proven: the copy stays, so does the original.
-          await _fail(
-            row.id,
-            CloudItemErrors.verifyUnavailable,
-            keepRemoteUri: true,
-          );
+          // Nothing proven: the copy stays (a Retry replaces it), so does
+          // the original.
+          await _fail(row.id, CloudItemErrors.verifyUnavailable);
       }
     } on CloudWriteException catch (e) {
-      // The writer deleted its partial document itself.
-      await _fail(
+      // The writer tries to delete its partial itself; it is deleted again
+      // here (gone = fine) so a failed delete is recorded, not lost.
+      await _failWith(
         row.id,
         e.failure == CloudWriteFailure.cancelled
             ? CloudItemErrors.cancelled
             : e.failure == CloudWriteFailure.permission
             ? CloudItemErrors.needsReconnecting
             : e.failure.name,
+        uri: remoteUri,
       );
     } finally {
       try {
@@ -436,14 +616,6 @@ class CloudUploadRunner {
       } on Object catch (e) {
         developer.log('temp copy not released: $e', name: 'kfm.cloud');
       }
-    }
-  }
-
-  Future<void> _dropDocument(String uri) async {
-    try {
-      await _writer.deleteDocument(uri);
-    } on Object catch (e) {
-      developer.log('cloud copy not deleted: $e', name: 'kfm.cloud');
     }
   }
 
@@ -471,17 +643,22 @@ class CloudUploadRunner {
 
   /// "Delete originals" for verified move rows whose original is still
   /// there (declined dialog, a restart before the job's end). Always in
-  /// trash mode (the job's choice isn't kept across restarts).
-  Future<CloudMoveSummary> deleteOriginals(List<int> itemIds) async {
+  /// trash mode (the job's choice isn't kept across restarts). Calls run
+  /// one after another (a double tap never races).
+  Future<CloudMoveSummary> deleteOriginals(List<int> itemIds) {
+    final run = _deleting.then((_) => _deleteOriginals(itemIds));
+    _deleting = run.then<void>((_) {}, onError: (Object _) {});
+    return run;
+  }
+
+  Future<CloudMoveSummary> _deleteOriginals(List<int> itemIds) async {
     final rows = await _items.byIds(itemIds);
-    final entries =
-        <int, ({VerifiedOriginal original, String remoteUri, int bytes})>{};
+    final entries = <int, _VerifiedEntry>{};
     final settled = <int, ({SourceOutcome outcome, String? error})>{};
     for (final r in rows) {
       final sha = r.sha256;
       final uri = r.remoteUri;
-      if (r.mode != CloudItemMode.move ||
-          r.status != CloudItemStatus.verified ||
+      if (!cloudOriginalMayGo(r) ||
           sha == null ||
           uri == null ||
           inRunningJob(r.id)) {
@@ -489,16 +666,40 @@ class CloudUploadRunner {
       }
       final FileRef? now;
       try {
-        now = await _files.stat(r.fileId);
+        now = await _files.stat(_followId(r.fileId));
       } on FileOpException catch (e) {
         settled[r.id] = (
           outcome: SourceOutcome.keptFailed,
-          error: e.failure.name,
+          error: e.failure == FileOpFailure.notFound
+              ? CloudItemErrors.sourceGone
+              : e.failure.name,
         );
         continue;
       }
       if (now == null) {
-        settled[r.id] = (outcome: SourceOutcome.alreadyGone, error: null);
+        // Not found under this id: maybe gone, maybe renamed while KFM
+        // wasn't watching. Never counted as deleted.
+        settled[r.id] = (
+          outcome: SourceOutcome.keptFailed,
+          error: CloudItemErrors.sourceGone,
+        );
+        continue;
+      }
+      // The cloud copy is read back again: it must still be the verified
+      // bytes (the stored length is the local file's, not a stripped
+      // copy's, so the hash is what proves it).
+      CloudWriteResult? back;
+      try {
+        back = await _writer.readBack(uri);
+      } on Object catch (e) {
+        developer.log('cloud copy not readable: $e', name: 'kfm.cloud');
+        back = null;
+      }
+      if (back == null || back.sha256 != sha) {
+        settled[r.id] = (
+          outcome: SourceOutcome.keptFailed,
+          error: CloudItemErrors.copyMissing,
+        );
         continue;
       }
       entries[r.id] = (
@@ -508,27 +709,28 @@ class CloudUploadRunner {
           modifiedAtMsAtCopy: r.sourceModifiedAtMs,
         ),
         remoteUri: uri,
-        // Unknown for a stripped copy: only presence is checked then.
-        bytes: -1,
+        bytes: back.bytes,
       );
     }
     if (settled.isNotEmpty) await _items.setOutcomes(settled);
     if (entries.isEmpty) {
       return CloudMoveSummary(deleted: 0, kept: settled.length);
     }
-    return await _finalize(entries, DeleteMode.trash);
+    final s = await _finalize(entries, DeleteMode.trash);
+    return CloudMoveSummary(deleted: s.deleted, kept: s.kept + settled.length);
   }
 
-  /// The cloud copy must still be there (with the verified length when
-  /// known) before its original goes; then one N11 call for all.
+  /// The cloud copy must still be there with the verified length before
+  /// its original goes; then one N11 call for all (one entry per file: the
+  /// same file verified at two destinations is deleted once and both rows
+  /// get its outcome).
   Future<CloudMoveSummary> _finalize(
-    Map<int, ({VerifiedOriginal original, String remoteUri, int bytes})>
-    entries,
+    Map<int, _VerifiedEntry> entries,
     DeleteMode mode,
   ) async {
     final settled = <int, ({SourceOutcome outcome, String? error})>{};
-    final byFileId = <String, int>{};
-    final originals = <VerifiedOriginal>[];
+    final idsByFile = <String, List<int>>{};
+    final originals = <String, VerifiedOriginal>{};
     for (final MapEntry(key: id, value: e) in entries.entries) {
       int? size;
       try {
@@ -536,22 +738,34 @@ class CloudUploadRunner {
       } on Object {
         size = null;
       }
-      if (size == null || (e.bytes >= 0 && size != e.bytes)) {
+      if (size == null || size != e.bytes) {
         settled[id] = (
           outcome: SourceOutcome.keptFailed,
           error: CloudItemErrors.copyMissing,
         );
         continue;
       }
-      byFileId[e.original.original.id] = id;
-      originals.add(e.original);
+      final o = e.original;
+      final f = _follow(o.original);
+      final current = identical(f, o.original)
+          ? o
+          : VerifiedOriginal(
+              original: f,
+              proof: o.proof,
+              modifiedAtMsAtCopy: o.modifiedAtMsAtCopy,
+            );
+      (idsByFile[f.id] ??= []).add(id);
+      originals.putIfAbsent(f.id, () => current);
     }
     if (originals.isNotEmpty) {
-      final r = await _verifiedMove.deleteOriginals(originals, mode: mode);
+      final r = await _verifiedMove.deleteOriginals(
+        originals.values.toList(),
+        mode: mode,
+      );
       for (final MapEntry(key: fileId, value: outcome) in r.outcomes.entries) {
-        final id = byFileId[fileId];
-        if (id == null) continue;
-        settled[id] = (outcome: outcome, error: r.errors[fileId]);
+        for (final id in idsByFile[fileId] ?? const <int>[]) {
+          settled[id] = (outcome: outcome, error: r.errors[fileId]);
+        }
       }
     }
     await _items.setOutcomes(settled);
@@ -567,6 +781,7 @@ class CloudUploadRunner {
   }
 
   Future<void> dispose() async {
+    await _idSub.cancel();
     await _progressSub?.cancel();
     await _progress.close();
   }

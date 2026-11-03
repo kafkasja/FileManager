@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
@@ -21,6 +22,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
+import java.io.SyncFailedException
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -36,10 +38,11 @@ import java.util.concurrent.Executors
  * - `cloudTreeLabel {tree}` → `{authority, name}` (the picked folder's display name).
  * - `cloudCreate {tree, name, mime}` → the new document's URI (the provider may rename it).
  * - `cloudCopy {source, doc, jobKey}` → `{sha256, bytes}` of the bytes read from [source]
- *   (a `content://` URI or an absolute path) and written to `doc`. MediaStore items are opened
+ *   (a `content://` URI or an absolute path) and written to `doc` through its file
+ *   descriptor, fsync'ed before it is closed. MediaStore items are opened
  *   with `setRequireOriginal` when ACCESS_MEDIA_LOCATION is granted (API 29+), so GPS isn't
  *   redacted. Stops between 1 MiB chunks on `cloudCancel` (error CANCELLED). On any failure
- *   the document is deleted.
+ *   the document is deleted (best effort: Dart deletes it again and records a failure).
  * - `cloudHash {doc}` → `{sha256, bytes}` read back through the provider.
  * - `cloudStat {doc}` → size, or null when the document is gone.
  * - `cloudDelete {doc}` → true (also when already gone).
@@ -173,7 +176,11 @@ class CloudSaf(private val context: Context, messenger: BinaryMessenger) {
         var lastEmit = 0L
         try {
             openSource(source).use { input ->
-                (resolver.openOutputStream(doc, "w") ?: throw IOException("no output stream")).use { out ->
+                val pfd = resolver.openFileDescriptor(doc, "w")
+                    ?: throw IOException("no file descriptor")
+                // Closing the stream closes the descriptor; a provider that reports a failed
+                // write on close throws here, so the copy fails.
+                ParcelFileDescriptor.AutoCloseOutputStream(pfd).use { out ->
                     val buf = ByteArray(CHUNK)
                     while (true) {
                         if (disposed || cancelled.remove(jobKey)) throw CancelledException()
@@ -189,6 +196,14 @@ class CloudSaf(private val context: Context, messenger: BinaryMessenger) {
                         }
                     }
                     out.flush()
+                    // The bytes must be on the provider's storage before the read-back and
+                    // before any original is deleted (power loss after a "done" copy).
+                    try {
+                        pfd.fileDescriptor.sync()
+                    } catch (e: SyncFailedException) {
+                        // Pipe-backed providers can't fsync; their close() reports the result.
+                        Log.w(TAG, "fsync not supported for $doc: $e")
+                    }
                 }
             }
         } catch (e: Exception) {

@@ -146,11 +146,16 @@ class _CloudSettingsScreenState extends ConsumerState<CloudSettingsScreen> {
     );
     if (ok != true) return;
     try {
-      await ref
-          .read(cloudDestinationsRepositoryProvider)
-          .remove(d.id, forgetUploads: forget);
-      // A copy into it that is running now stops (its row already failed).
-      await ref.read(cloudUploadRunnerProvider)?.onDestinationRemoved(d.id);
+      // The runner stops a copy running into it and deletes partial
+      // documents before the grant is released.
+      final runner = ref.read(cloudUploadRunnerProvider);
+      if (runner != null) {
+        await runner.removeDestination(d.id, forgetUploads: forget);
+      } else {
+        await ref
+            .read(cloudDestinationsRepositoryProvider)
+            .remove(d.id, forgetUploads: forget);
+      }
     } on Object catch (e) {
       _snack(e.toString());
     }

@@ -9447,6 +9447,18 @@ abstract class AppLocalizations {
   /// **'The cloud app didn\'t accept the file'**
   String get cloudWriteError;
 
+  /// X3 failure reason when KFM couldn't delete its unfinished or unverified copy from the cloud folder.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason}. A copy was left in the cloud folder'**
+  String cloudCopyLeftOver(String reason);
+
+  /// X3 outcome: Delete originals couldn't find the original file (gone or renamed outside KFM).
+  ///
+  /// In en, this message translates to:
+  /// **'Original not found, nothing deleted'**
+  String get cloudOriginalNotFound;
+
   /// X3 one-time note on the destinations screen.
   ///
   /// In en, this message translates to:

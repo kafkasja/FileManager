@@ -158,22 +158,22 @@ void main() {
     });
 
     test('enqueue upserts per (file, destination); active rows stay', () async {
-      final ids = await items.enqueue(
+      final ids = (await items.enqueue(
         [_file('ms:1'), _file('ms:2')],
         dest,
         CloudItemMode.copy,
-      );
+      )).ids;
       expect(ids, hasLength(2));
       expect(
         await items.startUploading(ids[0], sizeBytes: 3, sourceModifiedAtMs: 1),
         isTrue,
       );
       // Again while uploading: left alone.
-      final again = await items.enqueue(
+      final again = (await items.enqueue(
         [_file('ms:1')],
         dest,
         CloudItemMode.move,
-      );
+      )).ids;
       expect(again, [ids[0]]);
       expect((await items.byId(ids[0]))!.status, CloudItemStatus.uploading);
       // Finished, then again: back to queued with the new mode.
@@ -188,18 +188,22 @@ void main() {
     });
 
     test('resetInterrupted returns partial documents', () async {
-      final ids = await items.enqueue(
+      final ids = (await items.enqueue(
         [_file('ms:1')],
         dest,
         CloudItemMode.copy,
-      );
+      )).ids;
       await items.startUploading(ids[0], sizeBytes: 3, sourceModifiedAtMs: 1);
       await items.markUploading(ids[0], 'content://t/doc/1');
       expect(await items.hasPending(), isTrue);
       expect(await items.resetInterrupted(), ['content://t/doc/1']);
       final row = (await items.byId(ids[0]))!;
       expect(row.status, CloudItemStatus.queued);
-      expect(row.remoteUri, isNull);
+      expect(
+        row.remoteUri,
+        'content://t/doc/1',
+        reason: 'kept until the runner deleted the partial',
+      );
     });
 
     test('nextQueued skips removed destinations', () async {
@@ -210,11 +214,11 @@ void main() {
     });
 
     test('mark* only change uploading rows', () async {
-      final ids = await items.enqueue(
+      final ids = (await items.enqueue(
         [_file('ms:1')],
         dest,
         CloudItemMode.copy,
-      );
+      )).ids;
       expect(await items.markHandedToProvider(ids[0], 'ab', 1), isFalse);
       expect(await items.markFailed(ids[0], 'cancelled'), isTrue);
       expect(await items.markFailed(ids[0], 'again'), isFalse);

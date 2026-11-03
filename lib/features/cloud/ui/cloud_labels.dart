@@ -3,6 +3,8 @@ import 'package:kfm/core/db/app_database.dart' show CloudItemRow;
 import 'package:kfm/core/db/tables/cloud_items_table.dart';
 import 'package:kfm/core/db/tables/transfers_table.dart' show SourceOutcome;
 import 'package:kfm/features/cloud/data/cloud_destinations_repository.dart';
+import 'package:kfm/features/cloud/data/cloud_items_repository.dart'
+    show cloudOriginalMayGo;
 import 'package:kfm/features/cloud/domain/cloud_destination.dart';
 import 'package:kfm/features/cloud/domain/cloud_writer.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -15,8 +17,16 @@ IconData cloudProviderIcon(CloudProviderGuess p) => switch (p) {
   CloudProviderGuess.other => Icons.cloud_queue_outlined,
 };
 
-/// A stored `cloud_items.error` code as text.
-String cloudErrorText(AppLocalizations l10n, String? code) => switch (code) {
+/// A stored `cloud_items.error` code as text (a document that couldn't be
+/// deleted is mentioned after the reason).
+String cloudErrorText(AppLocalizations l10n, String? code) {
+  final reason = _reasonText(l10n, CloudItemErrors.reasonOf(code));
+  return CloudItemErrors.hasLeftover(code)
+      ? l10n.cloudCopyLeftOver(reason)
+      : reason;
+}
+
+String _reasonText(AppLocalizations l10n, String? code) => switch (code) {
   CloudItemErrors.destinationRemoved => l10n.cloudDestinationRemovedError,
   CloudItemErrors.needsReconnecting => l10n.cloudNeedsReconnecting,
   CloudItemErrors.cancelled => l10n.cloudCancelled,
@@ -58,21 +68,13 @@ String? cloudOutcomeText(AppLocalizations l10n, CloudItemRow row) {
     SourceOutcome.keptDeclined => l10n.transferOriginalKeptDeclined,
     SourceOutcome.keptCancelled => l10n.transferOriginalKeptCancelled,
     SourceOutcome.keptChanged => l10n.transferOriginalKeptChanged,
-    SourceOutcome.keptFailed =>
-      row.error == CloudItemErrors.copyMissing
-          ? l10n.cloudCopyMissing
-          : l10n.transferOriginalKeptFailed,
+    SourceOutcome.keptFailed => switch (row.error) {
+      CloudItemErrors.copyMissing => l10n.cloudCopyMissing,
+      CloudItemErrors.sourceGone => l10n.cloudOriginalNotFound,
+      _ => l10n.transferOriginalKeptFailed,
+    },
   };
 }
 
 /// A verified move row whose original may still be deleted.
-bool cloudOriginalLeft(CloudItemRow row) =>
-    row.mode == CloudItemMode.move &&
-    row.status == CloudItemStatus.verified &&
-    switch (row.sourceOutcome) {
-      null ||
-      SourceOutcome.keptDeclined ||
-      SourceOutcome.keptFailed ||
-      SourceOutcome.keptCancelled => true,
-      _ => false,
-    };
+bool cloudOriginalLeft(CloudItemRow row) => cloudOriginalMayGo(row);

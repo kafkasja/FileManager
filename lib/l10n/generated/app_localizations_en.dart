@@ -6730,6 +6730,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cloudWriteError => 'The cloud app didn\'t accept the file';
 
   @override
+  String cloudCopyLeftOver(String reason) {
+    return '$reason. A copy was left in the cloud folder';
+  }
+
+  @override
+  String get cloudOriginalNotFound => 'Original not found, nothing deleted';
+
+  @override
   String get cloudGpsNote =>
       'Photos are uploaded without their location because KFM can\'t read it.';
 

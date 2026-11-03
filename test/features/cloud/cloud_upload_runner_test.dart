@@ -327,7 +327,7 @@ void main() {
 
   test('restart: uploading rows restart, partials are deleted', () async {
     final files = photos(1);
-    final ids = await items.enqueue(files, dest, CloudItemMode.copy);
+    final ids = (await items.enqueue(files, dest, CloudItemMode.copy)).ids;
     await items.startUploading(ids.single, sizeBytes: 4, sourceModifiedAtMs: 1);
     writer.docs['content://drive/tree/p/doc/old'] = const [1];
     await items.markUploading(ids.single, 'content://drive/tree/p/doc/old');
@@ -349,7 +349,7 @@ void main() {
     'restart with a verified move row: original waits for the user',
     () async {
       final files = photos(1);
-      final ids = await items.enqueue(files, dest, CloudItemMode.move);
+      final ids = (await items.enqueue(files, dest, CloudItemMode.move)).ids;
       final fresh = build();
       addTearDown(fresh.dispose);
       await fresh.resume();
@@ -409,7 +409,7 @@ void main() {
       writer: writer,
       files: fs,
       verifiedMove: moves,
-      prepare: (f, id) async => CloudSource(
+      prepare: (f, id, {stripLocation}) async => CloudSource(
         source: '/cache/privacy/stripped.jpg',
         sizeBytes: 2,
         cleanup: () async => released = true,
@@ -431,7 +431,8 @@ void main() {
   test('location not removable: never uploaded', () async {
     await runner.dispose();
     runner = build(
-      prepare: (f, id) async => throw const CloudLocationNotRemoved(),
+      prepare: (f, id, {stripLocation}) async =>
+          throw const CloudLocationNotRemoved(),
     );
     await runner.start(
       CloudJobRequest(
@@ -465,6 +466,445 @@ void main() {
     );
     expect(h.ids, isEmpty);
     expect(await rows(), isEmpty);
+  });
+
+  group('review fixes', () {
+    const loc = 'content://drive/tree/p';
+
+    test('1+3: removing the destination mid-job ends the job; the partial is '
+        'deleted before the grant goes; a later move is its own job', () async {
+      writer
+        ..selfCleanup = false
+        ..grantHeld = () => trees.persisted.contains(loc);
+      final files = photos(2);
+      final gate = Completer<void>();
+      writer.gate = gate;
+      final h = await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+          deleteMode: DeleteMode.permanent,
+        ),
+      );
+      await pumpUntil(
+        () async => writer.calls.any((c) => c.startsWith('write')),
+      );
+      final removing = runner.removeDestination(dest, forgetUploads: false);
+      gate.complete();
+      await removing;
+      await runner.idle();
+      expect(
+        await h.done.timeout(const Duration(seconds: 2)),
+        isNull,
+        reason: 'the job ends (nothing verified)',
+      );
+      expect(writer.docs, isEmpty, reason: 'partial deleted');
+      expect(trees.persisted, isEmpty, reason: 'grant released after');
+      final all = await rows();
+      expect(all.map((r) => r.status), everyElement(CloudItemStatus.failed));
+      expect(all.map((r) => r.remoteUri), everyElement(isNull));
+      expect(
+        all.map((r) => r.error),
+        everyElement(CloudItemErrors.destinationRemoved),
+      );
+      expect(runner.inRunningJob(all.first.id), isFalse);
+      expect(fs.files, hasLength(2));
+
+      // Re-added and moved again: a new job with its own delete mode.
+      trees.persisted.add(loc);
+      final again = await dests.add(
+        location: loc,
+        label: 'Drive',
+        provider: CloudProviderGuess.googleDrive,
+      );
+      expect(again, dest);
+      final h2 = await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await runner.idle();
+      expect((await h2.done)!.deleted, 2);
+      expect(moves.modes, [DeleteMode.trash]);
+    });
+
+    test('4: a copy that cannot be deleted stays recorded and is retried '
+        'at start-up', () async {
+      final files = photos(1);
+      writer
+        ..corruptReadBack = true
+        ..failDeletes = true;
+      await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await runner.idle();
+      var row = (await rows()).single;
+      expect(row.status, CloudItemStatus.failed);
+      expect(row.remoteUri, isNotNull);
+      expect(CloudItemErrors.hasLeftover(row.error), isTrue);
+      expect(CloudItemErrors.reasonOf(row.error), CloudItemErrors.verify);
+      expect(writer.docs, hasLength(1));
+
+      writer.failDeletes = false;
+      final fresh = build();
+      addTearDown(fresh.dispose);
+      await fresh.resume();
+      await fresh.idle();
+      row = (await rows()).single;
+      expect(row.remoteUri, isNull);
+      expect(row.error, CloudItemErrors.verify);
+      expect(writer.docs, isEmpty);
+      expect(fs.files, hasLength(1));
+    });
+
+    test('4: a failed write whose own cleanup failed is deleted by the '
+        'runner', () async {
+      writer
+        ..selfCleanup = false
+        ..failWrite = CloudWriteFailure.noSpace;
+      await runner.start(
+        CloudJobRequest(
+          files: photos(1),
+          destinationId: dest,
+          mode: CloudItemMode.copy,
+        ),
+      );
+      await runner.idle();
+      final row = (await rows()).single;
+      expect(row.error, CloudWriteFailure.noSpace.name);
+      expect(row.remoteUri, isNull);
+      expect(writer.docs, isEmpty);
+    });
+
+    test('5: Retry after cancelling a waiting row runs it', () async {
+      final files = photos(2);
+      final gate = Completer<void>();
+      writer.gate = gate;
+      await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.copy,
+        ),
+      );
+      await pumpUntil(
+        () async => writer.calls.any((c) => c.startsWith('write')),
+      );
+      final second = (await rows()).firstWhere((r) => r.fileId == files[1].id);
+      await runner.cancel(second.id);
+      gate.complete();
+      await runner.idle();
+      expect((await items.byId(second.id))!.error, CloudItemErrors.cancelled);
+
+      writer.gate = null;
+      await runner.start(
+        CloudJobRequest(
+          files: [files[1]],
+          destinationId: dest,
+          mode: CloudItemMode.copy,
+        ),
+      );
+      await runner.idle();
+      expect(
+        (await items.byId(second.id))!.status,
+        CloudItemStatus.handedToProvider,
+      );
+    });
+
+    test(
+      '5: a cancel that came too late never fails the next attempt',
+      () async {
+        final files = photos(1);
+        await runner.start(
+          CloudJobRequest(
+            files: files,
+            destinationId: dest,
+            mode: CloudItemMode.copy,
+          ),
+        );
+        await runner.idle();
+        final id = (await rows()).single.id;
+        await runner.cancel(id); // already finished
+        await runner.start(
+          CloudJobRequest(
+            files: files,
+            destinationId: dest,
+            mode: CloudItemMode.copy,
+          ),
+        );
+        await runner.idle();
+        expect(
+          (await items.byId(id))!.status,
+          CloudItemStatus.handedToProvider,
+        );
+      },
+    );
+
+    test('6: a verified row waiting for its job end is not reset', () async {
+      final files = photos(2);
+      // The second file waits until the first is verified.
+      final gate = Completer<void>();
+      writer
+        ..gate = gate
+        ..gateOnly = {files[1].uri};
+      final h = await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await pumpUntil(
+        () async =>
+            (await rows()).any((x) => x.status == CloudItemStatus.verified),
+      );
+      final first = (await rows()).firstWhere((r) => r.fileId == files[0].id);
+      final h2 = await runner.start(
+        CloudJobRequest(
+          files: [files[0]],
+          destinationId: dest,
+          mode: CloudItemMode.copy,
+        ),
+      );
+      expect(h2.ids, [first.id]);
+      expect(await h2.done, isNull);
+      expect((await items.byId(first.id))!.status, CloudItemStatus.verified);
+      gate.complete();
+      await runner.idle();
+      expect((await h.done)!.deleted, 2);
+      expect(moves.calls.single, hasLength(2));
+    });
+
+    test('6: a queued row of no running job takes the new request', () async {
+      final files = photos(1);
+      await items.enqueue(files, dest, CloudItemMode.move);
+      final h = await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.copy,
+        ),
+      );
+      await runner.idle();
+      expect(await h.done, isNull);
+      final row = (await rows()).single;
+      expect(row.mode, CloudItemMode.copy);
+      expect(row.status, CloudItemStatus.handedToProvider);
+      expect(fs.files, hasLength(1));
+    });
+
+    test('7: Retry replaces a kept unverified copy (no orphan)', () async {
+      final files = photos(1);
+      writer.readBackFails = true;
+      await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await runner.idle();
+      final kept = (await rows()).single.remoteUri;
+      expect(kept, isNotNull);
+      expect(writer.docs.keys, [kept]);
+
+      writer.readBackFails = false;
+      final h = await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await runner.idle();
+      expect((await h.done)!.deleted, 1);
+      expect(writer.calls, contains('delete $kept'));
+      expect(writer.docs, hasLength(1));
+      expect(writer.docs.keys.single, isNot(kept));
+    });
+
+    test('8: the job keeps its location decision', () async {
+      final seen = <bool?>[];
+      await runner.dispose();
+      runner = build(
+        prepare: (f, id, {stripLocation}) async {
+          seen.add(stripLocation);
+          return CloudSource(source: f.uri);
+        },
+      );
+      await runner.start(
+        CloudJobRequest(
+          files: photos(2),
+          destinationId: dest,
+          mode: CloudItemMode.move,
+          stripLocation: false,
+        ),
+      );
+      await runner.idle();
+      expect(seen, [false, false]);
+    });
+
+    test('9: a file renamed mid-job is followed; its original is deleted '
+        'under the new id', () async {
+      final files = photos(2);
+      final gate = Completer<void>();
+      writer
+        ..gate = gate
+        ..gateOnly = {files[1].uri};
+      final h = await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await pumpUntil(
+        () async =>
+            (await rows()).any((x) => x.status == CloudItemStatus.verified),
+      );
+      final renamed = await fs.rename(files[0], 'renamed.jpg');
+      gate.complete();
+      await runner.idle();
+      final s = (await h.done)!;
+      expect(s.deleted, 2);
+      expect(
+        moves.calls.single.map((o) => o.original.id),
+        contains(renamed.id),
+      );
+      expect(fs.files, isEmpty);
+      expect(fs.trash, hasLength(2));
+      await queue.flush();
+      expect(
+        (await rows()).map((r) => r.fileId),
+        containsAll([renamed.id, files[1].id]),
+      );
+    });
+
+    test(
+      '9: Delete originals never counts a missing original as deleted',
+      () async {
+        final files = photos(1);
+        fs.declineDeletes = true;
+        await runner.start(
+          CloudJobRequest(
+            files: files,
+            destinationId: dest,
+            mode: CloudItemMode.move,
+          ),
+        );
+        await runner.idle();
+        fs
+          ..declineDeletes = false
+          ..removeExternally(files[0].id);
+        final id = (await rows()).single.id;
+        final s = await runner.deleteOriginals([id]);
+        expect(s.deleted, 0);
+        expect(s.kept, 1);
+        final row = (await items.byId(id))!;
+        expect(row.sourceOutcome, SourceOutcome.keptFailed);
+        expect(row.error, CloudItemErrors.sourceGone);
+        expect(cloudOriginalMayGo(row), isFalse);
+      },
+    );
+
+    test(
+      '10a+10c: one file at two destinations; double tap is serialized',
+      () async {
+        trees.persisted.add('content://drive/tree/q');
+        final dest2 = await dests.add(
+          location: 'content://drive/tree/q',
+          label: 'Drive › Q',
+          provider: CloudProviderGuess.googleDrive,
+        );
+        final files = photos(1);
+        fs.declineDeletes = true;
+        for (final d in [dest, dest2]) {
+          await runner.start(
+            CloudJobRequest(
+              files: files,
+              destinationId: d,
+              mode: CloudItemMode.move,
+            ),
+          );
+          await runner.idle();
+        }
+        fs.declineDeletes = false;
+        final ids = [for (final r in await rows()) r.id];
+        expect(ids, hasLength(2));
+        final a = runner.deleteOriginals(ids);
+        final b = runner.deleteOriginals(ids);
+        expect((await a).deleted, 2);
+        expect((await b).deleted, 0);
+        expect(moves.calls.last, hasLength(1), reason: 'one original once');
+        expect(
+          (await rows()).map((r) => r.sourceOutcome),
+          everyElement(SourceOutcome.trashed),
+        );
+      },
+    );
+
+    test('10b: Delete originals re-checks the copy bytes', () async {
+      final files = photos(1);
+      fs.declineDeletes = true;
+      await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await runner.idle();
+      fs.declineDeletes = false;
+      final row = (await rows()).single;
+      writer.docs[row.remoteUri!] = const [0, 0, 0, 0]; // same length
+      final s = await runner.deleteOriginals([row.id]);
+      expect(s.deleted, 0);
+      expect((await items.byId(row.id))!.error, CloudItemErrors.copyMissing);
+      expect(fs.files, hasLength(1));
+    });
+
+    test('10d: old verified moves stay listed for Delete originals', () async {
+      final files = photos(1);
+      fs.declineDeletes = true;
+      await runner.start(
+        CloudJobRequest(
+          files: files,
+          destinationId: dest,
+          mode: CloudItemMode.move,
+        ),
+      );
+      await runner.idle();
+      final listed = await items
+          .watchJobs(since: DateTime.now().add(const Duration(days: 1)))
+          .first;
+      expect(listed, hasLength(1));
+    });
+
+    test('10e: a copy whose source changed size fails', () async {
+      await runner.dispose();
+      runner = build(
+        prepare: (f, id, {stripLocation}) async =>
+            CloudSource(source: f.uri, sizeBytes: 99),
+      );
+      await runner.start(
+        CloudJobRequest(
+          files: photos(1),
+          destinationId: dest,
+          mode: CloudItemMode.copy,
+        ),
+      );
+      await runner.idle();
+      final row = (await rows()).single;
+      expect(row.error, CloudItemErrors.sourceChanged);
+      expect(writer.docs, isEmpty);
+    });
   });
 
   test('no destination, no start: the writer is never touched', () async {

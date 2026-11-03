@@ -49,27 +49,32 @@ CloudItemsRepository cloudItemsRepository(Ref ref) => CloudItemsRepository(
 
 /// X2: with "Remove location when sharing" on, photos and videos go up
 /// from a stripped copy (the checksum and the read-back are of that copy).
-CloudSourcePreparer _strippingPreparer(Ref ref) => (file, itemId) async {
-  final on = await ref
-      .read(settingsRepositoryProvider)
-      .read(AppSettings.privacyStripLocation);
-  if (!on || !LocationStripper.appliesTo(file)) {
-    return await plainCloudSource(file, itemId);
-  }
-  final stripper = ref.read(locationStripperProvider);
-  final sendId = 'cloud-$itemId';
-  try {
-    final copy = await stripper.stripToTemp(file, sendId: sendId);
-    return CloudSource(
-      source: copy.path,
-      sizeBytes: copy.sizeBytes,
-      cleanup: () => stripper.release(sendId),
-    );
-  } on LocationStripException {
-    await stripper.release(sendId);
-    throw const CloudLocationNotRemoved();
-  }
-};
+/// The job's decision from its start wins over the setting as it is now
+/// (a move's location warning was answered for that decision).
+CloudSourcePreparer _strippingPreparer(Ref ref) =>
+    (file, itemId, {stripLocation}) async {
+      final on =
+          stripLocation ??
+          await ref
+              .read(settingsRepositoryProvider)
+              .read(AppSettings.privacyStripLocation);
+      if (!on || !LocationStripper.appliesTo(file)) {
+        return await plainCloudSource(file, itemId);
+      }
+      final stripper = ref.read(locationStripperProvider);
+      final sendId = 'cloud-$itemId';
+      try {
+        final copy = await stripper.stripToTemp(file, sendId: sendId);
+        return CloudSource(
+          source: copy.path,
+          sizeBytes: copy.sizeBytes,
+          cleanup: () => stripper.release(sendId),
+        );
+      } on LocationStripException {
+        await stripper.release(sendId);
+        throw const CloudLocationNotRemoved();
+      }
+    };
 
 /// The cloud upload runner (TASK-X3). Null off Android. Creating it runs
 /// nothing: work starts on the first `start` or `resume` (Hard rule 1).
