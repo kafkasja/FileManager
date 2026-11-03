@@ -255,6 +255,29 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
 
   List<String> get _order => [for (final i in widget.items) widget.idOf(i)];
 
+  /// Item id → index for the view's items, built on first use per list.
+  late Map<String, int> _indexById;
+  List<T>? _indexedItems;
+
+  /// Where the item with [key] is now, so an item keeps its element (and
+  /// its loaded thumbnail) when the items before it change (Sort: the
+  /// acted-on file leaves, every later tile moves up one).
+  int? _indexOfKey(Key key) {
+    if (key is! ValueKey<String>) return null;
+    final items = widget.items;
+    if (!identical(items, _indexedItems)) {
+      _indexedItems = items;
+      _indexById = {
+        for (var i = 0; i < items.length; i++) widget.idOf(items[i]): i,
+      };
+    }
+    var id = key.value;
+    if (id.startsWith(_dropKeyPrefix)) id = id.substring(_dropKeyPrefix.length);
+    return _indexById[id];
+  }
+
+  static const _dropKeyPrefix = 'drop-';
+
   @override
   void didUpdateWidget(ExplorerView<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -659,6 +682,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
             delegate: SliverChildBuilderDelegate(
               (context, i) => _item(context, items[i], geo),
               childCount: items.length,
+              findChildIndexCallback: _indexOfKey,
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 48)),
@@ -680,6 +704,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
             delegate: SliverChildBuilderDelegate(
               (context, i) => _item(context, items[i], geo),
               childCount: items.length,
+              findChildIndexCallback: _indexOfKey,
             ),
           ),
         ),
@@ -707,7 +732,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     return offer == null
         ? view
         : DesktopDropTarget(
-            key: ValueKey('drop-$id'),
+            key: ValueKey('$_dropKeyPrefix$id'),
             offer: offer,
             radius: geo.details ? 4 : 10,
             child: view,
