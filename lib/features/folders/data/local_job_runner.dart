@@ -82,6 +82,7 @@ class LocalJobRunner {
     @visibleForTesting this.fat32MaxBytes = kFat32MaxFileBytes,
     bool Function(String folder)? stagesInTarget,
     PlacesGuard? track,
+    this._onJobEnded,
   }) : _track = track ?? unguardedAll,
        _stagesInTarget = stagesInTarget ?? ((_) => false),
        _isFat32 = isFat32 ?? isFat32Volume,
@@ -109,6 +110,10 @@ class LocalJobRunner {
   /// Targets whose imports are written under [localJobTempName] first
   /// (SAF: the document exists while its bytes are still streaming).
   final bool Function(String folder) _stagesInTarget;
+
+  /// Called after each job's run (done, paused, failed): Places' free space
+  /// refreshes.
+  final void Function()? _onJobEnded;
 
   /// Files this size or larger don't fit on FAT32.
   final int fat32MaxBytes;
@@ -335,6 +340,8 @@ class LocalJobRunner {
           failureReason: e is FileOpException ? e.failure.name : 'internal',
           nowMs: _now,
         );
+      } finally {
+        _onJobEnded?.call();
       }
     }
   }

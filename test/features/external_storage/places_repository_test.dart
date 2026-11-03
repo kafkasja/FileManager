@@ -71,6 +71,30 @@ void main() {
       expect(volumes.listCalls - before, 1);
     });
 
+    test('refresh requests (file ops, local jobs) re-read free space once, '
+        'debounced', () async {
+      final refresh = PlacesSpaceRefresh();
+      addTearDown(refresh.dispose);
+      final seen = <DeviceStorage>[];
+      final sub = watchDeviceStorage(
+        volumes,
+        null,
+        debounce: const Duration(milliseconds: 50),
+        refreshes: refresh.requests,
+      ).listen(seen.add);
+      addTearDown(sub.cancel);
+      await pumpEventQueue();
+      final before = volumes.listCalls;
+      volumes.volumes = [internalVolume, sdVolume().copyFree(1 << 30)];
+      refresh
+        ..request()
+        ..request()
+        ..request();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(volumes.listCalls - before, 1);
+      expect(seen.last.volumes.last.freeBytes, 1 << 30);
+    });
+
     test(
       'a failed read is an error event; the next event reads again',
       () async {
@@ -362,3 +386,17 @@ void main() {
 final _rootsProvider = FutureProvider<List<String>>(
   (ref) => pendingFolderRoots(ref, primaryRoot: '/storage/emulated/0'),
 );
+
+extension on VolumeInfo {
+  VolumeInfo copyFree(int free) => VolumeInfo(
+    uuid: uuid,
+    isPrimary: isPrimary,
+    isRemovable: isRemovable,
+    description: description,
+    state: state,
+    isMounted: isMounted,
+    rootPath: rootPath,
+    totalBytes: totalBytes,
+    freeBytes: free,
+  );
+}

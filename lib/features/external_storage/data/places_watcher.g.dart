@@ -55,4 +55,4 @@ final class PlacesWatcherProvider
   }
 }
 
-String _$placesWatcherHash() => r'8922fa9018a41860fa5f78f951986c754c4e7f44';
+String _$placesWatcherHash() => r'67118817f73e06951e004ef152901e1b204ac9b9';

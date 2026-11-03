@@ -46,10 +46,14 @@ class DeviceStorage {
 /// event, debounced by [debounce] (a loose cable flaps). Reads run one at
 /// a time, in order. A failed read is an error event; later events read
 /// again.
+///
+/// [refreshes]: read again (debounced too) after KFM's own writes or
+/// deletes, so free space follows them (volume events don't).
 Stream<DeviceStorage> watchDeviceStorage(
   VolumesPlatform volumes,
   MtpPlatform? mtp, {
   Duration debounce = const Duration(seconds: 1),
+  Stream<void>? refreshes,
 }) {
   late final StreamController<DeviceStorage> controller;
   final debouncer = Debouncer(debounce);
@@ -85,6 +89,7 @@ Stream<DeviceStorage> watchDeviceStorage(
           },
         ),
       );
+      if (refreshes != null) subs.add(refreshes.listen((_) => schedule()));
       if (mtp != null) {
         subs.add(
           mtp.changes().listen(
@@ -109,12 +114,37 @@ Stream<DeviceStorage> watchDeviceStorage(
   return controller.stream;
 }
 
+/// Asks for a fresh read of the volumes (free space) after a file
+/// operation or local job ends; [watchDeviceStorage] debounces it.
+class PlacesSpaceRefresh {
+  final _requests = StreamController<void>.broadcast();
+
+  Stream<void> get requests => _requests.stream;
+
+  void request() {
+    if (!_requests.isClosed) _requests.add(null);
+  }
+
+  void dispose() => unawaited(_requests.close());
+}
+
+@Riverpod(keepAlive: true)
+PlacesSpaceRefresh placesSpaceRefresh(Ref ref) {
+  final refresh = PlacesSpaceRefresh();
+  ref.onDispose(refresh.dispose);
+  return refresh;
+}
+
 /// The device's volumes and cameras, live. Empty off Android.
 @Riverpod(keepAlive: true)
 Stream<DeviceStorage> deviceStorage(Ref ref) {
   final volumes = ref.watch(volumesPlatformProvider);
   if (volumes == null) return Stream.value(DeviceStorage.empty);
-  return watchDeviceStorage(volumes, ref.watch(mtpPlatformProvider));
+  return watchDeviceStorage(
+    volumes,
+    ref.watch(mtpPlatformProvider),
+    refreshes: ref.watch(placesSpaceRefreshProvider).requests,
+  );
 }
 
 /// U1: SAF grants (volume uuid → tree URI).

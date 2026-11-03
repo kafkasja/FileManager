@@ -46,6 +46,7 @@ LocalJobRunner? localJobRunner(Ref ref) {
     staging: transferStagingDir,
     stagesInTarget: fs.saf.locator.owns,
     track: ref.watch(volumeActivityTrackerProvider.notifier).runAll,
+    onJobEnded: ref.read(placesSpaceRefreshProvider).request,
   );
   final ready = runner.recover();
   ref.listen(placesProvider, (_, next) {
