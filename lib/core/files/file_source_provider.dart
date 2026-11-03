@@ -20,6 +20,7 @@ import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/files/windows/windows_file_source.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/core/platform/volumes/volumes_providers.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/core/platform/windows/windows_channel.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
@@ -108,6 +109,11 @@ FileSource fileSource(Ref ref) {
           false,
       pendingFolder: ref.watch(pendingFolderProvider),
       tempLedger: ref.watch(tempFileLedgerProvider.future),
+      // U1: full scans walk mounted SD cards / USB drives too.
+      removableRoots: switch (ref.watch(volumesPlatformProvider)) {
+        final volumes? => () => readDirectPathRemovableRoots(volumes),
+        null => () async => const <String>[],
+      },
     );
     final locator = ref.watch(safLocatorProvider);
     final saf = SafFileSource(

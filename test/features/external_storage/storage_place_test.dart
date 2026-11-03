@@ -105,6 +105,18 @@ void main() {
     );
   });
 
+  test('direct-path removable roots: mounted cards on API 30+ only', () async {
+    final volumes = FakeVolumes([
+      internalVolume,
+      sdVolume(),
+      sdVolume(uuid: 'AAAA-BBBB', mounted: false),
+    ]);
+    addTearDown(volumes.close);
+    expect(await readDirectPathRemovableRoots(volumes), ['/storage/1234-ABCD']);
+    volumes.sdk = 29; // SAF only there
+    expect(await readDirectPathRemovableRoots(volumes), isEmpty);
+  });
+
   test('parseVolumeEvent', () {
     expect(
       parseVolumeEvent({'usbMassStorage': true}),
