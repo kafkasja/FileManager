@@ -84,12 +84,19 @@ void main() {
   test('no hard-coded Text literals in UI code', () {
     final literal = RegExp(r'''Text\(\s*['"]''');
     final offenders = <String>[];
-    final roots = [Directory('lib/app'), Directory('lib/features')];
+    final roots = [
+      Directory('lib/app'),
+      Directory('lib/features'),
+      Directory('lib/desktop'),
+    ];
     for (final root in roots) {
       for (final f in root.listSync(recursive: true).whereType<File>()) {
         final path = f.path.replaceAll(r'\', '/');
         if (!path.endsWith('.dart') || path.endsWith('.g.dart')) continue;
-        final isUi = path.contains('/ui/') || path.startsWith('lib/app');
+        final isUi =
+            path.contains('/ui/') ||
+            path.startsWith('lib/app') ||
+            path.startsWith('lib/desktop');
         if (isUi && literal.hasMatch(f.readAsStringSync())) {
           offenders.add(path);
         }

@@ -7049,4 +7049,53 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get shareFirewallBody =>
       'Zodat je telefoon deze pc kan bereiken, vraagt Windows Firewall om KFM toe te staan. Sta het alleen toe op particuliere netwerken.';
+
+  @override
+  String get desktopNavSort => 'Sorteren';
+
+  @override
+  String get desktopNavDevices => 'Apparaten';
+
+  @override
+  String get desktopSidebarPlaces => 'Locaties';
+
+  @override
+  String get desktopSidebarCollections => 'Collecties';
+
+  @override
+  String get desktopFavorites => 'Favorieten';
+
+  @override
+  String get desktopSidebarCollapse => 'Zijbalk inklappen';
+
+  @override
+  String get desktopSidebarExpand => 'Zijbalk uitklappen';
+
+  @override
+  String get desktopNoPlaces => 'Nog geen mappen';
+
+  @override
+  String get desktopDetailsNothing =>
+      'Selecteer een bestand om de details te zien';
+
+  @override
+  String desktopShortcutHint(String label, String keys) {
+    return '$label ($keys)';
+  }
+
+  @override
+  String desktopStatusItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String desktopStatusSelected(int count, String size) {
+    return '$count geselecteerd · $size';
+  }
 }

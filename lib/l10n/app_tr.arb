@@ -1621,5 +1621,17 @@
   "sharePublicNetwork": "Wi-Fi ağınız Ortak olarak ayarlı",
   "sharePublicNetworkHint": "Paylaşmak için Özel olarak ayarlayın. Windows Ayarları → Ağ ve internet → Wi-Fi → ağınız → Özel ağ.",
   "shareFirewallTitle": "Windows güvenlik duvarını soracak",
-  "shareFirewallBody": "Telefonunuzun bu bilgisayara ulaşabilmesi için Windows Güvenlik Duvarı KFM'ye izin vermenizi isteyecek. Yalnızca özel ağlarda izin verin."
+  "shareFirewallBody": "Telefonunuzun bu bilgisayara ulaşabilmesi için Windows Güvenlik Duvarı KFM'ye izin vermenizi isteyecek. Yalnızca özel ağlarda izin verin.",
+  "desktopNavSort": "Ayıkla",
+  "desktopNavDevices": "Cihazlar",
+  "desktopSidebarPlaces": "Konumlar",
+  "desktopSidebarCollections": "Koleksiyonlar",
+  "desktopFavorites": "Favoriler",
+  "desktopSidebarCollapse": "Kenar çubuğunu daralt",
+  "desktopSidebarExpand": "Kenar çubuğunu genişlet",
+  "desktopNoPlaces": "Henüz klasör yok",
+  "desktopDetailsNothing": "Ayrıntılarını görmek için bir dosya seçin",
+  "desktopShortcutHint": "{label} ({keys})",
+  "desktopStatusItems": "{count} öğe",
+  "desktopStatusSelected": "{count} seçili · {size}"
 }

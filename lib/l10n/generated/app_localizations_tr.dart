@@ -7009,4 +7009,47 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get shareFirewallBody =>
       'Telefonunuzun bu bilgisayara ulaşabilmesi için Windows Güvenlik Duvarı KFM\'ye izin vermenizi isteyecek. Yalnızca özel ağlarda izin verin.';
+
+  @override
+  String get desktopNavSort => 'Ayıkla';
+
+  @override
+  String get desktopNavDevices => 'Cihazlar';
+
+  @override
+  String get desktopSidebarPlaces => 'Konumlar';
+
+  @override
+  String get desktopSidebarCollections => 'Koleksiyonlar';
+
+  @override
+  String get desktopFavorites => 'Favoriler';
+
+  @override
+  String get desktopSidebarCollapse => 'Kenar çubuğunu daralt';
+
+  @override
+  String get desktopSidebarExpand => 'Kenar çubuğunu genişlet';
+
+  @override
+  String get desktopNoPlaces => 'Henüz klasör yok';
+
+  @override
+  String get desktopDetailsNothing =>
+      'Ayrıntılarını görmek için bir dosya seçin';
+
+  @override
+  String desktopShortcutHint(String label, String keys) {
+    return '$label ($keys)';
+  }
+
+  @override
+  String desktopStatusItems(int count) {
+    return '$count öğe';
+  }
+
+  @override
+  String desktopStatusSelected(int count, String size) {
+    return '$count seçili · $size';
+  }
 }

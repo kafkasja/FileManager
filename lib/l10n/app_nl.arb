@@ -1621,5 +1621,17 @@
   "sharePublicNetwork": "Je wifi staat op Openbaar",
   "sharePublicNetworkHint": "Zet het op Privé om te delen. Windows-instellingen → Netwerk en internet → Wifi → je netwerk → Particulier netwerk.",
   "shareFirewallTitle": "Windows vraagt naar de firewall",
-  "shareFirewallBody": "Zodat je telefoon deze pc kan bereiken, vraagt Windows Firewall om KFM toe te staan. Sta het alleen toe op particuliere netwerken."
+  "shareFirewallBody": "Zodat je telefoon deze pc kan bereiken, vraagt Windows Firewall om KFM toe te staan. Sta het alleen toe op particuliere netwerken.",
+  "desktopNavSort": "Sorteren",
+  "desktopNavDevices": "Apparaten",
+  "desktopSidebarPlaces": "Locaties",
+  "desktopSidebarCollections": "Collecties",
+  "desktopFavorites": "Favorieten",
+  "desktopSidebarCollapse": "Zijbalk inklappen",
+  "desktopSidebarExpand": "Zijbalk uitklappen",
+  "desktopNoPlaces": "Nog geen mappen",
+  "desktopDetailsNothing": "Selecteer een bestand om de details te zien",
+  "desktopShortcutHint": "{label} ({keys})",
+  "desktopStatusItems": "{count, plural, =1{1 item} other{{count} items}}",
+  "desktopStatusSelected": "{count} geselecteerd · {size}"
 }

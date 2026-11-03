@@ -6987,4 +6987,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareFirewallBody =>
       'So your phone can reach this PC, Windows Firewall asks to allow KFM. Allow it on private networks only.';
+
+  @override
+  String get desktopNavSort => 'Sort';
+
+  @override
+  String get desktopNavDevices => 'Devices';
+
+  @override
+  String get desktopSidebarPlaces => 'Places';
+
+  @override
+  String get desktopSidebarCollections => 'Collections';
+
+  @override
+  String get desktopFavorites => 'Favorites';
+
+  @override
+  String get desktopSidebarCollapse => 'Collapse sidebar';
+
+  @override
+  String get desktopSidebarExpand => 'Expand sidebar';
+
+  @override
+  String get desktopNoPlaces => 'No folders yet';
+
+  @override
+  String get desktopDetailsNothing => 'Select a file to see its details';
+
+  @override
+  String desktopShortcutHint(String label, String keys) {
+    return '$label ($keys)';
+  }
+
+  @override
+  String desktopStatusItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String desktopStatusSelected(int count, String size) {
+    return '$count selected · $size';
+  }
 }

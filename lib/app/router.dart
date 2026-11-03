@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/app_scaffold.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/router_extra_codec.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/desktop/shell/desktop_routes.dart';
 import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
@@ -86,6 +88,9 @@ abstract final class AppRoutes {
   static String collectionTagFor(int id) => '/browse/collections/tag/$id';
   static const trash = '/trash';
   static const settings = '/settings';
+
+  /// PL3: the desktop sidebar's Devices section (desktop only).
+  static const devices = '/devices';
   static const customizeSwipes = '/settings/swipes';
   static const renameBatch = '/swipe/rename';
   static const presets = '/settings/presets';
@@ -167,6 +172,8 @@ int debugRouterRedirectCount = 0;
 
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
+  // PL3: the desktop app swaps the shell and some section screens.
+  final desktop = ref.watch(formFactorProvider).isDesktop;
   final access = ValueNotifier<AsyncValue<StorageAccess>>(const AsyncLoading());
   ref
     ..listen(storageAccessControllerProvider, (_, next) {
@@ -237,13 +244,16 @@ GoRouter router(Ref ref) {
       // indexedStack keeps every tab alive: switching tabs never loses
       // swipe progress.
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => AppScaffold(shell: shell),
+        builder: (context, state, shell) => desktop
+            ? desktopShell(shell)
+            : AppScaffold(shell: shell),
         branches: [
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.swipe,
-                builder: (context, state) => const SwipeScreen(),
+                builder: (context, state) =>
+                    desktop ? desktopSortScreen() : const SwipeScreen(),
                 routes: [
                   GoRoute(
                     path: 'rename',
@@ -257,7 +267,8 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.browse,
-                builder: (context, state) => const BrowseScreen(),
+                builder: (context, state) =>
+                    desktop ? desktopBrowseScreen() : const BrowseScreen(),
                 routes: [
                   GoRoute(
                     path: 'collection',
@@ -406,6 +417,8 @@ GoRouter router(Ref ref) {
               ),
             ],
           ),
+          // PL3: Devices (Connect) inside the desktop shell.
+          if (desktop) desktopDevicesBranch(),
         ],
       ),
     ],

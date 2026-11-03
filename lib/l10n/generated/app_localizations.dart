@@ -9836,6 +9836,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'So your phone can reach this PC, Windows Firewall asks to allow KFM. Allow it on private networks only.'**
   String get shareFirewallBody;
+
+  /// PL3: desktop sidebar section for the swipe deck (sorting photos).
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get desktopNavSort;
+
+  /// PL3: desktop sidebar section for Connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get desktopNavDevices;
+
+  /// PL3: sidebar header above folders.
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get desktopSidebarPlaces;
+
+  /// PL3: sidebar header above favorites and tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get desktopSidebarCollections;
+
+  /// PL3: sidebar entry for favorite files.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get desktopFavorites;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse sidebar'**
+  String get desktopSidebarCollapse;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand sidebar'**
+  String get desktopSidebarExpand;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'No folders yet'**
+  String get desktopNoPlaces;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a file to see its details'**
+  String get desktopDetailsNothing;
+
+  /// PL3: a tooltip/hint with its keyboard shortcut, e.g. 'Undo (Ctrl+Z)'.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({keys})'**
+  String desktopShortcutHint(String label, String keys);
+
+  /// PL3: status bar item count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String desktopStatusItems(int count);
+
+  /// PL3: status bar selection count and total size.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected · {size}'**
+  String desktopStatusSelected(int count, String size);
 }
 
 class _AppLocalizationsDelegate
