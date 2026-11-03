@@ -41,3 +41,16 @@ Future<Set<String>> readDetachedRoots(
   if (indexed.isEmpty) return const {};
   return detachedRoots(indexed, await volumes.list());
 }
+
+/// U1: roots of the mounted removable volumes reached by path (API 30+;
+/// with All files access, which the walker checks itself). Full scans walk
+/// them next to internal storage; below API 30 these volumes are SAF-only.
+Future<List<String>> readDirectPathRemovableRoots(
+  VolumesPlatform volumes,
+) async {
+  if (await volumes.sdkInt() < 30) return const [];
+  return [
+    for (final v in await volumes.list())
+      if (!v.isPrimary && v.isMounted && v.uuid != null) ?v.rootPath,
+  ];
+}

@@ -8,6 +8,7 @@ import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/files/io/fs_walker.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/files/trash_types.dart';
 
@@ -516,6 +517,75 @@ void main() {
       });
     });
   });
+  group('U1 removable volumes in root-less scans', () {
+    // Regression (2026-11-03, API 37 emulator): an APK on the SD card was
+    // never indexed, so its place listed "No files here" even after a full
+    // rescan: the walker only walked internal storage.
+    late List<WalkOptions> walks;
+
+    AndroidFileSource create({
+      bool canSeeAll = true,
+      List<String> removable = const ['/storage/0000-0000/'],
+    }) {
+      walks = [];
+      _mockChannel((call) async => <Object?>[]);
+      final source = AndroidFileSource(
+        channel: FilesChannel(),
+        canSeeAllFiles: () => canSeeAll,
+        removableRoots: () async => removable,
+        walker: (o) {
+          walks.add(o);
+          return Stream.value([
+            FileRef(
+              id: 'path:${o.root}/x.apk',
+              uri: 'file://${o.root}/x.apk',
+              name: 'x.apk',
+              kind: FileKind.other,
+              sizeBytes: 1,
+              modifiedAt: DateTime.utc(2026),
+              folderPath: o.root,
+              origin: o.origin,
+            ),
+          ]);
+        },
+      );
+      addTearDown(source.dispose);
+      return source;
+    }
+
+    test(
+      'a full scan walks internal storage, then each mounted card',
+      () async {
+        final files = [
+          for (final page in await create().scan().toList()) ...page,
+        ];
+        expect(walks.map((w) => w.root), [
+          '/storage/emulated/0',
+          '/storage/0000-0000',
+        ]);
+        expect(walks.last.origin, FileOrigin.external);
+        expect(
+          files.map((f) => f.id),
+          contains('path:/storage/0000-0000/x.apk'),
+        );
+      },
+    );
+
+    test('a scan of one folder walks only that folder', () async {
+      await create()
+          .scan(
+            query: const FileQuery(rootPath: '/storage/emulated/0/Download'),
+          )
+          .toList();
+      expect(walks.map((w) => w.root), ['/storage/emulated/0/Download']);
+    });
+
+    test('without All files access nothing is walked', () async {
+      await create(canSeeAll: false).scan().toList();
+      expect(walks, isEmpty);
+    });
+  });
+
   group('B4 folder tools', () {
     test('statPath prefers the MediaStore row (ms: ref)', () async {
       _mockChannel(

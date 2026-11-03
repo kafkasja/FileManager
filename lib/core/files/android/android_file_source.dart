@@ -35,7 +35,17 @@ class AndroidFileSource implements FileSource {
     this._pendingFolder,
     this._folderExists = _dirExists,
     this._tempLedger,
+    this._removableRoots = _noRoots,
   });
+
+  static Future<List<String>> _noRoots() async => const [];
+
+  /// U1: roots of mounted removable volumes reached by path (SD card, USB
+  /// drive with All files access on API 30+). A scan without a root walks
+  /// them after [primaryRoot]: MediaStore covers their media, but their
+  /// other files exist only for the walker. Read per scan (cards come and
+  /// go).
+  final Future<List<String>> Function() _removableRoots;
 
   /// B4: lists `path:` copies in flight so the next start can remove a
   /// half-written one. Null = no ledger (tests); copies still use temp names.
@@ -347,19 +357,28 @@ class AndroidFileSource implements FileSource {
       (k) => !_mediaKinds.contains(k) && query.wants(k),
     );
     if (wantsOther && _canSeeAllFiles() || walkHidden) {
-      yield* _walker(
-        WalkOptions(
-          root: root ?? primaryRoot,
-          recursive: query.recursive,
-          includeHidden: query.includeHidden,
-          kinds: query.kinds,
-          skipIndexedKinds: _mediaKinds,
-          modifiedAfter: query.modifiedAfter,
-          minSizeBytes: query.minSizeBytes,
-          pageSize: query.pageSize,
-          origin: _originOf(root ?? primaryRoot),
-        ),
-      );
+      final walkRoots = root != null
+          ? [root]
+          : [
+              primaryRoot,
+              for (final r in await _removableRoots())
+                if (_trimSlash(r) case final r when r != primaryRoot) r,
+            ];
+      for (final walkRoot in walkRoots) {
+        yield* _walker(
+          WalkOptions(
+            root: walkRoot,
+            recursive: query.recursive,
+            includeHidden: query.includeHidden,
+            kinds: query.kinds,
+            skipIndexedKinds: _mediaKinds,
+            modifiedAfter: query.modifiedAfter,
+            minSizeBytes: query.minSizeBytes,
+            pageSize: query.pageSize,
+            origin: _originOf(walkRoot),
+          ),
+        );
+      }
     }
   }
 
