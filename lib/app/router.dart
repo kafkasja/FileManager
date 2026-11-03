@@ -373,7 +373,8 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.trash,
-                builder: (context, state) => const TrashScreen(),
+                builder: (context, state) =>
+                    desktop ? desktopTrashScreen() : const TrashScreen(),
               ),
             ],
           ),
@@ -381,7 +382,8 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.settings,
-                builder: (context, state) => const SettingsScreen(),
+                builder: (context, state) =>
+                    desktop ? desktopSettingsScreen() : const SettingsScreen(),
                 routes: [
                   GoRoute(
                     path: 'swipes',

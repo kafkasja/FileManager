@@ -7225,4 +7225,159 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get desktopBrowseNothingIndexed =>
       'KFM heeft hier nog geen bestanden gevonden';
+
+  @override
+  String desktopDragCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden',
+      one: '1 bestand',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String desktopDropMoveTo(String name) {
+    return 'Verplaatsen naar $name';
+  }
+
+  @override
+  String desktopDropCopyTo(String name) {
+    return 'Kopiëren naar $name';
+  }
+
+  @override
+  String desktopDropTag(String name) {
+    return 'Tag $name toevoegen';
+  }
+
+  @override
+  String get desktopDropFavorite => 'Toevoegen aan favorieten';
+
+  @override
+  String get desktopDropSend => 'Naar een apparaat sturen';
+
+  @override
+  String get desktopDropTrash => 'Naar prullenbak';
+
+  @override
+  String get desktopDropCtrlHint => 'Houd Ctrl ingedrukt om te kopiëren';
+
+  @override
+  String desktopDropFoldersSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mappen overgeslagen: sleep de bestanden erin',
+      one: '1 map overgeslagen: sleep de bestanden erin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopDropNothing => 'Niets om hierheen te kopiëren';
+
+  @override
+  String desktopDragOffer(String files, String action) {
+    return '$files · $action';
+  }
+
+  @override
+  String desktopTrashAll(int count) {
+    return 'Alles ($count)';
+  }
+
+  @override
+  String desktopTrashGroup(String name, String summary) {
+    return '$name · $summary';
+  }
+
+  @override
+  String get desktopTrashRecycleBin => 'Prullenbak';
+
+  @override
+  String get desktopTrashOriginalLocation => 'Oorspronkelijke locatie';
+
+  @override
+  String get desktopTrashDeleted => 'Verwijderd op';
+
+  @override
+  String get desktopTrashDaysLeft => 'Bewaard voor';
+
+  @override
+  String get desktopTrashWhere => 'Waar';
+
+  @override
+  String get desktopRefresh => 'Vernieuwen';
+
+  @override
+  String get desktopDevicesTitle => 'Een telefoon of andere pc verbinden';
+
+  @override
+  String get desktopDevicesHint =>
+      'Beide apparaten hebben KFM en hetzelfde wifi-netwerk nodig. Er wordt niets gedeeld tot je hieronder kiest.';
+
+  @override
+  String get desktopDevicesShareHint =>
+      'Toon een QR-code en een code voor je telefoon';
+
+  @override
+  String get desktopDevicesConnectHint =>
+      'Verbind met een apparaat dat een code toont';
+
+  @override
+  String get desktopCompare => 'Vergelijken';
+
+  @override
+  String desktopCompareTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto\'s',
+      one: '1 foto',
+    );
+    return '$_temp0 vergelijken';
+  }
+
+  @override
+  String get desktopCompareHint =>
+      'Cijfertoetsen wisselen Bewaren / Verwijderen · zoomen en schuiven doet alle foto\'s tegelijk';
+
+  @override
+  String desktopCompareRemove(int count) {
+    return '$count verwijderen';
+  }
+
+  @override
+  String get desktopCompareKeep => 'Bewaren';
+
+  @override
+  String get desktopCompareRemoveOne => 'Verwijderen';
+
+  @override
+  String desktopCompareFacts(String size, String resolution, String date) {
+    return '$size · $resolution · $date';
+  }
+
+  @override
+  String get desktopZoomIn => 'Inzoomen';
+
+  @override
+  String get desktopZoomOut => 'Uitzoomen';
+
+  @override
+  String get desktopZoomFit => 'Passend';
+
+  @override
+  String get desktopSortFavorite => 'Favoriet';
+
+  @override
+  String get desktopSortTag => 'Tag…';
+
+  @override
+  String get backupSettingDesktopBrowseLayout => 'Weergave van Bladeren op pc';
+
+  @override
+  String get backupSettingDesktopBrowseSort => 'Sortering van Bladeren op pc';
 }

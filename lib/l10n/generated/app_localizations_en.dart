@@ -7161,4 +7161,159 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopBrowseNothingIndexed => 'KFM hasn\'t found files here yet';
+
+  @override
+  String desktopDragCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String desktopDropMoveTo(String name) {
+    return 'Move to $name';
+  }
+
+  @override
+  String desktopDropCopyTo(String name) {
+    return 'Copy to $name';
+  }
+
+  @override
+  String desktopDropTag(String name) {
+    return 'Add tag $name';
+  }
+
+  @override
+  String get desktopDropFavorite => 'Add to Favorites';
+
+  @override
+  String get desktopDropSend => 'Send to a device';
+
+  @override
+  String get desktopDropTrash => 'Move to Trash';
+
+  @override
+  String get desktopDropCtrlHint => 'Hold Ctrl to copy';
+
+  @override
+  String desktopDropFoldersSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders were skipped: drop the files inside them',
+      one: '1 folder was skipped: drop the files inside it',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopDropNothing => 'Nothing to copy here';
+
+  @override
+  String desktopDragOffer(String files, String action) {
+    return '$files · $action';
+  }
+
+  @override
+  String desktopTrashAll(int count) {
+    return 'All ($count)';
+  }
+
+  @override
+  String desktopTrashGroup(String name, String summary) {
+    return '$name · $summary';
+  }
+
+  @override
+  String get desktopTrashRecycleBin => 'Recycle Bin';
+
+  @override
+  String get desktopTrashOriginalLocation => 'Original location';
+
+  @override
+  String get desktopTrashDeleted => 'Date deleted';
+
+  @override
+  String get desktopTrashDaysLeft => 'Kept for';
+
+  @override
+  String get desktopTrashWhere => 'Where';
+
+  @override
+  String get desktopRefresh => 'Refresh';
+
+  @override
+  String get desktopDevicesTitle => 'Connect a phone or another PC';
+
+  @override
+  String get desktopDevicesHint =>
+      'Both devices need KFM and the same Wi-Fi. Nothing is shared until you choose below.';
+
+  @override
+  String get desktopDevicesShareHint =>
+      'Show a QR code and a code for your phone';
+
+  @override
+  String get desktopDevicesConnectHint =>
+      'Connect to a device that shows a code';
+
+  @override
+  String get desktopCompare => 'Compare';
+
+  @override
+  String desktopCompareTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '1 photo',
+    );
+    return 'Compare $_temp0';
+  }
+
+  @override
+  String get desktopCompareHint =>
+      'Number keys switch Keep / Remove · zoom and pan move all photos together';
+
+  @override
+  String desktopCompareRemove(int count) {
+    return 'Remove $count';
+  }
+
+  @override
+  String get desktopCompareKeep => 'Keep';
+
+  @override
+  String get desktopCompareRemoveOne => 'Remove';
+
+  @override
+  String desktopCompareFacts(String size, String resolution, String date) {
+    return '$size · $resolution · $date';
+  }
+
+  @override
+  String get desktopZoomIn => 'Zoom in';
+
+  @override
+  String get desktopZoomOut => 'Zoom out';
+
+  @override
+  String get desktopZoomFit => 'Fit';
+
+  @override
+  String get desktopSortFavorite => 'Favorite';
+
+  @override
+  String get desktopSortTag => 'Tag…';
+
+  @override
+  String get backupSettingDesktopBrowseLayout => 'PC Browse view';
+
+  @override
+  String get backupSettingDesktopBrowseSort => 'PC Browse sort';
 }

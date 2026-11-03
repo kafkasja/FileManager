@@ -25,6 +25,12 @@ abstract final class DesktopKeys {
   );
   static const rename = SingleActivator(LogicalKeyboardKey.f2);
   static const keep = SingleActivator(LogicalKeyboardKey.keyK);
+  static const favorite = SingleActivator(LogicalKeyboardKey.keyF);
+  static const tag = SingleActivator(LogicalKeyboardKey.keyT);
+  static const restore = SingleActivator(
+    LogicalKeyboardKey.keyR,
+    control: true,
+  );
 
   /// "Ctrl+Z", "Shift+Del", "F2"… (key names as Windows prints them; the
   /// same in every language KFM ships).

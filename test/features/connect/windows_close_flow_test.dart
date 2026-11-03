@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Rect;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/platform/windows/desktop_shell.dart';
@@ -34,6 +35,15 @@ class FakeDesktopShell implements DesktopShell {
 
   @override
   Future<void> removeTray() async => calls.add('untray');
+
+  @override
+  Future<Rect> bounds() async => Rect.zero;
+
+  @override
+  Future<void> setBounds(Rect bounds) async => calls.add('bounds');
+
+  @override
+  Stream<void> get boundsChanges => const Stream.empty();
 }
 
 void main() {

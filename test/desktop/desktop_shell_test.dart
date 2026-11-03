@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/app_scaffold.dart';
+import 'package:kfm/desktop/connect/desktop_devices_screen.dart';
+import 'package:kfm/desktop/settings/desktop_settings_screen.dart';
 import 'package:kfm/desktop/shell/desktop_app_shell.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart';
-import 'package:kfm/features/connect/ui/connect_screen.dart';
-import 'package:kfm/features/settings/ui/settings_screen.dart';
-import 'package:kfm/features/trash/ui/trash_screen.dart';
+import 'package:kfm/desktop/trash/desktop_trash_screen.dart';
 
 import '../helpers/pump_app.dart';
 import 'desktop_helpers.dart';
@@ -37,13 +37,13 @@ void main() {
     await pumpDesktopApp(tester, files: desktopLibrary(1));
     await tester.tap(find.byKey(const ValueKey('desktop-nav-trash')));
     await tester.pumpAndSettle();
-    expect(find.byType(TrashScreen), findsOneWidget);
+    expect(find.byType(DesktopTrashScreen), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('desktop-nav-devices')));
-    await tester.pumpAndSettle();
-    expect(find.byType(ConnectScreen), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(DesktopDevicesScreen), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('desktop-nav-settings')));
     await tester.pumpAndSettle();
-    expect(find.byType(SettingsScreen), findsOneWidget);
+    expect(find.byType(DesktopSettingsScreen), findsOneWidget);
   });
 
   testWidgets('details pane toggles by button and Ctrl+I', (tester) async {

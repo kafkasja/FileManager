@@ -10106,6 +10106,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'KFM hasn\'t found files here yet'**
   String get desktopBrowseNothingIndexed;
+
+  /// PL3: label next to the cursor while dragging files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String desktopDragCount(int count);
+
+  /// PL3: drop target hint while dragging (hold Ctrl to copy).
+  ///
+  /// In en, this message translates to:
+  /// **'Move to {name}'**
+  String desktopDropMoveTo(String name);
+
+  /// PL3: drop target hint while dragging.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to {name}'**
+  String desktopDropCopyTo(String name);
+
+  /// PL3: drop target hint over a tag in the sidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag {name}'**
+  String desktopDropTag(String name);
+
+  /// PL3: drop target hint over Favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Favorites'**
+  String get desktopDropFavorite;
+
+  /// PL3: drop target hint over Devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to a device'**
+  String get desktopDropSend;
+
+  /// PL3: drop target hint over Trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get desktopDropTrash;
+
+  /// PL3: second line of the drag hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold Ctrl to copy'**
+  String get desktopDropCtrlHint;
+
+  /// PL3: after dropping folders from Windows Explorer (only files are copied).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder was skipped: drop the files inside it} other{{count} folders were skipped: drop the files inside them}}'**
+  String desktopDropFoldersSkipped(int count);
+
+  /// PL3: dropped items from Explorer could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to copy here'**
+  String get desktopDropNothing;
+
+  /// PL3: drag label, e.g. '3 files · Move to Pictures'.
+  ///
+  /// In en, this message translates to:
+  /// **'{files} · {action}'**
+  String desktopDragOffer(String files, String action);
+
+  /// PL3: Trash filter chip with the item count.
+  ///
+  /// In en, this message translates to:
+  /// **'All ({count})'**
+  String desktopTrashAll(int count);
+
+  /// PL3: Trash filter chip, e.g. 'Recycle Bin · 3 items · 2 MB'.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {summary}'**
+  String desktopTrashGroup(String name, String summary);
+
+  /// PL3: the Windows Recycle Bin (use Windows' own name).
+  ///
+  /// In en, this message translates to:
+  /// **'Recycle Bin'**
+  String get desktopTrashRecycleBin;
+
+  /// PL3: Trash column (as in the Windows Recycle Bin).
+  ///
+  /// In en, this message translates to:
+  /// **'Original location'**
+  String get desktopTrashOriginalLocation;
+
+  /// PL3: Trash column.
+  ///
+  /// In en, this message translates to:
+  /// **'Date deleted'**
+  String get desktopTrashDeleted;
+
+  /// PL3: Trash column with '7 days left' values.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept for'**
+  String get desktopTrashDaysLeft;
+
+  /// PL3: Trash column: Recycle Bin or Pending delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Where'**
+  String get desktopTrashWhere;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get desktopRefresh;
+
+  /// PL3: Devices section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a phone or another PC'**
+  String get desktopDevicesTitle;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Both devices need KFM and the same Wi-Fi. Nothing is shared until you choose below.'**
+  String get desktopDevicesHint;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a QR code and a code for your phone'**
+  String get desktopDevicesShareHint;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a device that shows a code'**
+  String get desktopDevicesConnectHint;
+
+  /// PL3: opens a similar group side by side.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get desktopCompare;
+
+  /// PL3: Compare view title.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare {count, plural, =1{1 photo} other{{count} photos}}'**
+  String desktopCompareTitle(int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Number keys switch Keep / Remove · zoom and pan move all photos together'**
+  String get desktopCompareHint;
+
+  /// PL3: Compare: removes the photos marked Remove (C2 rules, undoable).
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {count}'**
+  String desktopCompareRemove(int count);
+
+  /// PL3: Compare panel state.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get desktopCompareKeep;
+
+  /// PL3: Compare panel state.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get desktopCompareRemoveOne;
+
+  /// PL3: Compare panel subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} · {resolution} · {date}'**
+  String desktopCompareFacts(String size, String resolution, String date);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get desktopZoomIn;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get desktopZoomOut;
+
+  /// PL3: reset zoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit'**
+  String get desktopZoomFit;
+
+  /// PL3: Sort toolbar button (key F): adds the selection to Favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get desktopSortFavorite;
+
+  /// PL3: Sort toolbar button (key T): pick a tag for the selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag…'**
+  String get desktopSortTag;
+
+  /// X6 import preview: the desktop Browse layout setting.
+  ///
+  /// In en, this message translates to:
+  /// **'PC Browse view'**
+  String get backupSettingDesktopBrowseLayout;
+
+  /// X6 import preview: the desktop Browse sort setting.
+  ///
+  /// In en, this message translates to:
+  /// **'PC Browse sort'**
+  String get backupSettingDesktopBrowseSort;
 }
 
 class _AppLocalizationsDelegate

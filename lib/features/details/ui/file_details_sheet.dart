@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -13,6 +14,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/details/data/file_details_repository.dart';
@@ -471,6 +473,12 @@ void openFolderInBrowse(BuildContext context, String folder) {
   final container = ProviderScope.containerOf(context, listen: false);
   final router = GoRouter.of(context);
   Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+  // PL3: the desktop app opens the folder in its Explorer-like Browse.
+  if (container.read(formFactorProvider).isDesktop) {
+    container.read(desktopBrowseControllerProvider.notifier).open(folder);
+    router.go(AppRoutes.browse);
+    return;
+  }
   router.go(AppRoutes.browse);
   WidgetsBinding.instance.addPostFrameCallback((_) {
     container.read(browseViewControllerProvider.notifier)
