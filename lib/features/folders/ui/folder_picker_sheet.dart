@@ -167,7 +167,7 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
   Future<void> _openPlace(StoragePlace place) async {
     final root = place.rootPath;
     if (root == null) return;
-    if (!await ensureSafGrant(context, ref, place)) return;
+    if (await ensurePlaceAccess(context, ref, place) == null) return;
     if (mounted) _open(root);
   }
 

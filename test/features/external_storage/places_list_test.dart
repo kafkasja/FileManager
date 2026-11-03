@@ -98,9 +98,74 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('without All files access: explanation, a subfolder is '
-      'refused, the drive root is kept', (tester) async {
+  testWidgets('U1 (f): API 30+ without All files access explains it, '
+      'opens its page and then the card by path (no SAF picker)', (
+    tester,
+  ) async {
     final volumes = FakeVolumes([internalVolume, sdVolume()]);
+    addTearDown(volumes.close);
+    final trees = FakeSafTrees();
+    final perms = FakePermissionService(
+      grantedAccess.copyWith(allFiles: AllFilesAccess.notGranted),
+    );
+    final app = await pumpApp(
+      tester,
+      files: FakeFileSource()..addFile('$_sd/DCIM/a.jpg'),
+      permissions: perms,
+      overrides: [
+        volumesPlatformProvider.overrideWithValue(volumes),
+        mtpPlatformProvider.overrideWithValue(null),
+        safTreePlatformProvider.overrideWithValue(trees),
+      ],
+    );
+    await _openBrowse(tester);
+
+    // Cancelled: nothing opens, no picker.
+    await tester.tap(find.text('SanDisk SD card'));
+    await tester.pumpAndSettle();
+    expect(find.text('Open SanDisk SD card'), findsOneWidget);
+    expect(find.text('Allow access to SanDisk SD card'), findsNothing);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(perms.calls, isNot(contains('openAllFilesAccessSettings')));
+
+    // Came back without turning it on: told so, still nothing opens.
+    await tester.tap(find.text('SanDisk SD card'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Turn on'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'All files access is still off, so SanDisk SD card can’t be '
+        'opened.',
+      ),
+      findsOneWidget,
+    );
+    expect(app.container.read(browseViewControllerProvider).folder, isNull);
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+
+    // Turned on in the system page: the card opens by path.
+    await tester.tap(find.text('SanDisk SD card'));
+    await tester.pumpAndSettle();
+    perms.current = grantedAccess;
+    await tester.tap(find.text('Turn on'));
+    await tester.pumpAndSettle();
+    expect(
+      perms.calls.where((c) => c == 'openAllFilesAccessSettings'),
+      hasLength(2),
+    );
+    expect(trees.calls, isEmpty);
+    expect(app.container.read(browseViewControllerProvider).folder, _sd);
+    expect(find.byType(PlaceBrowserScreen), findsNothing);
+    // Let the access change's re-scan timers run out.
+    await tester.pump(const Duration(seconds: 31));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('API 29 without All files access: explanation, a subfolder is '
+      'refused, the drive root is kept', (tester) async {
+    final volumes = FakeVolumes([internalVolume, sdVolume()])..sdk = 29;
     addTearDown(volumes.close);
     final trees = FakeSafTrees();
     final app = await pumpApp(

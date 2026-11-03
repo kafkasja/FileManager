@@ -7461,6 +7461,24 @@ abstract class AppLocalizations {
   /// **'Android didn’t keep the access. Try again.'**
   String get externalGrantFailed;
 
+  /// U1 title when an SD card / USB drive can only be opened with All files access (Android 11+ blocks picking a drive's root).
+  ///
+  /// In en, this message translates to:
+  /// **'Open {label}'**
+  String externalAllFilesTitle(String label);
+
+  /// U1 explanation before opening the All files access system page for an SD card / USB drive.
+  ///
+  /// In en, this message translates to:
+  /// **'To open {label}, KFM needs All files access. Android doesn’t let apps choose a whole SD card or USB drive any other way. On the next screen, turn on access for KFM, then come back.'**
+  String externalAllFilesExplain(String label);
+
+  /// U1 snackbar when the user came back from the system page without turning on All files access.
+  ///
+  /// In en, this message translates to:
+  /// **'All files access is still off, so {label} can’t be opened.'**
+  String externalAllFilesStillOff(String label);
+
   /// U1 help shown when a USB stick is plugged in but no storage appears within a few seconds.
   ///
   /// In en, this message translates to:

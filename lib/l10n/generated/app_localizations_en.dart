@@ -5283,6 +5283,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Android didn’t keep the access. Try again.';
 
   @override
+  String externalAllFilesTitle(String label) {
+    return 'Open $label';
+  }
+
+  @override
+  String externalAllFilesExplain(String label) {
+    return 'To open $label, KFM needs All files access. Android doesn’t let apps choose a whole SD card or USB drive any other way. On the next screen, turn on access for KFM, then come back.';
+  }
+
+  @override
+  String externalAllFilesStillOff(String label) {
+    return 'All files access is still off, so $label can’t be opened.';
+  }
+
+  @override
   String get externalFormatHelp =>
       'The USB drive didn’t open. Android reads FAT32 and exFAT drives; NTFS drives often don’t work. Reformat it on a computer or try another drive.';
 
