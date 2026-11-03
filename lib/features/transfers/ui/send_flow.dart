@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -114,10 +115,9 @@ Future<void> startSend(
   List<FileRef> files,
 ) async {
   if (files.isEmpty) return;
-  final target = await showModalBottomSheet<_SendTarget>(
+  final target = await showAdaptiveSheet<_SendTarget>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => _SendDeviceSheet(count: files.length),
   );
   if (target == null || !context.mounted) return;

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 
 /// Picks one of the tags on [fileIds] (with how many of them have it) to
 /// remove (TASK-B9). Null when dismissed.
 Future<int?> showTagRemoveSheet(BuildContext context, List<String> fileIds) =>
-    showModalBottomSheet<int>(
+    showAdaptiveSheet<int>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => _TagRemoveSheet(fileIds: fileIds),
     );
 

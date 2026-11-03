@@ -15,6 +15,7 @@ import 'package:kfm/desktop/shell/desktop_status_bar.dart';
 import 'package:kfm/desktop/shell/window_memory.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
@@ -254,7 +255,7 @@ class _TopBar extends ConsumerWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     return SizedBox(
-      height: 52,
+      height: scaledExtent(context, 52),
       child: Padding(
         padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
         child: Row(
@@ -268,7 +269,7 @@ class _TopBar extends ConsumerWidget {
             ),
             SizedBox(
               width: 300,
-              height: 36,
+              height: scaledExtent(context, 36),
               child: TextField(
                 key: const ValueKey('desktop-search'),
                 controller: search,

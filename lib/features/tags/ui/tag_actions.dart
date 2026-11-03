@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
@@ -197,9 +198,8 @@ final List<SelectionAction> tagSelectionActions = [
     icon: Icons.label_outline,
     run: (context, ref, ids) async {
       final l10n = context.l10n;
-      final choice = await showModalBottomSheet<_SelectionTagChoice>(
+      final choice = await showAdaptiveSheet<_SelectionTagChoice>(
         context: context,
-        showDragHandle: true,
         builder: (context) => SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -14,6 +14,7 @@ import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
@@ -615,7 +616,7 @@ class _FolderTile extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         SizedBox(
-          height: 32,
+          height: scaledExtent(context, 32),
           child: Text(
             entry.name,
             maxLines: 2,
@@ -652,7 +653,7 @@ class _Breadcrumb extends StatelessWidget {
     }
     final theme = Theme.of(context);
     return Container(
-      height: 34,
+      height: scaledExtent(context, 34),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),

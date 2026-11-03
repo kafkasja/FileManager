@@ -28,9 +28,17 @@ ImageProvider<Object> displayImageProvider(
 /// image fading in over it. Undecodable files keep the placeholder and can
 /// still be swiped. Videos show their frame + a play icon (S5 plays them).
 class MediaView extends ConsumerWidget {
-  const new({required this.file, this.active = true, super.key});
+  const new({
+    required this.file,
+    this.active = true,
+    this.desktopVideoControls = false,
+    super.key,
+  });
 
   final FileRef file;
+
+  /// PL3 Quick look: videos get the desktop control bar.
+  final bool desktopVideoControls;
 
   /// Videos play only on the current card (S5); others are just prepared.
   final bool active;
@@ -59,7 +67,11 @@ class MediaView extends ConsumerWidget {
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             if (file.kind == FileKind.video)
-              VideoSurface(file: file, active: active),
+              VideoSurface(
+                file: file,
+                active: active,
+                desktopControls: desktopVideoControls,
+              ),
           ],
         );
       },

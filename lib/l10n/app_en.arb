@@ -4257,5 +4257,19 @@
   "backupSettingDesktopBrowseLayout": "PC Browse view",
   "@backupSettingDesktopBrowseLayout": {"description": "X6 import preview: the desktop Browse layout setting."},
   "backupSettingDesktopBrowseSort": "PC Browse sort",
-  "@backupSettingDesktopBrowseSort": {"description": "X6 import preview: the desktop Browse sort setting."}
+  "@backupSettingDesktopBrowseSort": {"description": "X6 import preview: the desktop Browse sort setting."},
+  "desktopSortPreset": "Preset: {name}",
+  "@desktopSortPreset": {"description": "PL3: desktop Sort presets dropdown button; name = the active preset (or Basic).", "placeholders": {"name": {"type": "String"}}},
+  "desktopSortManagePresets": "Manage presets…",
+  "@desktopSortManagePresets": {"description": "PL3: last entry of the desktop Sort presets dropdown."},
+  "desktopSortSetup": "Sort setup…",
+  "@desktopSortSetup": {"description": "PL3: desktop Sort button that opens the directions/filter/extras setup as a dialog."},
+  "videoPlay": "Play",
+  "@videoPlay": {"description": "PL3 Quick look video bar: play button tooltip."},
+  "videoPause": "Pause",
+  "@videoPause": {"description": "PL3 Quick look video bar: pause button tooltip."},
+  "videoSoundOn": "Turn sound on",
+  "@videoSoundOn": {"description": "PL3 Quick look video bar: sound button tooltip while muted."},
+  "videoSoundOff": "Turn sound off",
+  "@videoSoundOff": {"description": "PL3 Quick look video bar: sound button tooltip while sound is on."}
 }

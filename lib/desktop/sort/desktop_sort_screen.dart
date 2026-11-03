@@ -12,6 +12,7 @@ import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
 import 'package:kfm/desktop/sort/sort_history.dart';
+import 'package:kfm/desktop/sort/sort_setup_bar.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
@@ -29,7 +30,6 @@ import 'package:kfm/features/swipe/ui/swipe_action_bar.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
 import 'package:kfm/features/swipe/ui/swipe_finish_flow.dart';
-import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_bar.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/tags/ui/tag_picker_sheet.dart';
@@ -356,8 +356,8 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
       child: Column(
         children: [
           SwipeSourceBar(deck: deck),
-          // S6: preset, directions, filter (the phone's strip for now).
-          SwipeSetupStrip(deck: deck),
+          // S6 on the desktop: presets dropdown, filter, setup dialog.
+          SortSetupBar(deck: deck),
           _Toolbar(
             deck: deck,
             entries: entries,

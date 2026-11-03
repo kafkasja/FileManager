@@ -244,9 +244,8 @@ GoRouter router(Ref ref) {
       // indexedStack keeps every tab alive: switching tabs never loses
       // swipe progress.
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => desktop
-            ? desktopShell(shell)
-            : AppScaffold(shell: shell),
+        builder: (context, state, shell) =>
+            desktop ? desktopShell(shell) : AppScaffold(shell: shell),
         branches: [
           StatefulShellBranch(
             routes: [

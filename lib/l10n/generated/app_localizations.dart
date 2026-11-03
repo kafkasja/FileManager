@@ -10328,6 +10328,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PC Browse sort'**
   String get backupSettingDesktopBrowseSort;
+
+  /// PL3: desktop Sort presets dropdown button; name = the active preset (or Basic).
+  ///
+  /// In en, this message translates to:
+  /// **'Preset: {name}'**
+  String desktopSortPreset(String name);
+
+  /// PL3: last entry of the desktop Sort presets dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage presets…'**
+  String get desktopSortManagePresets;
+
+  /// PL3: desktop Sort button that opens the directions/filter/extras setup as a dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort setup…'**
+  String get desktopSortSetup;
+
+  /// PL3 Quick look video bar: play button tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get videoPlay;
+
+  /// PL3 Quick look video bar: pause button tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get videoPause;
+
+  /// PL3 Quick look video bar: sound button tooltip while muted.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn sound on'**
+  String get videoSoundOn;
+
+  /// PL3 Quick look video bar: sound button tooltip while sound is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn sound off'**
+  String get videoSoundOff;
 }
 
 class _AppLocalizationsDelegate

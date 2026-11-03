@@ -20,8 +20,7 @@ enum FormFactor {
 /// override it (the test config runs the app as Android on any host).
 @Riverpod(keepAlive: true)
 FormFactor formFactor(Ref ref) =>
-    isWindowsHost ||
-        (!_inTests && (Platform.isMacOS || Platform.isLinux))
+    isWindowsHost || (!_inTests && (Platform.isMacOS || Platform.isLinux))
     ? FormFactor.desktop
     : FormFactor.mobile;
 

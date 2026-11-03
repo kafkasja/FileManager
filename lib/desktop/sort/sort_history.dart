@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/swipe/domain/action_label.dart';
@@ -99,7 +100,7 @@ class SortHistoryPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            height: 44,
+            height: scaledExtent(context, 44),
             child: Row(
               children: [
                 const SizedBox(width: 16),

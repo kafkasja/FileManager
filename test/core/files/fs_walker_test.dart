@@ -144,7 +144,10 @@ void main() {
     await touch('cs/bin/Debug/app.dll');
     await touch('notes/build/plan.pdf');
     final skipped = await names(WalkOptions(root: root, skipBuildOutput: true));
-    expect(skipped, containsAll(['proj/lib/main.dart', 'notes/build/plan.pdf']));
+    expect(
+      skipped,
+      containsAll(['proj/lib/main.dart', 'notes/build/plan.pdf']),
+    );
     expect(skipped.where((p) => p.contains('build/app')), isEmpty);
     expect(skipped.where((p) => p.contains('node_modules')), isEmpty);
     expect(skipped.where((p) => p.contains('cs/bin')), isEmpty);

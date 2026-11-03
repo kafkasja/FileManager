@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/tags/domain/tag.dart';
 
 /// Picks (or creates) a tag (TASK-P2; B9 reuses it). Returns its id, or null
 /// when dismissed.
-Future<int?> showTagPicker(BuildContext context) => showModalBottomSheet<int>(
+/// A dialog on the desktop (PL3).
+Future<int?> showTagPicker(BuildContext context) => showAdaptiveSheet<int>(
   context: context,
   isScrollControlled: true,
-  showDragHandle: true,
+  maxDialogWidth: 400,
   builder: (_) => const _TagPicker(),
 );
 
@@ -24,11 +26,10 @@ class _TagPicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final tags = ref.watch(tagsByIdProvider).value?.values.toList() ?? const [];
-    return DraggableScrollableSheet(
-      expand: false,
-      maxChildSize: 0.9,
-      builder: (context, scroll) => ListView(
+    return AdaptiveScrollSheet(
+      builder: (context, scroll, {required shrinkWrap}) => ListView(
         controller: scroll,
+        shrinkWrap: shrinkWrap,
         children: [
           Padding(
             padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),

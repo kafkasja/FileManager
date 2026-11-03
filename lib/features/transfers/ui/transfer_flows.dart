@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -297,9 +298,8 @@ Future<SwipeAction?> pickSendToDeviceAction(BuildContext context) async {
     _snack(context, l10n.transferNoRememberedDevices);
     return null;
   }
-  final device = await showModalBottomSheet<KnownDevice>(
+  final device = await showAdaptiveSheet<KnownDevice>(
     context: context,
-    showDragHandle: true,
     builder: (context) => SafeArea(
       child: ListView(
         shrinkWrap: true,

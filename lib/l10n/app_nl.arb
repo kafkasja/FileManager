@@ -1703,5 +1703,12 @@
   "desktopSortFavorite": "Favoriet",
   "desktopSortTag": "Tag…",
   "backupSettingDesktopBrowseLayout": "Weergave van Bladeren op pc",
-  "backupSettingDesktopBrowseSort": "Sortering van Bladeren op pc"
+  "backupSettingDesktopBrowseSort": "Sortering van Bladeren op pc",
+  "desktopSortPreset": "Voorinstelling: {name}",
+  "desktopSortManagePresets": "Voorinstellingen beheren…",
+  "desktopSortSetup": "Sorteerinstellingen…",
+  "videoPlay": "Afspelen",
+  "videoPause": "Pauzeren",
+  "videoSoundOn": "Geluid aan",
+  "videoSoundOff": "Geluid uit"
 }

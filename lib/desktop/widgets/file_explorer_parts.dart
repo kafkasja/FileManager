@@ -4,6 +4,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
@@ -43,7 +44,7 @@ class FileTileBody extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         SizedBox(
-          height: 32,
+          height: scaledExtent(context, 32),
           child: Text(
             file.name,
             maxLines: 2,

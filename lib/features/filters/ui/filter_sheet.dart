@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -23,10 +24,9 @@ Future<void> showFilterSheet(
   BuildContext context, {
   FileFilter? initial,
   void Function(FileFilter filter)? onSave,
-}) => showModalBottomSheet<void>(
+}) => showAdaptiveSheet<void>(
   context: context,
   isScrollControlled: true,
-  showDragHandle: true,
   builder: (_) => _FilterSheet(initial: initial, onSave: onSave),
 );
 
@@ -154,11 +154,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
         f.cloud != CloudFilterMode.any ||
         (ref.watch(cloudHasUploadsProvider).value ?? false);
     final problem = f.problem;
-    return DraggableScrollableSheet(
-      expand: false,
+    return AdaptiveScrollSheet(
       initialChildSize: 0.85,
       maxChildSize: 0.95,
-      builder: (context, scroll) => Column(
+      builder: (context, scroll, {required shrinkWrap}) => Column(
         children: [
           Expanded(
             child: ListView(

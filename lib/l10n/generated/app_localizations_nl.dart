@@ -7380,4 +7380,27 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupSettingDesktopBrowseSort => 'Sortering van Bladeren op pc';
+
+  @override
+  String desktopSortPreset(String name) {
+    return 'Voorinstelling: $name';
+  }
+
+  @override
+  String get desktopSortManagePresets => 'Voorinstellingen beheren…';
+
+  @override
+  String get desktopSortSetup => 'Sorteerinstellingen…';
+
+  @override
+  String get videoPlay => 'Afspelen';
+
+  @override
+  String get videoPause => 'Pauzeren';
+
+  @override
+  String get videoSoundOn => 'Geluid aan';
+
+  @override
+  String get videoSoundOff => 'Geluid uit';
 }

@@ -7316,4 +7316,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupSettingDesktopBrowseSort => 'PC Browse sort';
+
+  @override
+  String desktopSortPreset(String name) {
+    return 'Preset: $name';
+  }
+
+  @override
+  String get desktopSortManagePresets => 'Manage presets…';
+
+  @override
+  String get desktopSortSetup => 'Sort setup…';
+
+  @override
+  String get videoPlay => 'Play';
+
+  @override
+  String get videoPause => 'Pause';
+
+  @override
+  String get videoSoundOn => 'Turn sound on';
+
+  @override
+  String get videoSoundOff => 'Turn sound off';
 }

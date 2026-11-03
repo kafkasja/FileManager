@@ -7326,4 +7326,27 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupSettingDesktopBrowseSort => 'PC\'de Gözat sıralaması';
+
+  @override
+  String desktopSortPreset(String name) {
+    return 'Hazır ayar: $name';
+  }
+
+  @override
+  String get desktopSortManagePresets => 'Hazır ayarları yönet…';
+
+  @override
+  String get desktopSortSetup => 'Sıralama ayarları…';
+
+  @override
+  String get videoPlay => 'Oynat';
+
+  @override
+  String get videoPause => 'Duraklat';
+
+  @override
+  String get videoSoundOn => 'Sesi aç';
+
+  @override
+  String get videoSoundOff => 'Sesi kapat';
 }

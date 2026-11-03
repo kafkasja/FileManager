@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 
 /// How an [ExplorerView] lays out its items (TASK-PL3: Large icons / Grid
@@ -139,20 +140,23 @@ class _Geometry {
     required this.tileWidth,
     required this.rowExtent,
     required this.width,
+    this.header = 0,
   });
 
-  factory of(ExplorerLayout layout, double width) {
+  /// [scale]: `desktopTextScale` (L5): rows, header and labels grow.
+  factory of(ExplorerLayout layout, double width, {double scale = 1}) {
     if (layout == ExplorerLayout.details) {
       return _Geometry(
         layout: layout,
         cross: 1,
         tileWidth: width,
-        rowExtent: ExplorerView.rowHeight,
+        rowExtent: ExplorerView.rowHeight * scale,
         width: width,
+        header: ExplorerView.headerHeight * scale,
       );
     }
     final extent = layout == ExplorerLayout.largeIcons ? 184.0 : 124.0;
-    final label = layout == ExplorerLayout.largeIcons ? 44.0 : 40.0;
+    final label = (layout == ExplorerLayout.largeIcons ? 44.0 : 40.0) * scale;
     const pad = ExplorerView.padding;
     const gap = ExplorerView.gap;
     final double inner = math.max(1, width - 2 * pad);
@@ -172,6 +176,9 @@ class _Geometry {
   final double tileWidth;
   final double rowExtent;
   final double width;
+
+  /// The Details column header's height (0 for the icon layouts).
+  final double header;
 
   bool get details => layout == ExplorerLayout.details;
 
@@ -220,6 +227,19 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   // Type-to-find.
   String _typed = '';
   Timer? _typedReset;
+
+  /// Column widths the user dragged (unscaled; by column id). Kept while
+  /// the view lives (desktop screens stay alive in the shell).
+  final Map<String, double> _widths = {};
+
+  /// L5 `desktopTextScale`, set each build.
+  double _scale = 1;
+
+  static const _minColumn = 48.0;
+  static const _maxColumn = 800.0;
+
+  double _columnWidth(ExplorerColumn<T> c, double scale) =>
+      (_widths[c.id] ?? c.width) * scale;
 
   List<String> get _order => [for (final i in widget.items) widget.idOf(i)];
 
@@ -375,7 +395,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   }
 
   Offset _content(Offset local) {
-    final header = (_geo?.details ?? false) ? ExplorerView.headerHeight : 0.0;
+    final header = _geo?.header ?? 0.0;
     final offset = _scroll.hasClients ? _scroll.offset : 0.0;
     return Offset(local.dx, local.dy - header + offset);
   }
@@ -391,7 +411,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
       return;
     }
     if (e.buttons & kPrimaryMouseButton == 0) return;
-    final header = (_geo?.details ?? false) ? ExplorerView.headerHeight : 0.0;
+    final header = _geo?.header ?? 0.0;
     if (e.localPosition.dy < header) return; // column headers
     final ctrl = HardwareKeyboard.instance.isControlPressed;
     _bandBase = ctrl ? _s.ids : const {};
@@ -552,8 +572,12 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
       onKeyEvent: _onKey,
       child: LayoutBuilder(
         builder: (context, box) {
-          final geo = _geo = _Geometry.of(widget.layout, box.maxWidth);
-          final header = geo.details ? ExplorerView.headerHeight : 0.0;
+          final geo = _geo = _Geometry.of(
+            widget.layout,
+            box.maxWidth,
+            scale: _scale = desktopTextScale(context),
+          );
+          final header = geo.header;
           final band = _bandStart != null && _bandEnd != null
               ? Rect.fromPoints(_bandStart!, _bandEnd!)
               : null;
@@ -695,7 +719,52 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     );
     return c.expand
         ? Expanded(child: padded)
-        : SizedBox(width: c.width, child: padded);
+        : SizedBox(width: _columnWidth(c, _scale), child: padded);
+  }
+
+  /// The drag handle on a fixed column's end edge (Explorer's column
+  /// divider): drag to resize, double-click to reset.
+  Widget _resizable(ExplorerColumn<T> c, Widget cell) {
+    if (c.expand) return cell;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return SizedBox(
+      width: _columnWidth(c, _scale),
+      child: Stack(
+        children: [
+          Positioned.fill(child: Row(children: [cell])),
+          PositionedDirectional(
+            end: 0,
+            top: 0,
+            bottom: 0,
+            width: 8,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.resizeColumn,
+              child: GestureDetector(
+                key: ValueKey('explorer-resize-${c.id}'),
+                behavior: HitTestBehavior.opaque,
+                // The edge follows the pointer from the press on.
+                dragStartBehavior: DragStartBehavior.down,
+                onDoubleTap: () => setState(() => _widths.remove(c.id)),
+                onHorizontalDragUpdate: (d) => setState(() {
+                  final dx = (rtl ? -d.delta.dx : d.delta.dx) / _scale;
+                  _widths[c.id] = ((_widths[c.id] ?? c.width) + dx).clamp(
+                    _minColumn,
+                    _maxColumn,
+                  );
+                }),
+                child: Center(
+                  child: Container(
+                    width: 1,
+                    height: double.infinity,
+                    color: Theme.of(context).dividerColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _header(BuildContext context) {
@@ -704,7 +773,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
       color: theme.colorScheme.onSurfaceVariant,
     );
     return SizedBox(
-      height: ExplorerView.headerHeight,
+      height: _geo?.header ?? ExplorerView.headerHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: theme.dividerColor)),
@@ -712,34 +781,37 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
         child: Row(
           children: [
             for (final c in widget.columns)
-              _cellBox(
+              _resizable(
                 c,
-                InkWell(
-                  key: ValueKey('explorer-column-${c.id}'),
-                  onTap: c.sortable && widget.onSort != null
-                      ? () => widget.onSort!(c.id)
-                      : null,
-                  child: Row(
-                    mainAxisAlignment: c.alignEnd
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          c.label,
-                          style: style,
-                          overflow: TextOverflow.ellipsis,
+                _cellBox(
+                  c,
+                  InkWell(
+                    key: ValueKey('explorer-column-${c.id}'),
+                    onTap: c.sortable && widget.onSort != null
+                        ? () => widget.onSort!(c.id)
+                        : null,
+                    child: Row(
+                      mainAxisAlignment: c.alignEnd
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            c.label,
+                            style: style,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      if (widget.sortColumn == c.id)
-                        Icon(
-                          widget.sortDescending
-                              ? Icons.arrow_downward
-                              : Icons.arrow_upward,
-                          size: 14,
-                          color: style?.color,
-                        ),
-                    ],
+                        if (widget.sortColumn == c.id)
+                          Icon(
+                            widget.sortDescending
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            size: 14,
+                            color: style?.color,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),

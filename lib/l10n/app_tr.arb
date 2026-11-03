@@ -1703,5 +1703,12 @@
   "desktopSortFavorite": "Favori",
   "desktopSortTag": "Etiket…",
   "backupSettingDesktopBrowseLayout": "PC'de Gözat görünümü",
-  "backupSettingDesktopBrowseSort": "PC'de Gözat sıralaması"
+  "backupSettingDesktopBrowseSort": "PC'de Gözat sıralaması",
+  "desktopSortPreset": "Hazır ayar: {name}",
+  "desktopSortManagePresets": "Hazır ayarları yönet…",
+  "desktopSortSetup": "Sıralama ayarları…",
+  "videoPlay": "Oynat",
+  "videoPause": "Duraklat",
+  "videoSoundOn": "Sesi aç",
+  "videoSoundOff": "Sesi kapat"
 }
