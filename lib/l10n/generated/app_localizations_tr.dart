@@ -7001,4 +7001,18 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get settingsStopSharingOnCloseHint =>
       'Aksi halde KFM sistem tepsisinden paylaşmaya devam eder.';
+
+  @override
+  String get sharePublicNetwork => 'Wi-Fi ağınız Ortak olarak ayarlı';
+
+  @override
+  String get sharePublicNetworkHint =>
+      'Paylaşmak için Özel olarak ayarlayın. Windows Ayarları → Ağ ve internet → Wi-Fi → ağınız → Özel ağ.';
+
+  @override
+  String get shareFirewallTitle => 'Windows güvenlik duvarını soracak';
+
+  @override
+  String get shareFirewallBody =>
+      'Telefonunuzun bu bilgisayara ulaşabilmesi için Windows Güvenlik Duvarı KFM\'ye izin vermenizi isteyecek. Yalnızca özel ağlarda izin verin.';
 }

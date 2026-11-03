@@ -1619,5 +1619,9 @@
   "trayNoticeTitle": "KFM blijft delen",
   "trayNoticeBody": "KFM deelt deze pc nog steeds. Stop het via het pictogram in het systeemvak.",
   "settingsStopSharingOnClose": "Stoppen met delen als het venster sluit",
-  "settingsStopSharingOnCloseHint": "Anders blijft KFM delen vanuit het systeemvak."
+  "settingsStopSharingOnCloseHint": "Anders blijft KFM delen vanuit het systeemvak.",
+  "sharePublicNetwork": "Je wifi staat op Openbaar",
+  "sharePublicNetworkHint": "Zet het op Privé om te delen. Windows-instellingen → Netwerk en internet → Wifi → je netwerk → Particulier netwerk.",
+  "shareFirewallTitle": "Windows vraagt naar de firewall",
+  "shareFirewallBody": "Zodat je telefoon deze pc kan bereiken, vraagt Windows Firewall om KFM toe te staan. Sta het alleen toe op particuliere netwerken."
 }

@@ -7041,4 +7041,18 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get settingsStopSharingOnCloseHint =>
       'Anders blijft KFM delen vanuit het systeemvak.';
+
+  @override
+  String get sharePublicNetwork => 'Je wifi staat op Openbaar';
+
+  @override
+  String get sharePublicNetworkHint =>
+      'Zet het op Privé om te delen. Windows-instellingen → Netwerk en internet → Wifi → je netwerk → Particulier netwerk.';
+
+  @override
+  String get shareFirewallTitle => 'Windows vraagt naar de firewall';
+
+  @override
+  String get shareFirewallBody =>
+      'Zodat je telefoon deze pc kan bereiken, vraagt Windows Firewall om KFM toe te staan. Sta het alleen toe op particuliere netwerken.';
 }

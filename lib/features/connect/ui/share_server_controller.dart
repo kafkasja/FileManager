@@ -162,6 +162,9 @@ class ShareServerController extends _$ShareServerController {
     unawaited(ref.read(offerServiceProvider).start());
     final server = ref.read(shareServerProvider);
     try {
+      // PL1: Public network → error state; firewall explainer, once.
+      await ref.read(windowsShareCheckProvider)?.beforeBind();
+      if (gen != _generation) return;
       final next = await server.start();
       if (gen != _generation) {
         await server.stop();

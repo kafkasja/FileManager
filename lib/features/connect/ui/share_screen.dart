@@ -15,6 +15,7 @@ import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/remote_trash_service.dart';
 import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
+import 'package:kfm/features/connect/data/windows_share_check.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
@@ -45,6 +46,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   late final ScreenAwake _awake;
   late final AcceptGate _gate;
   late final ShareChangeTracker _tracker;
+  WindowsShareCheck? _windowsCheck;
   StreamSubscription<AcceptGateEvent>? _gateSub;
   ProviderSubscription<ShareServerState>? _statusSub;
   ProviderSubscription<RemoteRequestOutcome?>? _outcomeSub;
@@ -60,6 +62,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     _gate = ref.read(acceptGateProvider);
     _gateSub = _gate.events.listen(_onGateEvent);
     _tracker = ref.read(shareChangeTrackerProvider);
+    // PL1: "Allow on private networks only" before the firewall prompt.
+    _windowsCheck = ref.read(windowsShareCheckProvider)
+      ?..explainFirewall = _explainFirewall;
     // N7 live sync: observe changes only while the server runs.
     _statusSub = ref.listenManual(
       shareServerControllerProvider,
@@ -84,8 +89,31 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     });
   }
 
+  Future<void> _explainFirewall() async {
+    if (!mounted) return;
+    final l10n = context.l10n;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.security_outlined),
+        title: Text(l10n.shareFirewallTitle),
+        content: Text(l10n.shareFirewallBody),
+        actions: [
+          FilledButton(
+            autofocus: true,
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    if (_windowsCheck?.explainFirewall == _explainFirewall) {
+      _windowsCheck?.explainFirewall = null;
+    }
     _gateSub?.cancel().ignore();
     _statusSub?.close();
     _outcomeSub?.close();
@@ -273,6 +301,16 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
           state: state,
           receive: widget.receive,
         ),
+        ShareServerStatus.error when state.error is PublicNetworkException =>
+          _Centered(
+            icon: Icons.public_off_outlined,
+            title: l10n.sharePublicNetwork,
+            body: l10n.sharePublicNetworkHint,
+            action: FilledButton(
+              onPressed: () => _controller.startSharing().ignore(),
+              child: Text(l10n.shareRetry),
+            ),
+          ),
         ShareServerStatus.error => _Centered(
           icon: Icons.wifi_off_outlined,
           title: state.error is NoLocalNetworkException

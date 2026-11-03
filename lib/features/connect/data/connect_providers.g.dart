@@ -1526,6 +1526,61 @@ final class LifecycleStopsSharingProvider
 String _$lifecycleStopsSharingHash() =>
     r'87d7f3f8e8c4fa810e7f992a77d7f7f83fe44a81';
 
+/// PL1: Public-network check + firewall explainer before sharing binds on
+/// Windows; null elsewhere.
+
+@ProviderFor(windowsShareCheck)
+final windowsShareCheckProvider = WindowsShareCheckProvider._();
+
+/// PL1: Public-network check + firewall explainer before sharing binds on
+/// Windows; null elsewhere.
+
+final class WindowsShareCheckProvider
+    extends
+        $FunctionalProvider<
+          WindowsShareCheck?,
+          WindowsShareCheck?,
+          WindowsShareCheck?
+        >
+    with $Provider<WindowsShareCheck?> {
+  /// PL1: Public-network check + firewall explainer before sharing binds on
+  /// Windows; null elsewhere.
+  WindowsShareCheckProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'windowsShareCheckProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$windowsShareCheckHash();
+
+  @$internal
+  @override
+  $ProviderElement<WindowsShareCheck?> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  WindowsShareCheck? create(Ref ref) {
+    return windowsShareCheck(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WindowsShareCheck? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WindowsShareCheck?>(value),
+    );
+  }
+}
+
+String _$windowsShareCheckHash() => r'e3fb6db68eb366fcea38c4955aff8c57a650cae3';
+
 /// N5b: Android keeps sharing running in the background behind an ongoing
 /// notification; PL1: Windows behind a tray icon.
 

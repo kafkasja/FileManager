@@ -4089,5 +4089,13 @@
   "settingsStopSharingOnClose": "Stop sharing when the window closes",
   "@settingsStopSharingOnClose": {"description": "PL1: Windows-only switch in Settings → Connect."},
   "settingsStopSharingOnCloseHint": "Otherwise KFM keeps sharing from the tray icon.",
-  "@settingsStopSharingOnCloseHint": {"description": "PL1: subtitle of the stop-sharing-on-close switch."}
+  "@settingsStopSharingOnCloseHint": {"description": "PL1: subtitle of the stop-sharing-on-close switch."},
+  "sharePublicNetwork": "Your Wi-Fi is set to Public",
+  "@sharePublicNetwork": {"description": "PL1: share screen title on Windows when the network profile is Public."},
+  "sharePublicNetworkHint": "Set it to Private to share. Windows Settings → Network & internet → Wi-Fi → your network → Private network.",
+  "@sharePublicNetworkHint": {"description": "PL1: how to switch the Windows network profile to Private."},
+  "shareFirewallTitle": "Windows will ask about the firewall",
+  "@shareFirewallTitle": {"description": "PL1: explainer dialog title before the first share on Windows."},
+  "shareFirewallBody": "So your phone can reach this PC, Windows Firewall asks to allow KFM. Allow it on private networks only.",
+  "@shareFirewallBody": {"description": "PL1: firewall explainer dialog body (shown once)."}
 }

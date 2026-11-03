@@ -6979,4 +6979,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsStopSharingOnCloseHint =>
       'Otherwise KFM keeps sharing from the tray icon.';
+
+  @override
+  String get sharePublicNetwork => 'Your Wi-Fi is set to Public';
+
+  @override
+  String get sharePublicNetworkHint =>
+      'Set it to Private to share. Windows Settings → Network & internet → Wi-Fi → your network → Private network.';
+
+  @override
+  String get shareFirewallTitle => 'Windows will ask about the firewall';
+
+  @override
+  String get shareFirewallBody =>
+      'So your phone can reach this PC, Windows Firewall asks to allow KFM. Allow it on private networks only.';
 }

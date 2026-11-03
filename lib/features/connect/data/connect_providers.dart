@@ -9,8 +9,10 @@ import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
@@ -43,6 +45,7 @@ import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:kfm/features/connect/data/upload_store.dart';
+import 'package:kfm/features/connect/data/windows_share_check.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
@@ -384,6 +387,22 @@ CameraAccess cameraAccess(Ref ref) => const PlatformCameraAccess();
 /// On desktop the share screen stays usable behind other windows.
 @Riverpod(keepAlive: true)
 bool lifecycleStopsSharing(Ref ref) => Platform.isAndroid || Platform.isIOS;
+
+/// PL1: Public-network check + firewall explainer before sharing binds on
+/// Windows; null elsewhere.
+@Riverpod(keepAlive: true)
+WindowsShareCheck? windowsShareCheck(Ref ref) {
+  if (!isWindowsHost) return null;
+  final channel = ref.watch(windowsChannelProvider);
+  final settings = ref.watch(settingsRepositoryProvider);
+  return WindowsShareCheck(
+    isPublic: channel.networkIsPublic,
+    firewallExplained: () =>
+        settings.read(AppSettings.windowsFirewallExplained),
+    markFirewallExplained: () =>
+        settings.write(AppSettings.windowsFirewallExplained, true),
+  );
+}
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
 /// notification; PL1: Windows behind a tray icon.

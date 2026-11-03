@@ -123,6 +123,7 @@ const Set<String> excludedBackupSettings = {
   'windows.indexRoots',
   'windows.stopSharingOnClose',
   'windows.trayNoticeShown',
+  'windows.firewallExplained',
 };
 
 final Map<String, BackupSetting> backupSettingsByName = Map.unmodifiable({

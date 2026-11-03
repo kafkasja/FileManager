@@ -419,6 +419,13 @@ abstract final class AppSettings {
     'windows.trayNoticeShown',
     defaultValue: false,
   );
+
+  /// PL1. The "Allow on private networks only" firewall explainer was shown
+  /// (before the first share on this PC).
+  static final SettingKey<bool> windowsFirewallExplained = SettingKey.boolean(
+    'windows.firewallExplained',
+    defaultValue: false,
+  );
 }
 
 /// B4: the action of a drag & drop onto a folder.

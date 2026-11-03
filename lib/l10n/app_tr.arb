@@ -1619,5 +1619,9 @@
   "trayNoticeTitle": "KFM paylaşmaya devam ediyor",
   "trayNoticeBody": "KFM bu bilgisayarı paylaşmaya devam ediyor. Sistem tepsisindeki simgeden durdurun.",
   "settingsStopSharingOnClose": "Pencere kapanınca paylaşımı durdur",
-  "settingsStopSharingOnCloseHint": "Aksi halde KFM sistem tepsisinden paylaşmaya devam eder."
+  "settingsStopSharingOnCloseHint": "Aksi halde KFM sistem tepsisinden paylaşmaya devam eder.",
+  "sharePublicNetwork": "Wi-Fi ağınız Ortak olarak ayarlı",
+  "sharePublicNetworkHint": "Paylaşmak için Özel olarak ayarlayın. Windows Ayarları → Ağ ve internet → Wi-Fi → ağınız → Özel ağ.",
+  "shareFirewallTitle": "Windows güvenlik duvarını soracak",
+  "shareFirewallBody": "Telefonunuzun bu bilgisayara ulaşabilmesi için Windows Güvenlik Duvarı KFM'ye izin vermenizi isteyecek. Yalnızca özel ağlarda izin verin."
 }

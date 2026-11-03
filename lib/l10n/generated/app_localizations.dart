@@ -9824,6 +9824,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Otherwise KFM keeps sharing from the tray icon.'**
   String get settingsStopSharingOnCloseHint;
+
+  /// PL1: share screen title on Windows when the network profile is Public.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Wi-Fi is set to Public'**
+  String get sharePublicNetwork;
+
+  /// PL1: how to switch the Windows network profile to Private.
+  ///
+  /// In en, this message translates to:
+  /// **'Set it to Private to share. Windows Settings → Network & internet → Wi-Fi → your network → Private network.'**
+  String get sharePublicNetworkHint;
+
+  /// PL1: explainer dialog title before the first share on Windows.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows will ask about the firewall'**
+  String get shareFirewallTitle;
+
+  /// PL1: firewall explainer dialog body (shown once).
+  ///
+  /// In en, this message translates to:
+  /// **'So your phone can reach this PC, Windows Firewall asks to allow KFM. Allow it on private networks only.'**
+  String get shareFirewallBody;
 }
 
 class _AppLocalizationsDelegate
