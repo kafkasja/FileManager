@@ -68,6 +68,7 @@ class WindowsFileSource implements FileSource {
           modifiedAfter: query.modifiedAfter,
           minSizeBytes: query.minSizeBytes,
           pageSize: query.pageSize,
+          readExif: true,
         ),
       );
     }

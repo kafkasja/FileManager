@@ -6973,12 +6973,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get windowsRootsReset => 'Varsayılanlara dön';
 
   @override
-  String get windowsRootsPathLabel => 'Klasör yolu';
-
-  @override
-  String get windowsRootsPathMissing => 'Bu yolda klasör yok';
-
-  @override
   String get shareNotificationOpen => 'KFM\'yi aç';
 
   @override

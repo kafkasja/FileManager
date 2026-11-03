@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/windows/windows_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/windows/folder_picker.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
 
 /// Settings → "Folders KFM scans" (TASK-PL1, Windows only, order 450): the
@@ -59,12 +58,11 @@ class WindowsRootsSection extends ConsumerWidget {
           leading: const Icon(Icons.create_new_folder_outlined),
           title: Text(l10n.windowsRootsAdd),
           onTap: () async {
-            final path = await showDialog<String>(
-              context: context,
-              builder: (_) => const _AddRootDialog(),
+            final picked = await ref.read(pickFolderProvider)(
+              confirmLabel: l10n.windowsRootsAddConfirm,
             );
-            if (path == null) return;
-            await store.add(path);
+            if (picked == null) return;
+            await store.add(normalizeWindowsPath(picked));
             await _changed(ref);
           },
         ),
@@ -83,60 +81,3 @@ class WindowsRootsSection extends ConsumerWidget {
 
 /// How a root is shown: the way Explorer writes it.
 String _display(String path) => windowsIoPath(path).replaceAll('/', r'\');
-
-/// Asks for a folder path (the native folder picker comes with the
-/// Windows build, TASK-PL1 part 2).
-class _AddRootDialog extends StatefulWidget {
-  const new();
-
-  @override
-  State<_AddRootDialog> createState() => _AddRootDialogState();
-}
-
-class _AddRootDialogState extends State<_AddRootDialog> {
-  final _controller = TextEditingController();
-  String? _error;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final raw = _controller.text.trim();
-    final path = normalizeWindowsPath(raw);
-    if (raw.isEmpty || !Directory(windowsIoPath(path)).existsSync()) {
-      setState(() => _error = context.l10n.windowsRootsPathMissing);
-      return;
-    }
-    Navigator.of(context).pop(path);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AlertDialog(
-      title: Text(l10n.windowsRootsAdd),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(
-          labelText: l10n.windowsRootsPathLabel,
-          errorText: _error,
-        ),
-        onSubmitted: (_) => _submit(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(l10n.windowsRootsAddConfirm),
-        ),
-      ],
-    );
-  }
-}

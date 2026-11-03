@@ -6950,12 +6950,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get windowsRootsReset => 'Reset to defaults';
 
   @override
-  String get windowsRootsPathLabel => 'Folder path';
-
-  @override
-  String get windowsRootsPathMissing => 'There is no folder at this path';
-
-  @override
   String get shareNotificationOpen => 'Open KFM';
 
   @override

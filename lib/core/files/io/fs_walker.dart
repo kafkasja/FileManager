@@ -6,6 +6,7 @@ import 'package:kfm/core/diagnostics/spawn_logged.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/io/exif_meta.dart';
 import 'package:kfm/core/files/io_errors.dart';
 import 'package:kfm/core/files/system_files.dart';
 import 'package:meta/meta.dart';
@@ -23,6 +24,7 @@ class WalkOptions {
     this.minSizeBytes,
     this.pageSize = 500,
     this.origin = FileOrigin.local,
+    this.readExif = false,
   });
 
   final String root;
@@ -41,6 +43,10 @@ class WalkOptions {
   final int? minSizeBytes;
   final int pageSize;
   final FileOrigin origin;
+
+  /// PL1: photos get `takenAt`/width/height from their EXIF (first 64 KiB).
+  /// Android leaves it off (MediaStore has them).
+  final bool readExif;
 }
 
 /// Lists files under [WalkOptions.root] in a background isolate, in pages.
@@ -93,10 +99,10 @@ Stream<List<FileRef>> walkFiles(WalkOptions options) {
 
 /// Isolate entry: sends `List<FileRef>` pages, `(failureIndex, message)` on
 /// error, then `null` when finished.
-void _walkEntry((SendPort, WalkOptions) args) {
+Future<void> _walkEntry((SendPort, WalkOptions) args) async {
   final (out, options) = args;
   try {
-    _walk(options, out.send);
+    await _walk(options, out.send);
   } on FileOpException catch (e) {
     out.send((e.failure.index, e.message));
   } on Object catch (e) {
@@ -105,7 +111,7 @@ void _walkEntry((SendPort, WalkOptions) args) {
   out.send(null);
 }
 
-void _walk(WalkOptions o, void Function(Object?) send) {
+Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
   final root = o.root.endsWith('/') && o.root.length > 1
       ? o.root.substring(0, o.root.length - 1)
       : o.root;
@@ -167,6 +173,10 @@ void _walk(WalkOptions o, void Function(Object?) send) {
       }
       if (o.minSizeBytes != null && stat.size < o.minSizeBytes!) continue;
 
+      final exif =
+          o.readExif && kind == FileKind.image && hasExifExtension(name)
+          ? await readExifMeta(path)
+          : null;
       page.add(
         FileRef(
           id: 'path:$path',
@@ -178,6 +188,9 @@ void _walk(WalkOptions o, void Function(Object?) send) {
           folderPath: dir,
           origin: o.origin,
           hidden: hidden || dotted,
+          takenAt: exif?.takenAt,
+          width: exif?.width,
+          height: exif?.height,
         ),
       );
       if (page.length >= o.pageSize) {

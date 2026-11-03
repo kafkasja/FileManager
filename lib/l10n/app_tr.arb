@@ -1611,8 +1611,6 @@
   "windowsRootsAddConfirm": "Ekle",
   "windowsRootsRemove": "{folder} kaldır",
   "windowsRootsReset": "Varsayılanlara dön",
-  "windowsRootsPathLabel": "Klasör yolu",
-  "windowsRootsPathMissing": "Bu yolda klasör yok",
   "shareNotificationOpen": "KFM'yi aç",
   "shareNotificationQuit": "Çık",
   "shareKeepsRunningTray": "Pencereyi kapattığınızda paylaşım devam eder. Buradan veya sistem tepsisindeki simgeden durdurun.",

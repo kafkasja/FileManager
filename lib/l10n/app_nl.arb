@@ -1611,8 +1611,6 @@
   "windowsRootsAddConfirm": "Toevoegen",
   "windowsRootsRemove": "{folder} verwijderen",
   "windowsRootsReset": "Standaardmappen herstellen",
-  "windowsRootsPathLabel": "Pad van de map",
-  "windowsRootsPathMissing": "Er is geen map op dit pad",
   "shareNotificationOpen": "KFM openen",
   "shareNotificationQuit": "Afsluiten",
   "shareKeepsRunningTray": "Delen gaat door als je het venster sluit. Stop het hier of via het pictogram in het systeemvak.",

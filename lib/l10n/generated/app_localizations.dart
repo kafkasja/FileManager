@@ -9771,18 +9771,6 @@ abstract class AppLocalizations {
   /// **'Reset to defaults'**
   String get windowsRootsReset;
 
-  /// PL1: text field label in the add-folder dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Folder path'**
-  String get windowsRootsPathLabel;
-
-  /// PL1: add-folder dialog error.
-  ///
-  /// In en, this message translates to:
-  /// **'There is no folder at this path'**
-  String get windowsRootsPathMissing;
-
   /// PL1: Windows tray menu entry that brings the window back.
   ///
   /// In en, this message translates to:

@@ -7012,12 +7012,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get windowsRootsReset => 'Standaardmappen herstellen';
 
   @override
-  String get windowsRootsPathLabel => 'Pad van de map';
-
-  @override
-  String get windowsRootsPathMissing => 'Er is geen map op dit pad';
-
-  @override
   String get shareNotificationOpen => 'KFM openen';
 
   @override

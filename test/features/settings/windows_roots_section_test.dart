@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/windows/windows_file_source.dart';
+import 'package:kfm/core/platform/windows/folder_picker.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/core/platform/windows/windows_channel.dart';
 import 'package:kfm/features/settings/ui/windows_roots_section.dart';
@@ -59,6 +60,7 @@ void main() {
   late String pics;
   late String docs;
   late _FakeRoots roots;
+  String? picked;
   var rescans = 0;
 
   setUp(() {
@@ -74,7 +76,12 @@ void main() {
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [windowsIndexRootsProvider.overrideWithValue(roots)],
+        overrides: [
+          windowsIndexRootsProvider.overrideWithValue(roots),
+          pickFolderProvider.overrideWithValue(
+            ({confirmLabel}) async => picked,
+          ),
+        ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -113,18 +120,18 @@ void main() {
     expect(rescans, 2);
   });
 
-  testWidgets('add checks that the folder exists', (tester) async {
+  testWidgets('Add folder adds the picked folder; cancel adds nothing', (
+    tester,
+  ) async {
     await pump(tester);
+    picked = null;
     await tester.tap(find.text('Add folder'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '${dir.path}/nope');
-    await tester.tap(find.text('Add'));
-    await tester.pumpAndSettle();
-    expect(find.text('There is no folder at this path'), findsOneWidget);
+    expect(rescans, 0);
 
     final extra = Directory('${dir.path}/Extra')..createSync();
-    await tester.enterText(find.byType(TextField), extra.path);
-    await tester.tap(find.text('Add'));
+    picked = extra.path; // backslashes, as Windows returns it
+    await tester.tap(find.text('Add folder'));
     await tester.pumpAndSettle();
     expect(find.text(shown(normalizeWindowsPath(extra.path))), findsOneWidget);
     expect(rescans, 1);
