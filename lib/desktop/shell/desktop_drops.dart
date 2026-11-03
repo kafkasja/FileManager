@@ -47,6 +47,11 @@ String _leaf(String path) {
   return i < 0 ? path : path.substring(i + 1);
 }
 
+String _parentOf(String path) {
+  final i = path.lastIndexOf('/');
+  return i <= 0 ? path.substring(0, i + 1) : path.substring(0, i);
+}
+
 /// A folder (sidebar place, Browse folder or the open folder): Explorer
 /// files are copied in; Browse files move (Ctrl = copy) through B4 / U2;
 /// Sort files get a one-off Move to / Copy to action.
@@ -65,7 +70,18 @@ DropOfferBuilder folderDropOffer(
         onDrop: () => importPaths(context, ref, data.paths, folder),
       );
     case DragOrigin.browse:
-      if (!copy && data.files.every((f) => f.folderPath == folder)) {
+      // A folder never goes into itself (or one of its subfolders); a move
+      // into the folder everything already is in does nothing.
+      final lower = folder.toLowerCase();
+      if (data.folders.any((d) {
+        final l = d.toLowerCase();
+        return lower == l || lower.startsWith('$l/');
+      })) {
+        return null;
+      }
+      if (!copy &&
+          data.files.every((f) => f.folderPath == folder) &&
+          data.folders.every((d) => _parentOf(d) == folder)) {
         return null;
       }
       return DropOffer(
@@ -78,7 +94,7 @@ DropOfferBuilder folderDropOffer(
           await pasteFiles(
             context,
             ref,
-            DesktopClip(data.files, cut: !copy),
+            DesktopClip(data.files, cut: !copy, folders: data.folders),
             folder,
           );
         },
@@ -109,7 +125,7 @@ DropOfferBuilder tagDropOffer(
   int tagId,
   String name,
 ) => (data, {required copy}) {
-  if (!data.fromKfm) return null;
+  if (!data.fromKfm || !data.filesOnly) return null;
   return DropOffer(
     label: context.l10n.desktopDropTag(name),
     onDrop: () async {
@@ -133,7 +149,7 @@ DropOfferBuilder tagDropOffer(
 /// Favorites in the sidebar.
 DropOfferBuilder favoriteDropOffer(BuildContext context, WidgetRef ref) =>
     (data, {required copy}) {
-      if (!data.fromKfm) return null;
+      if (!data.fromKfm || !data.filesOnly) return null;
       return DropOffer(
         label: context.l10n.desktopDropFavorite,
         onDrop: () async {
@@ -157,7 +173,7 @@ DropOfferBuilder favoriteDropOffer(BuildContext context, WidgetRef ref) =>
 /// Trash in the sidebar: the user's delete mode (Sort: the Trash action).
 DropOfferBuilder trashDropOffer(BuildContext context, WidgetRef ref) =>
     (data, {required copy}) {
-      if (!data.fromKfm) return null;
+      if (!data.fromKfm || !data.filesOnly) return null;
       return DropOffer(
         label: context.l10n.desktopDropTrash,
         onDrop: () async {
@@ -174,7 +190,7 @@ DropOfferBuilder trashDropOffer(BuildContext context, WidgetRef ref) =>
 /// Devices in the sidebar: N12 "Send to…".
 DropOfferBuilder devicesDropOffer(BuildContext context, WidgetRef ref) =>
     (data, {required copy}) {
-      if (!data.fromKfm) return null;
+      if (!data.fromKfm || !data.filesOnly) return null;
       return DropOffer(
         label: context.l10n.desktopDropSend,
         onDrop: () async {
@@ -184,35 +200,43 @@ DropOfferBuilder devicesDropOffer(BuildContext context, WidgetRef ref) =>
       );
     };
 
-/// Files dropped in from Explorer: copied into [folder] with B4's
-/// collision dialog, progress and Undo. Folders are skipped (said so).
+/// Whether `path` is a folder on disk (tests replace it: the fake file
+/// source has no disk).
+@visibleForTesting
+Future<bool> Function(String path) isFolderOnDisk = (path) async =>
+    isWindowsHost && await Directory(path).exists();
+
+/// Files and folders from Explorer (a drop, or a Windows clipboard paste)
+/// into [folder]: copied (or moved for an Explorer cut, [move]) with B4's
+/// collision dialog, progress and Undo; folders with their whole tree.
 Future<void> importPaths(
   BuildContext context,
   WidgetRef ref,
   List<String> paths,
-  String folder,
-) async {
+  String folder, {
+  bool move = false,
+}) async {
   final source = ref.read(fileSourceProvider);
   final files = <FileRef>[];
-  var folders = 0;
+  final folders = <String>[];
   for (final p in paths) {
-    if (isWindowsHost && await Directory(p).exists()) {
-      folders++;
+    if (await isFolderOnDisk(p)) {
+      folders.add(p);
       continue;
     }
     final f = await source.statPath(p);
     if (f != null) files.add(f);
   }
   if (!context.mounted) return;
-  final l10n = context.l10n;
-  final messenger = ScaffoldMessenger.of(context);
-  if (folders > 0) {
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.desktopDropFoldersSkipped(folders))),
-    );
-  } else if (files.isEmpty) {
-    messenger.showSnackBar(SnackBar(content: Text(l10n.desktopDropNothing)));
+  if (files.isEmpty && folders.isEmpty) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.l10n.desktopDropNothing)));
+    return;
   }
-  if (files.isEmpty) return;
-  await pasteFiles(context, ref, DesktopClip(files, cut: false), folder);
+  await pasteFiles(
+    context,
+    ref,
+    DesktopClip(files, cut: move, folders: folders),
+    folder,
+  );
 }

@@ -4200,8 +4200,6 @@
   "@desktopDropTrash": {"description": "PL3: drop target hint over Trash."},
   "desktopDropCtrlHint": "Hold Ctrl to copy",
   "@desktopDropCtrlHint": {"description": "PL3: second line of the drag hint."},
-  "desktopDropFoldersSkipped": "{count, plural, =1{1 folder was skipped: drop the files inside it} other{{count} folders were skipped: drop the files inside them}}",
-  "@desktopDropFoldersSkipped": {"description": "PL3: after dropping folders from Windows Explorer (only files are copied).", "placeholders": {"count": {"type": "int"}}},
   "desktopDropNothing": "Nothing to copy here",
   "@desktopDropNothing": {"description": "PL3: dropped items from Explorer could not be read."},
   "desktopDragOffer": "{files} · {action}",
@@ -4271,5 +4269,13 @@
   "videoSoundOn": "Turn sound on",
   "@videoSoundOn": {"description": "PL3 Quick look video bar: sound button tooltip while muted."},
   "videoSoundOff": "Turn sound off",
-  "@videoSoundOff": {"description": "PL3 Quick look video bar: sound button tooltip while sound is on."}
+  "@videoSoundOff": {"description": "PL3 Quick look video bar: sound button tooltip while sound is on."},
+  "desktopDragItems": "{count, plural, =1{1 item} other{{count} items}}",
+  "@desktopDragItems": {"description": "PL3: drag label when folders are dragged (files and folders together).", "placeholders": {"count": {"type": "int"}}},
+  "opTreeMoved": "{folders, plural, =0{Moved} =1{Moved 1 folder} other{Moved {folders} folders}} ({files, plural, =1{1 file} other{{files} files}})",
+  "@opTreeMoved": {"description": "PL3: snackbar after moving folders (with their files) by drag & drop or Ctrl+X/V.", "placeholders": {"folders": {"type": "int"}, "files": {"type": "int"}}},
+  "opTreeCopied": "{folders, plural, =0{Copied} =1{Copied 1 folder} other{Copied {folders} folders}} ({files, plural, =1{1 file} other{{files} files}})",
+  "@opTreeCopied": {"description": "PL3: snackbar after copying folders (with their files).", "placeholders": {"folders": {"type": "int"}, "files": {"type": "int"}}},
+  "opFolderIntoItself": "A folder can't go into itself",
+  "@opFolderIntoItself": {"description": "PL3: a folder was dropped or pasted into itself or one of its subfolders."}
 }

@@ -1675,7 +1675,6 @@
   "desktopDropSend": "Naar een apparaat sturen",
   "desktopDropTrash": "Naar prullenbak",
   "desktopDropCtrlHint": "Houd Ctrl ingedrukt om te kopiëren",
-  "desktopDropFoldersSkipped": "{count, plural, =1{1 map overgeslagen: sleep de bestanden erin} other{{count} mappen overgeslagen: sleep de bestanden erin}}",
   "desktopDropNothing": "Niets om hierheen te kopiëren",
   "desktopDragOffer": "{files} · {action}",
   "desktopTrashAll": "Alles ({count})",
@@ -1710,5 +1709,9 @@
   "videoPlay": "Afspelen",
   "videoPause": "Pauzeren",
   "videoSoundOn": "Geluid aan",
-  "videoSoundOff": "Geluid uit"
+  "videoSoundOff": "Geluid uit",
+  "desktopDragItems": "{count, plural, =1{1 item} other{{count} items}}",
+  "opTreeMoved": "{folders, plural, =0{Verplaatst} =1{1 map verplaatst} other{{folders} mappen verplaatst}} ({files, plural, =1{1 bestand} other{{files} bestanden}})",
+  "opTreeCopied": "{folders, plural, =0{Gekopieerd} =1{1 map gekopieerd} other{{folders} mappen gekopieerd}} ({files, plural, =1{1 bestand} other{{files} bestanden}})",
+  "opFolderIntoItself": "Een map kan niet in zichzelf"
 }

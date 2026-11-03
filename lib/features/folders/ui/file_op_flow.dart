@@ -17,6 +17,7 @@ import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/cloud/ui/cloud_send_flow.dart';
 import 'package:kfm/features/folders/data/file_operation_runner.dart';
 import 'package:kfm/features/folders/data/folder_ops.dart';
+import 'package:kfm/features/folders/data/folder_tree_transfer.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 import 'package:kfm/features/folders/domain/move_target.dart';
 import 'package:kfm/features/folders/ui/collision_dialog.dart';
@@ -224,6 +225,23 @@ Future<void> dropSelectionOnFolder(
     action == DropAction.copy ? CopyOp(files, folder) : MoveOp(files, folder),
     skippedNeedAccess: loaded.needAllFiles,
   );
+}
+
+/// PL3: copies (or moves) whole [folders], with loose [files], into
+/// [target] (`FolderTreeTransfer`): progress, collisions, the summary
+/// snackbar and one Undo for all of it. Needs All files access.
+Future<void> transferFolders(
+  BuildContext context,
+  WidgetRef ref, {
+  required List<String> folders,
+  required List<FileRef> files,
+  required String target,
+  required bool move,
+}) async {
+  if (folders.isEmpty && files.isEmpty) return;
+  if (!await ensureAllFilesAccess(context, ref) || !context.mounted) return;
+  await _Host(context)
+      .runTree(folders: folders, files: files, target: target, move: move);
 }
 
 /// Undoes the last Browse file operation (snackbar Undo, Browse overflow).
@@ -478,6 +496,77 @@ class _Host {
     return done;
   }
 
+  Future<void> runTree({
+    required List<String> folders,
+    required List<FileRef> files,
+    required String target,
+    required bool move,
+  }) async {
+    final cancel = CancelToken();
+    final transfer = container.read(folderTreeTransferProvider);
+    Future<CollisionAnswer> resolve(FileRef incoming, FileRef existing) async {
+      final c = context;
+      if (c == null) return (CollisionChoice.skip, false);
+      return await showCollisionDialog(
+        c,
+        incoming: incoming,
+        existing: existing,
+      );
+    }
+
+    Future<TreeTransferDone> task(void Function(OperationProgress)? p) =>
+        transfer.transfer(
+          folders: folders,
+          files: files,
+          target: target,
+          move: move,
+          cancel: cancel,
+          resolveCollision: resolve,
+          onProgress: p,
+        );
+
+    final TreeTransferDone done;
+    try {
+      final c = context;
+      done = c != null
+          ? await showOperationProgress(
+              c,
+              label: move ? ProgressLabel.moving : ProgressLabel.copying,
+              cancel: cancel,
+              task: task,
+            )
+          : await task(null);
+    } on FolderIntoItselfException {
+      show(l10n.opFolderIntoItself);
+      return;
+    } on NotEnoughSpaceException catch (e) {
+      show(spaceRefusedMessage(l10n, needed: e.neededBytes, free: e.freeBytes));
+      return;
+    } on FileOpException catch (e) {
+      show(folderOpFailureMessage(l10n, e, nameOf(target)));
+      return;
+    }
+    container.read(lastOperationUndoProvider.notifier).recordTree(done);
+    final failed = [
+      for (final r in done.results)
+        if (r.error != null) r,
+    ].length;
+    final moved = [
+      for (final r in done.results)
+        if (r.after != null) r,
+    ].length;
+    show(
+      [
+        if (move)
+          l10n.opTreeMoved(done.folderCount, moved)
+        else
+          l10n.opTreeCopied(done.folderCount, moved),
+        if (failed > 0) l10n.opFailedSummary(failed),
+      ].join(' · '),
+      undo: done.isUndoable,
+    );
+  }
+
   Future<CompletedOperation> _execute(FileOperation op) async {
     final cancel = CancelToken();
     final runner = container.read(fileOperationRunnerProvider);
@@ -582,6 +671,7 @@ class _Host {
       ExtractDone(:final files) => files.length,
       CompressDone() => 1,
       FolderRenameDone() => 0,
+      FolderTreeDone(:final done) => done.fileCount,
     };
     final cancel = CancelToken();
     final UndoOutcome? outcome;

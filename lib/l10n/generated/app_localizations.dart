@@ -10155,12 +10155,6 @@ abstract class AppLocalizations {
   /// **'Hold Ctrl to copy'**
   String get desktopDropCtrlHint;
 
-  /// PL3: after dropping folders from Windows Explorer (only files are copied).
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 folder was skipped: drop the files inside it} other{{count} folders were skipped: drop the files inside them}}'**
-  String desktopDropFoldersSkipped(int count);
-
   /// PL3: dropped items from Explorer could not be read.
   ///
   /// In en, this message translates to:
@@ -10370,6 +10364,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Turn sound off'**
   String get videoSoundOff;
+
+  /// PL3: drag label when folders are dragged (files and folders together).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String desktopDragItems(int count);
+
+  /// PL3: snackbar after moving folders (with their files) by drag & drop or Ctrl+X/V.
+  ///
+  /// In en, this message translates to:
+  /// **'{folders, plural, =0{Moved} =1{Moved 1 folder} other{Moved {folders} folders}} ({files, plural, =1{1 file} other{{files} files}})'**
+  String opTreeMoved(int folders, int files);
+
+  /// PL3: snackbar after copying folders (with their files).
+  ///
+  /// In en, this message translates to:
+  /// **'{folders, plural, =0{Copied} =1{Copied 1 folder} other{Copied {folders} folders}} ({files, plural, =1{1 file} other{{files} files}})'**
+  String opTreeCopied(int folders, int files);
+
+  /// PL3: a folder was dropped or pasted into itself or one of its subfolders.
+  ///
+  /// In en, this message translates to:
+  /// **'A folder can\'t go into itself'**
+  String get opFolderIntoItself;
 }
 
 class _AppLocalizationsDelegate

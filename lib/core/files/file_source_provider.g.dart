@@ -208,7 +208,7 @@ final class FileSourceProvider
   }
 }
 
-String _$fileSourceHash() => r'd592d5d9906c47c08a22edcae09306769a8478a7';
+String _$fileSourceHash() => r'2c698ac26011ff09798e653d9465158f3957bbdd';
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
 /// Windows: the Pictures known folder (its profile path; the channel's

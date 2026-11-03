@@ -58,8 +58,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
       final native = _native = WindowsDragDrop();
       // A KFM drag that leaves the window becomes an Explorer drag of the
       // files' paths (copy).
-      _drag.onLeaveWindow = (data) =>
-          native.startDrag([for (final f in data.files) f.path]);
+      _drag.onLeaveWindow = (data) => native.startDrag(data.allPaths);
       native.listen(this);
     }
     // PL3 polish: the window opens where the user left it.

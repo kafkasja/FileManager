@@ -7212,17 +7212,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get desktopDropCtrlHint => 'Kopyalamak için Ctrl tuşunu basılı tutun';
 
   @override
-  String desktopDropFoldersSkipped(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count klasör atlandı: içindeki dosyaları bırakın',
-      one: '1 klasör atlandı: içindeki dosyaları bırakın',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get desktopDropNothing => 'Buraya kopyalanacak bir şey yok';
 
   @override
@@ -7349,4 +7338,54 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get videoSoundOff => 'Sesi kapat';
+
+  @override
+  String desktopDragItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öğe',
+      one: '1 öğe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opTreeMoved(int folders, int files) {
+    String _temp0 = intl.Intl.pluralLogic(
+      folders,
+      locale: localeName,
+      other: '$folders klasör taşındı',
+      one: '1 klasör taşındı',
+      zero: 'Taşındı',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files dosya',
+      one: '1 dosya',
+    );
+    return '$_temp0 ($_temp1)';
+  }
+
+  @override
+  String opTreeCopied(int folders, int files) {
+    String _temp0 = intl.Intl.pluralLogic(
+      folders,
+      locale: localeName,
+      other: '$folders klasör kopyalandı',
+      one: '1 klasör kopyalandı',
+      zero: 'Kopyalandı',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files dosya',
+      one: '1 dosya',
+    );
+    return '$_temp0 ($_temp1)';
+  }
+
+  @override
+  String get opFolderIntoItself => 'Bir klasör kendi içine taşınamaz';
 }

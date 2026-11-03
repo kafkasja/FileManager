@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/form_factor.dart';
+import 'package:kfm/features/folders/data/folder_tree_transfer.dart';
 
 import '../core/files/fake_file_source.dart';
 import '../helpers/pump_app.dart';
@@ -37,6 +38,8 @@ Future<TestApp> pumpDesktopApp(
     files: files,
     overrides: [
       formFactorProvider.overrideWithValue(FormFactor.desktop),
+      // The fake file source has no disk folders to remove.
+      emptyDirRemoverProvider.overrideWithValue((_) async => false),
       ...overrides,
     ],
   );

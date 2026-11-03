@@ -8,6 +8,7 @@ import 'package:kfm/features/archive/data/archive_undo.dart';
 import 'package:kfm/features/archive/domain/archive_job.dart';
 import 'package:kfm/features/folders/data/file_operation_runner.dart';
 import 'package:kfm/features/folders/data/folder_ops.dart';
+import 'package:kfm/features/folders/data/folder_tree_transfer.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -31,6 +32,14 @@ final class FolderRenameDone extends LastOperation {
 
   final String oldPath;
   final String newPath;
+}
+
+/// PL3: folders (and files) copied or moved together
+/// (`FolderTreeTransfer`). Undo reverses every part.
+final class FolderTreeDone extends LastOperation {
+  const new(this.done);
+
+  final TreeTransferDone done;
 }
 
 /// B5: a zip was created. Undo trashes it.
@@ -91,25 +100,40 @@ class LastOperationUndo extends _$LastOperationUndo {
       default:
         break;
     }
-    if (state case FileOpDone(:final done)) {
-      if (!done.results.any((r) => r.after?.id == change.oldId)) return;
-      OpResult rekey(OpResult r) => r.after?.id != change.oldId
-          ? r
-          : (
-              before: r.before,
-              after: change.newRef,
-              replaced: r.replaced,
-              trashed: r.trashed,
-              error: r.error,
-            );
-      state = FileOpDone(
-        CompletedOperation(
-          op: done.op,
-          results: List.unmodifiable(done.results.map(rekey)),
-          cancelled: done.cancelled,
-          stoppedEarly: done.stoppedEarly,
-        ),
-      );
+    bool hit(CompletedOperation done) =>
+        done.results.any((r) => r.after?.id == change.oldId);
+    OpResult rekey(OpResult r) => r.after?.id != change.oldId
+        ? r
+        : (
+            before: r.before,
+            after: change.newRef,
+            replaced: r.replaced,
+            trashed: r.trashed,
+            error: r.error,
+          );
+    CompletedOperation rekeyed(CompletedOperation done) => !hit(done)
+        ? done
+        : CompletedOperation(
+            op: done.op,
+            results: List.unmodifiable(done.results.map(rekey)),
+            cancelled: done.cancelled,
+            stoppedEarly: done.stoppedEarly,
+          );
+    switch (state) {
+      case FileOpDone(:final done) when hit(done):
+        state = FileOpDone(rekeyed(done));
+      case FolderTreeDone(:final done) when done.ops.any(hit):
+        state = FolderTreeDone(
+          TreeTransferDone(
+            move: done.move,
+            ops: List.unmodifiable(done.ops.map(rekeyed)),
+            createdDirs: done.createdDirs,
+            removedDirs: done.removedDirs,
+            folderCount: done.folderCount,
+          ),
+        );
+      default:
+        break;
     }
   }
 
@@ -117,6 +141,10 @@ class LastOperationUndo extends _$LastOperationUndo {
   /// (permanent delete, all skipped/failed) clear the stored one.
   void record(CompletedOperation done) =>
       state = done.isUndoable ? FileOpDone(done) : null;
+
+  /// PL3: after a `FolderTreeTransfer.transfer`.
+  void recordTree(TreeTransferDone done) =>
+      state = done.isUndoable ? FolderTreeDone(done) : null;
 
   void recordFolderRename(FolderRenamed renamed) =>
       state = FolderRenameDone(renamed.oldPath, renamed.newPath);
@@ -148,6 +176,21 @@ class LastOperationUndo extends _$LastOperationUndo {
             .undo(done, cancel: cancel, onProgress: onProgress);
         // Declined / cancelled before anything changed: still undoable.
         // A partial undo is cleared (what's left isn't tracked).
+        if ((out.declined || out.cancelled) &&
+            out.undone == 0 &&
+            out.failed.isEmpty &&
+            state == null) {
+          state = last;
+        }
+        return out;
+      case FolderTreeDone(:final done):
+        final out = await ref
+            .read(folderTreeTransferProvider)
+            .undo(
+              done,
+              cancel: cancel ?? CancelToken(),
+              onProgress: onProgress,
+            );
         if ((out.declined || out.cancelled) &&
             out.undone == 0 &&
             out.failed.isEmpty &&
