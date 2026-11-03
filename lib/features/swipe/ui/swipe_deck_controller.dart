@@ -1023,8 +1023,22 @@ class SwipeDeckController extends _$SwipeDeckController {
   /// least refresh "N left" and the new-photos chip.
   Future<void> _onIndexChanged() async {
     final generation = _generation;
-    final deck = state.value;
+    var deck = state.value;
     if (deck == null || _stale(generation)) return;
+    // U1 follow-up (g): cards on a volume that was just detached leave the
+    // deck, the current one too (queries already hide those rows; the
+    // window loaded before doesn't). They come back with a later reload.
+    final dao = ref.read(mediaIndexDaoProvider);
+    if (dao.excludedRoots.isNotEmpty &&
+        deck.upcoming.any((f) => dao.isExcludedFolder(f.folderPath))) {
+      deck = deck.copyWith(
+        upcoming: [
+          for (final f in deck.upcoming)
+            if (!dao.isExcludedFolder(f.folderPath)) f,
+        ],
+      );
+      state = AsyncData(deck);
+    }
     if (deck.upcoming.length < refillBelow) {
       // Re-read from the resume point: skipping by id stays correct when new
       // files were indexed anywhere after it; newer ones come via the chip.

@@ -5299,6 +5299,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get externalGrantFailed => 'Android erişimi saklamadı. Tekrar dene.';
 
   @override
+  String externalAllFilesTitle(String label) {
+    return '$label için erişim';
+  }
+
+  @override
+  String externalAllFilesExplain(String label) {
+    return '$label için KFM\'nin Tüm dosyalara erişim iznine ihtiyacı var. Android, uygulamaların bir SD kartı veya USB belleği başka bir yolla seçmesine izin vermiyor. Sonraki ekranda KFM için erişimi aç, sonra geri dön.';
+  }
+
+  @override
+  String externalAllFilesStillOff(String label) {
+    return 'Tüm dosyalara erişim hâlâ kapalı, bu yüzden şu açılamıyor: $label.';
+  }
+
+  @override
   String get externalFormatHelp =>
       'USB bellek açılmadı. Android FAT32 ve exFAT sürücüleri okur; NTFS sürücüler çoğu zaman çalışmaz. Belleği bir bilgisayarda yeniden biçimlendir veya başka bir sürücü dene.';
 

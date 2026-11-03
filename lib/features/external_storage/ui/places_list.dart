@@ -88,7 +88,8 @@ class PlacesList extends ConsumerWidget {
 
 /// Opens [place]: cameras ask for the USB permission first, then open in
 /// U2's place browser; SAF volumes get their one-time grant and open in
-/// the place browser too; places reached by path open Browse's folder
+/// the place browser too (API 30+: All files access instead, see
+/// [ensurePlaceAccess]); places reached by path open Browse's folder
 /// layout at their root (indexed: B1 filters and B2 sorting work).
 Future<void> openPlace(
   BuildContext context,
@@ -117,9 +118,10 @@ Future<void> openPlace(
   }
   final root = place.rootPath;
   if (root == null) return;
-  if (!await ensureSafGrant(context, ref, place)) return;
-  if (!context.mounted) return;
-  if (place.access == AccessMethod.saf) {
+  // API 30+ without a grant: All files access instead (then by path).
+  final usable = await ensurePlaceAccess(context, ref, place);
+  if (usable == null || !context.mounted) return;
+  if (usable.access == AccessMethod.saf) {
     await context.push(
       placeBrowserLocation(root: root, title: placeLabel(l10n, place)),
     );

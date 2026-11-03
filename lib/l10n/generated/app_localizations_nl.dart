@@ -5326,6 +5326,21 @@ class AppLocalizationsNl extends AppLocalizations {
       'Android heeft de toegang niet bewaard. Probeer het opnieuw.';
 
   @override
+  String externalAllFilesTitle(String label) {
+    return '$label openen';
+  }
+
+  @override
+  String externalAllFilesExplain(String label) {
+    return 'Om $label te openen heeft KFM Toegang tot alle bestanden nodig. Android laat apps een hele SD-kaart of USB-stick niet op een andere manier kiezen. Zet op het volgende scherm de toegang voor KFM aan en kom dan terug.';
+  }
+
+  @override
+  String externalAllFilesStillOff(String label) {
+    return 'Toegang tot alle bestanden staat nog uit, dus $label kan niet worden geopend.';
+  }
+
+  @override
   String get externalFormatHelp =>
       'De USB-stick kan niet worden geopend. Android leest FAT32- en exFAT-schijven; NTFS werkt vaak niet. Formatteer de stick op een computer of probeer een andere.';
 

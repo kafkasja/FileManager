@@ -70,6 +70,11 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  /// U1: [folderPath] is on a detached volume (same rule as the queries).
+  bool isExcludedFolder(String folderPath) => _excludedRoots.any(
+    (root) => folderPath == root || folderPath.startsWith('$root/'),
+  );
+
   /// U1: the roots of removable volumes that have indexed rows
   /// (`/storage/<id>`, never `/storage/emulated/…`).
   Future<Set<String>> indexedVolumeRoots() async {
