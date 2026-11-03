@@ -58,7 +58,62 @@ final class WindowsCloseFlowProvider
   }
 }
 
-String _$windowsCloseFlowHash() => r'0e139b8198dec484d6fbb18e58251574df37579e';
+String _$windowsCloseFlowHash() => r'0adfe97ce20fdb060372571eb2dfcf9f9fb356ea';
+
+/// PL1: sleep stops sharing and flushes; wake-up rescans (started by
+/// `App`; null off Windows).
+
+@ProviderFor(windowsPowerFlow)
+final windowsPowerFlowProvider = WindowsPowerFlowProvider._();
+
+/// PL1: sleep stops sharing and flushes; wake-up rescans (started by
+/// `App`; null off Windows).
+
+final class WindowsPowerFlowProvider
+    extends
+        $FunctionalProvider<
+          WindowsPowerFlow?,
+          WindowsPowerFlow?,
+          WindowsPowerFlow?
+        >
+    with $Provider<WindowsPowerFlow?> {
+  /// PL1: sleep stops sharing and flushes; wake-up rescans (started by
+  /// `App`; null off Windows).
+  WindowsPowerFlowProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'windowsPowerFlowProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$windowsPowerFlowHash();
+
+  @$internal
+  @override
+  $ProviderElement<WindowsPowerFlow?> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  WindowsPowerFlow? create(Ref ref) {
+    return windowsPowerFlow(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WindowsPowerFlow? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WindowsPowerFlow?>(value),
+    );
+  }
+}
+
+String _$windowsPowerFlowHash() => r'2681e13709bb3acbd823e1411bee6c2fcb636f4f';
 
 /// PL1: Settings → Connect switch "Stop sharing when the window closes".
 

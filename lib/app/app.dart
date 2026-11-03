@@ -96,6 +96,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(updateAutoCheckProvider)
       // PL1: Windows close → tray while sharing (null elsewhere).
       ..watch(windowsCloseFlowProvider)
+      // PL1: sleep stops sharing, wake-up rescans (null elsewhere).
+      ..watch(windowsPowerFlowProvider)
       // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
       // the set stays loaded without rebuilding the app on each change.
       ..listen(favoriteIdsProvider, (_, _) {});
