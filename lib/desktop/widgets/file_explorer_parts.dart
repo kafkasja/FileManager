@@ -96,7 +96,7 @@ List<ExplorerColumn<T>> fileColumns<T>(
   BuildContext context, {
   required FileRef? Function(T item) fileOf,
   required Widget Function(BuildContext context, T item) nameCell,
-  String Function(T item)? typeOf,
+  String? Function(T item)? typeOf,
   bool sortable = true,
 }) {
   final l10n = context.l10n;

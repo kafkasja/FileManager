@@ -7116,4 +7116,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopSortLeft(int count) {
     return '$count left';
   }
+
+  @override
+  String get desktopBrowseBack => 'Back';
+
+  @override
+  String get desktopBrowseForward => 'Forward';
+
+  @override
+  String get desktopBrowseUp => 'Up one level';
+
+  @override
+  String get desktopBrowseOpen => 'Open';
+
+  @override
+  String get desktopBrowseEmptyFolder => 'This folder is empty';
+
+  @override
+  String get desktopBrowseSortThese => 'Sort these';
+
+  @override
+  String get desktopBrowseCopy => 'Copy';
+
+  @override
+  String get desktopBrowseCut => 'Cut';
+
+  @override
+  String get desktopBrowsePaste => 'Paste';
+
+  @override
+  String get desktopBrowseNothingIndexed => 'KFM hasn\'t found files here yet';
 }

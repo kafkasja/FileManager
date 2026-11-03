@@ -1653,5 +1653,15 @@
   "desktopTypeUnknown": "Bestand",
   "desktopTypeFolder": "Map",
   "desktopQuickLookTitle": "{name} · {size} · {date}",
-  "desktopSortLeft": "Nog {count}"
+  "desktopSortLeft": "Nog {count}",
+  "desktopBrowseBack": "Terug",
+  "desktopBrowseForward": "Vooruit",
+  "desktopBrowseUp": "Een niveau omhoog",
+  "desktopBrowseOpen": "Openen",
+  "desktopBrowseEmptyFolder": "Deze map is leeg",
+  "desktopBrowseSortThese": "Deze sorteren",
+  "desktopBrowseCopy": "Kopiëren",
+  "desktopBrowseCut": "Knippen",
+  "desktopBrowsePaste": "Plakken",
+  "desktopBrowseNothingIndexed": "KFM heeft hier nog geen bestanden gevonden"
 }

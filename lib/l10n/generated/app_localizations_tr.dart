@@ -7127,4 +7127,34 @@ class AppLocalizationsTr extends AppLocalizations {
   String desktopSortLeft(int count) {
     return '$count kaldı';
   }
+
+  @override
+  String get desktopBrowseBack => 'Geri';
+
+  @override
+  String get desktopBrowseForward => 'İleri';
+
+  @override
+  String get desktopBrowseUp => 'Bir üst düzey';
+
+  @override
+  String get desktopBrowseOpen => 'Aç';
+
+  @override
+  String get desktopBrowseEmptyFolder => 'Bu klasör boş';
+
+  @override
+  String get desktopBrowseSortThese => 'Bunları ayıkla';
+
+  @override
+  String get desktopBrowseCopy => 'Kopyala';
+
+  @override
+  String get desktopBrowseCut => 'Kes';
+
+  @override
+  String get desktopBrowsePaste => 'Yapıştır';
+
+  @override
+  String get desktopBrowseNothingIndexed => 'KFM burada henüz dosya bulmadı';
 }

@@ -10028,6 +10028,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} left'**
   String desktopSortLeft(int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get desktopBrowseBack;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get desktopBrowseForward;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Up one level'**
+  String get desktopBrowseUp;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get desktopBrowseOpen;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder is empty'**
+  String get desktopBrowseEmptyFolder;
+
+  /// PL3: opens the folder's or selection's photos in Sort (SS1 'Swipe these').
+  ///
+  /// In en, this message translates to:
+  /// **'Sort these'**
+  String get desktopBrowseSortThese;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get desktopBrowseCopy;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get desktopBrowseCut;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get desktopBrowsePaste;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM hasn\'t found files here yet'**
+  String get desktopBrowseNothingIndexed;
 }
 
 class _AppLocalizationsDelegate

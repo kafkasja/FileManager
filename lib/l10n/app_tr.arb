@@ -1653,5 +1653,15 @@
   "desktopTypeUnknown": "Dosya",
   "desktopTypeFolder": "Klasör",
   "desktopQuickLookTitle": "{name} · {size} · {date}",
-  "desktopSortLeft": "{count} kaldı"
+  "desktopSortLeft": "{count} kaldı",
+  "desktopBrowseBack": "Geri",
+  "desktopBrowseForward": "İleri",
+  "desktopBrowseUp": "Bir üst düzey",
+  "desktopBrowseOpen": "Aç",
+  "desktopBrowseEmptyFolder": "Bu klasör boş",
+  "desktopBrowseSortThese": "Bunları ayıkla",
+  "desktopBrowseCopy": "Kopyala",
+  "desktopBrowseCut": "Kes",
+  "desktopBrowsePaste": "Yapıştır",
+  "desktopBrowseNothingIndexed": "KFM burada henüz dosya bulmadı"
 }

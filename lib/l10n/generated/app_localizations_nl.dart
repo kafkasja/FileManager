@@ -7179,4 +7179,35 @@ class AppLocalizationsNl extends AppLocalizations {
   String desktopSortLeft(int count) {
     return 'Nog $count';
   }
+
+  @override
+  String get desktopBrowseBack => 'Terug';
+
+  @override
+  String get desktopBrowseForward => 'Vooruit';
+
+  @override
+  String get desktopBrowseUp => 'Een niveau omhoog';
+
+  @override
+  String get desktopBrowseOpen => 'Openen';
+
+  @override
+  String get desktopBrowseEmptyFolder => 'Deze map is leeg';
+
+  @override
+  String get desktopBrowseSortThese => 'Deze sorteren';
+
+  @override
+  String get desktopBrowseCopy => 'Kopiëren';
+
+  @override
+  String get desktopBrowseCut => 'Knippen';
+
+  @override
+  String get desktopBrowsePaste => 'Plakken';
+
+  @override
+  String get desktopBrowseNothingIndexed =>
+      'KFM heeft hier nog geen bestanden gevonden';
 }
