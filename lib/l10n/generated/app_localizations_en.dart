@@ -7261,4 +7261,47 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get desktopDevicesConnectHint =>
       'Connect to a device that shows a code';
+
+  @override
+  String get desktopCompare => 'Compare';
+
+  @override
+  String desktopCompareTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '1 photo',
+    );
+    return 'Compare $_temp0';
+  }
+
+  @override
+  String get desktopCompareHint =>
+      'Number keys switch Keep / Remove · zoom and pan move all photos together';
+
+  @override
+  String desktopCompareRemove(int count) {
+    return 'Remove $count';
+  }
+
+  @override
+  String get desktopCompareKeep => 'Keep';
+
+  @override
+  String get desktopCompareRemoveOne => 'Remove';
+
+  @override
+  String desktopCompareFacts(String size, String resolution, String date) {
+    return '$size · $resolution · $date';
+  }
+
+  @override
+  String get desktopZoomIn => 'Zoom in';
+
+  @override
+  String get desktopZoomOut => 'Zoom out';
+
+  @override
+  String get desktopZoomFit => 'Fit';
 }

@@ -10244,6 +10244,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect to a device that shows a code'**
   String get desktopDevicesConnectHint;
+
+  /// PL3: opens a similar group side by side.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get desktopCompare;
+
+  /// PL3: Compare view title.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare {count, plural, =1{1 photo} other{{count} photos}}'**
+  String desktopCompareTitle(int count);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Number keys switch Keep / Remove · zoom and pan move all photos together'**
+  String get desktopCompareHint;
+
+  /// PL3: Compare: removes the photos marked Remove (C2 rules, undoable).
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {count}'**
+  String desktopCompareRemove(int count);
+
+  /// PL3: Compare panel state.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get desktopCompareKeep;
+
+  /// PL3: Compare panel state.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get desktopCompareRemoveOne;
+
+  /// PL3: Compare panel subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} · {resolution} · {date}'**
+  String desktopCompareFacts(String size, String resolution, String date);
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get desktopZoomIn;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get desktopZoomOut;
+
+  /// PL3: reset zoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit'**
+  String get desktopZoomFit;
 }
 
 class _AppLocalizationsDelegate

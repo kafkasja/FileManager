@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/app_scaffold.dart';
+import 'package:kfm/desktop/connect/desktop_devices_screen.dart';
+import 'package:kfm/desktop/settings/desktop_settings_screen.dart';
 import 'package:kfm/desktop/shell/desktop_app_shell.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart';
-import 'package:kfm/desktop/connect/desktop_devices_screen.dart';
-import 'package:kfm/desktop/settings/desktop_settings_screen.dart';
 import 'package:kfm/desktop/trash/desktop_trash_screen.dart';
 
 import '../helpers/pump_app.dart';

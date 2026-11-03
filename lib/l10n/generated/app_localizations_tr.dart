@@ -7271,4 +7271,47 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get desktopDevicesConnectHint => 'Kod gösteren bir cihaza bağlanın';
+
+  @override
+  String get desktopCompare => 'Karşılaştır';
+
+  @override
+  String desktopCompareTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fotoğrafı',
+      one: '1 fotoğrafı',
+    );
+    return '$_temp0 karşılaştır';
+  }
+
+  @override
+  String get desktopCompareHint =>
+      'Rakam tuşları Sakla / Kaldır arasında geçiş yapar · yakınlaştırma ve kaydırma tüm fotoğraflara birlikte uygulanır';
+
+  @override
+  String desktopCompareRemove(int count) {
+    return '$count tanesini kaldır';
+  }
+
+  @override
+  String get desktopCompareKeep => 'Sakla';
+
+  @override
+  String get desktopCompareRemoveOne => 'Kaldır';
+
+  @override
+  String desktopCompareFacts(String size, String resolution, String date) {
+    return '$size · $resolution · $date';
+  }
+
+  @override
+  String get desktopZoomIn => 'Yakınlaştır';
+
+  @override
+  String get desktopZoomOut => 'Uzaklaştır';
+
+  @override
+  String get desktopZoomFit => 'Sığdır';
 }

@@ -1689,5 +1689,15 @@
   "desktopDevicesTitle": "Bir telefon veya başka bir PC bağlayın",
   "desktopDevicesHint": "İki cihazda da KFM ve aynı Wi-Fi gerekir. Aşağıdan seçene kadar hiçbir şey paylaşılmaz.",
   "desktopDevicesShareHint": "Telefonunuz için bir QR kod ve kod gösterin",
-  "desktopDevicesConnectHint": "Kod gösteren bir cihaza bağlanın"
+  "desktopDevicesConnectHint": "Kod gösteren bir cihaza bağlanın",
+  "desktopCompare": "Karşılaştır",
+  "desktopCompareTitle": "{count, plural, =1{1 fotoğrafı} other{{count} fotoğrafı}} karşılaştır",
+  "desktopCompareHint": "Rakam tuşları Sakla / Kaldır arasında geçiş yapar · yakınlaştırma ve kaydırma tüm fotoğraflara birlikte uygulanır",
+  "desktopCompareRemove": "{count} tanesini kaldır",
+  "desktopCompareKeep": "Sakla",
+  "desktopCompareRemoveOne": "Kaldır",
+  "desktopCompareFacts": "{size} · {resolution} · {date}",
+  "desktopZoomIn": "Yakınlaştır",
+  "desktopZoomOut": "Uzaklaştır",
+  "desktopZoomFit": "Sığdır"
 }

@@ -7325,4 +7325,47 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get desktopDevicesConnectHint =>
       'Verbind met een apparaat dat een code toont';
+
+  @override
+  String get desktopCompare => 'Vergelijken';
+
+  @override
+  String desktopCompareTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto\'s',
+      one: '1 foto',
+    );
+    return '$_temp0 vergelijken';
+  }
+
+  @override
+  String get desktopCompareHint =>
+      'Cijfertoetsen wisselen Bewaren / Verwijderen · zoomen en schuiven doet alle foto\'s tegelijk';
+
+  @override
+  String desktopCompareRemove(int count) {
+    return '$count verwijderen';
+  }
+
+  @override
+  String get desktopCompareKeep => 'Bewaren';
+
+  @override
+  String get desktopCompareRemoveOne => 'Verwijderen';
+
+  @override
+  String desktopCompareFacts(String size, String resolution, String date) {
+    return '$size · $resolution · $date';
+  }
+
+  @override
+  String get desktopZoomIn => 'Inzoomen';
+
+  @override
+  String get desktopZoomOut => 'Uitzoomen';
+
+  @override
+  String get desktopZoomFit => 'Passend';
 }

@@ -1689,5 +1689,15 @@
   "desktopDevicesTitle": "Een telefoon of andere pc verbinden",
   "desktopDevicesHint": "Beide apparaten hebben KFM en hetzelfde wifi-netwerk nodig. Er wordt niets gedeeld tot je hieronder kiest.",
   "desktopDevicesShareHint": "Toon een QR-code en een code voor je telefoon",
-  "desktopDevicesConnectHint": "Verbind met een apparaat dat een code toont"
+  "desktopDevicesConnectHint": "Verbind met een apparaat dat een code toont",
+  "desktopCompare": "Vergelijken",
+  "desktopCompareTitle": "{count, plural, =1{1 foto} other{{count} foto's}} vergelijken",
+  "desktopCompareHint": "Cijfertoetsen wisselen Bewaren / Verwijderen · zoomen en schuiven doet alle foto's tegelijk",
+  "desktopCompareRemove": "{count} verwijderen",
+  "desktopCompareKeep": "Bewaren",
+  "desktopCompareRemoveOne": "Verwijderen",
+  "desktopCompareFacts": "{size} · {resolution} · {date}",
+  "desktopZoomIn": "Inzoomen",
+  "desktopZoomOut": "Uitzoomen",
+  "desktopZoomFit": "Passend"
 }

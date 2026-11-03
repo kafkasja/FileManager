@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -10,6 +11,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
+import 'package:kfm/desktop/compare/compare_view.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/similar/data/similar_repository.dart';
@@ -236,6 +238,11 @@ class _GroupCard extends ConsumerWidget {
     }
   }
 
+  Future<void> _compare(BuildContext context, WidgetRef ref) async {
+    final op = await showCompareView(context, members: group.members);
+    if (op != null && context.mounted) showSimilarOpSnack(context, ref, op);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
@@ -277,6 +284,14 @@ class _GroupCard extends ConsumerWidget {
                   label: Text(l10n.similarKeepBest),
                   onPressed: () => unawaited(_keepBest(context, ref)),
                 ),
+                // PL3: the desktop app compares the group side by side.
+                if (ref.watch(formFactorProvider).isDesktop)
+                  TextButton.icon(
+                    key: ValueKey('similar-compare-${group.id}'),
+                    icon: const Icon(Icons.compare_outlined),
+                    label: Text(l10n.desktopCompare),
+                    onPressed: () => unawaited(_compare(context, ref)),
+                  ),
                 TextButton.icon(
                   icon: const Icon(Icons.swipe_outlined),
                   label: Text(l10n.similarSwipeGroup),
