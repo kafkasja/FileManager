@@ -42,10 +42,17 @@ import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:window_manager/window_manager.dart';
 
 const _mode = String.fromEnvironment('KFM_PERF_MODE', defaultValue: 'browse');
 const _root = String.fromEnvironment('KFM_PERF_ROOT');
 const _dir = String.fromEnvironment('KFM_PERF_DIR');
+
+/// The thumbnail cache folder under KFM_PERF_DIR (a new name = cold cache).
+const _thumbs = String.fromEnvironment(
+  'KFM_PERF_THUMBS',
+  defaultValue: 'thumbs',
+);
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -110,14 +117,29 @@ void main() {
       for (final layout in [ExplorerLayout.grid, ExplorerLayout.details]) {
         nav.setLayout(layout);
         await _settle();
-        results['${layout.name}Cached'] = await _scrollRun(
-          tester,
-          c,
-          pxPerSecond: 3000,
-          seconds: 6,
-          layout: layout,
-        );
+        for (var run = 1; run <= 2; run++) {
+          results['${layout.name}Cached$run'] = await _scrollRun(
+            tester,
+            c,
+            pxPerSecond: 3000,
+            seconds: 6,
+            layout: layout,
+          );
+        }
       }
+      // Baseline: the same rows drawn again every frame (1 px back and
+      // forth), so nothing is built, loaded or decoded.
+      nav.setLayout(ExplorerLayout.grid);
+      await _settle();
+      final pos = _explorerScroll<BrowseEntry>(tester)..jumpTo(400);
+      await _settle(500);
+      results['gridRedrawOnly'] = await _frames(() async {
+        for (var i = 0; i < 480; i++) {
+          pos.jumpTo(i.isEven ? 401 : 400);
+          await SchedulerBinding.instance.endOfFrame;
+        }
+      });
+      _log('redraw only: ${results['gridRedrawOnly']}');
       // Into rows that aren't cached (Shell thumbnails being made).
       nav.setLayout(ExplorerLayout.grid);
       await _settle();
@@ -154,6 +176,10 @@ Future<_App> _startApp(
   WidgetTester tester,
   IntegrationTestWidgetsFlutterBinding binding,
 ) async {
+  // The worst case: a maximized window shows the most tiles.
+  await windowManager.ensureInitialized();
+  await windowManager.maximize();
+  await _settle(500);
   final dbDir = Directory('$_dir/db-$_mode');
   if (dbDir.existsSync()) dbDir.deleteSync(recursive: true);
   dbDir.createSync(recursive: true);
@@ -184,7 +210,7 @@ Future<_App> _startApp(
       thumbnailCacheProvider.overrideWith((ref) async {
         final settings = ref.watch(settingsRepositoryProvider);
         return DiskThumbnailCache(
-          dir: Directory('$_dir/thumbs'),
+          dir: Directory('$_dir/$_thumbs'),
           generator: shellThumbnailGenerator(ref.watch(windowsChannelProvider)),
           maxDiskBytes: () async =>
               await settings.read(AppSettings.thumbCacheMaxMb) * 1024 * 1024,

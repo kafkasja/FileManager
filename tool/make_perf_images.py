@@ -2,8 +2,9 @@
 
     python tool/make_perf_images.py <folder> <count>
 
-Each image is 160x120 with a few random coloured shapes and its number, so
-every Shell thumbnail differs. Existing files are kept (re-running only adds
+Each image is 400x300 (bigger than the 256 px thumbnail, like a photo) with
+a few random coloured shapes and its number, so every Shell thumbnail
+differs. Existing files are kept (re-running only adds
 what is missing). Delete the folder after the check.
 """
 
@@ -14,6 +15,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 from PIL import Image, ImageDraw
 
+W, H = 400, 300
+
 
 def _make(args):
     folder, start, end = args
@@ -22,17 +25,17 @@ def _make(args):
         if os.path.exists(path):
             continue
         rnd = random.Random(i)
-        img = Image.new("RGB", (160, 120), tuple(rnd.randrange(256) for _ in range(3)))
+        img = Image.new("RGB", (W, H), tuple(rnd.randrange(256) for _ in range(3)))
         d = ImageDraw.Draw(img)
         for _ in range(6):
-            x0, y0 = rnd.randrange(160), rnd.randrange(120)
-            x1, y1 = x0 + rnd.randrange(10, 80), y0 + rnd.randrange(10, 60)
+            x0, y0 = rnd.randrange(W), rnd.randrange(H)
+            x1, y1 = x0 + rnd.randrange(25, 200), y0 + rnd.randrange(25, 150)
             colour = tuple(rnd.randrange(256) for _ in range(3))
             if rnd.random() < 0.5:
                 d.rectangle((x0, y0, x1, y1), fill=colour)
             else:
                 d.ellipse((x0, y0, x1, y1), fill=colour)
-        d.text((6, 6), str(i), fill=(255, 255, 255))
+        d.text((12, 12), str(i), fill=(255, 255, 255), font_size=40)
         img.save(path, "JPEG", quality=80)
     return end - start
 
