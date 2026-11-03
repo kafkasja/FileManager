@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/features/cloud/data/cloud_items_repository.dart';
 
 /// Moves every file-id keyed row to a file's new id when a move/rename
 /// changes it (`FileSource.idChanges`): tags, favorites, reviewed labels and
 /// (H4) undo log, queued deletes and rename batch items, (B6) the
 /// selection and its Clear all snapshot, (SS1) swipe source items, (C2) image signals, similar group items and
 /// dismissals, (C5) EXIF rows, smart group members and covers, (C3) AI labels and their
-/// status. Idempotent: copy
+/// status, (X4) cloud uploads. Idempotent: copy
 /// rows to the new id (ignoring ones already there), then drop the old id's
 /// rows.
 class FileIdRekeyer {
@@ -25,6 +26,7 @@ class FileIdRekeyer {
         c.oldId,
         c.newRef.id,
         newModifiedMs: c.newRef.modifiedAt.millisecondsSinceEpoch,
+        newSizeBytes: c.newRef.sizeBytes,
       ).fireAndForget(),
     );
   }
@@ -51,7 +53,12 @@ class FileIdRekeyer {
     );
   }
 
-  Future<void> rekey(String oldId, String newId, {int? newModifiedMs}) {
+  Future<void> rekey(
+    String oldId,
+    String newId, {
+    int? newModifiedMs,
+    int? newSizeBytes,
+  }) {
     if (oldId == newId) return Future.value();
     return _queue.enqueue(
       null,
@@ -192,6 +199,15 @@ class FileIdRekeyer {
             oldId,
           ]);
         }
+        // X4: the cloud badge follows the file (X3's rule, shared with its
+        // upload runner, which re-keys only while it exists).
+        await CloudItemsRepository.rekeyStatements(
+          _db,
+          oldId,
+          newId,
+          newSizeBytes: newSizeBytes,
+          newModifiedMs: newModifiedMs,
+        );
       }),
     );
   }

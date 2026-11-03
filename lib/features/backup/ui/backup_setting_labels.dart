@@ -41,6 +41,7 @@ String? backupSettingLabelOrNull(AppLocalizations l10n, String name) {
         l10n.backupSettingSimilarScreenshots,
     AppSettings.aiModelsWifiOnly.name: l10n.backupSettingAiWifiOnly,
     AppSettings.privacyStripLocation.name: l10n.backupSettingStripLocation,
+    AppSettings.cloudShowBadge.name: l10n.cloudShowBadge,
   };
   return labels[name];
 }

@@ -9620,6 +9620,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close hint'**
   String get hintDismiss;
+
+  /// X4 tooltip / screen-reader label of the cloud icon on a file KFM uploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded by KFM (last known, not a live check)'**
+  String get cloudBadgeOnCloud;
+
+  /// X4 tooltip / screen-reader label of the cloud icon when the file changed after its upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed since it was uploaded'**
+  String get cloudBadgeChanged;
+
+  /// X4 Settings → Cloud switch (also the X6 backup name of this setting).
+  ///
+  /// In en, this message translates to:
+  /// **'Show cloud icon'**
+  String get cloudShowBadge;
+
+  /// X4 help text under the Show cloud icon switch.
+  ///
+  /// In en, this message translates to:
+  /// **'The cloud icon means KFM handed this file to your cloud app. It\'s saved on this phone, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.'**
+  String get cloudBadgeHelp;
+
+  /// X4 viewer info line, one per cloud folder the file was uploaded to.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded by KFM to {destination} · {date}'**
+  String cloudInfoUploaded(String destination, String date);
+
+  /// X4 viewer info line: the file changed after it was uploaded there.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed since upload to {destination}'**
+  String cloudInfoChanged(String destination);
+
+  /// X4: a cloud folder that was removed from KFM (in the viewer info line).
+  ///
+  /// In en, this message translates to:
+  /// **'{destination} (removed)'**
+  String cloudInfoRemoved(String destination);
+
+  /// X4 filter sheet: heading of the cloud row (shown once KFM uploaded something).
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud'**
+  String get cloudFilterRow;
+
+  /// X4 filter sheet chip: no cloud filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get cloudFilterAny;
+
+  /// X4 filter chip and search chip: files KFM uploaded and that haven't changed since.
+  ///
+  /// In en, this message translates to:
+  /// **'On cloud'**
+  String get cloudFilterOn;
+
+  /// X4 filter chip and search chip: every other file.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on cloud'**
+  String get cloudFilterNotOn;
+
+  /// X4 Settings → Cloud row: opens swipe mode with the On cloud files.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe files already on cloud'**
+  String get cloudSwipeOnCloud;
+
+  /// X4: title of the swipe source with the files already on cloud.
+  ///
+  /// In en, this message translates to:
+  /// **'On cloud'**
+  String get cloudSwipeOnCloudTitle;
 }
 
 class _AppLocalizationsDelegate

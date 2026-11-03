@@ -28,7 +28,7 @@ void main() {
   });
 
   test('a newer version or bad types throw; decode falls back to none', () {
-    expect(() => FileFilter.fromJson(const {'v': 2}), throwsFormatException);
+    expect(() => FileFilter.fromJson(const {'v': 3}), throwsFormatException);
     expect(
       () => FileFilter.fromJson(const {
         'v': 1,

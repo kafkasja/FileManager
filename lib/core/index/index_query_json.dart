@@ -30,6 +30,7 @@ Map<String, Object?> indexQueryToJson(IndexQuery q) => {
     'labels': [for (final term in q.labelTerms) term.toList()..sort()],
   if (q.blurryOnly) 'blurry': true,
   'blurMax': ?q.blurThreshold,
+  'cloud': ?q.onCloud,
 };
 
 /// Throws [FormatException] on bad data or a newer version.
@@ -86,5 +87,6 @@ IndexQuery indexQueryFromJson(Map<String, Object?> j) {
     ],
     blurryOnly: opt<bool>('blurry') ?? false,
     blurThreshold: opt<int>('blurMax'),
+    onCloud: opt<bool>('cloud'),
   );
 }

@@ -5,6 +5,7 @@ import 'package:kfm/app/theme/app_theme.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge_cache.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// TASK-H7: a non-media grid tile's name never runs under the ⋮.
@@ -39,6 +40,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          // X4: a tile on its own has no database.
+          cloudHasUploadsProvider.overrideWith((ref) => Stream.value(false)),
           fileMenuItemsProvider.overrideWithValue([
             FileMenuItem(
               label: (_) => 'x',

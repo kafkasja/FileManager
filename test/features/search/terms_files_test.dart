@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
+import 'package:kfm/features/cloud/data/cloud_keywords.dart';
 import 'package:kfm/features/search/data/builtin_keywords.dart';
 import 'package:kfm/features/search/data/search_keywords.dart';
 import 'package:kfm/features/search/data/search_vocabulary.dart';
@@ -11,9 +12,9 @@ import 'package:kfm/features/search/domain/normalize.dart';
 /// Prefixes of every family, built or planned (X4 cloud, C4 label).
 const _knownPrefixes = {'type', 'source', 'attr', 'cloud', 'label'};
 
-/// Prefixes whose family isn't registered yet, or (C4 label) needs C3's
-/// vocabulary: `label_keywords_test` checks those ids.
-const _laterPrefixes = {'cloud', 'label'};
+/// Prefixes whose family (C4 label) needs C3's vocabulary:
+/// `label_keywords_test` checks those ids.
+const _laterPrefixes = {'label'};
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,7 @@ void main() {
               typeKeywords,
               sourceKeywords,
               attributeKeywords,
+              cloudKeywords,
             ]),
             isNotNull,
             reason: '$word → $id',
@@ -70,7 +72,12 @@ void main() {
       rootBundle,
       main: 'en',
       secondary: '',
-      families: const [typeKeywords, sourceKeywords, attributeKeywords],
+      families: const [
+        typeKeywords,
+        sourceKeywords,
+        attributeKeywords,
+        cloudKeywords,
+      ],
     );
     expect(vocab.loadErrors, isEmpty);
     for (final (w, id) in [
@@ -86,11 +93,13 @@ void main() {
       ('gif maker', 'source:gifs'),
       ('hidden', 'attr:hidden'),
       ('tiny', 'attr:tiny'),
+      ('cloud', 'cloud:on'),
+      ('in the cloud', 'cloud:on'),
+      ('not on cloud', 'cloud:off'),
     ]) {
       expect(vocab.phrases[w]?.id, id, reason: w);
     }
-    // Bare `gif` stays an extension; `cloud` waits for X4.
+    // Bare `gif` stays an extension.
     expect(vocab.phrases['gif'], isNull);
-    expect(vocab.phrases['cloud'], isNull);
   });
 }

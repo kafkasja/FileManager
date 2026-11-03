@@ -1,3 +1,4 @@
+import 'package:kfm/features/cloud/data/cloud_keywords.dart';
 import 'package:kfm/features/search/data/builtin_keywords.dart';
 import 'package:kfm/features/search/data/label_keywords.dart';
 import 'package:kfm/features/search/domain/search_keyword.dart';
@@ -13,7 +14,7 @@ List<SearchKeywordFamily> searchKeywordFamilies(Ref ref) => List.unmodifiable([
   typeKeywords,
   sourceKeywords,
   attributeKeywords,
-  // X4: cloudKeywords,
+  cloudKeywords,
   ref.watch(labelKeywordFamilyProvider),
 ]);
 

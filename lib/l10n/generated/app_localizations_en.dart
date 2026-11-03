@@ -6854,4 +6854,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hintDismiss => 'Close hint';
+
+  @override
+  String get cloudBadgeOnCloud =>
+      'Uploaded by KFM (last known, not a live check)';
+
+  @override
+  String get cloudBadgeChanged => 'Changed since it was uploaded';
+
+  @override
+  String get cloudShowBadge => 'Show cloud icon';
+
+  @override
+  String get cloudBadgeHelp =>
+      'The cloud icon means KFM handed this file to your cloud app. It\'s saved on this phone, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.';
+
+  @override
+  String cloudInfoUploaded(String destination, String date) {
+    return 'Uploaded by KFM to $destination · $date';
+  }
+
+  @override
+  String cloudInfoChanged(String destination) {
+    return 'Changed since upload to $destination';
+  }
+
+  @override
+  String cloudInfoRemoved(String destination) {
+    return '$destination (removed)';
+  }
+
+  @override
+  String get cloudFilterRow => 'Cloud';
+
+  @override
+  String get cloudFilterAny => 'Any';
+
+  @override
+  String get cloudFilterOn => 'On cloud';
+
+  @override
+  String get cloudFilterNotOn => 'Not on cloud';
+
+  @override
+  String get cloudSwipeOnCloud => 'Swipe files already on cloud';
+
+  @override
+  String get cloudSwipeOnCloudTitle => 'On cloud';
 }

@@ -36,6 +36,11 @@ IndexQuery? toIndexQuery(
     favoritesOnly: f.favoritesOnly,
     reviewed: reviewed == null ? null : () => reviewed,
     sources: f.sources,
+    onCloud: switch (f.cloud) {
+      CloudFilterMode.onCloud => () => true,
+      CloudFilterMode.notOnCloud => () => false,
+      CloudFilterMode.any => null,
+    },
   );
 }
 

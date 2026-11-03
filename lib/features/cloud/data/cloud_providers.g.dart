@@ -395,7 +395,7 @@ final class CloudDestinationHealthProvider
 }
 
 String _$cloudDestinationHealthHash() =>
-    r'bd2eaca2798eaa9427a7b929172702462bff0fa6';
+    r'47d8363727da5e2066a76ab9771df6f8e434a199';
 
 @ProviderFor(cloudDestinationsById)
 final cloudDestinationsByIdProvider = CloudDestinationsByIdProvider._();

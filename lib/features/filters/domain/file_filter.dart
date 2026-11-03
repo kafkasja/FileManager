@@ -9,6 +9,9 @@ enum TagFilterMode { any, tagged, untagged, hasTags }
 
 enum ReviewedFilterMode { any, reviewed, notReviewed }
 
+/// X4: files KFM uploaded to a cloud destination (unchanged since).
+enum CloudFilterMode { any, onCloud, notOnCloud }
+
 /// Which dates a filter keeps (local calendar days).
 @immutable
 sealed class DateFilter {
@@ -91,13 +94,16 @@ class FileFilter {
     this.reviewed = ReviewedFilterMode.any,
     this.includeReviewed,
     this.sources = const {},
+    this.cloud = CloudFilterMode.any,
   });
 
   /// Throws [FormatException] on bad types or a newer version. Unknown keys
   /// are ignored.
   factory fromJson(Map<String, Object?> j) {
     final v = j['v'];
-    if (v is! int || v > 1) throw FormatException('Bad filter version: $v');
+    if (v is! int || v > version) {
+      throw FormatException('Bad filter version: $v');
+    }
     T? opt<T>(String key) => switch (j[key]) {
       null => null,
       final T value => value,
@@ -128,6 +134,7 @@ class FileFilter {
           SourceBucket.values.asNameMap()[s] ??
               (throw FormatException('Bad source: $s')),
       },
+      cloud: _enum(CloudFilterMode.values, opt<String>('cloud')),
     );
   }
 
@@ -155,6 +162,13 @@ class FileFilter {
 
   /// B1: empty = any source; OR'ed.
   final Set<SourceBucket> sources;
+
+  /// X4: KFM uploads (same rule as the cloud badge).
+  final CloudFilterMode cloud;
+
+  /// Newest JSON version written. v2 (X4) adds `cloud`; a filter without
+  /// it is still written as v1, so older builds keep reading it.
+  static const version = 2;
 
   static const none = FileFilter();
 
@@ -203,7 +217,7 @@ class FileFilter {
 
   /// Only non-default fields.
   Map<String, Object?> toJson() => {
-    'v': 1,
+    'v': cloud == CloudFilterMode.any ? 1 : version,
     if (kinds.isNotEmpty) 'kinds': [for (final k in kinds) k.name]..sort(),
     if (screenshotsOnly) 'screenshots': true,
     if (date is! DateAny) 'date': _dateToJson(date),
@@ -217,6 +231,7 @@ class FileFilter {
     'inclRev': ?includeReviewed,
     if (sources.isNotEmpty)
       'sources': [for (final s in sources) s.name]..sort(),
+    if (cloud != CloudFilterMode.any) 'cloud': cloud.name,
   };
 
   /// Sizes are set with [clearMinSize]/[clearMaxSize] to go back to "any".
@@ -236,6 +251,7 @@ class FileFilter {
     bool? includeReviewed,
     bool clearIncludeReviewed = false,
     Set<SourceBucket>? sources,
+    CloudFilterMode? cloud,
   }) => FileFilter(
     kinds: kinds ?? this.kinds,
     screenshotsOnly: screenshotsOnly ?? this.screenshotsOnly,
@@ -251,6 +267,7 @@ class FileFilter {
         ? null
         : includeReviewed ?? this.includeReviewed,
     sources: sources ?? this.sources,
+    cloud: cloud ?? this.cloud,
   );
 
   @override
@@ -267,7 +284,8 @@ class FileFilter {
       other.favoritesOnly == favoritesOnly &&
       other.reviewed == reviewed &&
       other.includeReviewed == includeReviewed &&
-      _setEquals(other.sources, sources);
+      _setEquals(other.sources, sources) &&
+      other.cloud == cloud;
 
   @override
   int get hashCode => Object.hash(
@@ -283,6 +301,7 @@ class FileFilter {
     reviewed,
     includeReviewed,
     Object.hashAllUnordered(sources),
+    cloud,
   );
 
   static T _of<T>(Object? value, String what) =>

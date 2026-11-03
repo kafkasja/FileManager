@@ -40,7 +40,7 @@ final class ActivePresetControllerProvider
 }
 
 String _$activePresetControllerHash() =>
-    r'3ba5f9fb20b9c5c1f510fa58b182d3b7a5600c13';
+    r'00cf4abf60b9fa701243fb190e528206ef75735b';
 
 /// Switching presets (TASK-P6). Loading while a switch runs; an error
 /// (e.g. [PresetSwitchBlocked]) leaves the current preset active.

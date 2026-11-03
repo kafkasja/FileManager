@@ -6,6 +6,7 @@ import 'package:kfm/core/db/tables/transfers_table.dart' show SourceOutcome;
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/cloud/data/cloud_destinations_repository.dart'
     show CloudItemErrors;
+import 'package:kfm/features/cloud/domain/cloud_state.dart';
 
 export 'package:kfm/core/db/app_database.dart' show CloudItemRow;
 export 'package:kfm/core/db/tables/cloud_items_table.dart';
@@ -276,16 +277,132 @@ class CloudItemsRepository {
     }),
   );
 
-  /// The local file got a new id (F3 `idChanges`): its rows follow it. A
-  /// destination that already has a row for the new id keeps that one.
-  Future<void> rekey(String oldId, String newId) => _write(
-    () => _db.customUpdate(
-      'UPDATE OR IGNORE cloud_items SET file_id = ? WHERE file_id = ?',
-      variables: [Variable.withString(newId), Variable.withString(oldId)],
-      updates: {_db.cloudItems},
-      updateKind: UpdateKind.update,
-    ),
+  /// The local file got a new id (F3 `idChanges`): its rows follow it
+  /// ([rekeyStatements]). Idempotent, so X3's runner and P2's
+  /// `FileIdRekeyer` may both call it for the same change.
+  Future<void> rekey(
+    String oldId,
+    String newId, {
+    int? newSizeBytes,
+    int? newModifiedMs,
+  }) {
+    if (oldId == newId) return Future.value();
+    return _write(
+      () => _db.transaction(
+        () => rekeyStatements(
+          _db,
+          oldId,
+          newId,
+          newSizeBytes: newSizeBytes,
+          newModifiedMs: newModifiedMs,
+        ),
+      ),
+    );
+  }
+
+  /// X4 re-keying, for callers already inside a write-queue transaction
+  /// (P2's `FileIdRekeyer`). Where both ids have a row for the same
+  /// destination the older upload goes (ties: the new id's row stays);
+  /// the rest move to [newId]. A move isn't an edit: rows that matched the
+  /// file's size adopt its new modified time (cross-volume moves change it),
+  /// so the badge survives (accepted risk as P7: edited *and* moved with the
+  /// same size shows "on cloud" again).
+  static Future<void> rekeyStatements(
+    AppDatabase db,
+    String oldId,
+    String newId, {
+    int? newSizeBytes,
+    int? newModifiedMs,
+  }) async {
+    if (oldId == newId) return;
+    await db.customStatement(
+      'DELETE FROM cloud_items WHERE id IN ( '
+      'SELECT CASE WHEN COALESCE(o.uploaded_at_ms, 0) > '
+      'COALESCE(n.uploaded_at_ms, 0) THEN n.id ELSE o.id END '
+      'FROM cloud_items o JOIN cloud_items n '
+      'ON n.destination_id = o.destination_id '
+      'WHERE o.file_id = ? AND n.file_id = ?)',
+      [oldId, newId],
+    );
+    await db.customStatement(
+      'UPDATE cloud_items SET file_id = ? WHERE file_id = ?',
+      [newId, oldId],
+    );
+    if (newSizeBytes != null && newModifiedMs != null) {
+      await db.customStatement(
+        'UPDATE cloud_items SET source_modified_at_ms = ? '
+        'WHERE file_id = ? AND size_bytes = ?',
+        [newModifiedMs, newId, newSizeBytes],
+      );
+    }
+    // customStatement doesn't notify drift streams.
+    db.notifyUpdates({const TableUpdate('cloud_items')});
+  }
+
+  static const List<CloudItemStatus> _uploaded = [
+    CloudItemStatus.handedToProvider,
+    CloudItemStatus.verified,
+  ];
+
+  static CloudUploadFact _fact(CloudItemRow r) => CloudUploadFact(
+    destinationId: r.destinationId,
+    sizeBytes: r.sizeBytes,
+    sourceModifiedAtMs: r.sourceModifiedAtMs,
+    uploadedAtMs: r.uploadedAtMs ?? 0,
   );
+
+  /// X4: uploaded rows (handedToProvider/verified) per file id, one query
+  /// per 500 ids (served by `ci_on_cloud_file`). Ids without uploads are
+  /// absent.
+  Future<Map<String, List<CloudUploadFact>>> uploadFactsFor(
+    List<String> fileIds,
+  ) async {
+    final out = <String, List<CloudUploadFact>>{};
+    for (var i = 0; i < fileIds.length; i += 500) {
+      final chunk = fileIds.sublist(
+        i,
+        i + 500 > fileIds.length ? fileIds.length : i + 500,
+      );
+      final rows =
+          await (_db.select(_db.cloudItems)..where(
+                (c) => c.fileId.isIn(chunk) & c.status.isInValues(_uploaded),
+              ))
+              .get();
+      for (final r in rows) {
+        (out[r.fileId] ??= []).add(_fact(r));
+      }
+    }
+    return out;
+  }
+
+  /// X4: one file's uploads, newest first (the viewer's info line).
+  Stream<List<CloudUploadFact>> destinationsFor(String fileId) =>
+      (_db.select(_db.cloudItems)
+            ..where(
+              (c) => c.fileId.equals(fileId) & c.status.isInValues(_uploaded),
+            )
+            ..orderBy([
+              (c) => OrderingTerm.desc(c.uploadedAtMs),
+              (c) => OrderingTerm.asc(c.id),
+            ]))
+          .watch()
+          .map((rows) => [for (final r in rows) _fact(r)]);
+
+  /// X4: at least one upload exists (badge, filter row and settings stay
+  /// hidden otherwise). Removed destinations' rows count too.
+  Stream<bool> watchHasAny() => _db
+      .customSelect(
+        'SELECT EXISTS (SELECT 1 FROM cloud_items '
+        "WHERE status IN ('handedToProvider', 'verified')) AS e",
+        readsFrom: {_db.cloudItems},
+      )
+      .watchSingle()
+      .map((r) => r.read<bool>('e'))
+      .distinct();
+
+  /// X4: fires (debounced by the caller) whenever `cloud_items` changes.
+  Stream<void> watchChangeTick() =>
+      _db.tableUpdates(TableUpdateQuery.onTable(_db.cloudItems)).map((_) {});
 
   /// Moves: what happened to each original (N11 outcome + error text).
   Future<void> setOutcomes(

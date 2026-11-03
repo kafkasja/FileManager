@@ -12,6 +12,7 @@ import 'package:kfm/features/browse/ui/collection_screen.dart';
 import 'package:kfm/features/browse/ui/text_viewer_screen.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_carousel.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge_cache.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 
 import '../../core/files/fake_file_source.dart';
@@ -165,6 +166,10 @@ void main() {
         .copyWith(sizeBytes: 200 * 1024 * 1024);
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          // X4: a tile on its own has no database.
+          cloudHasUploadsProvider.overrideWith((ref) => Stream.value(false)),
+        ],
         child: MaterialApp(
           theme: ThemeData(extensions: const [AppTokens.light]),
           home: Scaffold(

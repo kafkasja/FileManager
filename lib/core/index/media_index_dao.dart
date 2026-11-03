@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/tables/ai_labels_table.dart';
+import 'package:kfm/core/db/tables/cloud_items_table.dart';
 import 'package:kfm/core/db/tables/image_signals_table.dart';
 import 'package:kfm/core/db/tables/media_index_table.dart';
 import 'package:kfm/core/db/tables/media_locations_table.dart';
@@ -40,6 +41,7 @@ typedef ScopeDigestRow = ({
     SmartGroupItems,
     AiLabels,
     ImageSignals,
+    CloudItems,
   ],
 )
 class MediaIndexDao extends DatabaseAccessor<AppDatabase>
@@ -370,10 +372,11 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
   /// U2: indexed ids of the files in `folderPath`, by name ("Swipe this
   /// folder" prefers the `ms:` id of an SD photo seen through SAF).
   Future<Map<String, String>> idsByNameIn(String folderPath) async {
-    final rows = await (selectOnly(mediaIndex)
-          ..addColumns([mediaIndex.id, mediaIndex.name])
-          ..where(mediaIndex.folderPath.equals(folderPath)))
-        .get();
+    final rows =
+        await (selectOnly(mediaIndex)
+              ..addColumns([mediaIndex.id, mediaIndex.name])
+              ..where(mediaIndex.folderPath.equals(folderPath)))
+            .get();
     return {
       for (final r in rows) r.read(mediaIndex.name)!: r.read(mediaIndex.id)!,
     };
@@ -669,6 +672,23 @@ class MediaIndexDao extends DatabaseAccessor<AppDatabase>
                         blurryPredicate(s, threshold),
                   ),
                 ));
+    }
+    // X4: "on cloud" = an uploaded row whose size and modified ms still
+    // match (same rule as cloudBadgeFor; served by ci_on_cloud_file).
+    if (q.onCloud case final want?) {
+      final c = cloudItems;
+      final sub = selectOnly(c)
+        ..addColumns([c.id])
+        ..where(
+          c.fileId.equalsExp(t.id) &
+              c.status.isInValues(const [
+                CloudItemStatus.handedToProvider,
+                CloudItemStatus.verified,
+              ]) &
+              c.sizeBytes.equalsExp(t.sizeBytes) &
+              c.sourceModifiedAtMs.equalsExp(t.modifiedAtMs),
+        );
+      where = where & (want ? existsQuery(sub) : notExistsQuery(sub));
     }
     return where;
   }

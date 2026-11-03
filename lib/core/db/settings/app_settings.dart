@@ -341,6 +341,13 @@ abstract final class AppSettings {
     defaultValue: false,
   );
 
+  /// X4: the cloud icon on files KFM uploaded (tiles, rows, swipe cards).
+  /// The "On cloud" filter works either way.
+  static final SettingKey<bool> cloudShowBadge = SettingKey.boolean(
+    'cloud.showBadge',
+    defaultValue: true,
+  );
+
   /// X7. Opt-in network: daily GitHub release check (rule 7: off).
   static final SettingKey<bool> updateCheckEnabled = SettingKey.boolean(
     'updates.checkEnabled',

@@ -65,4 +65,4 @@ final class SearchKeywordFamiliesProvider
 }
 
 String _$searchKeywordFamiliesHash() =>
-    r'64f6735505047527b7887424a490fefefd3714d2';
+    r'c4e89fab34de7f709cea07b7474b0891139c5e22';

@@ -189,7 +189,14 @@ class CloudUploadRunner {
 
   void _onIdChange(FileIdChange c) {
     _movedIds[c.oldId] = c.newRef;
-    _items.rekey(c.oldId, c.newRef.id).fireAndForget();
+    _items
+        .rekey(
+          c.oldId,
+          c.newRef.id,
+          newSizeBytes: c.newRef.sizeBytes,
+          newModifiedMs: c.newRef.modifiedAt.millisecondsSinceEpoch,
+        )
+        .fireAndForget();
   }
 
   /// [f] under its latest id this session.

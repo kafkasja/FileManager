@@ -16,6 +16,7 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
@@ -826,6 +827,12 @@ class _CardFace extends StatelessWidget {
               bottom: 12,
               child: ReviewedBadge(),
             ),
+          // X4: top-start is free (S5's expand button is top-end).
+          PositionedDirectional(
+            start: 8,
+            top: 8,
+            child: CloudBadgeIcon(file: file, tooltip: true),
+          ),
         ],
       ),
     );

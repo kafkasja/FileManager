@@ -70,6 +70,7 @@ class IndexQuery {
     this.labelTerms = const [],
     this.blurryOnly = false,
     this.blurThreshold,
+    this.onCloud,
   });
 
   /// Empty = all kinds.
@@ -140,6 +141,10 @@ class IndexQuery {
   /// never reads settings). Null with [blurryOnly] = matches nothing.
   final int? blurThreshold;
 
+  /// X4: null = any · true = on cloud (an unchanged KFM upload) · false =
+  /// not on cloud. Same rule as `cloudBadgeFor`.
+  final bool? onCloud;
+
   /// C4: a content (AI label or blur) predicate is present.
   bool get hasContentTerms => labelTerms.isNotEmpty || blurryOnly;
 
@@ -185,6 +190,7 @@ class IndexQuery {
     List<Set<String>>? labelTerms,
     bool? blurryOnly,
     int? Function()? blurThreshold,
+    bool? Function()? onCloud,
   }) => IndexQuery(
     kinds: kinds ?? this.kinds,
     folderPath: folderPath == null ? this.folderPath : folderPath(),
@@ -212,6 +218,7 @@ class IndexQuery {
     labelTerms: labelTerms ?? this.labelTerms,
     blurryOnly: blurryOnly ?? this.blurryOnly,
     blurThreshold: blurThreshold == null ? this.blurThreshold : blurThreshold(),
+    onCloud: onCloud == null ? this.onCloud : onCloud(),
   );
 
   @override
@@ -243,7 +250,8 @@ class IndexQuery {
       other.documentsGroup == documentsGroup &&
       _termsEqual(other.labelTerms, labelTerms) &&
       other.blurryOnly == blurryOnly &&
-      other.blurThreshold == blurThreshold;
+      other.blurThreshold == blurThreshold &&
+      other.onCloud == onCloud;
 
   static bool _termsEqual(List<Set<String>> a, List<Set<String>> b) {
     if (a.length != b.length) return false;
@@ -282,6 +290,7 @@ class IndexQuery {
     Object.hashAll(labelTerms.map(Object.hashAllUnordered)),
     blurryOnly,
     blurThreshold,
+    onCloud,
   ]);
 }
 

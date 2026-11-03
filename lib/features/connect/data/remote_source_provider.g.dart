@@ -174,7 +174,7 @@ final class RemoteSourceProvider
   }
 }
 
-String _$remoteSourceHash() => r'5ad0fee5754540e5e25f51ef6bba17339871d7d1';
+String _$remoteSourceHash() => r'f4d70ae5a5afe046d9103fd9a6041195f9a3d949';
 
 /// The files of the device with [peerFingerprint] (TASK-N7). Lives as long
 /// as the app; it reads the live connection's client per call, so while that

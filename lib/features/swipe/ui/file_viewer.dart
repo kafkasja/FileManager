@@ -9,6 +9,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/connect/ui/remote_image_provider.dart';
@@ -881,6 +882,8 @@ class _InfoBar extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
                 style: text,
               ),
+            // X4: "Uploaded by KFM to …" per upload.
+            CloudInfoLines(file: file, style: text),
           ],
         ),
       ),

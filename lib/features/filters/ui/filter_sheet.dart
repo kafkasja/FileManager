@@ -9,6 +9,7 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/utils/debouncer.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge_cache.dart';
 import 'package:kfm/features/filters/data/filter_query.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -147,6 +148,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final f = _filter;
     final tags = ref.watch(tagsByIdProvider).value ?? const {};
     final folders = ref.watch(_folders).value ?? const [];
+    // X4: hidden until KFM uploaded something (or the filter already uses
+    // it, e.g. a preset).
+    final showCloud =
+        f.cloud != CloudFilterMode.any ||
+        (ref.watch(cloudHasUploadsProvider).value ?? false);
     final problem = f.problem;
     return DraggableScrollableSheet(
       expand: false,
@@ -335,6 +341,25 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       _debouncer.run(_recount);
                     },
                   ),
+                if (showCloud) ...[
+                  _Header(l10n.cloudFilterRow),
+                  Wrap(
+                    key: const ValueKey('filter-cloud-row'),
+                    spacing: spacing,
+                    children: [
+                      for (final (mode, label) in [
+                        (CloudFilterMode.any, l10n.cloudFilterAny),
+                        (CloudFilterMode.onCloud, l10n.cloudFilterOn),
+                        (CloudFilterMode.notOnCloud, l10n.cloudFilterNotOn),
+                      ])
+                        _choice(
+                          label,
+                          f.cloud == mode,
+                          () => _set(_filter.copyWith(cloud: mode)),
+                        ),
+                    ],
+                  ),
+                ],
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.filterFavoritesOnly),

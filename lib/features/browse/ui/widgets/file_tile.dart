@@ -5,6 +5,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/core/utils/text_ranges.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge.dart';
 
 /// Grid tile (TASK-B1): the thumbnail; non-media files show their name and
 /// an extension badge over the type icon.
@@ -147,6 +148,15 @@ class FileGridTile extends StatelessWidget {
             ),
           ),
         ),
+        // X4: top-start is free on media tiles (size bottom-start, ⋮ and
+        // video bottom-end); non-media tiles show their size label there.
+        PositionedDirectional(
+          start: spacing / 2,
+          top: !file.isMedia && (showSize || big)
+              ? spacing / 2 + 20
+              : spacing / 2,
+          child: CloudBadgeIcon(file: file),
+        ),
         if (menu case final menu?)
           PositionedDirectional(end: 2, bottom: 2, child: menu),
       ],
@@ -187,9 +197,19 @@ class FileListRow extends StatelessWidget {
       trailing: menu,
       leading: SizedBox.square(
         dimension: 48,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(context.tokens.spacing / 2),
-          child: Thumbnail(file: file),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(context.tokens.spacing / 2),
+              child: Thumbnail(file: file),
+            ),
+            PositionedDirectional(
+              end: 0,
+              bottom: 0,
+              child: CloudBadgeIcon(file: file, size: 12),
+            ),
+          ],
         ),
       ),
       title: HighlightedName(name: file.name, words: highlight),

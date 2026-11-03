@@ -79,6 +79,7 @@ final List<BackupSetting> backupSettings = List.unmodifiable(<BackupSetting>[
   BackupSetting.of(AppSettings.similarIncludeScreenshots),
   BackupSetting.of(AppSettings.aiModelsWifiOnly),
   BackupSetting.of(AppSettings.privacyStripLocation),
+  BackupSetting.of(AppSettings.cloudShowBadge),
 ]);
 
 /// Never exported: device state, caches, grants, and network opt-ins that

@@ -39,6 +39,7 @@ RemoteFileSource remoteSource(Ref ref, String peerFingerprint) {
           c.oldId,
           c.newRef.id,
           newModifiedMs: c.newRef.modifiedAt.millisecondsSinceEpoch,
+          newSizeBytes: c.newRef.sizeBytes,
         )
         .fireAndForget(),
   );

@@ -32,13 +32,25 @@ void main() {
   IndexQuery apply(String id, [IndexQuery q = IndexQuery.all]) =>
       kw(id).apply(q);
 
-  test('B8 registers type, source and attr; C4 adds label', () {
-    expect(families.map((f) => f.prefix), ['type', 'source', 'attr', 'label']);
+  test('B8 registers type, source and attr; X4 cloud; C4 label', () {
+    expect(families.map((f) => f.prefix), [
+      'type',
+      'source',
+      'attr',
+      'cloud',
+      'label',
+    ]);
+  });
+
+  test('X4: cloud:on / cloud:off → onCloud', () {
+    expect(apply('cloud:on').onCloud, isTrue);
+    expect(apply('cloud:off').onCloud, isFalse);
+    expect(kw('cloud:on').chipLabel(AppLocalizationsEn()), 'On cloud');
   });
 
   test('unknown prefixes, args and malformed ids resolve to null', () {
     for (final id in [
-      'cloud:on',
+      'cloud:maybe',
       'label:unicorn',
       'type:banana',
       'source:created',

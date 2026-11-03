@@ -72,6 +72,9 @@
     "cloud": "cloud:on",
     "on cloud": "cloud:on",
     "in the cloud": "cloud:on",
+    "not on cloud": "cloud:off",
+    "not in cloud": "cloud:off",
+    "not uploaded": "cloud:off",
 
     "cat": "label:cat",
     "cats": "label:cat",
