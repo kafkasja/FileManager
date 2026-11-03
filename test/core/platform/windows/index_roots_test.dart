@@ -141,6 +141,51 @@ void main() {
       });
     });
 
+    test('a paused drive stops its watchers until resumed (eject)', () {
+      fakeAsync((async) {
+        final a = '${dir.path}/a'.replaceAll(r'\', '/');
+        final b = '${dir.path}/b'.replaceAll(r'\', '/');
+        Directory(a).createSync();
+        Directory(b).createSync();
+        final watched = <String, StreamController<FileSystemEvent>>{};
+        final pauses = WatchPauses();
+        final sub = windowsDirectoryChanges(
+          Stream.value([a, b]),
+          pauses: pauses,
+          // An onCancel future: a bare controller's cancel completes in the
+          // root zone, outside fakeAsync.
+          watch: (root) => (watched[root] = StreamController<FileSystemEvent>(
+            onCancel: () async {},
+          )).stream,
+        ).listen((_) {});
+        async.flushMicrotasks();
+        expect(watched[a]!.hasListener, isTrue);
+
+        var paused = false;
+        unawaited(pauses.pause(a).then((_) => paused = true));
+        async.flushMicrotasks();
+        expect(paused, isTrue);
+        expect(watched[a]!.hasListener, isFalse); // handle closed
+        expect(watched[b]!.hasListener, isTrue); // other drive untouched
+        expect(pauses.isPaused('$a/DCIM'), isTrue);
+
+        // Roots changing while paused don't restart it.
+        final oldB = watched[b];
+        unawaited(pauses.pause('${dir.path}/none'));
+        async.flushMicrotasks();
+        expect(watched[a]!.hasListener, isFalse);
+        expect(watched[b], same(oldB));
+
+        // Eject refused / cancelled: watching again.
+        unawaited(pauses.resume(a));
+        async.flushMicrotasks();
+        expect(watched[a]!.hasListener, isTrue);
+
+        unawaited(sub.cancel());
+        async.flushMicrotasks();
+      });
+    });
+
     test('a real file dropped into a root is reported', () async {
       final root = dir.path.replaceAll(r'\', '/');
       final changes = windowsDirectoryChanges(

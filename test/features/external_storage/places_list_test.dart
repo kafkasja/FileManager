@@ -5,6 +5,7 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/volumes/volumes_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/browse_screen.dart';
@@ -255,11 +256,17 @@ void main() {
         mtpPlatformProvider.overrideWithValue(null),
       ],
     );
+    final pauses = app.container.read(watchPausesProvider);
+    Set<String>? pausedAtEject;
+    volumes.onEject = (_) => pausedAtEject = pauses.paused;
     await _openBrowse(tester);
     await tester.tap(find.byKey(const ValueKey('eject-1234-ABCD')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('eject-open-settings')), findsNothing);
     expect(volumes.ejected, [_sd]);
+    // KFM's directory watchers under the drive were stopped for the eject.
+    expect(pausedAtEject, {_sd});
+    expect(pauses.paused, isEmpty);
     expect(volumes.settingsOpened, 0);
     VolumeActivity activity() =>
         app.container.read(volumeActivityTrackerProvider);
@@ -291,10 +298,16 @@ void main() {
         mtpPlatformProvider.overrideWithValue(null),
       ],
     );
+    final pauses = app.container.read(watchPausesProvider);
+    Set<String>? pausedAtEject;
+    volumes.onEject = (_) => pausedAtEject = pauses.paused;
     await _openBrowse(tester);
     await tester.tap(find.byKey(const ValueKey('eject-1234-ABCD')));
     await tester.pumpAndSettle();
     expect(volumes.ejected, [_sd]);
+    // Watchers stopped for the eject, running again after the refusal.
+    expect(pausedAtEject, {_sd});
+    expect(pauses.isPaused('$_sd/DCIM'), isFalse);
     expect(
       find.text(
         'SanDisk SD card is still in use by another program. '
@@ -303,9 +316,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      app.container
-          .read(volumeActivityTrackerProvider)
-          .isEjecting('1234-ABCD'),
+      app.container.read(volumeActivityTrackerProvider).isEjecting('1234-ABCD'),
       isFalse,
     );
     await tester.pump(const Duration(seconds: 6));

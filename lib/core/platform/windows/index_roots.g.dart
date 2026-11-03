@@ -50,6 +50,52 @@ final class WindowsChannelProvider
 
 String _$windowsChannelHash() => r'441d7216adc249bc0c9460cfb93b64485810a542';
 
+/// The drives whose directory watchers are paused (PL1 eject).
+
+@ProviderFor(watchPauses)
+final watchPausesProvider = WatchPausesProvider._();
+
+/// The drives whose directory watchers are paused (PL1 eject).
+
+final class WatchPausesProvider
+    extends $FunctionalProvider<WatchPauses, WatchPauses, WatchPauses>
+    with $Provider<WatchPauses> {
+  /// The drives whose directory watchers are paused (PL1 eject).
+  WatchPausesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'watchPausesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$watchPausesHash();
+
+  @$internal
+  @override
+  $ProviderElement<WatchPauses> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  WatchPauses create(Ref ref) {
+    return watchPauses(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WatchPauses value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WatchPauses>(value),
+    );
+  }
+}
+
+String _$watchPausesHash() => r'6728ac9e058048c1e8d1d67e5da6237b489f0eb8';
+
 @ProviderFor(windowsIndexRoots)
 final windowsIndexRootsProvider = WindowsIndexRootsProvider._();
 

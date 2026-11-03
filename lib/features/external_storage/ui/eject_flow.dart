@@ -11,6 +11,7 @@ import 'package:kfm/core/files/routing_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/volumes/volumes_channel.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/features/external_storage/data/eject_watch.dart';
 import 'package:kfm/features/external_storage/data/tracked_file_source.dart';
 import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
@@ -120,7 +121,9 @@ Future<void> openEjectSettings(
 
 /// PL1: ejects [place] through [volumes] (Windows shows its own "Safe to
 /// remove"). Success is confirmed by U1's place events (`PlaceEjected`); a
-/// refusal cancels the eject and says why.
+/// refusal cancels the eject and says why. KFM's own directory watchers
+/// under the drive are stopped first (an open watcher handle makes Windows
+/// refuse the eject as "in use") and started again when it fails.
 @visibleForTesting
 Future<void> ejectDirectly(
   WidgetRef ref,
@@ -130,15 +133,20 @@ Future<void> ejectDirectly(
   AppLocalizations l10n,
 ) async {
   final watch = ref.read(ejectWatchProvider)..start(place);
+  final pauses = ref.read(watchPausesProvider);
+  final root = place.rootPath;
   VolumeEjectError? error;
   try {
-    final root = place.rootPath;
     if (root == null) throw StateError('no root for ${place.id}');
+    await pauses.pause(root);
     error = await volumes.eject(root);
   } on Object catch (e, st) {
     developer.log('eject failed', name: 'kfm.eject', error: e, stackTrace: st);
     error = VolumeEjectError.failed;
   }
+  // The drive is gone after a successful eject (the watchers find nothing
+  // to restart); after a refusal they watch it again.
+  if (root != null) await pauses.resume(root);
   if (error == null) return;
   watch.stop(place.id);
   ref.read(volumeActivityTrackerProvider.notifier).cancelEject(place.id);

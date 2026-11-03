@@ -35,6 +35,7 @@ Raw<Stream<MediaChange>> mediaChanges(Ref ref) {
   if (isWindowsHost) {
     return windowsDirectoryChanges(
       ref.watch(windowsIndexRootsProvider).watch(),
+      pauses: ref.watch(watchPausesProvider),
     );
   }
   return const Stream.empty();

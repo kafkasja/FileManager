@@ -114,6 +114,43 @@ class IndexRootStatus {
   int get hashCode => Object.hash(path, available);
 }
 
+/// Drives (or folders) whose directory watchers are stopped. PL1: an
+/// open watcher handle on a removable drive makes Windows refuse its eject
+/// as "in use", so the eject flow pauses the drive first and resumes it
+/// when the eject fails or is cancelled.
+class WatchPauses {
+  final Set<String> _paused = {};
+  final List<Future<void> Function()> _listeners = [];
+
+  /// Whether [path] lies under a paused drive/folder.
+  bool isPaused(String path) => isUnderAnyRoot(path, _paused.toList());
+
+  Set<String> get paused => Set.unmodifiable(_paused);
+
+  /// Stops the watchers under [root]; completes once they're cancelled.
+  Future<void> pause(String root) async {
+    if (_paused.add(normalizeWindowsPath(root))) await _notify();
+  }
+
+  /// Lets the watchers under [root] start again (where the folder exists).
+  Future<void> resume(String root) async {
+    final before = _paused.length;
+    _paused.removeWhere((r) => sameWindowsPath(r, root));
+    if (_paused.length != before) await _notify();
+  }
+
+  /// [onChange] runs (and is awaited) after every pause/resume; the
+  /// returned function removes it.
+  void Function() addListener(Future<void> Function() onChange) {
+    _listeners.add(onChange);
+    return () => _listeners.remove(onChange);
+  }
+
+  Future<void> _notify() => Future.wait([
+    for (final l in [..._listeners]) l(),
+  ]);
+}
+
 /// How long file-system events are collected before the index hears of
 /// them (a copy of 500 photos is one rescan, not 500).
 const windowsChangeDebounce = Duration(seconds: 2);
@@ -123,10 +160,12 @@ const windowsChangeDebounce = Duration(seconds: 2);
 /// creates/edits/moves → one `insert` (an incremental scan), deletes → one
 /// `delete` without id (a media rescan). Follows [roots]: watchers start
 /// and stop as roots change; a root that disappears stops its watcher.
+/// Roots under a drive in [pauses] aren't watched (see [WatchPauses]).
 Stream<MediaChange> windowsDirectoryChanges(
   Stream<List<String>> roots, {
   Duration debounce = windowsChangeDebounce,
   Stream<FileSystemEvent> Function(String root)? watch,
+  WatchPauses? pauses,
 }) {
   final watchRoot =
       watch ?? (root) => Directory(windowsIoPath(root)).watch(recursive: true);
@@ -134,6 +173,8 @@ Stream<MediaChange> windowsDirectoryChanges(
   // Cancelled in the controller's onCancel.
   // ignore: cancel_subscriptions
   StreamSubscription<List<String>>? rootsSub;
+  void Function()? removePauseListener;
+  var lastRoots = const <String>[];
   final watchers = <String, StreamSubscription<FileSystemEvent>>{};
   Timer? timer;
   var sawDelete = false;
@@ -164,11 +205,16 @@ Stream<MediaChange> windowsDirectoryChanges(
     await watchers.remove(root)?.cancel();
   }
 
-  void follow(List<String> next) {
-    final wanted = {for (final r in next) normalizeWindowsPath(r)};
-    for (final root in watchers.keys.toList()) {
-      if (!wanted.contains(root)) unawaited(stop(root));
-    }
+  Future<void> follow(List<String> next) {
+    lastRoots = next;
+    final wanted = {
+      for (final r in next)
+        if (!(pauses?.isPaused(r) ?? false)) normalizeWindowsPath(r),
+    };
+    final stops = [
+      for (final root in watchers.keys.toList())
+        if (!wanted.contains(root)) stop(root),
+    ];
     for (final root in wanted) {
       if (watchers.containsKey(root)) continue;
       if (!Directory(windowsIoPath(root)).existsSync()) continue;
@@ -184,14 +230,17 @@ Stream<MediaChange> windowsDirectoryChanges(
         // Not watchable right now; the next scan still sees it.
       }
     }
+    return Future.wait(stops);
   }
 
   controller = StreamController<MediaChange>(
     onListen: () {
-      rootsSub = roots.listen(follow);
+      rootsSub = roots.listen((next) => unawaited(follow(next)));
+      removePauseListener = pauses?.addListener(() => follow(lastRoots));
     },
     onCancel: () async {
       timer?.cancel();
+      removePauseListener?.call();
       // All cancels start right away; then wait for them together.
       final cancels = [
         if (rootsSub case final s?) s.cancel(),
@@ -206,6 +255,10 @@ Stream<MediaChange> windowsDirectoryChanges(
 
 @Riverpod(keepAlive: true)
 WindowsChannel windowsChannel(Ref ref) => WindowsChannel();
+
+/// The drives whose directory watchers are paused (PL1 eject).
+@Riverpod(keepAlive: true)
+WatchPauses watchPauses(Ref ref) => WatchPauses();
 
 @Riverpod(keepAlive: true)
 WindowsIndexRoots windowsIndexRoots(Ref ref) => WindowsIndexRoots(

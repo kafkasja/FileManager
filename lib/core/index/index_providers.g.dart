@@ -103,7 +103,7 @@ final class MediaChangesProvider
   }
 }
 
-String _$mediaChangesHash() => r'26130ee324bce90ba53dda99b3d687dbf384dc91';
+String _$mediaChangesHash() => r'80d403b7cbe8c774b795367f7d96af345bf31714';
 
 /// N7: Files-table changes (non-media files) from the native observer.
 /// Empty off Android and in tests. The observer runs only while listened

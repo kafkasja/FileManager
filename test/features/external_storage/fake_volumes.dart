@@ -69,9 +69,13 @@ class FakeVolumes implements VolumesPlatform {
   final List<String> ejected = [];
   VolumeEjectError? ejectError;
 
+  /// Called when [eject] runs (to look at KFM's state at that moment).
+  void Function(String rootPath)? onEject;
+
   @override
   Future<VolumeEjectError?> eject(String rootPath) async {
     ejected.add(rootPath);
+    onEject?.call(rootPath);
     return ejectError;
   }
 
