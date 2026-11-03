@@ -7314,4 +7314,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get desktopZoomFit => 'Sığdır';
+
+  @override
+  String get desktopSortFavorite => 'Favori';
+
+  @override
+  String get desktopSortTag => 'Etiket…';
+
+  @override
+  String get backupSettingDesktopBrowseLayout => 'PC\'de Gözat görünümü';
+
+  @override
+  String get backupSettingDesktopBrowseSort => 'PC\'de Gözat sıralaması';
 }

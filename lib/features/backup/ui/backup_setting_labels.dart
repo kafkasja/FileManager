@@ -20,6 +20,8 @@ String? backupSettingLabelOrNull(AppLocalizations l10n, String name) {
     AppSettings.browseSortDescending.name:
         l10n.backupSettingBrowseSortDescending,
     AppSettings.browseShowSizes.name: l10n.backupSettingBrowseShowSizes,
+    AppSettings.desktopBrowseLayout.name: l10n.backupSettingDesktopBrowseLayout,
+    AppSettings.desktopBrowseSort.name: l10n.backupSettingDesktopBrowseSort,
     AppSettings.browseHighlightBig.name: l10n.backupSettingBrowseHighlightBig,
     AppSettings.searchSecondaryLanguage.name:
         l10n.backupSettingSearchSecondLanguage,

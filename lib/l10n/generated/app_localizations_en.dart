@@ -7304,4 +7304,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopZoomFit => 'Fit';
+
+  @override
+  String get desktopSortFavorite => 'Favorite';
+
+  @override
+  String get desktopSortTag => 'Tag…';
+
+  @override
+  String get backupSettingDesktopBrowseLayout => 'PC Browse view';
+
+  @override
+  String get backupSettingDesktopBrowseSort => 'PC Browse sort';
 }

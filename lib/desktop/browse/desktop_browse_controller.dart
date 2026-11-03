@@ -1,3 +1,8 @@
+import 'dart:async';
+
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/db_write_queue.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
@@ -66,7 +71,48 @@ class DesktopBrowseState {
 @Riverpod(keepAlive: true)
 class DesktopBrowseController extends _$DesktopBrowseController {
   @override
-  DesktopBrowseState build() => const DesktopBrowseState();
+  DesktopBrowseState build() {
+    unawaited(_restore());
+    return const DesktopBrowseState();
+  }
+
+  /// The last layout and sort (PL3 polish: remembered between runs).
+  Future<void> _restore() async {
+    final settings = ref.read(settingsRepositoryProvider);
+    final String layout;
+    final String sort;
+    try {
+      layout = await settings.read(AppSettings.desktopBrowseLayout);
+      sort = await settings.read(AppSettings.desktopBrowseSort);
+    } on Object {
+      return; // Defaults stay.
+    }
+    if (!ref.mounted) return;
+    final parts = sort.split(':');
+    final column = switch (parts.first) {
+      FileColumns.date => FileColumns.date,
+      FileColumns.size => FileColumns.size,
+      _ => FileColumns.name,
+    };
+    state = state.copyWith(
+      layout: ExplorerLayout.values.asNameMap()[layout] ?? state.layout,
+      sortColumn: column,
+      descending: parts.length > 1 && parts[1] == 'desc',
+    );
+  }
+
+  void _save() {
+    final settings = ref.read(settingsRepositoryProvider);
+    settings
+        .write(AppSettings.desktopBrowseLayout, state.layout.name)
+        .fireAndForget();
+    settings
+        .write(
+          AppSettings.desktopBrowseSort,
+          '${state.sortColumn}:${state.descending ? 'desc' : 'asc'}',
+        )
+        .fireAndForget();
+  }
 
   /// Opens [folder] (null = Places), remembering where it came from.
   void open(String? folder) {
@@ -106,8 +152,10 @@ class DesktopBrowseController extends _$DesktopBrowseController {
     );
   }
 
-  void setLayout(ExplorerLayout layout) =>
-      state = state.copyWith(layout: layout);
+  void setLayout(ExplorerLayout layout) {
+    state = state.copyWith(layout: layout);
+    _save();
+  }
 
   /// A column header click: that column, or the other direction when it is
   /// already the sort column. Dates and sizes start largest/newest first.
@@ -119,6 +167,7 @@ class DesktopBrowseController extends _$DesktopBrowseController {
             sortColumn: column,
             descending: column != FileColumns.name,
           );
+    _save();
   }
 }
 

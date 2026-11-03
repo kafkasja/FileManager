@@ -1699,5 +1699,9 @@
   "desktopCompareFacts": "{size} · {resolution} · {date}",
   "desktopZoomIn": "Yakınlaştır",
   "desktopZoomOut": "Uzaklaştır",
-  "desktopZoomFit": "Sığdır"
+  "desktopZoomFit": "Sığdır",
+  "desktopSortFavorite": "Favori",
+  "desktopSortTag": "Etiket…",
+  "backupSettingDesktopBrowseLayout": "PC'de Gözat görünümü",
+  "backupSettingDesktopBrowseSort": "PC'de Gözat sıralaması"
 }

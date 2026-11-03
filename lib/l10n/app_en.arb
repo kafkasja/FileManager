@@ -4249,5 +4249,13 @@
   "desktopZoomOut": "Zoom out",
   "@desktopZoomOut": {"description": "PL3 desktop UI."},
   "desktopZoomFit": "Fit",
-  "@desktopZoomFit": {"description": "PL3: reset zoom."}
+  "@desktopZoomFit": {"description": "PL3: reset zoom."},
+  "desktopSortFavorite": "Favorite",
+  "@desktopSortFavorite": {"description": "PL3: Sort toolbar button (key F): adds the selection to Favorites."},
+  "desktopSortTag": "Tag…",
+  "@desktopSortTag": {"description": "PL3: Sort toolbar button (key T): pick a tag for the selection."},
+  "backupSettingDesktopBrowseLayout": "PC Browse view",
+  "@backupSettingDesktopBrowseLayout": {"description": "X6 import preview: the desktop Browse layout setting."},
+  "backupSettingDesktopBrowseSort": "PC Browse sort",
+  "@backupSettingDesktopBrowseSort": {"description": "X6 import preview: the desktop Browse sort setting."}
 }

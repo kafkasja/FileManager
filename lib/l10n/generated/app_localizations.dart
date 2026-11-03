@@ -10304,6 +10304,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fit'**
   String get desktopZoomFit;
+
+  /// PL3: Sort toolbar button (key F): adds the selection to Favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get desktopSortFavorite;
+
+  /// PL3: Sort toolbar button (key T): pick a tag for the selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag…'**
+  String get desktopSortTag;
+
+  /// X6 import preview: the desktop Browse layout setting.
+  ///
+  /// In en, this message translates to:
+  /// **'PC Browse view'**
+  String get backupSettingDesktopBrowseLayout;
+
+  /// X6 import preview: the desktop Browse sort setting.
+  ///
+  /// In en, this message translates to:
+  /// **'PC Browse sort'**
+  String get backupSettingDesktopBrowseSort;
 }
 
 class _AppLocalizationsDelegate

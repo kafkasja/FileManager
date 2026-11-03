@@ -7368,4 +7368,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get desktopZoomFit => 'Passend';
+
+  @override
+  String get desktopSortFavorite => 'Favoriet';
+
+  @override
+  String get desktopSortTag => 'Tag…';
+
+  @override
+  String get backupSettingDesktopBrowseLayout => 'Weergave van Bladeren op pc';
+
+  @override
+  String get backupSettingDesktopBrowseSort => 'Sortering van Bladeren op pc';
 }

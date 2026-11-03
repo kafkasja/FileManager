@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:ui' show Rect;
+
 import 'package:flutter/foundation.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -39,6 +41,14 @@ abstract interface class DesktopShell {
   });
 
   Future<void> removeTray();
+
+  /// The window's bounds (logical pixels), for remembering them (PL3).
+  Future<Rect> bounds();
+
+  Future<void> setBounds(Rect bounds);
+
+  /// The user moved or resized the window.
+  Stream<void> get boundsChanges;
 }
 
 /// window_manager + tray_manager. [init] once in `main` before `runApp`.
@@ -52,6 +62,7 @@ class WindowsDesktopShell
 
   final StreamController<void> _close = StreamController.broadcast();
   final StreamController<String> _clicks = StreamController.broadcast();
+  final StreamController<void> _bounds = StreamController.broadcast();
   bool _trayShown = false;
 
   /// Intercepts closing. The native runner keeps size, title and minimum
@@ -71,6 +82,21 @@ class WindowsDesktopShell
 
   @override
   void onWindowClose() => _close.add(null);
+
+  @override
+  void onWindowMoved() => _bounds.add(null);
+
+  @override
+  void onWindowResized() => _bounds.add(null);
+
+  @override
+  Stream<void> get boundsChanges => _bounds.stream;
+
+  @override
+  Future<Rect> bounds() => windowManager.getBounds();
+
+  @override
+  Future<void> setBounds(Rect bounds) => windowManager.setBounds(bounds);
 
   @override
   void onTrayIconMouseDown() => _clicks.add(trayOpenKey);

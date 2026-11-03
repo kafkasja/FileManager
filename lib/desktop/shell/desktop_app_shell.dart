@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
+import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/platform/host_platform.dart';
+import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/drag_drop_channel.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
+import 'package:kfm/desktop/shell/window_memory.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
@@ -41,6 +44,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
   final _searchFocus = FocusNode(debugLabel: 'desktopSearch');
   late final DesktopDragController _drag;
   WindowsDragDrop? _native;
+  WindowMemory? _memory;
 
   DesktopSection get _section =>
       DesktopSection.ofBranch(widget.shell.currentIndex);
@@ -57,6 +61,11 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
           native.startDrag([for (final f in data.files) f.path]);
       native.listen(this);
     }
+    // PL3 polish: the window opens where the user left it.
+    if (ref.read(desktopShellProvider) case final shell?) {
+      _memory = WindowMemory(shell, ref.read(settingsRepositoryProvider))
+        ..start().ignore();
+    }
   }
 
   Size? _windowSize() {
@@ -68,6 +77,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
   @override
   void dispose() {
     _native?.listen(null);
+    _memory?.dispose();
     _drag
       ..cancel()
       ..onLeaveWindow = null

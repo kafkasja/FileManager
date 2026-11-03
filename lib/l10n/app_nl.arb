@@ -1699,5 +1699,9 @@
   "desktopCompareFacts": "{size} · {resolution} · {date}",
   "desktopZoomIn": "Inzoomen",
   "desktopZoomOut": "Uitzoomen",
-  "desktopZoomFit": "Passend"
+  "desktopZoomFit": "Passend",
+  "desktopSortFavorite": "Favoriet",
+  "desktopSortTag": "Tag…",
+  "backupSettingDesktopBrowseLayout": "Weergave van Bladeren op pc",
+  "backupSettingDesktopBrowseSort": "Sortering van Bladeren op pc"
 }

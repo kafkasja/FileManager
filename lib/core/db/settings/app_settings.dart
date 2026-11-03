@@ -125,6 +125,25 @@ abstract final class AppSettings {
         FileSortField.values,
       );
 
+  /// PL3. Desktop Browse view: largeIcons, grid or details.
+  static final SettingKey<String> desktopBrowseLayout = SettingKey.string(
+    'desktop.browse.layout',
+    'details',
+  );
+
+  /// PL3. Desktop Browse sort: `<column>:<asc|desc>` (name, date, size).
+  static final SettingKey<String> desktopBrowseSort = SettingKey.string(
+    'desktop.browse.sort',
+    'name:asc',
+  );
+
+  /// PL3. The desktop window's last bounds `x,y,width,height` (logical
+  /// pixels); empty = the runner's default.
+  static final SettingKey<String> desktopWindowBounds = SettingKey.string(
+    'desktop.window.bounds',
+    '',
+  );
+
   /// B2. Browse sort direction.
   static final SettingKey<bool> browseSortDescending = SettingKey.boolean(
     'browse.sort.descending',
