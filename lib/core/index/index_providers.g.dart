@@ -50,12 +50,14 @@ final class MediaIndexDaoProvider
 
 String _$mediaIndexDaoHash() => r'a7e2075c534433612a7d3232400a34a91853d778';
 
-/// Live MediaStore changes. Empty off Android and in tests.
+/// Live MediaStore changes (Android), directory watchers over the index
+/// roots (Windows, PL1). Empty elsewhere and in tests.
 
 @ProviderFor(mediaChanges)
 final mediaChangesProvider = MediaChangesProvider._();
 
-/// Live MediaStore changes. Empty off Android and in tests.
+/// Live MediaStore changes (Android), directory watchers over the index
+/// roots (Windows, PL1). Empty elsewhere and in tests.
 
 final class MediaChangesProvider
     extends
@@ -65,7 +67,8 @@ final class MediaChangesProvider
           Raw<Stream<MediaChange>>
         >
     with $Provider<Raw<Stream<MediaChange>>> {
-  /// Live MediaStore changes. Empty off Android and in tests.
+  /// Live MediaStore changes (Android), directory watchers over the index
+  /// roots (Windows, PL1). Empty elsewhere and in tests.
   MediaChangesProvider._()
     : super(
         from: null,
@@ -100,7 +103,7 @@ final class MediaChangesProvider
   }
 }
 
-String _$mediaChangesHash() => r'6f8f54411417c497e04da28059c176be279239f4';
+String _$mediaChangesHash() => r'26130ee324bce90ba53dda99b3d687dbf384dc91';
 
 /// N7: Files-table changes (non-media files) from the native observer.
 /// Empty off Android and in tests. The observer runs only while listened
@@ -498,4 +501,4 @@ final class ThumbnailCacheProvider
   }
 }
 
-String _$thumbnailCacheHash() => r'559594ffb0223873eab0448e470fb71a36eb4203';
+String _$thumbnailCacheHash() => r'16c060ccbdf528f2b1cba04fdcaf44ad80d78ada';

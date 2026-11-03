@@ -1600,5 +1600,16 @@
   "cloudFilterNotOn": "Niet in de cloud",
   "cloudSwipeOnCloud": "Bestanden swipen die al in de cloud staan",
   "cloudSwipeOnCloudTitle": "In de cloud",
-  "backupUndoBlocked": "het prullenbakvenster is geweigerd, dus er is niets veranderd"
+  "backupUndoBlocked": "het prullenbakvenster is geweigerd, dus er is niets veranderd",
+  "fileOpInUse": "{name} wordt gebruikt door een ander programma",
+  "fileOpNoTrash": "Dit station heeft geen Prullenbak",
+  "windowsRootsTitle": "Mappen die KFM doorzoekt",
+  "windowsRootsHint": "KFM toont de foto's, video's en bestanden in deze mappen.",
+  "windowsRootsNotAvailable": "Niet beschikbaar",
+  "windowsRootsAdd": "Map toevoegen",
+  "windowsRootsAddConfirm": "Toevoegen",
+  "windowsRootsRemove": "{folder} verwijderen",
+  "windowsRootsReset": "Standaardmappen herstellen",
+  "windowsRootsPathLabel": "Pad van de map",
+  "windowsRootsPathMissing": "Er is geen map op dit pad"
 }

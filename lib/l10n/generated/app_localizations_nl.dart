@@ -6967,4 +6967,42 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get backupUndoBlocked =>
       'het prullenbakvenster is geweigerd, dus er is niets veranderd';
+
+  @override
+  String fileOpInUse(String name) {
+    return '$name wordt gebruikt door een ander programma';
+  }
+
+  @override
+  String get fileOpNoTrash => 'Dit station heeft geen Prullenbak';
+
+  @override
+  String get windowsRootsTitle => 'Mappen die KFM doorzoekt';
+
+  @override
+  String get windowsRootsHint =>
+      'KFM toont de foto\'s, video\'s en bestanden in deze mappen.';
+
+  @override
+  String get windowsRootsNotAvailable => 'Niet beschikbaar';
+
+  @override
+  String get windowsRootsAdd => 'Map toevoegen';
+
+  @override
+  String get windowsRootsAddConfirm => 'Toevoegen';
+
+  @override
+  String windowsRootsRemove(String folder) {
+    return '$folder verwijderen';
+  }
+
+  @override
+  String get windowsRootsReset => 'Standaardmappen herstellen';
+
+  @override
+  String get windowsRootsPathLabel => 'Pad van de map';
+
+  @override
+  String get windowsRootsPathMissing => 'Er is geen map op dit pad';
 }

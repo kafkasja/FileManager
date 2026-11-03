@@ -43,7 +43,7 @@ final class OnboardingControllerProvider
 }
 
 String _$onboardingControllerHash() =>
-    r'6ae5e0a3814adce1a855654f85bd958c8d953958';
+    r'7f1f3eb79642a8ca8d17de268eb41d06c2f37507';
 
 /// The first-time tutorial and one-time hints (TASK-L3), over two settings.
 /// Writes go through the settings write queue (latest value wins); failures

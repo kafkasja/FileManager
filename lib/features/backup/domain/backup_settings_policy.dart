@@ -119,6 +119,8 @@ const Set<String> excludedBackupSettings = {
   'onboarding.tutorialDone',
   'onboarding.seenHints',
   'onboarding.existingChecked',
+  // PL1: folder paths of this PC.
+  'windows.indexRoots',
 };
 
 final Map<String, BackupSetting> backupSettingsByName = Map.unmodifiable({

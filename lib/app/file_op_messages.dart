@@ -35,6 +35,7 @@ String fileOpFailureMessage(
       FileOpFailure.userCancelled => l.fileOpDeclined,
       FileOpFailure.noSpace => l.fileOpNoSpace,
       FileOpFailure.volumeEjecting => l.ejectRefused,
+      FileOpFailure.inUse => l.fileOpInUse(file.name),
       FileOpFailure.unsupported ||
       FileOpFailure.permissionDenied => l.fileOpNeedsAllFiles,
       _ => fallback,
@@ -51,6 +52,8 @@ String fileOpFailureMessage(
     FileOpFailure.pendingFolderUnavailable => l.pendingFallbackTitle,
     FileOpFailure.unavailable => l.remoteNotConnected,
     FileOpFailure.volumeEjecting => l.ejectRefused,
+    FileOpFailure.inUse => l.fileOpInUse(file.name),
+    FileOpFailure.noTrash => l.fileOpNoTrash,
     FileOpFailure.ioError || null => fallback,
   };
 }
@@ -67,6 +70,7 @@ String folderOpFailureMessage(
   FileOpFailure.unsupported => l.fileOpNeedsAllFiles,
   FileOpFailure.notFound => l.fileOpNotFound(name),
   FileOpFailure.volumeEjecting => l.ejectRefused,
+  FileOpFailure.inUse => l.fileOpInUse(name),
   _ => l.fileOpFailedGeneric(name),
 };
 

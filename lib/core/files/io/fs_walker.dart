@@ -117,21 +117,23 @@ void _walk(WalkOptions o, void Function(Object?) send) {
   while (stack.isNotEmpty) {
     final (dir, parentHidden) = stack.removeLast();
     final isRoot = dir == root;
+    // Windows drive root `C:` (PL1): dart:io needs `C:/` for the root.
+    final ioDir = _driveRoot.hasMatch(dir) ? '$dir/' : dir;
     final noMedia = File('$dir/.nomedia').existsSync();
     if (noMedia && !o.includeHidden) continue;
     final hidden = parentHidden || noMedia;
 
     final List<FileSystemEntity> entries;
     try {
-      entries = Directory(dir).listSync(followLinks: false);
+      entries = Directory(ioDir).listSync(followLinks: false);
     } on FileSystemException catch (e) {
       if (isRoot) throw fileOpExceptionFromIo(e, dir);
       continue; // unreadable subfolder (Android/data, lost+found…)
     }
 
     for (final entity in entries) {
-      final path = entity.path.replaceAll(r'\', '/');
-      final name = path.substring(path.lastIndexOf('/') + 1);
+      final name = _nameOf(entity.path);
+      final path = dir == '/' ? '/$name' : '$dir/$name';
       final dotted = name.startsWith('.');
       if (dotted && !o.includeHidden) continue;
       if (isSystemTempName(name)) continue;
@@ -185,4 +187,11 @@ void _walk(WalkOptions o, void Function(Object?) send) {
     }
   }
   if (page.isNotEmpty) send(List<FileRef>.unmodifiable(page));
+}
+
+final _driveRoot = RegExp(r'^[A-Za-z]:$');
+
+String _nameOf(String path) {
+  final p = path.replaceAll(r'\', '/');
+  return p.substring(p.lastIndexOf('/') + 1);
 }

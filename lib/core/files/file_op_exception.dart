@@ -17,6 +17,12 @@ enum FileOpFailure {
 
   /// U3: the volume is being ejected; new work on it is refused.
   volumeEjecting,
+
+  /// PL1: another program has the file open (Windows sharing violation).
+  inUse,
+
+  /// PL1: the drive has no Recycle Bin (off, too small, network drive).
+  noTrash,
 }
 
 /// Every FileSource failure. The UI maps [failure] to a localized message;
