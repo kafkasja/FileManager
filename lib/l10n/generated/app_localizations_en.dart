@@ -6915,6 +6915,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileOpNoTrash => 'This drive has no Recycle Bin';
 
   @override
+  String deleteNoRecycleBin(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'these $count files',
+      one: 'this file',
+    );
+    return 'This drive has no Recycle Bin. Delete $_temp0 permanently?';
+  }
+
+  @override
   String get windowsRootsTitle => 'Folders KFM scans';
 
   @override

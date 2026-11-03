@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.kaf" "\0"
-            VALUE "FileDescription", "kfm" "\0"
+            VALUE "CompanyName", "Kaf" "\0"
+            VALUE "FileDescription", "Kaf's File Manager" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "kfm" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.kaf. All rights reserved." "\0"
-            VALUE "OriginalFilename", "kfm.exe" "\0"
-            VALUE "ProductName", "kfm" "\0"
+            VALUE "InternalName", "KFM" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Kaf" "\0"
+            VALUE "OriginalFilename", "KFM.exe" "\0"
+            VALUE "ProductName", "KFM" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

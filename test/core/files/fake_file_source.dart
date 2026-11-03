@@ -100,6 +100,10 @@ class FakeFileSource implements FileSource {
   /// H2: files [trashBatch] can't put in the pending-delete folder.
   final Set<String> folderUnavailable = {};
 
+  /// PL1: files on a drive without a Recycle Bin (`trashBatch` fails them
+  /// with `noTrash`; permanent deletes still work).
+  final Set<String> noTrash = {};
+
   /// Moves a file into the trash as if the system did it (H1: a dialog
   /// whose result was lost), without a [trashBatch] call.
   void trashExternally(String id) {
@@ -247,6 +251,14 @@ class FakeFileSource implements FileSource {
     final trashed = <TrashedItem>[];
     final failed = <String, FileOpException>{};
     for (final f in files) {
+      if (noTrash.contains(f.id)) {
+        failed[f.id] = FileOpException(
+          FileOpFailure.noTrash,
+          f.path,
+          fileId: f.id,
+        );
+        continue;
+      }
       if (folderUnavailable.contains(f.id)) {
         failed[f.id] = FileOpException(
           FileOpFailure.pendingFolderUnavailable,

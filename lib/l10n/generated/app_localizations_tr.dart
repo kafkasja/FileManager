@@ -6938,6 +6938,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fileOpNoTrash => 'Bu sürücüde Geri Dönüşüm Kutusu yok';
 
   @override
+  String deleteNoRecycleBin(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Bu $count dosya',
+      one: 'Bu dosya',
+    );
+    return 'Bu sürücüde Geri Dönüşüm Kutusu yok. $_temp0 kalıcı olarak silinsin mi?';
+  }
+
+  @override
   String get windowsRootsTitle => 'KFM\'nin taradığı klasörler';
 
   @override

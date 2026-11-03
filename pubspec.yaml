@@ -47,6 +47,9 @@ dev_dependencies:
   fake_async: ^1.3.3
   flutter_test:
     sdk: flutter
+  # PL1: Windows-only Recycle Bin round trip against the real runner.
+  integration_test:
+    sdk: flutter
   mocktail: ^1.0.5
   riverpod_generator: ^4.0.9
   riverpod_lint: ^3.1.9

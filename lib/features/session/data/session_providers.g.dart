@@ -182,7 +182,61 @@ final class DeleteQueueProvider
   }
 }
 
-String _$deleteQueueHash() => r'c19800d6a332f55b97f699c2211221707467f0b9';
+String _$deleteQueueHash() => r'b9db25b7b8b5200633adfc8213c5985a356af8fc';
+
+/// PL1: the UI side of [DeleteQueue]'s no-Recycle-Bin question
+/// (`NoTrashPrompter` in the app shell answers it).
+
+@ProviderFor(noTrashConfirmer)
+final noTrashConfirmerProvider = NoTrashConfirmerProvider._();
+
+/// PL1: the UI side of [DeleteQueue]'s no-Recycle-Bin question
+/// (`NoTrashPrompter` in the app shell answers it).
+
+final class NoTrashConfirmerProvider
+    extends
+        $FunctionalProvider<
+          NoTrashConfirmer,
+          NoTrashConfirmer,
+          NoTrashConfirmer
+        >
+    with $Provider<NoTrashConfirmer> {
+  /// PL1: the UI side of [DeleteQueue]'s no-Recycle-Bin question
+  /// (`NoTrashPrompter` in the app shell answers it).
+  NoTrashConfirmerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'noTrashConfirmerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$noTrashConfirmerHash();
+
+  @$internal
+  @override
+  $ProviderElement<NoTrashConfirmer> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  NoTrashConfirmer create(Ref ref) {
+    return noTrashConfirmer(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NoTrashConfirmer value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NoTrashConfirmer>(value),
+    );
+  }
+}
+
+String _$noTrashConfirmerHash() => r'89017144a7c8a3843afecab93c92f92fa0cbd293';
 
 @ProviderFor(undoService)
 final undoServiceProvider = UndoServiceProvider._();

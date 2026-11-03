@@ -1603,6 +1603,7 @@
   "backupUndoBlocked": "çöp kutusu penceresi reddedildi, hiçbir şey değişmedi",
   "fileOpInUse": "{name} başka bir program tarafından kullanılıyor",
   "fileOpNoTrash": "Bu sürücüde Geri Dönüşüm Kutusu yok",
+  "deleteNoRecycleBin": "Bu sürücüde Geri Dönüşüm Kutusu yok. {count, plural, =1{Bu dosya} other{Bu {count} dosya}} kalıcı olarak silinsin mi?",
   "windowsRootsTitle": "KFM'nin taradığı klasörler",
   "windowsRootsHint": "KFM bu klasörlerdeki fotoğrafları, videoları ve dosyaları gösterir.",
   "windowsRootsNotAvailable": "Kullanılamıyor",

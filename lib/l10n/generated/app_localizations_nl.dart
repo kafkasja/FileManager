@@ -6977,6 +6977,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get fileOpNoTrash => 'Dit station heeft geen Prullenbak';
 
   @override
+  String deleteNoRecycleBin(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Deze $count bestanden',
+      one: 'Dit bestand',
+    );
+    return 'Dit station heeft geen Prullenbak. $_temp0 definitief verwijderen?';
+  }
+
+  @override
   String get windowsRootsTitle => 'Mappen die KFM doorzoekt';
 
   @override

@@ -1603,6 +1603,7 @@
   "backupUndoBlocked": "het prullenbakvenster is geweigerd, dus er is niets veranderd",
   "fileOpInUse": "{name} wordt gebruikt door een ander programma",
   "fileOpNoTrash": "Dit station heeft geen Prullenbak",
+  "deleteNoRecycleBin": "Dit station heeft geen Prullenbak. {count, plural, =1{Dit bestand} other{Deze {count} bestanden}} definitief verwijderen?",
   "windowsRootsTitle": "Mappen die KFM doorzoekt",
   "windowsRootsHint": "KFM toont de foto's, video's en bestanden in deze mappen.",
   "windowsRootsNotAvailable": "Niet beschikbaar",

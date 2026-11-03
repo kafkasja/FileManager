@@ -9723,6 +9723,12 @@ abstract class AppLocalizations {
   /// **'This drive has no Recycle Bin'**
   String get fileOpNoTrash;
 
+  /// PL1: one question per delete batch on a Windows drive without a Recycle Bin. No keeps the files queued.
+  ///
+  /// In en, this message translates to:
+  /// **'This drive has no Recycle Bin. Delete {count, plural, =1{this file} other{these {count} files}} permanently?'**
+  String deleteNoRecycleBin(int count);
+
   /// PL1: Windows settings section listing the index roots.
   ///
   /// In en, this message translates to:

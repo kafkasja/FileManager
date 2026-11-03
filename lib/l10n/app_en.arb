@@ -4056,6 +4056,8 @@
   "@fileOpInUse": {"placeholders": {"name": {"type": "String"}}, "description": "PL1: a file another program has open on Windows."},
   "fileOpNoTrash": "This drive has no Recycle Bin",
   "@fileOpNoTrash": {"description": "PL1: trashing on a Windows drive without a Recycle Bin."},
+  "deleteNoRecycleBin": "This drive has no Recycle Bin. Delete {count, plural, =1{this file} other{these {count} files}} permanently?",
+  "@deleteNoRecycleBin": {"description": "PL1: one question per delete batch on a Windows drive without a Recycle Bin. No keeps the files queued.", "placeholders": {"count": {"type": "int"}}},
   "windowsRootsTitle": "Folders KFM scans",
   "@windowsRootsTitle": {"description": "PL1: Windows settings section listing the index roots."},
   "windowsRootsHint": "KFM shows the photos, videos and files in these folders.",

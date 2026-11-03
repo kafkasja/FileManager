@@ -8,6 +8,7 @@ import 'package:kfm/features/swipe/data/file_source_resolver.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/trash/data/delete_queue.dart';
+import 'package:kfm/features/trash/data/no_trash_confirmer.dart';
 import 'package:kfm/features/undo/data/undo_repository.dart';
 import 'package:kfm/features/undo/domain/undo_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -41,10 +42,17 @@ DeleteQueue deleteQueue(Ref ref) {
     // N8: rows of remote sessions commit through that device.
     remoteSource: (id) => ref.read(fileSourceResolverProvider)(id),
     trash: FileSourceResolver.swipeTrash,
+    // PL1: a Windows drive without a Recycle Bin asks first.
+    confirmNoTrash: ref.watch(noTrashConfirmerProvider).confirm,
   );
   ref.onDispose(queue.dispose);
   return queue;
 }
+
+/// PL1: the UI side of [DeleteQueue]'s no-Recycle-Bin question
+/// (`NoTrashPrompter` in the app shell answers it).
+@Riverpod(keepAlive: true)
+NoTrashConfirmer noTrashConfirmer(Ref ref) => NoTrashConfirmer();
 
 @Riverpod(keepAlive: true)
 UndoService undoService(Ref ref) => UndoService(

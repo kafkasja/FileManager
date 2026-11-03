@@ -89,6 +89,10 @@ typedef CommitTrash = Future<TrashResult> Function(
   List<FileRef> files,
 );
 
+/// PL1: asks whether [count] files on a drive without a Recycle Bin may be
+/// deleted permanently. False: they stay queued.
+typedef ConfirmNoTrash = Future<bool> Function(int count);
+
 /// Deferred, batched deletes (TASK-D2). Shares [SerialLock] with undo so a
 /// commit and an undo never interleave.
 class DeleteQueue {
@@ -100,6 +104,7 @@ class DeleteQueue {
     required this._index,
     this._remoteSource,
     this._trash,
+    this._confirmNoTrash,
     this._policy = const DeleteBatchPolicy(),
     this._clock = DateTime.now,
   });
@@ -111,6 +116,9 @@ class DeleteQueue {
   /// N8: the source of a non-local source id (rows of remote sessions).
   final FileSource Function(String sourceId)? _remoteSource;
   final CommitTrash? _trash;
+
+  /// PL1: one question per batch for `noTrash` failures; null = No.
+  final ConfirmNoTrash? _confirmNoTrash;
   final UndoRepository _undo;
   final MediaIndexDao _index;
   final DeleteBatchPolicy _policy;
@@ -528,6 +536,7 @@ class DeleteQueue {
           continue;
         }
         final trashedById = {for (final t in result.trashed) t.original.id: t};
+        final noBin = <(PendingDeleteRow, FileRef)>[];
         for (final (row, file) in batch) {
           final error = result.failed[file.id];
           if (trashedById[file.id] case final item?) {
@@ -546,10 +555,20 @@ class DeleteQueue {
             await _markFailed(row, _unavailableCode);
             failed++;
             unavailable++;
+          } else if (!remote && error?.failure == FileOpFailure.noTrash) {
+            // PL1: a drive without a Recycle Bin: asked once below.
+            noBin.add((row, file));
           } else {
             await _markFailed(row, error?.message ?? 'not trashed');
             failed++;
           }
+        }
+        if (noBin.isNotEmpty) {
+          final r = await _deleteWithoutBin(source, noBin);
+          committed += r.committed;
+          failed += r.failed;
+          bytes += r.bytes;
+          cancelled = cancelled || r.userCancelled;
         }
       } on FileOpException catch (e) {
         if (e.failure == FileOpFailure.userCancelled) {
@@ -579,6 +598,45 @@ class DeleteQueue {
       folderUnavailable: unavailable,
       sourceUnavailable: sourceUnavailable,
     );
+  }
+
+  /// PL1: files on a drive without a Recycle Bin. One question for the
+  /// batch: Yes → deleted permanently (the action then counts as a
+  /// permanent delete); No (or no one to ask) → they stay queued.
+  Future<CommitResult> _deleteWithoutBin(
+    FileSource source,
+    List<(PendingDeleteRow, FileRef)> batch,
+  ) async {
+    final confirm = _confirmNoTrash;
+    final yes = confirm != null && await confirm(batch.length);
+    if (!yes) {
+      await _setStatus([
+        for (final (r, _) in batch) r.id,
+      ], PendingDeleteStatus.queued);
+      return const CommitResult(userCancelled: true);
+    }
+    Object? error;
+    try {
+      await source.deletePermanentlyBatch([for (final (_, f) in batch) f]);
+    } on Object catch (e) {
+      // Every file was tried: which ones are gone is checked below.
+      error = e;
+      _report(e);
+    }
+    var committed = 0;
+    var failed = 0;
+    var bytes = 0;
+    for (final (row, file) in batch) {
+      if (error == null || await source.stat(file.id) == null) {
+        await _markCommitted(row, null, mode: DeleteMode.permanent.name);
+        committed++;
+        bytes += row.sizeBytes;
+      } else {
+        await _markFailed(row, '$error');
+        failed++;
+      }
+    }
+    return CommitResult(committed: committed, failed: failed, bytes: bytes);
   }
 
   /// Where files that vanished from normal queries are now, keyed by the
