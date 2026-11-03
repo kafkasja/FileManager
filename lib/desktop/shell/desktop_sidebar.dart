@@ -9,6 +9,7 @@ import 'package:kfm/desktop/shell/desktop_navigation.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 
 /// Left sidebar (TASK-PL3 PL3-2 a): the sections, then Places and
@@ -239,7 +240,7 @@ class _SidebarItemState extends State<SidebarItem> {
           borderRadius: BorderRadius.circular(8),
           onTap: widget.enabled ? widget.onTap : null,
           child: Container(
-            height: 36,
+            height: scaledExtent(context, 36),
             margin: const EdgeInsetsDirectional.symmetric(vertical: 1),
             padding: const EdgeInsetsDirectional.symmetric(horizontal: 10),
             decoration: BoxDecoration(

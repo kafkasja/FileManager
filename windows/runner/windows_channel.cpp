@@ -1,5 +1,7 @@
 #include "windows_channel.h"
 
+#include "clipboard_files.h"
+
 #include <flutter/standard_method_codec.h>
 // clang-format off
 #include <windows.h>
@@ -1226,6 +1228,11 @@ void WindowsChannel::HandleCall(
   Result result(std::move(unique_result));
   const std::string& method = call.method_name();
   const EncodableMap& args = ArgsMap(call.arguments());
+  // PL3: files on the Windows clipboard, answered on this (window) thread.
+  if (clipboard_files::Handles(method)) {
+    clipboard_files::Handle(window_, method, args, *result);
+    return;
+  }
   if (method == "knownFolders") {
     Run(*quick_, result, [] { return KnownFolders(); });
   } else if (method == "binAvailable") {

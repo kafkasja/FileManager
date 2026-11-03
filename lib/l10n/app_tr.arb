@@ -1675,7 +1675,6 @@
   "desktopDropSend": "Bir cihaza gönder",
   "desktopDropTrash": "Çöpe taşı",
   "desktopDropCtrlHint": "Kopyalamak için Ctrl tuşunu basılı tutun",
-  "desktopDropFoldersSkipped": "{count, plural, =1{1 klasör atlandı: içindeki dosyaları bırakın} other{{count} klasör atlandı: içindeki dosyaları bırakın}}",
   "desktopDropNothing": "Buraya kopyalanacak bir şey yok",
   "desktopDragOffer": "{files} · {action}",
   "desktopTrashAll": "Tümü ({count})",
@@ -1706,5 +1705,16 @@
   "backupSettingDesktopBrowseSort": "PC'de Gözat sıralaması",
   "ejectWindowsInUse": "{label} hâlâ başka bir program tarafından kullanılıyor. Programı kapatıp tekrar deneyin.",
   "ejectWindowsFailed": "Windows {label} sürücüsünü çıkaramadı",
-  "desktopSystemDrive": "Yerel disk ({drive})"
+  "desktopSystemDrive": "Yerel disk ({drive})",
+  "desktopSortPreset": "Hazır ayar: {name}",
+  "desktopSortManagePresets": "Hazır ayarları yönet…",
+  "desktopSortSetup": "Sıralama ayarları…",
+  "videoPlay": "Oynat",
+  "videoPause": "Duraklat",
+  "videoSoundOn": "Sesi aç",
+  "videoSoundOff": "Sesi kapat",
+  "desktopDragItems": "{count, plural, =1{1 öğe} other{{count} öğe}}",
+  "opTreeMoved": "{folders, plural, =0{Taşındı} =1{1 klasör taşındı} other{{folders} klasör taşındı}} ({files, plural, =1{1 dosya} other{{files} dosya}})",
+  "opTreeCopied": "{folders, plural, =0{Kopyalandı} =1{1 klasör kopyalandı} other{{folders} klasör kopyalandı}} ({files, plural, =1{1 dosya} other{{files} dosya}})",
+  "opFolderIntoItself": "Bir klasör kendi içine taşınamaz"
 }

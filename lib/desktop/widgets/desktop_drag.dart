@@ -24,6 +24,7 @@ class DesktopDragData {
     required this.origin,
     this.files = const [],
     this.paths = const [],
+    this.folders = const [],
   });
 
   final DragOrigin origin;
@@ -34,7 +35,18 @@ class DesktopDragData {
   /// '/'-separated paths ([DragOrigin.explorer]).
   final List<String> paths;
 
-  int get count => origin == DragOrigin.explorer ? paths.length : files.length;
+  /// Whole folders dragged in desktop Browse ('/'-separated paths).
+  final List<String> folders;
+
+  int get count => origin == DragOrigin.explorer
+      ? paths.length
+      : files.length + folders.length;
+
+  /// Files only (targets that act on files: tags, Trash, Devices…).
+  bool get filesOnly => folders.isEmpty;
+
+  /// Every path of a KFM drag (files and folders), for a drag out.
+  List<String> get allPaths => [for (final f in files) f.path, ...folders];
 
   bool get fromKfm => origin != DragOrigin.explorer;
 }
@@ -248,6 +260,9 @@ class DesktopDragOverlay extends StatelessWidget {
         final l10n = context.l10n;
         final theme = Theme.of(context);
         final offer = controller.offer;
+        final what = data.filesOnly
+            ? l10n.desktopDragCount(data.count)
+            : l10n.desktopDragItems(data.count);
         return Stack(
           children: [
             Positioned(
@@ -282,11 +297,8 @@ class DesktopDragOverlay extends StatelessWidget {
                             const SizedBox(width: 6),
                             Text(
                               offer == null
-                                  ? l10n.desktopDragCount(data.count)
-                                  : l10n.desktopDragOffer(
-                                      l10n.desktopDragCount(data.count),
-                                      offer.label,
-                                    ),
+                                  ? what
+                                  : l10n.desktopDragOffer(what, offer.label),
                             ),
                           ],
                         ),

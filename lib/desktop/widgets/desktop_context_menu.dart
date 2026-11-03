@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 
 /// One entry of a desktop right-click menu (null [onSelected] = disabled;
 /// [divider] draws a line above it).
@@ -47,7 +48,7 @@ Future<void> showDesktopContextMenu(
           key: e.key,
           value: e,
           enabled: e.onSelected != null,
-          height: 34,
+          height: scaledExtent(context, 34),
           child: Row(
             children: [
               SizedBox(

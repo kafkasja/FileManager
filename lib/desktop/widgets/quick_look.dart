@@ -5,6 +5,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
 
 /// An action button (and key) inside Quick look.
@@ -145,7 +146,7 @@ class _QuickLookState extends ConsumerState<_QuickLook> {
         child: Column(
           children: [
             SizedBox(
-              height: 48,
+              height: scaledExtent(context, 48),
               child: Row(
                 children: [
                   const SizedBox(width: 16),
@@ -186,7 +187,11 @@ class _QuickLookState extends ConsumerState<_QuickLook> {
                   Expanded(
                     child: file == null
                         ? const SizedBox.shrink()
-                        : MediaView(key: ValueKey(file.id), file: file),
+                        : MediaView(
+                            key: ValueKey(file.id),
+                            file: file,
+                            desktopVideoControls: true,
+                          ),
                   ),
                   IconButton(
                     tooltip: shortcutHint(l10n, l10n.desktopNext, '→'),

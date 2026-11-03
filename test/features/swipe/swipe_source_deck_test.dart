@@ -434,54 +434,54 @@ void main() {
     expect(await db.select(db.swipeSourceItems).get(), hasLength(5));
   });
 
-  test('X1: a file kept in the "Shared files" deck is still offered by the '
-      'main deck (position and count unchanged); a trashed one is not', () async {
-    var c = await launch();
-    addTearDown(c.dispose);
-    final main = photos.reversed.toList();
-    expect(await swipe(c, 2), main.sublist(0, 2));
+  test(
+    'X1: a file kept in the "Shared files" deck is still offered by the '
+    'main deck (position and count unchanged); a trashed one is not',
+    () async {
+      var c = await launch();
+      addTearDown(c.dispose);
+      final main = photos.reversed.toList();
+      expect(await swipe(c, 2), main.sublist(0, 2));
 
-    // Shared from the gallery: the next main file, kept there.
-    await open(
-      c,
-      FilesSourceRequest(
-        origin: SwipeSourceOrigin.sharedIn,
-        title: 'Shared files',
-        fileIds: [main[2]],
-      ),
-    );
-    expect(await swipe(c, 1), [main[2]]);
-    await controller(c).closeSource();
-    expect(deck(c).source, isNull);
-    expect(current(c), main[2]);
-    expect(deck(c).swiped, 2);
+      // Shared from the gallery: the next main file, kept there.
+      await open(
+        c,
+        FilesSourceRequest(
+          origin: SwipeSourceOrigin.sharedIn,
+          title: 'Shared files',
+          fileIds: [main[2]],
+        ),
+      );
+      expect(await swipe(c, 1), [main[2]]);
+      await controller(c).closeSource();
+      expect(deck(c).source, isNull);
+      expect(current(c), main[2]);
+      expect(deck(c).swiped, 2);
 
-    c = await restart(c);
-    expect(current(c), main[2]);
-    expect(deck(c).swiped, 2);
+      c = await restart(c);
+      expect(current(c), main[2]);
+      expect(deck(c).swiped, 2);
 
-    // Trashed in the shared deck: it is going away, so main skips it.
-    await open(
-      c,
-      FilesSourceRequest(
-        origin: SwipeSourceOrigin.sharedIn,
-        title: 'Shared files',
-        fileIds: [main[2]],
-      ),
-    );
-    expect(
-      await swipe(c, 1, direction: SwipeDirection.left),
-      [main[2]],
-    );
-    await controller(c).closeSource();
-    expect(current(c), main[3]);
+      // Trashed in the shared deck: it is going away, so main skips it.
+      await open(
+        c,
+        FilesSourceRequest(
+          origin: SwipeSourceOrigin.sharedIn,
+          title: 'Shared files',
+          fileIds: [main[2]],
+        ),
+      );
+      expect(await swipe(c, 1, direction: SwipeDirection.left), [main[2]]);
+      await controller(c).closeSource();
+      expect(current(c), main[3]);
 
-    // Other sources keep the SS1 rule: acted files are skipped in main.
-    await open(c, list([main[3]]));
-    await swipe(c, 1);
-    await controller(c).closeSource();
-    expect(current(c), main[4]);
-  });
+      // Other sources keep the SS1 rule: acted files are skipped in main.
+      await open(c, list([main[3]]));
+      await swipe(c, 1);
+      await controller(c).closeSource();
+      expect(current(c), main[4]);
+    },
+  );
 
   test('a restart with a source open continues it at the next file', () async {
     var c = await launch();

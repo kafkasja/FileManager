@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
@@ -10,10 +11,10 @@ import 'package:kfm/features/tags/ui/tag_picker_sheet.dart';
 /// One file's tags as checkboxes (TASK-B9). Each toggle writes at once
 /// (unchecking undoes it); "New tag…" creates a tag and adds it.
 Future<void> showFileTagsSheet(BuildContext context, String fileId) =>
-    showModalBottomSheet<void>(
+    showAdaptiveSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      maxDialogWidth: 400,
       builder: (_) => _FileTagsSheet(fileId: fileId),
     );
 
@@ -29,11 +30,10 @@ class _FileTagsSheet extends ConsumerWidget {
     final on = ref.watch(fileTagIdsProvider(fileId)).value ?? const <int>{};
     // The snackbar belongs to the screen under the sheet.
     final outer = Navigator.of(context).context;
-    return DraggableScrollableSheet(
-      expand: false,
-      maxChildSize: 0.9,
-      builder: (context, scroll) => ListView(
+    return AdaptiveScrollSheet(
+      builder: (context, scroll, {required shrinkWrap}) => ListView(
         controller: scroll,
+        shrinkWrap: shrinkWrap,
         children: [
           Padding(
             padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),

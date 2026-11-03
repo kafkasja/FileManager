@@ -7201,17 +7201,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopDropCtrlHint => 'Hold Ctrl to copy';
 
   @override
-  String desktopDropFoldersSkipped(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count folders were skipped: drop the files inside them',
-      one: '1 folder was skipped: drop the files inside it',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get desktopDropNothing => 'Nothing to copy here';
 
   @override
@@ -7331,4 +7320,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopSystemDrive(String drive) {
     return 'Local disk ($drive)';
   }
+
+  @override
+  String desktopSortPreset(String name) {
+    return 'Preset: $name';
+  }
+
+  @override
+  String get desktopSortManagePresets => 'Manage presets…';
+
+  @override
+  String get desktopSortSetup => 'Sort setup…';
+
+  @override
+  String get videoPlay => 'Play';
+
+  @override
+  String get videoPause => 'Pause';
+
+  @override
+  String get videoSoundOn => 'Turn sound on';
+
+  @override
+  String get videoSoundOff => 'Turn sound off';
+
+  @override
+  String desktopDragItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opTreeMoved(int folders, int files) {
+    String _temp0 = intl.Intl.pluralLogic(
+      folders,
+      locale: localeName,
+      other: 'Moved $folders folders',
+      one: 'Moved 1 folder',
+      zero: 'Moved',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files files',
+      one: '1 file',
+    );
+    return '$_temp0 ($_temp1)';
+  }
+
+  @override
+  String opTreeCopied(int folders, int files) {
+    String _temp0 = intl.Intl.pluralLogic(
+      folders,
+      locale: localeName,
+      other: 'Copied $folders folders',
+      one: 'Copied 1 folder',
+      zero: 'Copied',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files files',
+      one: '1 file',
+    );
+    return '$_temp0 ($_temp1)';
+  }
+
+  @override
+  String get opFolderIntoItself => 'A folder can\'t go into itself';
 }

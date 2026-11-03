@@ -25,6 +25,7 @@ class WalkOptions {
     this.pageSize = 500,
     this.origin = FileOrigin.local,
     this.readExif = false,
+    this.skipBuildOutput = false,
   });
 
   final String root;
@@ -47,6 +48,10 @@ class WalkOptions {
   /// PL1: photos get `takenAt`/width/height from their EXIF (first 64 KiB).
   /// Android leaves it off (MediaStore has them).
   final bool readExif;
+
+  /// PL3: skip developer build output (`isBuildOutputFolder`), so a project
+  /// under Documents doesn't fill the index with generated images.
+  final bool skipBuildOutput;
 }
 
 /// Lists files under [WalkOptions.root] in a background isolate, in pages.
@@ -137,6 +142,8 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
       continue; // unreadable subfolder (Android/data, lost+found…)
     }
 
+    // The folder's names, for the build-output check (made on first use).
+    List<String>? siblings;
     for (final entity in entries) {
       final name = _nameOf(entity.path);
       final path = dir == '/' ? '/$name' : '$dir/$name';
@@ -145,6 +152,13 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
       if (isSystemTempName(name)) continue;
 
       if (entity is Directory) {
+        if (o.skipBuildOutput &&
+            isBuildOutputFolder(
+              name,
+              siblings ??= [for (final e in entries) _nameOf(e.path)],
+            )) {
+          continue;
+        }
         if (o.recursive && !isExcludedFolderPath(path)) {
           stack.add((path, hidden || dotted));
         }

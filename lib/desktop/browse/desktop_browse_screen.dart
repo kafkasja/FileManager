@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/core/platform/windows/windows_clipboard.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_clipboard.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
@@ -14,6 +15,7 @@ import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
@@ -142,15 +144,19 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
 
   void _copy({required bool cut}) {
     final files = _selectedFiles;
-    if (files.isEmpty) return;
-    ref.read(desktopClipboardProvider.notifier).set(files, cut: cut);
+    final roots = _roots;
+    final folders = [
+      for (final f in _selectedFolders)
+        if (f.available && !roots.contains(f.path)) f.path,
+    ];
+    if (files.isEmpty && folders.isEmpty) return;
+    unawaited(copyToClipboard(ref, files, cut: cut, folders: folders));
   }
 
   Future<void> _paste() async {
     final folder = ref.read(desktopBrowseControllerProvider).folder;
-    final clip = ref.read(desktopClipboardProvider);
-    if (folder == null || clip == null) return;
-    await pasteFiles(context, ref, clip, folder);
+    if (folder == null) return;
+    await pasteClipboard(context, ref, folder);
   }
 
   Future<void> _undo() async {
@@ -235,7 +241,13 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
   Future<void> _contextMenu(BrowseEntry? item, Offset at) async {
     final l10n = context.l10n;
     final folder = ref.read(desktopBrowseControllerProvider).folder;
-    final clip = ref.read(desktopClipboardProvider);
+    // Paste works with KFM's clipboard or files on the Windows clipboard.
+    var canPaste = ref.read(desktopClipboardProvider) != null;
+    if (!canPaste && item == null) {
+      final sys = await ref.read(systemFileClipboardProvider)?.read();
+      if (!mounted) return;
+      canPaste = sys != null && sys.paths.isNotEmpty;
+    }
     final entries = <DesktopMenuEntry>[];
     final files = _selectedFiles;
     final folders = _selectedFolders;
@@ -256,7 +268,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
               label: l10n.desktopBrowsePaste,
               icon: Icons.content_paste,
               shortcut: 'Ctrl+V',
-              onSelected: clip == null ? null : () => unawaited(_paste()),
+              onSelected: canPaste ? () => unawaited(_paste()) : null,
             ),
           )
           ..add(
@@ -277,6 +289,28 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
           onSelected: () => unawaited(_open(item)),
         ),
       );
+      if (!_roots.contains(item.path)) {
+        entries
+          ..add(
+            DesktopMenuEntry(
+              key: const ValueKey('menu-folder-cut'),
+              label: l10n.desktopBrowseCut,
+              icon: Icons.content_cut,
+              shortcut: 'Ctrl+X',
+              divider: true,
+              onSelected: () => _copy(cut: true),
+            ),
+          )
+          ..add(
+            DesktopMenuEntry(
+              key: const ValueKey('menu-folder-copy'),
+              label: l10n.desktopBrowseCopy,
+              icon: Icons.content_copy,
+              shortcut: 'Ctrl+C',
+              onSelected: () => _copy(cut: false),
+            ),
+          );
+      }
       if (folders.length == 1 && !_roots.contains(item.path)) {
         for (final m in ref.read(folderMenuItemsProvider)) {
           if (!m.isAvailable(entry)) continue;
@@ -510,11 +544,21 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                           if (e is FileBrowseEntry && ids.contains(e.id))
                             e.file,
                       ];
-                      return files.isEmpty
+                      final roots = _roots;
+                      final folders = [
+                        for (final e in _entries)
+                          if (e is FolderBrowseEntry &&
+                              e.available &&
+                              ids.contains(e.id) &&
+                              !roots.contains(e.path))
+                            e.path,
+                      ];
+                      return files.isEmpty && folders.isEmpty
                           ? null
                           : DesktopDragData(
                               origin: DragOrigin.browse,
                               files: files,
+                              folders: folders,
                             );
                     },
                     itemDropOffer: (e) => switch (e) {
@@ -615,7 +659,7 @@ class _FolderTile extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         SizedBox(
-          height: 32,
+          height: scaledExtent(context, 32),
           child: Text(
             entry.name,
             maxLines: 2,
@@ -652,7 +696,7 @@ class _Breadcrumb extends StatelessWidget {
     }
     final theme = Theme.of(context);
     return Container(
-      height: 34,
+      height: scaledExtent(context, 34),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),

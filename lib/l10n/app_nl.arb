@@ -1675,7 +1675,6 @@
   "desktopDropSend": "Naar een apparaat sturen",
   "desktopDropTrash": "Naar prullenbak",
   "desktopDropCtrlHint": "Houd Ctrl ingedrukt om te kopiëren",
-  "desktopDropFoldersSkipped": "{count, plural, =1{1 map overgeslagen: sleep de bestanden erin} other{{count} mappen overgeslagen: sleep de bestanden erin}}",
   "desktopDropNothing": "Niets om hierheen te kopiëren",
   "desktopDragOffer": "{files} · {action}",
   "desktopTrashAll": "Alles ({count})",
@@ -1706,5 +1705,16 @@
   "backupSettingDesktopBrowseSort": "Sortering van Bladeren op pc",
   "ejectWindowsInUse": "{label} wordt nog gebruikt door een ander programma. Sluit het en probeer het opnieuw.",
   "ejectWindowsFailed": "Windows kon {label} niet uitwerpen",
-  "desktopSystemDrive": "Lokale schijf ({drive})"
+  "desktopSystemDrive": "Lokale schijf ({drive})",
+  "desktopSortPreset": "Voorinstelling: {name}",
+  "desktopSortManagePresets": "Voorinstellingen beheren…",
+  "desktopSortSetup": "Sorteerinstellingen…",
+  "videoPlay": "Afspelen",
+  "videoPause": "Pauzeren",
+  "videoSoundOn": "Geluid aan",
+  "videoSoundOff": "Geluid uit",
+  "desktopDragItems": "{count, plural, =1{1 item} other{{count} items}}",
+  "opTreeMoved": "{folders, plural, =0{Verplaatst} =1{1 map verplaatst} other{{folders} mappen verplaatst}} ({files, plural, =1{1 bestand} other{{files} bestanden}})",
+  "opTreeCopied": "{folders, plural, =0{Gekopieerd} =1{1 map gekopieerd} other{{folders} mappen gekopieerd}} ({files, plural, =1{1 bestand} other{{files} bestanden}})",
+  "opFolderIntoItself": "Een map kan niet in zichzelf"
 }

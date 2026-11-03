@@ -135,6 +135,26 @@ void main() {
     );
   });
 
+  test('skipBuildOutput skips build folders of projects only', () async {
+    await touch('proj/pubspec.yaml');
+    await touch('proj/build/app/res/abc.png');
+    await touch('proj/lib/main.dart');
+    await touch('web/node_modules/x/logo.png');
+    await touch('cs/App.csproj');
+    await touch('cs/bin/Debug/app.dll');
+    await touch('notes/build/plan.pdf');
+    final skipped = await names(WalkOptions(root: root, skipBuildOutput: true));
+    expect(
+      skipped,
+      containsAll(['proj/lib/main.dart', 'notes/build/plan.pdf']),
+    );
+    expect(skipped.where((p) => p.contains('build/app')), isEmpty);
+    expect(skipped.where((p) => p.contains('node_modules')), isEmpty);
+    expect(skipped.where((p) => p.contains('cs/bin')), isEmpty);
+    final all = await names(WalkOptions(root: root));
+    expect(all, contains('proj/build/app/res/abc.png'));
+  });
+
   test('cancelling the subscription stops the walk', () async {
     for (var i = 0; i < 50; i++) {
       await touch('many/f$i.txt');

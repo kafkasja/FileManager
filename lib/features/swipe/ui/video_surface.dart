@@ -18,10 +18,15 @@ class VideoSurface extends ConsumerStatefulWidget {
     required this.file,
     required this.active,
     this.fullscreen = false,
+    this.desktopControls = false,
     super.key,
   });
 
   final FileRef file;
+
+  /// PL3 Quick look: a desktop control bar (play/pause, a scrub slider you
+  /// can click or drag, times, sound) instead of the thin phone bar.
+  final bool desktopControls;
 
   /// Only the current card plays; others are prepared but paused.
   final bool active;
@@ -127,39 +132,160 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
           ),
         if (_error != null)
           Center(child: _Pill(text: context.l10n.videoCantPlay)),
-        PositionedDirectional(
-          start: widget.fullscreen ? 16 : 8,
-          top: widget.fullscreen ? null : 8,
-          bottom: widget.fullscreen
-              ? MediaQuery.paddingOf(context).bottom + 28
-              : null,
-          child: handle == null
-              ? _Pill(
-                  icon: muted ? Icons.volume_off : Icons.volume_up,
-                  text: formatDuration(
-                    Duration(milliseconds: widget.file.durationMs ?? 0),
-                  ),
-                )
-              // MediaStore sometimes reports 0 (seen on a device): prefer
-              // the player's duration once it is known.
-              : ValueListenableBuilder<VideoPlayerValue>(
-                  valueListenable: handle.state,
-                  builder: (context, value, _) => _Pill(
+        if (widget.desktopControls) ...[
+          if (handle != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              // Mouse only: ← → stay Quick look's previous / next.
+              child: ExcludeFocus(child: DesktopVideoBar(handle: handle)),
+            ),
+        ] else ...[
+          PositionedDirectional(
+            start: widget.fullscreen ? 16 : 8,
+            top: widget.fullscreen ? null : 8,
+            bottom: widget.fullscreen
+                ? MediaQuery.paddingOf(context).bottom + 28
+                : null,
+            child: handle == null
+                ? _Pill(
                     icon: muted ? Icons.volume_off : Icons.volume_up,
                     text: formatDuration(
-                      value.duration > Duration.zero
-                          ? value.duration
-                          : Duration(milliseconds: widget.file.durationMs ?? 0),
+                      Duration(milliseconds: widget.file.durationMs ?? 0),
+                    ),
+                  )
+                // MediaStore sometimes reports 0 (seen on a device): prefer
+                // the player's duration once it is known.
+                : ValueListenableBuilder<VideoPlayerValue>(
+                    valueListenable: handle.state,
+                    builder: (context, value, _) => _Pill(
+                      icon: muted ? Icons.volume_off : Icons.volume_up,
+                      text: formatDuration(
+                        value.duration > Duration.zero
+                            ? value.duration
+                            : Duration(
+                                milliseconds: widget.file.durationMs ?? 0,
+                              ),
+                      ),
                     ),
                   ),
-                ),
-        ),
-        if (handle != null)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: _ScrubBar(handle: handle),
           ),
+          if (handle != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _ScrubBar(handle: handle),
+            ),
+        ],
       ],
+    );
+  }
+}
+
+/// PL3 Quick look's video bar: play/pause, position, a slider (click or
+/// drag to seek; seeks are throttled to one per 80 ms while dragging),
+/// duration and sound.
+class DesktopVideoBar extends ConsumerStatefulWidget {
+  const new({required this.handle, super.key});
+
+  final VideoHandle handle;
+
+  @override
+  ConsumerState<DesktopVideoBar> createState() => _DesktopVideoBarState();
+}
+
+class _DesktopVideoBarState extends ConsumerState<DesktopVideoBar> {
+  static const _throttle = Duration(milliseconds: 80);
+  DateTime _lastSeek = DateTime.fromMillisecondsSinceEpoch(0);
+  double? _dragFraction;
+  bool _wasPlaying = false;
+
+  void _seek(double f, Duration total, {bool force = false}) {
+    final now = DateTime.now();
+    if (!force && now.difference(_lastSeek) < _throttle) return;
+    _lastSeek = now;
+    widget.handle.seekTo(total * f).ignore();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final muted = ref.watch(videoMutedProvider);
+    const white = Colors.white;
+    return ValueListenableBuilder<VideoPlayerValue>(
+      valueListenable: widget.handle.state,
+      builder: (context, value, _) {
+        final total = value.duration;
+        final ms = total.inMilliseconds;
+        final fraction =
+            (_dragFraction ??
+                    (ms == 0 ? 0.0 : value.position.inMilliseconds / ms))
+                .clamp(0.0, 1.0);
+        final position = _dragFraction == null
+            ? value.position
+            : total * _dragFraction!;
+        return Material(
+          key: const ValueKey('desktop-video-bar'),
+          color: Colors.black54,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  key: const ValueKey('desktop-video-play'),
+                  tooltip: value.isPlaying ? l10n.videoPause : l10n.videoPlay,
+                  color: white,
+                  icon: Icon(value.isPlaying ? Icons.pause : Icons.play_arrow),
+                  onPressed: () =>
+                      (value.isPlaying
+                              ? widget.handle.pause()
+                              : widget.handle.play())
+                          .ignore(),
+                ),
+                Text(
+                  formatDuration(position),
+                  style: const TextStyle(color: white),
+                ),
+                Expanded(
+                  child: Slider(
+                    key: const ValueKey('desktop-video-slider'),
+                    value: fraction,
+                    onChangeStart: ms == 0
+                        ? null
+                        : (_) {
+                            _wasPlaying = value.isPlaying;
+                            widget.handle.pause().ignore();
+                          },
+                    onChanged: ms == 0
+                        ? null
+                        : (f) {
+                            setState(() => _dragFraction = f);
+                            _seek(f, total);
+                          },
+                    onChangeEnd: ms == 0
+                        ? null
+                        : (f) {
+                            _seek(f, total, force: true);
+                            setState(() => _dragFraction = null);
+                            if (_wasPlaying) widget.handle.play().ignore();
+                          },
+                  ),
+                ),
+                Text(
+                  formatDuration(total),
+                  style: const TextStyle(color: white),
+                ),
+                IconButton(
+                  key: const ValueKey('desktop-video-sound'),
+                  tooltip: muted ? l10n.videoSoundOn : l10n.videoSoundOff,
+                  color: white,
+                  icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
+                  onPressed: () =>
+                      ref.read(videoMutedProvider.notifier).toggle(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

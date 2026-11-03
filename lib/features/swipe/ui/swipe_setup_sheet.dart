@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -35,10 +36,10 @@ Future<void> showSwipeSetupSheet(
   String sourceId = kLocalSourceId,
   String deviceName = '',
   SwipeSetupSection initialSection = SwipeSetupSection.presets,
-}) => showModalBottomSheet<void>(
+}) => showAdaptiveSheet<void>(
   context: context,
   isScrollControlled: true,
-  showDragHandle: true,
+  maxDialogWidth: 640,
   builder: (_) => SwipeSetupSheet(
     sourceId: sourceId,
     deviceName: deviceName,
@@ -96,12 +97,12 @@ class _SwipeSetupSheetState extends ConsumerState<SwipeSetupSheet> {
       padding: EdgeInsetsDirectional.only(top: spacing * 2, bottom: spacing),
       child: Text(text, style: Theme.of(context).textTheme.titleSmall),
     );
-    return DraggableScrollableSheet(
-      expand: false,
+    return AdaptiveScrollSheet(
       initialChildSize: 0.7,
       maxChildSize: 0.95,
-      builder: (context, scroll) => ListView(
+      builder: (context, scroll, {required shrinkWrap}) => ListView(
         controller: scroll,
+        shrinkWrap: shrinkWrap,
         padding: EdgeInsetsDirectional.fromSTEB(
           spacing * 2,
           0,

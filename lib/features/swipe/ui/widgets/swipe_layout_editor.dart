@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -347,10 +348,9 @@ Future<({SwipeAction? action})?> pickSwipeAction(
   bool showNothing = true,
   Set<SwipeActionType> disabledTypes = const {},
 }) async {
-  final choice = await showModalBottomSheet<_Choice>(
+  final choice = await showAdaptiveSheet<_Choice>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     builder: (context) => _ActionPicker(
       title: title,
       current: current,

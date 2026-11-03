@@ -7,6 +7,7 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 
 /// Bottom status bar: items / selection of the current section on the
@@ -28,7 +29,7 @@ class DesktopStatusBar extends ConsumerWidget {
       color: theme.colorScheme.onSurfaceVariant,
     );
     return Container(
-      height: 28,
+      height: scaledExtent(context, 28),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         border: Border(top: BorderSide(color: theme.dividerColor)),
