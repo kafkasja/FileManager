@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
@@ -390,7 +391,10 @@ class _Running extends ConsumerWidget {
         SizedBox(height: spacing * 2),
         Text(
           switch (state.keepAlive) {
-            ShareKeepAlive.background => l10n.shareKeepsRunning,
+            ShareKeepAlive.background =>
+              isWindowsHost
+                  ? l10n.shareKeepsRunningTray
+                  : l10n.shareKeepsRunning,
             ShareKeepAlive.whileAppOpen => l10n.shareKeepOpen,
             ShareKeepAlive.whileOnScreen => l10n.shareKeepOpenDesktop,
           },

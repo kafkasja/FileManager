@@ -7016,4 +7016,29 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get windowsRootsPathMissing => 'Er is geen map op dit pad';
+
+  @override
+  String get shareNotificationOpen => 'KFM openen';
+
+  @override
+  String get shareNotificationQuit => 'Afsluiten';
+
+  @override
+  String get shareKeepsRunningTray =>
+      'Delen gaat door als je het venster sluit. Stop het hier of via het pictogram in het systeemvak.';
+
+  @override
+  String get trayNoticeTitle => 'KFM blijft delen';
+
+  @override
+  String get trayNoticeBody =>
+      'KFM deelt deze pc nog steeds. Stop het via het pictogram in het systeemvak.';
+
+  @override
+  String get settingsStopSharingOnClose =>
+      'Stoppen met delen als het venster sluit';
+
+  @override
+  String get settingsStopSharingOnCloseHint =>
+      'Anders blijft KFM delen vanuit het systeemvak.';
 }

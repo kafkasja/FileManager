@@ -406,6 +406,19 @@ abstract final class AppSettings {
             j is List ? List.unmodifiable(j.whereType<String>()) : const [],
         encode: (v) => v,
       );
+
+  /// PL1. Closing the window while sharing stops sharing and quits,
+  /// instead of hiding KFM to the tray.
+  static final SettingKey<bool> windowsStopSharingOnClose = SettingKey.boolean(
+    'windows.stopSharingOnClose',
+    defaultValue: false,
+  );
+
+  /// PL1. The one-time "KFM is still sharing this PC" notice was shown.
+  static final SettingKey<bool> windowsTrayNoticeShown = SettingKey.boolean(
+    'windows.trayNoticeShown',
+    defaultValue: false,
+  );
 }
 
 /// B4: the action of a drag & drop onto a folder.

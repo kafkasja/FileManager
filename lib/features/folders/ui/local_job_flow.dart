@@ -42,8 +42,7 @@ bool jobTouchesEjectingPlace(
   VolumeActivity activity, {
   required String targetPlace,
   required Iterable<String> sourcePlaces,
-}) =>
-    activity.isEjecting(targetPlace) || sourcePlaces.any(activity.isEjecting);
+}) => activity.isEjecting(targetPlace) || sourcePlaces.any(activity.isEjecting);
 
 /// The place browser's Copy to / Move to: the B4 picker (with Places),
 /// then a local job (or nothing when dismissed).

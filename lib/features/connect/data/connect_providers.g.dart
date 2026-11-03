@@ -1527,20 +1527,20 @@ String _$lifecycleStopsSharingHash() =>
     r'87d7f3f8e8c4fa810e7f992a77d7f7f83fe44a81';
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
-/// notification.
+/// notification; PL1: Windows behind a tray icon.
 
 @ProviderFor(shareBackground)
 final shareBackgroundProvider = ShareBackgroundProvider._();
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
-/// notification.
+/// notification; PL1: Windows behind a tray icon.
 
 final class ShareBackgroundProvider
     extends
         $FunctionalProvider<ShareBackground, ShareBackground, ShareBackground>
     with $Provider<ShareBackground> {
   /// N5b: Android keeps sharing running in the background behind an ongoing
-  /// notification.
+  /// notification; PL1: Windows behind a tray icon.
   ShareBackgroundProvider._()
     : super(
         from: null,
@@ -1574,7 +1574,7 @@ final class ShareBackgroundProvider
   }
 }
 
-String _$shareBackgroundHash() => r'c0008e5ecd2927299514fe5d0f32a08f91cfe81e';
+String _$shareBackgroundHash() => r'39a49e8e10b9bbd811e19e724b7a8779aa6c4862';
 
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 

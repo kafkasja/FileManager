@@ -8,6 +8,8 @@ import 'package:kfm/core/background/background_scheduler.dart';
 import 'package:kfm/core/diagnostics/error_log.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/platform/host_platform.dart';
+import 'package:kfm/core/platform/windows/desktop_shell.dart';
+import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/media_kit_handle.dart';
 import 'package:kfm/features/ai_labels/data/ai_licenses.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
@@ -15,11 +17,14 @@ import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:kfm/features/trash/data/pending_purge_worker.dart';
 import 'package:media_kit/media_kit.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerAiLicenses();
   // PL1: video on Windows goes through media_kit (libmpv).
   if (isWindowsHost) MediaKit.ensureInitialized();
+  // PL1: closing the window goes through the close/tray flow.
+  final desktopShell = isWindowsHost ? WindowsDesktopShell() : null;
+  await desktopShell?.init();
   // H5: errors also go to the on-device log (opened lazily on the first
   // write, so startup doesn't wait for it).
   final log = ErrorLog.current = ErrorLog.main(errorLogDirectory);
@@ -57,6 +62,8 @@ void main() {
           backgroundSchedulerProvider.overrideWithValue(
             WorkmanagerScheduler(pendingPurgeDispatcher),
           ),
+        if (desktopShell != null)
+          desktopShellProvider.overrideWithValue(desktopShell),
         if (isWindowsHost)
           videoHandleFactoryProvider.overrideWith(
             (ref) => mediaKitHandleFactory(

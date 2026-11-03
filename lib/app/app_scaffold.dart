@@ -4,7 +4,9 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/app/widgets/indexing_chip.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
+import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
 import 'package:kfm/features/onboarding/ui/limited_access_banner.dart';
 import 'package:kfm/features/share_in/ui/share_in_prompter.dart';
@@ -55,6 +57,8 @@ class AppScaffold extends StatelessWidget {
           const ShareInPrompter(),
           // PL1: "This drive has no Recycle Bin. Delete permanently?"
           const NoTrashPrompter(),
+          // PL1: the one-time "still sharing from the tray" notice.
+          if (isWindowsHost) const WindowsCloseHost(),
           // X7: never over the swipe card (rule 5).
           if (shell.currentIndex != AppTab.swipe.index) const UpdateBanner(),
           if (onMediaTab) const LimitedAccessBanner(),

@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/db_write_queue.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 
 /// Settings → Connect a device (TASK-N1): the entry rows of Phase 5. N6
@@ -22,6 +27,19 @@ class ConnectSettingsSection extends ConsumerWidget {
           subtitle: Text(l10n.connectShareThisDeviceHint),
           onTap: () => context.push(AppRoutes.connectShare),
         ),
+        // PL1: what closing the window does while sharing.
+        if (isWindowsHost)
+          SwitchListTile(
+            key: const ValueKey('settings-stop-sharing-on-close'),
+            secondary: const Icon(Icons.close_fullscreen),
+            title: Text(l10n.settingsStopSharingOnClose),
+            subtitle: Text(l10n.settingsStopSharingOnCloseHint),
+            value: ref.watch(windowsStopSharingOnCloseProvider).value ?? false,
+            onChanged: (v) => ref
+                .read(settingsRepositoryProvider)
+                .write(AppSettings.windowsStopSharingOnClose, v)
+                .fireAndForget(),
+          ),
         ListTile(
           leading: const Icon(Icons.devices_outlined),
           title: Text(l10n.connectToDevice),

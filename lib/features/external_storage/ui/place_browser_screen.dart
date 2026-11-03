@@ -75,7 +75,9 @@ class _PlaceBrowserState extends ConsumerState<PlaceBrowserScreen> {
     ];
     switch (_sort) {
       case _Sort.name:
-        out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        out.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
       case _Sort.date:
         out.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
       case _Sort.size:
@@ -204,11 +206,10 @@ class _PlaceBrowserState extends ConsumerState<PlaceBrowserScreen> {
   Widget _menu(FileRef f) {
     final l10n = context.l10n;
     final fs = ref.watch(fileSourceProvider);
-    final canMove =
-        fs.supports(FileOp.move, f) &&
-        fs.supports(FileOp.trash, f);
+    final canMove = fs.supports(FileOp.move, f) && fs.supports(FileOp.trash, f);
     final canDelete =
-        fs.supports(FileOp.trash, f) || fs.supports(FileOp.deletePermanently, f);
+        fs.supports(FileOp.trash, f) ||
+        fs.supports(FileOp.deletePermanently, f);
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
       onSelected: (v) => unawaited(switch (v) {
@@ -274,19 +275,18 @@ class _PlaceBrowserState extends ConsumerState<PlaceBrowserScreen> {
         if (f.isMedia) f,
     ];
     if (media.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.externalSwipeFolderEmpty)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.externalSwipeFolderEmpty)));
       return;
     }
     final known = _folder.startsWith('mtp:')
         ? const <String, String>{}
-        : await ref.read(mediaIndexDaoProvider).idsByNameIn(media.first.folderPath);
+        : await ref
+              .read(mediaIndexDaoProvider)
+              .idsByNameIn(media.first.folderPath);
     final request = FilesSourceRequest(
       origin: SwipeSourceOrigin.externalPlace,
-      title: swipeSourceTitle(
-        _stack.isEmpty ? widget.title : _stack.last.name,
-      ),
+      title: swipeSourceTitle(_stack.isEmpty ? widget.title : _stack.last.name),
       fileIds: [for (final f in media) known[f.name] ?? f.id],
     );
     final SwipeSourceOpenResult r;
@@ -294,9 +294,8 @@ class _PlaceBrowserState extends ConsumerState<PlaceBrowserScreen> {
       r = await ref.read(swipeSourceLauncherProvider.notifier).open(request);
     } on Object {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.swipeErrorGeneric)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.swipeErrorGeneric)));
       }
       return;
     }

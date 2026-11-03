@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:kfm/core/platform/windows/desktop_shell.dart';
 import 'package:meta/meta.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 
@@ -14,12 +15,18 @@ class ShareNotificationTexts {
     required this.title,
     required this.text,
     required this.stop,
+    this.open = '',
+    this.quit = '',
   });
 
   final String channel;
   final String title;
   final String text;
   final String stop;
+
+  /// PL1 tray menu only (not sent to Android): "Open KFM", "Quit".
+  final String open;
+  final String quit;
 
   Map<String, String> toMap() => {
     'channel': channel,
@@ -34,10 +41,12 @@ class ShareNotificationTexts {
       other.channel == channel &&
       other.title == title &&
       other.text == text &&
-      other.stop == stop;
+      other.stop == stop &&
+      other.open == open &&
+      other.quit == quit;
 
   @override
-  int get hashCode => Object.hash(channel, title, text, stop);
+  int get hashCode => Object.hash(channel, title, text, stop, open, quit);
 }
 
 /// Texts of the N12 "Incoming files" notification.
@@ -139,6 +148,43 @@ class NoShareBackground implements ShareBackground {
 
   @override
   Future<void> showOffer(OfferNotificationTexts texts) async {}
+
+  @override
+  Future<void> cancelOffer() async {}
+}
+
+/// PL1: on Windows sharing keeps running while the window is hidden, behind
+/// a tray icon (tooltip = who is connected; menu Stop sharing / Open KFM /
+/// Quit). Open and Quit are the close flow's (`WindowsCloseFlow`); Stop
+/// comes back here as [stopRequests]. An incoming offer (N12) brings the
+/// window to the front: offers are never answered from the tray.
+class TrayShareBackground implements ShareBackground {
+  new(this._shell);
+
+  final DesktopShell _shell;
+
+  @override
+  bool get supported => true;
+
+  @override
+  Future<void> show(ShareNotificationTexts texts) => _shell.showTray(
+    tooltip: texts.title,
+    menu: [
+      TrayMenuEntry(trayStopSharingKey, texts.stop),
+      TrayMenuEntry(trayOpenKey, texts.open),
+      TrayMenuEntry(trayQuitKey, texts.quit),
+    ],
+  );
+
+  @override
+  Future<void> stop() => _shell.removeTray();
+
+  @override
+  Stream<void> get stopRequests =>
+      _shell.trayClicks.where((k) => k == trayStopSharingKey);
+
+  @override
+  Future<void> showOffer(OfferNotificationTexts texts) => _shell.showAndFocus();
 
   @override
   Future<void> cancelOffer() async {}

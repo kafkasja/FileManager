@@ -90,9 +90,7 @@ class SwipeFileOps {
     DeleteMode deleteMode = DeleteMode.trash,
   }) {
     final seq = _undo.reserveSeq(sessionId);
-    _lock
-        .run(() => _apply(seq, sessionId, file, action, deleteMode))
-        .ignore();
+    _lock.run(() => _apply(seq, sessionId, file, action, deleteMode)).ignore();
     return seq;
   }
 

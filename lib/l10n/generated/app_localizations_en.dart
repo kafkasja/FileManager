@@ -6954,4 +6954,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get windowsRootsPathMissing => 'There is no folder at this path';
+
+  @override
+  String get shareNotificationOpen => 'Open KFM';
+
+  @override
+  String get shareNotificationQuit => 'Quit';
+
+  @override
+  String get shareKeepsRunningTray =>
+      'Sharing keeps running when you close the window. Stop it here or from the tray icon.';
+
+  @override
+  String get trayNoticeTitle => 'KFM keeps sharing';
+
+  @override
+  String get trayNoticeBody =>
+      'KFM is still sharing this PC. Stop it from the tray icon.';
+
+  @override
+  String get settingsStopSharingOnClose =>
+      'Stop sharing when the window closes';
+
+  @override
+  String get settingsStopSharingOnCloseHint =>
+      'Otherwise KFM keeps sharing from the tray icon.';
 }

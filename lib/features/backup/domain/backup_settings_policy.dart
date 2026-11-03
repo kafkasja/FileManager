@@ -119,8 +119,10 @@ const Set<String> excludedBackupSettings = {
   'onboarding.tutorialDone',
   'onboarding.seenHints',
   'onboarding.existingChecked',
-  // PL1: folder paths of this PC.
+  // PL1: folder paths of this PC; this PC's close/tray choices.
   'windows.indexRoots',
+  'windows.stopSharingOnClose',
+  'windows.trayNoticeShown',
 };
 
 final Map<String, BackupSetting> backupSettingsByName = Map.unmodifiable({

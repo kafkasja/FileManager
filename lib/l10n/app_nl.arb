@@ -1612,5 +1612,12 @@
   "windowsRootsRemove": "{folder} verwijderen",
   "windowsRootsReset": "Standaardmappen herstellen",
   "windowsRootsPathLabel": "Pad van de map",
-  "windowsRootsPathMissing": "Er is geen map op dit pad"
+  "windowsRootsPathMissing": "Er is geen map op dit pad",
+  "shareNotificationOpen": "KFM openen",
+  "shareNotificationQuit": "Afsluiten",
+  "shareKeepsRunningTray": "Delen gaat door als je het venster sluit. Stop het hier of via het pictogram in het systeemvak.",
+  "trayNoticeTitle": "KFM blijft delen",
+  "trayNoticeBody": "KFM deelt deze pc nog steeds. Stop het via het pictogram in het systeemvak.",
+  "settingsStopSharingOnClose": "Stoppen met delen als het venster sluit",
+  "settingsStopSharingOnCloseHint": "Anders blijft KFM delen vanuit het systeemvak."
 }

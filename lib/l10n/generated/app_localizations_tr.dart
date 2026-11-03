@@ -6977,4 +6977,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get windowsRootsPathMissing => 'Bu yolda klasör yok';
+
+  @override
+  String get shareNotificationOpen => 'KFM\'yi aç';
+
+  @override
+  String get shareNotificationQuit => 'Çık';
+
+  @override
+  String get shareKeepsRunningTray =>
+      'Pencereyi kapattığınızda paylaşım devam eder. Buradan veya sistem tepsisindeki simgeden durdurun.';
+
+  @override
+  String get trayNoticeTitle => 'KFM paylaşmaya devam ediyor';
+
+  @override
+  String get trayNoticeBody =>
+      'KFM bu bilgisayarı paylaşmaya devam ediyor. Sistem tepsisindeki simgeden durdurun.';
+
+  @override
+  String get settingsStopSharingOnClose => 'Pencere kapanınca paylaşımı durdur';
+
+  @override
+  String get settingsStopSharingOnCloseHint =>
+      'Aksi halde KFM sistem tepsisinden paylaşmaya devam eder.';
 }

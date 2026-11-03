@@ -12,6 +12,7 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
+import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/external_storage/data/places_watcher.dart';
 import 'package:kfm/features/privacy/data/privacy_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -93,6 +94,8 @@ class _AppState extends ConsumerState<App> {
       ..watch(transferEngineProvider)
       // X7: daily update check; no request while the switch is off.
       ..watch(updateAutoCheckProvider)
+      // PL1: Windows close → tray while sharing (null elsewhere).
+      ..watch(windowsCloseFlowProvider)
       // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
       // the set stays loaded without rebuilding the app on each change.
       ..listen(favoriteIdsProvider, (_, _) {});

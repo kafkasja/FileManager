@@ -277,4 +277,6 @@ ShareNotificationTexts shareNotificationTexts(
       : l10n.shareNotificationWith(clientNames.first, clientNames.length - 1),
   text: l10n.shareNotificationText,
   stop: l10n.shareNotificationStop,
+  open: l10n.shareNotificationOpen,
+  quit: l10n.shareNotificationQuit,
 );

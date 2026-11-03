@@ -33,7 +33,9 @@ bool _canSeeAllFiles(Ref ref) =>
 Raw<Stream<MediaChange>> mediaChanges(Ref ref) {
   if (Platform.isAndroid) return photoManagerChanges();
   if (isWindowsHost) {
-    return windowsDirectoryChanges(ref.watch(windowsIndexRootsProvider).watch());
+    return windowsDirectoryChanges(
+      ref.watch(windowsIndexRootsProvider).watch(),
+    );
   }
   return const Stream.empty();
 }

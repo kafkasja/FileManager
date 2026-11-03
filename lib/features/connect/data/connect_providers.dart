@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
@@ -385,10 +386,14 @@ CameraAccess cameraAccess(Ref ref) => const PlatformCameraAccess();
 bool lifecycleStopsSharing(Ref ref) => Platform.isAndroid || Platform.isIOS;
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
-/// notification.
+/// notification; PL1: Windows behind a tray icon.
 @Riverpod(keepAlive: true)
-ShareBackground shareBackground(Ref ref) =>
-    Platform.isAndroid ? AndroidShareBackground() : const NoShareBackground();
+ShareBackground shareBackground(Ref ref) {
+  if (Platform.isAndroid) return AndroidShareBackground();
+  final shell = ref.watch(desktopShellProvider);
+  if (shell != null) return TrayShareBackground(shell);
+  return const NoShareBackground();
+}
 
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 @Riverpod(keepAlive: true)

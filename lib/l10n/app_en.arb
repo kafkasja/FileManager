@@ -4075,5 +4075,19 @@
   "windowsRootsPathLabel": "Folder path",
   "@windowsRootsPathLabel": {"description": "PL1: text field label in the add-folder dialog."},
   "windowsRootsPathMissing": "There is no folder at this path",
-  "@windowsRootsPathMissing": {"description": "PL1: add-folder dialog error."}
+  "@windowsRootsPathMissing": {"description": "PL1: add-folder dialog error."},
+  "shareNotificationOpen": "Open KFM",
+  "@shareNotificationOpen": {"description": "PL1: Windows tray menu entry that brings the window back."},
+  "shareNotificationQuit": "Quit",
+  "@shareNotificationQuit": {"description": "PL1: Windows tray menu entry: stop sharing and close KFM."},
+  "shareKeepsRunningTray": "Sharing keeps running when you close the window. Stop it here or from the tray icon.",
+  "@shareKeepsRunningTray": {"description": "PL1: share screen note on Windows (sharing continues in the tray)."},
+  "trayNoticeTitle": "KFM keeps sharing",
+  "@trayNoticeTitle": {"description": "PL1: one-time dialog title before the window first hides to the tray."},
+  "trayNoticeBody": "KFM is still sharing this PC. Stop it from the tray icon.",
+  "@trayNoticeBody": {"description": "PL1: one-time dialog body before the window first hides to the tray."},
+  "settingsStopSharingOnClose": "Stop sharing when the window closes",
+  "@settingsStopSharingOnClose": {"description": "PL1: Windows-only switch in Settings → Connect."},
+  "settingsStopSharingOnCloseHint": "Otherwise KFM keeps sharing from the tray icon.",
+  "@settingsStopSharingOnCloseHint": {"description": "PL1: subtitle of the stop-sharing-on-close switch."}
 }

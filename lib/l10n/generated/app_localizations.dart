@@ -9782,6 +9782,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no folder at this path'**
   String get windowsRootsPathMissing;
+
+  /// PL1: Windows tray menu entry that brings the window back.
+  ///
+  /// In en, this message translates to:
+  /// **'Open KFM'**
+  String get shareNotificationOpen;
+
+  /// PL1: Windows tray menu entry: stop sharing and close KFM.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit'**
+  String get shareNotificationQuit;
+
+  /// PL1: share screen note on Windows (sharing continues in the tray).
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing keeps running when you close the window. Stop it here or from the tray icon.'**
+  String get shareKeepsRunningTray;
+
+  /// PL1: one-time dialog title before the window first hides to the tray.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM keeps sharing'**
+  String get trayNoticeTitle;
+
+  /// PL1: one-time dialog body before the window first hides to the tray.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM is still sharing this PC. Stop it from the tray icon.'**
+  String get trayNoticeBody;
+
+  /// PL1: Windows-only switch in Settings → Connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing when the window closes'**
+  String get settingsStopSharingOnClose;
+
+  /// PL1: subtitle of the stop-sharing-on-close switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise KFM keeps sharing from the tray icon.'**
+  String get settingsStopSharingOnCloseHint;
 }
 
 class _AppLocalizationsDelegate

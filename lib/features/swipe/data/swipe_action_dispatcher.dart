@@ -216,8 +216,7 @@ class SwipeActionDispatcher {
           action,
           applyInTransaction: () => _favorites.addInTransaction(file.id),
         ),
-        SwipeActionType.moveTo ||
-        SwipeActionType.copyTo => _fileOps.run(
+        SwipeActionType.moveTo || SwipeActionType.copyTo => _fileOps.run(
           session.id,
           file,
           action,
