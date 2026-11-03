@@ -7,6 +7,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   dynamic_color
   flutter_secure_storage_windows
+  media_kit_libs_windows_video
+  media_kit_video
   nsd_windows
   permission_handler_windows
 )
