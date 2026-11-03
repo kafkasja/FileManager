@@ -21,6 +21,10 @@ import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
+import 'package:kfm/features/onboarding/domain/onboarding_state.dart';
+import 'package:kfm/features/onboarding/ui/feature_hint.dart';
+import 'package:kfm/features/onboarding/ui/onboarding_controller.dart';
+import 'package:kfm/features/onboarding/ui/swipe_tutorial_overlay.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/reviewed/ui/reviewed_badge.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -148,37 +152,43 @@ class SwipeScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: switch (deck) {
-        AsyncData(:final value) => PopScope(
-          // SS1: system back closes an open source.
-          canPop: value.source == null,
-          onPopInvokedWithResult: (didPop, _) {
-            if (didPop) return;
-            unawaited(ref.read(deckProvider.notifier).closeSource());
-          },
-          child: Column(
-            children: [
-              SwipeSourceBar(deck: value),
-              // S6: preset, directions, filter and the setup sheet.
-              SwipeSetupStrip(
-                deck: value,
-                sourceId: sourceId,
-                deviceName: device,
-              ),
-              Expanded(child: _Deck(deck: value)),
-            ],
+      // L3: the first-time tutorial over the local deck.
+      body: _TutorialHost(
+        enabled: peer == null,
+        builder: (undoKey) => switch (deck) {
+          AsyncData(:final value) => PopScope(
+            // SS1: system back closes an open source.
+            canPop: value.source == null,
+            onPopInvokedWithResult: (didPop, _) {
+              if (didPop) return;
+              unawaited(ref.read(deckProvider.notifier).closeSource());
+            },
+            child: Column(
+              children: [
+                SwipeSourceBar(deck: value),
+                // S6: preset, directions, filter and the setup sheet.
+                SwipeSetupStrip(
+                  deck: value,
+                  sourceId: sourceId,
+                  deviceName: device,
+                ),
+                Expanded(
+                  child: _Deck(deck: value, undoKey: undoKey),
+                ),
+              ],
+            ),
           ),
-        ),
-        AsyncError() => _Message(
-          icon: Icons.error_outline,
-          text: l10n.swipeErrorGeneric,
-          action: TextButton(
-            onPressed: () => ref.invalidate(deckProvider),
-            child: Text(l10n.retry),
+          AsyncError() => _Message(
+            icon: Icons.error_outline,
+            text: l10n.swipeErrorGeneric,
+            action: TextButton(
+              onPressed: () => ref.invalidate(deckProvider),
+              child: Text(l10n.retry),
+            ),
           ),
-        ),
-        _ => const Center(child: CircularProgressIndicator()),
-      },
+          _ => const Center(child: CircularProgressIndicator()),
+        },
+      ),
     );
   }
 
@@ -329,10 +339,44 @@ class SwipeScreen extends ConsumerWidget {
   }
 }
 
+/// L3: the swipe body with the tutorial layer on top while it's due.
+class _TutorialHost extends ConsumerStatefulWidget {
+  const new({required this.enabled, required this.builder});
+
+  /// Local decks only; a remote deck is reached by people who swiped.
+  final bool enabled;
+  final Widget Function(GlobalKey undoKey) builder;
+
+  @override
+  ConsumerState<_TutorialHost> createState() => _TutorialHostState();
+}
+
+class _TutorialHostState extends ConsumerState<_TutorialHost> {
+  final GlobalKey _undoKey = GlobalKey(debugLabel: 'undoButton');
+
+  @override
+  Widget build(BuildContext context) {
+    final body = widget.builder(_undoKey);
+    if (!widget.enabled) return body;
+    final done = ref.watch(onboardingControllerProvider).value?.tutorialDone;
+    if (done != false) return body;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        body,
+        SwipeTutorialOverlay(undoKey: _undoKey),
+      ],
+    );
+  }
+}
+
 class _Deck extends ConsumerStatefulWidget {
-  const new({required this.deck});
+  const new({required this.deck, this.undoKey});
 
   final SwipeDeckState deck;
+
+  /// L3: the tutorial's step 3 finds the Undo button through it.
+  final GlobalKey? undoKey;
 
   @override
   ConsumerState<_Deck> createState() => _DeckState();
@@ -355,9 +399,19 @@ class _DeckState extends ConsumerState<_Deck> {
     }
   }
 
+  /// L3: the restore snackbar waits until the tutorial is gone.
+  bool _restoreHeld = false;
+
+  bool get _local => peerOfSourceId(widget.deck.session.sourceId) == null;
+
   /// SE2: once per app start when a session with history was continued.
   void _showRestored() {
     if (!mounted) return;
+    if (_local && ref.read(swipeTutorialPendingProvider)) {
+      _restoreHeld = true;
+      return;
+    }
+    _restoreHeld = false;
     ref.read(SwipeDeckScope.providerOf(context).notifier).restoreNoticeSeen();
     final l10n = context.l10n;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -452,6 +506,10 @@ class _DeckState extends ConsumerState<_Deck> {
     ref.watch(hapticsEnabledProvider);
     final deck = widget.deck;
     final l10n = context.l10n;
+    final tutorial = _local && ref.watch(swipeTutorialPendingProvider);
+    ref.listen(swipeTutorialPendingProvider, (_, pending) {
+      if (!pending && _restoreHeld) _showRestored();
+    });
     // H2: a commit hit files the pending folder couldn't take.
     ref.listen(pendingDeleteSummaryProvider(deck.session.id), (prev, next) {
       final before = prev?.value?.folderUnavailable;
@@ -623,6 +681,19 @@ class _DeckState extends ConsumerState<_Deck> {
             fit: StackFit.expand,
             children: [
               body,
+              // L3: one-time hint the first time the action bar shows; over
+              // the card's bottom edge so big text doesn't squeeze the card.
+              if (current != null &&
+                  !tutorial &&
+                  deck.session.layout.actionBar.isNotEmpty &&
+                  (ref.watch(actionBarEnabledProvider).value ?? false))
+                Align(
+                  alignment: AlignmentDirectional.bottomCenter,
+                  child: FeatureHint(
+                    id: HintIds.actionBar,
+                    text: l10n.hintActionBar,
+                  ),
+                ),
               // Above the card area, so the last swipe's label still shows
               // on the "All done" screen.
               Align(
@@ -673,7 +744,7 @@ class _DeckState extends ConsumerState<_Deck> {
               // Hidden while the viewer is on top, so ✕ and undo are never
               // on screen together (S3).
               if (!ref.watch(viewerOpenProvider))
-                UndoButton(sessionId: deck.session.id)
+                UndoButton(key: widget.undoKey, sessionId: deck.session.id)
               else
                 const SizedBox(height: 48),
             ],

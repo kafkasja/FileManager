@@ -99,7 +99,7 @@ final class PendingSharedBatchProvider
 }
 
 String _$pendingSharedBatchHash() =>
-    r'fa73eba8257ed950ad007048df5bc9577055bc0f';
+    r'4cbe593a3ead509c2c125d351784f0baebebbd5f';
 
 /// TASK-X1: the latest share into KFM. Takes Android's pending batch on
 /// start (cold start) and whenever one is ready. Errors propagate.
@@ -159,7 +159,7 @@ final class ShareInProgressSinkProvider
 }
 
 String _$shareInProgressSinkHash() =>
-    r'db14e228b922a4920dfa1b5b8cf211de8ce5c8f3';
+    r'68e2e641661b86f44d83c24a855e1ad48abb5eac';
 
 /// Copy progress of a big item while a batch resolves.
 
@@ -217,4 +217,4 @@ final class ShareInCleanupProvider
   }
 }
 
-String _$shareInCleanupHash() => r'd27c574b2e121651c9cbde206b583f2b6641ea23';
+String _$shareInCleanupHash() => r'7706540c95d459a537eef4be9264f10864dd2243';

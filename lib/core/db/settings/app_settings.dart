@@ -364,6 +364,22 @@ abstract final class AppSettings {
     'updates.latestJson',
     '',
   );
+
+  /// L3. The first-time swipe tutorial was finished or skipped.
+  static final SettingKey<bool> onboardingTutorialDone = SettingKey.boolean(
+    'onboarding.tutorialDone',
+    defaultValue: false,
+  );
+
+  /// L3. One-time feature hints already shown ('presets', 'actionBar').
+  static final SettingKey<List<String>> onboardingSeenHints =
+      SettingKey<List<String>>(
+        'onboarding.seenHints',
+        const [],
+        decode: (j) =>
+            j is List ? List.unmodifiable(j.whereType<String>()) : const [],
+        encode: (v) => v,
+      );
 }
 
 /// B4: the action of a drag & drop onto a folder.

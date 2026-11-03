@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/app.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/files/open_with.dart';
 import 'package:kfm/core/index/index_providers.dart';
@@ -38,9 +39,22 @@ Future<TestApp> pumpApp(
   FakeVideoFactory? videos,
   FakeOpenWith? openWith,
   List<Override> overrides = const [],
+  // L3: the first-time tutorial would cover the swipe screen; only the
+  // onboarding tests want it.
+  bool tutorialDone = true,
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   final db = AppDatabase(NativeDatabase.memory());
+  if (tutorialDone) {
+    await db
+        .into(db.settings)
+        .insert(
+          SettingRow(
+            key: AppSettings.onboardingTutorialDone.name,
+            value: AppSettings.onboardingTutorialDone.encodeToDb(true),
+          ),
+        );
+  }
   final service = permissions ?? FakePermissionService();
   final fileSource = files ?? FakeFileSource();
   final thumbDir = Directory.systemTemp.createTempSync('kfm_app_thumbs');

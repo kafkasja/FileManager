@@ -9542,6 +9542,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get cloudRetry;
+
+  /// L3 tutorial step 1 (the dummy card slides left).
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left to throw away'**
+  String get tutorialStepTrash;
+
+  /// L3 tutorial step 2 (the dummy card slides right).
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe right to keep'**
+  String get tutorialStepKeep;
+
+  /// L3 tutorial step 3; a ring highlights the Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Made a mistake? Tap Undo'**
+  String get tutorialStepUndo;
+
+  /// L3: ends the tutorial at any step.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tutorialSkip;
+
+  /// L3: next tutorial step.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tutorialNext;
+
+  /// L3: last tutorial step.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get tutorialDone;
+
+  /// L3: screen-reader label of the tutorial's example card.
+  ///
+  /// In en, this message translates to:
+  /// **'Example photo'**
+  String get tutorialDemoCard;
+
+  /// L3: Settings → Swiping row; also shows the one-time hints again.
+  ///
+  /// In en, this message translates to:
+  /// **'Show tutorial again'**
+  String get tutorialShowAgain;
+
+  /// L3 one-time hint on the first open of Manage presets.
+  ///
+  /// In en, this message translates to:
+  /// **'A preset saves your swipe setup and filter. Switch with one tap.'**
+  String get hintPresets;
+
+  /// L3 one-time hint the first time the action bar appears.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra actions live here. Turn them off in Settings → Swiping.'**
+  String get hintActionBar;
+
+  /// L3: tooltip of a one-time hint's close button.
+  ///
+  /// In en, this message translates to:
+  /// **'Close hint'**
+  String get hintDismiss;
 }
 
 class _AppLocalizationsDelegate

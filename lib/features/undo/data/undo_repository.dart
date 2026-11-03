@@ -185,6 +185,14 @@ class UndoRepository {
     return row != null;
   }
 
+  /// L3: whether any session ever had an action (rows outlive sessions).
+  Future<bool> hasAnyAction() async {
+    final row = await (_db.select(
+      _db.sessionActions,
+    )..limit(1)).getSingleOrNull();
+    return row != null;
+  }
+
   Future<SessionAction?> top(int sessionId) async {
     final rows = await stack(sessionId, limit: 1);
     return rows.isEmpty ? null : rows.single;

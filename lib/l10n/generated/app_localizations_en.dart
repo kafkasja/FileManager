@@ -6811,4 +6811,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudRetry => 'Retry';
+
+  @override
+  String get tutorialStepTrash => 'Swipe left to throw away';
+
+  @override
+  String get tutorialStepKeep => 'Swipe right to keep';
+
+  @override
+  String get tutorialStepUndo => 'Made a mistake? Tap Undo';
+
+  @override
+  String get tutorialSkip => 'Skip';
+
+  @override
+  String get tutorialNext => 'Next';
+
+  @override
+  String get tutorialDone => 'Done';
+
+  @override
+  String get tutorialDemoCard => 'Example photo';
+
+  @override
+  String get tutorialShowAgain => 'Show tutorial again';
+
+  @override
+  String get hintPresets =>
+      'A preset saves your swipe setup and filter. Switch with one tap.';
+
+  @override
+  String get hintActionBar =>
+      'Extra actions live here. Turn them off in Settings → Swiping.';
+
+  @override
+  String get hintDismiss => 'Close hint';
 }
