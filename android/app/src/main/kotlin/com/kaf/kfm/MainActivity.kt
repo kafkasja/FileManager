@@ -1,11 +1,19 @@
 package com.kaf.kfm
 
+import android.app.ActivityManager
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import java.lang.ref.WeakReference
 
 class MainActivity : FlutterActivity() {
+    companion object {
+        /** The live instance (main thread only). */
+        private var live: WeakReference<MainActivity>? = null
+    }
+
     private var filesChannel: FilesChannel? = null
     private var geocoderChannel: GeocoderChannel? = null
     private var shareServiceChannel: ShareServiceChannel? = null
@@ -29,7 +37,55 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val fromHistory = ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
+        // One instance only (see the manifest): Recents can still restore a second KFM task
+        // (e.g. one left over from a build with taskAffinity="", or a dead duplicate) and
+        // start a MainActivity in it, ignoring launchMode. Hand the launch to the live
+        // instance and drop this task. finish() in onCreate skips onStart, so this
+        // instance's Flutter engine never runs Dart.
+        val other = live?.get()
+        if (other != null && other !== this && !other.isFinishing && !other.isDestroyed &&
+            other.taskId != taskId
+        ) {
+            if (savedInstanceState == null && !fromHistory) intent?.let { other.onNewIntent(it) }
+            appTask(other.taskId)?.moveToFront()
+            finishAndRemoveTask()
+            return
+        }
+        live = WeakReference(this)
+        // No other instance is alive: any other KFM task in Recents is an empty duplicate.
+        removeOtherTasks()
         if (savedInstanceState == null && !fromHistory) takeShare(intent)
+    }
+
+    override fun onDestroy() {
+        if (live?.get() === this) live = null
+        super.onDestroy()
+    }
+
+    private fun appTasks(): List<ActivityManager.AppTask> =
+        getSystemService(ActivityManager::class.java)?.appTasks ?: emptyList()
+
+    @Suppress("DEPRECATION")
+    private fun idOf(task: ActivityManager.AppTask): Int? = try {
+        val info = task.taskInfo
+        if (Build.VERSION.SDK_INT >= 29) info.taskId else info.persistentId
+    } catch (e: IllegalArgumentException) {
+        null // the task went away meanwhile
+    }
+
+    private fun appTask(id: Int) = appTasks().firstOrNull { idOf(it) == id }
+
+    private fun removeOtherTasks() {
+        for (task in appTasks()) {
+            val id = idOf(task) ?: continue
+            if (id != taskId) {
+                try {
+                    task.finishAndRemoveTask()
+                } catch (e: IllegalArgumentException) {
+                    // already gone
+                }
+            }
+        }
     }
 
     /** X1: hands a share to [ShareInChannel] once, then forgets it. */

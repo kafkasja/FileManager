@@ -107,6 +107,23 @@ class SwipeSourceRepository {
     return [for (final r in rows) (r.fileId, r.groupIndex)];
   }
 
+  /// X1: `(openedAfterSeq, closedAtSeq]` of [sessionId]'s closed sources
+  /// opened from [origin].
+  Future<List<(int, int)>> closedRanges(
+    int sessionId, {
+    required SwipeSourceOrigin origin,
+  }) async {
+    final rows =
+        await (_db.select(_db.swipeSources)..where(
+              (s) =>
+                  s.sessionId.equals(sessionId) &
+                  s.origin.equalsValue(origin) &
+                  s.closedAtSeq.isNotNull(),
+            ))
+            .get();
+    return [for (final r in rows) (r.openedAfterSeq, r.closedAtSeq!)];
+  }
+
   /// Highest closedAtSeq of [sessionId]'s closed sources (null = none).
   Future<int?> mainFloor(int sessionId) async {
     final max = _db.swipeSources.closedAtSeq.max();
