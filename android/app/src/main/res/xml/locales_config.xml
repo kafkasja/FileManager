@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TASK-L2: Android 13+ per-app language (Settings > Apps > KFM > Language). One line per bundled app_<lang>.arb. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="nl" />
+    <locale android:name="tr" />
+</locale-config>

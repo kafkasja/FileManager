@@ -25,8 +25,12 @@ void main() {
       .where((f) => f.uri.pathSegments.last.startsWith('terms_'))
       .toList();
 
-  test('B8 ships only terms_en.json', () {
-    expect(files.map((f) => f.uri.pathSegments.last), ['terms_en.json']);
+  test('B8 + L2 ship terms_en, terms_nl and terms_tr', () {
+    expect(files.map((f) => f.uri.pathSegments.last).toList()..sort(), [
+      'terms_en.json',
+      'terms_nl.json',
+      'terms_tr.json',
+    ]);
   });
 
   for (final file in files) {
@@ -64,7 +68,7 @@ void main() {
 
   test('bundled files are in the asset manifest', () async {
     final langs = await listSearchLanguages(rootBundle);
-    expect(langs, ['en']);
+    expect(langs, ['en', 'nl', 'tr']);
   });
 
   test('terms_en.json has the plan words', () async {
