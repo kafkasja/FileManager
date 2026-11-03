@@ -54,6 +54,20 @@ class ActivePresetController extends _$ActivePresetController {
       ..invalidate(swipeLayoutControllerProvider);
   }
 
+  /// X6 note: a preset just saved from the current setup becomes the active
+  /// one at once (the chip shows its name), keeping the open session: see
+  /// `SessionRepository.adoptIntoPreset`.
+  Future<void> adoptCurrentAs(int presetId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(sessionRepositoryProvider).adoptIntoPreset(presetId),
+    );
+    if (!ref.mounted) return;
+    ref
+      ..invalidate(swipeDeckControllerProvider)
+      ..invalidate(swipeLayoutControllerProvider);
+  }
+
   /// The preset the deck is on: the open local session's, else the
   /// setting. Read from the database, not from activePresetIdProvider's
   /// cached value: that stream is paused while nothing watches it (e.g. on

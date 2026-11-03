@@ -201,7 +201,8 @@ class _PresetsSection extends ConsumerWidget {
   }
 }
 
-/// P6 "Save as preset…" from the current session (doesn't switch to it).
+/// P6 "Save as preset…" from the current session; the session then belongs
+/// to the new preset (X6 note: the chip shows its name at once).
 Future<void> _saveAsNew(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
@@ -213,6 +214,7 @@ Future<void> _saveAsNew(BuildContext context, WidgetRef ref) async {
     filterJson: session.filterJson,
   );
   if (id == null) return;
+  await ref.read(activePresetControllerProvider.notifier).adoptCurrentAs(id);
   final saved = await ref.read(presetRepositoryProvider).byId(id);
   if (saved != null) {
     messenger.showSnackBar(

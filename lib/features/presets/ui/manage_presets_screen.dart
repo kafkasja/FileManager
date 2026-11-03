@@ -85,6 +85,8 @@ class ManagePresetsScreen extends ConsumerWidget {
       context,
       layout: session?.layout ?? SwipeLayout.basic,
       filterJson: session?.filterJson,
+      // X6 note: saved from the current setup → it becomes the active one.
+      adoptCurrent: session != null,
     );
   }
 }
@@ -94,11 +96,12 @@ Future<void> _saveWithFeedback(
   required SwipeLayout layout,
   String? filterJson,
   String initialName = '',
+  bool adoptCurrent = false,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
-  final repo = ProviderScope.containerOf(context)
-      .read(presetRepositoryProvider);
+  final container = ProviderScope.containerOf(context);
+  final repo = container.read(presetRepositoryProvider);
   final id = await showSavePresetDialog(
     context,
     layout: layout,
@@ -106,6 +109,11 @@ Future<void> _saveWithFeedback(
     initialName: initialName,
   );
   if (id == null) return;
+  if (adoptCurrent) {
+    await container
+        .read(activePresetControllerProvider.notifier)
+        .adoptCurrentAs(id);
+  }
   final saved = await repo.byId(id);
   if (saved == null) return;
   messenger.showSnackBar(SnackBar(content: Text(l10n.presetSaved(saved.name))));

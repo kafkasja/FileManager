@@ -41,10 +41,10 @@ void main() {
     expect(find.text('Quick cleanup'), findsOneWidget);
   });
 
-  testWidgets('save as preset → chip appears → switching uses it', (
-    tester,
-  ) async {
+  testWidgets('save as preset → it is the active one at once (same session) '
+      '→ switching to Basic and back works', (tester) async {
     final app = await _pump(tester);
+    final before = app.container.read(swipeDeckControllerProvider).value!;
     app.container.read(routerProvider).go(AppRoutes.customizeSwipes);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Save as preset…'));
@@ -59,15 +59,29 @@ void main() {
     app.container.read(routerProvider).go(AppRoutes.swipe);
     await tester.pump(const Duration(seconds: 5)); // let the snackbar go
     await tester.pumpAndSettle();
-    expect(_chipLabel('Basic'), findsOneWidget);
+    // X6 note: no "Preset Basic" until tapped.
+    expect(_chipLabel('Mine'), findsOneWidget);
+    final adopted = app.container.read(swipeDeckControllerProvider).value!;
+    expect(adopted.session.presetId, isNotNull);
+    expect(adopted.session.id, before.session.id);
     // S6-2 a: tap the preset name → chips in the strip → one tap switches.
+    await tester.tap(_chipLabel('Mine'));
+    await tester.pumpAndSettle();
+    await tester.tap(_chipLabel('Basic'));
+    await tester.pumpAndSettle();
+    expect(_chipLabel('Basic'), findsOneWidget);
+    expect(
+      app.container.read(swipeDeckControllerProvider).value!.session.presetId,
+      isNull,
+    );
     await tester.tap(_chipLabel('Basic'));
     await tester.pumpAndSettle();
     await tester.tap(_chipLabel('Mine'));
     await tester.pumpAndSettle();
     expect(_chipLabel('Mine'), findsOneWidget);
     final deck = app.container.read(swipeDeckControllerProvider).value!;
-    expect(deck.session.presetId, isNotNull);
+    expect(deck.session.presetId, adopted.session.presetId);
+    expect(deck.session.id, before.session.id);
     await tester.pump(const Duration(seconds: 5));
   });
 
