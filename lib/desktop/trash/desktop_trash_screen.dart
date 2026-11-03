@@ -8,6 +8,7 @@ import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
@@ -339,6 +340,14 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
               onContextMenu: (item, at) => unawaited(_contextMenu(item, at)),
               tileBuilder: (context, i, {required extent}) =>
                   FileTileBody(file: i.preview),
+              columnWidths:
+                  ref.watch(
+                    desktopColumnWidthsProvider,
+                  )[ColumnWidthLists.trash] ??
+                  const {},
+              onColumnWidthsChanged: (w) => ref
+                  .read(desktopColumnWidthsProvider.notifier)
+                  .save(ColumnWidthLists.trash, w),
               columns: _columns(context, l10n, locale),
             ),
           },

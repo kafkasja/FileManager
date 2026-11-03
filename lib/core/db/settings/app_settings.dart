@@ -137,6 +137,14 @@ abstract final class AppSettings {
     'name:asc',
   );
 
+  /// PL3. Dragged Details column widths of the desktop lists, JSON
+  /// `{"browse": {"date": 150}}` (see `DesktopColumnWidths`); empty = the
+  /// defaults.
+  static final SettingKey<String> desktopColumnWidths = SettingKey.string(
+    'desktop.columnWidths',
+    '',
+  );
+
   /// PL3. The desktop window's last bounds `x,y,width,height` (logical
   /// pixels); empty = the runner's default.
   static final SettingKey<String> desktopWindowBounds = SettingKey.string(

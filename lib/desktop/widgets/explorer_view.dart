@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -75,6 +76,8 @@ class ExplorerView<T> extends StatefulWidget {
     this.dragController,
     this.dragDataOf,
     this.itemDropOffer,
+    this.columnWidths = const {},
+    this.onColumnWidthsChanged,
     super.key,
   });
 
@@ -121,6 +124,13 @@ class ExplorerView<T> extends StatefulWidget {
 
   /// Items that take drops (folders); null = none.
   final DropOfferBuilder? Function(T item)? itemDropOffer;
+
+  /// Details column widths the user dragged before (unscaled; by column
+  /// id), e.g. remembered in the settings.
+  final Map<String, double> columnWidths;
+
+  /// A column was resized or reset: all dragged widths (unscaled).
+  final ValueChanged<Map<String, double>>? onColumnWidthsChanged;
 
   static const padding = 12.0;
   static const gap = 6.0;
@@ -228,9 +238,11 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   String _typed = '';
   Timer? _typedReset;
 
-  /// Column widths the user dragged (unscaled; by column id). Kept while
-  /// the view lives (desktop screens stay alive in the shell).
-  final Map<String, double> _widths = {};
+  /// Column widths the user dragged (unscaled; by column id), seeded from
+  /// [ExplorerView.columnWidths] and reported through
+  /// [ExplorerView.onColumnWidthsChanged] when a drag ends.
+  late final Map<String, double> _widths = {...widget.columnWidths};
+  bool _resizing = false;
 
   /// L5 `desktopTextScale`, set each build.
   double _scale = 1;
@@ -247,6 +259,11 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   void didUpdateWidget(ExplorerView<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     _latest = null;
+    if (!_resizing && !mapEquals(oldWidget.columnWidths, widget.columnWidths)) {
+      _widths
+        ..clear()
+        ..addAll(widget.columnWidths);
+    }
     if (oldWidget.scrollController != widget.scrollController &&
         widget.scrollController != null) {
       _scroll = widget.scrollController!;
@@ -744,7 +761,13 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
                 behavior: HitTestBehavior.opaque,
                 // The edge follows the pointer from the press on.
                 dragStartBehavior: DragStartBehavior.down,
-                onDoubleTap: () => setState(() => _widths.remove(c.id)),
+                onDoubleTap: () {
+                  setState(() => _widths.remove(c.id));
+                  _reportWidths();
+                },
+                onHorizontalDragStart: (_) => _resizing = true,
+                onHorizontalDragEnd: (_) => _endResize(),
+                onHorizontalDragCancel: _endResize,
                 onHorizontalDragUpdate: (d) => setState(() {
                   final dx = (rtl ? -d.delta.dx : d.delta.dx) / _scale;
                   _widths[c.id] = ((_widths[c.id] ?? c.width) + dx).clamp(
@@ -766,6 +789,15 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
       ),
     );
   }
+
+  void _endResize() {
+    if (!_resizing) return;
+    _resizing = false;
+    _reportWidths();
+  }
+
+  void _reportWidths() =>
+      widget.onColumnWidthsChanged?.call(Map.unmodifiable(_widths));
 
   Widget _header(BuildContext context) {
     final theme = Theme.of(context);

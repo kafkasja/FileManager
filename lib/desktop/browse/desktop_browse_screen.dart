@@ -12,6 +12,7 @@ import 'package:kfm/desktop/browse/desktop_clipboard.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
+import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
@@ -592,6 +593,14 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                       FileBrowseEntry(:final file) => FileTileBody(file: file),
                       FolderBrowseEntry() => _FolderTile(entry: e),
                     },
+                    columnWidths:
+                        ref.watch(
+                          desktopColumnWidthsProvider,
+                        )[ColumnWidthLists.browse] ??
+                        const {},
+                    onColumnWidthsChanged: (w) => ref
+                        .read(desktopColumnWidthsProvider.notifier)
+                        .save(ColumnWidthLists.browse, w),
                     columns: fileColumns<BrowseEntry>(
                       context,
                       fileOf: (e) => e is FileBrowseEntry ? e.file : null,

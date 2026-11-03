@@ -6,6 +6,7 @@ import 'package:kfm/app/layout/app_text_size.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
+import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 
@@ -73,12 +74,46 @@ void main() {
     await tester.drag(handle, const Offset(60, 0));
     await tester.pumpAndSettle();
     expect(tester.getSize(cell).width, closeTo(before + 60, 1));
-    // Double-click resets.
+    // Remembered in the settings (and read back on the next run).
+    final settings = app.container.read(settingsRepositoryProvider);
+    final stored = decodeColumnWidths(
+      await tester.runAsync(
+            () => settings.read(AppSettings.desktopColumnWidths),
+          ) ??
+          '',
+    );
+    final dragged = stored[ColumnWidthLists.browse]?['size'];
+    expect(dragged, isNotNull);
+    expect(app.container.read(desktopColumnWidthsProvider), stored);
+    app.container.invalidate(desktopColumnWidthsProvider);
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getSize(cell).width, closeTo(before + 60, 1));
+    // Double-click resets (and forgets it).
     await tester.tap(handle);
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tap(handle);
     await tester.pumpAndSettle();
     expect(tester.getSize(cell).width, closeTo(before, 1));
+    expect(
+      app.container.read(desktopColumnWidthsProvider)[ColumnWidthLists.browse],
+      isNull,
+    );
+  });
+
+  test('column widths JSON: round trip, junk dropped', () {
+    final widths = {
+      'browse': {'size': 150.0, 'date': 90.0},
+    };
+    expect(decodeColumnWidths(encodeColumnWidths(widths)), widths);
+    expect(decodeColumnWidths(''), isEmpty);
+    expect(decodeColumnWidths('not json'), isEmpty);
+    expect(decodeColumnWidths('{"browse": {"size": "x", "date": 80}}'), {
+      'browse': {'date': 80.0},
+    });
   });
 
   testWidgets('big text: desktop Sort and Browse lay out without overflow', (

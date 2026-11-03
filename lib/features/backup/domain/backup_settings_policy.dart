@@ -97,6 +97,8 @@ const Set<String> excludedBackupSettings = {
   'indexLastIncrementalAt',
   'sharePort',
   'desktop.window.bounds',
+  // PL3: column widths fit this PC's screen.
+  'desktop.columnWidths',
   'indexGeneration',
   'index.hiddenScanned',
   'browse.recentSearches',

@@ -13,6 +13,7 @@ import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
 import 'package:kfm/desktop/sort/sort_history.dart';
 import 'package:kfm/desktop/sort/sort_setup_bar.dart';
+import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
@@ -449,6 +450,12 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
         ],
       ),
       tileBuilder: (context, f, {required extent}) => FileTileBody(file: f),
+      columnWidths:
+          ref.watch(desktopColumnWidthsProvider)[ColumnWidthLists.sort] ??
+          const {},
+      onColumnWidthsChanged: (w) => ref
+          .read(desktopColumnWidthsProvider.notifier)
+          .save(ColumnWidthLists.sort, w),
       columns: fileColumns<FileRef>(
         context,
         fileOf: (f) => f,
