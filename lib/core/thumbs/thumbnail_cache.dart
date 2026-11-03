@@ -107,9 +107,11 @@ class _Request {
 }
 
 /// Disk files: `<dir>/<sha1[0:2]>/<sha1(id)>_<modifiedAtMs>.jpg`, so an
-/// edited file gets a new thumbnail automatically. The disk cap is enforced
-/// every [trimEvery] writes by deleting least-recently-used files down to
-/// 80% of the cap.
+/// edited file gets a new thumbnail automatically. The disk cap is checked
+/// every [trimEvery] writes against a running total (the folder is listed
+/// once, then only when the total is over the cap) and enforced by deleting
+/// least-recently-used files down to 80% of the cap, in the background:
+/// requests never wait for it.
 class DiskThumbnailCache implements ThumbnailCache {
   new({
     required this._dir,
@@ -140,6 +142,16 @@ class DiskThumbnailCache implements ThumbnailCache {
   final List<_Request> _waiting = [];
   int _running = 0;
   int _writesSinceTrim = 0;
+
+  /// Bytes in the disk cache: null until the first trim listed it, then
+  /// kept up to date by writes (PL1 speed check: listing ~20k files every
+  /// 100 writes held up the requests, ~42 thumbnails/s on Windows).
+  int? _diskBytes;
+
+  /// All bytes written so far (writes during a trim's listing count on top
+  /// of what it found; some twice, which only trims a little earlier).
+  int _written = 0;
+  Future<void>? _trimming;
   final Map<String, DateTime> _lastAccess = {};
 
   /// Audio: its cover art (H7), if it has one.
@@ -209,11 +221,14 @@ class DiskThumbnailCache implements ThumbnailCache {
     _memoryBytes = 0;
     _failed.clear();
     _lastAccess.clear();
+    await _trimming;
     if (await _dir.exists()) await _dir.delete(recursive: true);
+    _diskBytes = 0;
   }
 
   @override
   Future<int> diskSizeBytes() async {
+    await _trimming;
     var total = 0;
     for (final (_, stat) in await _diskFiles()) {
       total += stat.size;
@@ -251,9 +266,13 @@ class DiskThumbnailCache implements ThumbnailCache {
         } else {
           await file.parent.create(recursive: true);
           await file.writeAsBytes(bytes, flush: true);
+          _written += bytes.length;
+          if (_diskBytes case final known?) {
+            _diskBytes = known + bytes.length;
+          }
           if (++_writesSinceTrim >= trimEvery) {
             _writesSinceTrim = 0;
-            await _trim();
+            _scheduleTrim();
           }
         }
       }
@@ -283,10 +302,28 @@ class DiskThumbnailCache implements ThumbnailCache {
     }
   }
 
-  Future<void> _trim() async {
+  /// One trim at a time, off the request path.
+  void _scheduleTrim() {
+    if (_trimming != null) return;
+    _trimming = _trimIfNeeded()
+        .catchError((Object e) {
+          developer.log('thumbnail trim failed: $e', name: 'kfm.thumbs');
+        })
+        .whenComplete(() => _trimming = null);
+  }
+
+  Future<void> _trimIfNeeded() async {
     final cap = await _maxDiskBytes();
+    final known = _diskBytes;
+    if (known != null && known <= cap) return;
+    await _trim(cap);
+  }
+
+  Future<void> _trim(int cap) async {
+    final writtenBefore = _written;
     final files = await _diskFiles();
     var total = files.fold<int>(0, (sum, f) => sum + f.$2.size);
+    _diskBytes = total + _written - writtenBefore;
     if (total <= cap) return;
     DateTime lastUsed((File, FileStat) f) =>
         _lastAccess[f.$1.path] ?? f.$2.modified;
@@ -298,6 +335,7 @@ class DiskThumbnailCache implements ThumbnailCache {
       _lastAccess.remove(file.path);
       total -= stat.size;
     }
+    _diskBytes = total + _written - writtenBefore;
   }
 
   Future<List<(File, FileStat)>> _diskFiles() async {

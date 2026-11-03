@@ -112,6 +112,26 @@ void main() {
     expect(size, greaterThan(0));
   });
 
+  test('requests never wait for the disk trim (PL1 speed check)', () async {
+    final capAsked = Completer<int>();
+    var asks = 0;
+    final c = DiskThumbnailCache(
+      dir: dir,
+      generator: generator,
+      maxDiskBytes: () {
+        asks++;
+        return capAsked.future;
+      },
+    );
+    for (var i = 0; i < DiskThumbnailCache.trimEvery + 5; i++) {
+      // The trim after write 100 is stuck on the cap: gets still finish.
+      expect(await c.get(photo('f$i')), isNotNull);
+    }
+    expect(asks, 1);
+    capAsked.complete(1 << 30);
+    expect(await c.diskSizeBytes(), (DiskThumbnailCache.trimEvery + 5) * 1000);
+  });
+
   test('clear empties memory and disk', () async {
     final c = cache();
     await c.get(photo('a'));
