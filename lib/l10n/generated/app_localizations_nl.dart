@@ -6790,6 +6790,15 @@ class AppLocalizationsNl extends AppLocalizations {
       'De cloud-app heeft het bestand niet geaccepteerd';
 
   @override
+  String cloudCopyLeftOver(String reason) {
+    return '$reason. Er is een kopie in de cloudmap achtergebleven';
+  }
+
+  @override
+  String get cloudOriginalNotFound =>
+      'Origineel niet gevonden, niets verwijderd';
+
+  @override
   String get cloudGpsNote =>
       'Foto\'s worden zonder locatie geüpload omdat KFM die niet kan lezen.';
 
@@ -6907,4 +6916,55 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get hintDismiss => 'Tip sluiten';
+
+  @override
+  String get cloudBadgeOnCloud =>
+      'Geüpload door KFM (laatst bekend, geen live controle)';
+
+  @override
+  String get cloudBadgeChanged => 'Gewijzigd sinds het uploaden';
+
+  @override
+  String get cloudShowBadge => 'Cloudpictogram tonen';
+
+  @override
+  String get cloudBadgeHelp =>
+      'Het cloudpictogram betekent dat KFM dit bestand aan je cloud-app heeft gegeven. Dit wordt op deze telefoon bewaard, dus het is ook offline zichtbaar. Het is geen live controle: KFM kan niet zien of het uploaden klaar is of dat de kopie later is verwijderd. Verandert het bestand na het uploaden, dan verandert het pictogram ook. Alleen bestanden die met KFM zijn geüpload, krijgen een markering.';
+
+  @override
+  String cloudInfoUploaded(String destination, String date) {
+    return 'Door KFM geüpload naar $destination · $date';
+  }
+
+  @override
+  String cloudInfoChanged(String destination) {
+    return 'Gewijzigd sinds uploaden naar $destination';
+  }
+
+  @override
+  String cloudInfoRemoved(String destination) {
+    return '$destination (verwijderd)';
+  }
+
+  @override
+  String get cloudFilterRow => 'Cloud';
+
+  @override
+  String get cloudFilterAny => 'Alle';
+
+  @override
+  String get cloudFilterOn => 'In de cloud';
+
+  @override
+  String get cloudFilterNotOn => 'Niet in de cloud';
+
+  @override
+  String get cloudSwipeOnCloud => 'Bestanden swipen die al in de cloud staan';
+
+  @override
+  String get cloudSwipeOnCloudTitle => 'In de cloud';
+
+  @override
+  String get backupUndoBlocked =>
+      'het prullenbakvenster is geweigerd, dus er is niets veranderd';
 }

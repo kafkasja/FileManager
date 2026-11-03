@@ -4049,5 +4049,7 @@
   "cloudSwipeOnCloud": "Swipe files already on cloud",
   "@cloudSwipeOnCloud": {"description": "X4 Settings → Cloud row: opens swipe mode with the On cloud files."},
   "cloudSwipeOnCloudTitle": "On cloud",
-  "@cloudSwipeOnCloudTitle": {"description": "X4: title of the swipe source with the files already on cloud."}
+  "@cloudSwipeOnCloudTitle": {"description": "X4: title of the swipe source with the files already on cloud."},
+  "backupUndoBlocked": "the trash dialog was declined, so nothing changed",
+  "@backupUndoBlocked": {"description": "X6: reason inside backupUndoFailed when the open deck's queued deletes could not be committed (declined system trash dialog)."}
 }

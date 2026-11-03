@@ -1584,5 +1584,21 @@
   "tutorialShowAgain": "Uitleg opnieuw tonen",
   "hintPresets": "Een voorinstelling bewaart je swipe-instellingen en filter. Wissel met één tik.",
   "hintActionBar": "Hier staan extra acties. Zet ze uit via Instellingen → Swipen.",
-  "hintDismiss": "Tip sluiten"
+  "hintDismiss": "Tip sluiten",
+  "cloudCopyLeftOver": "{reason}. Er is een kopie in de cloudmap achtergebleven",
+  "cloudOriginalNotFound": "Origineel niet gevonden, niets verwijderd",
+  "cloudBadgeOnCloud": "Geüpload door KFM (laatst bekend, geen live controle)",
+  "cloudBadgeChanged": "Gewijzigd sinds het uploaden",
+  "cloudShowBadge": "Cloudpictogram tonen",
+  "cloudBadgeHelp": "Het cloudpictogram betekent dat KFM dit bestand aan je cloud-app heeft gegeven. Dit wordt op deze telefoon bewaard, dus het is ook offline zichtbaar. Het is geen live controle: KFM kan niet zien of het uploaden klaar is of dat de kopie later is verwijderd. Verandert het bestand na het uploaden, dan verandert het pictogram ook. Alleen bestanden die met KFM zijn geüpload, krijgen een markering.",
+  "cloudInfoUploaded": "Door KFM geüpload naar {destination} · {date}",
+  "cloudInfoChanged": "Gewijzigd sinds uploaden naar {destination}",
+  "cloudInfoRemoved": "{destination} (verwijderd)",
+  "cloudFilterRow": "Cloud",
+  "cloudFilterAny": "Alle",
+  "cloudFilterOn": "In de cloud",
+  "cloudFilterNotOn": "Niet in de cloud",
+  "cloudSwipeOnCloud": "Bestanden swipen die al in de cloud staan",
+  "cloudSwipeOnCloudTitle": "In de cloud",
+  "backupUndoBlocked": "het prullenbakvenster is geweigerd, dus er is niets veranderd"
 }

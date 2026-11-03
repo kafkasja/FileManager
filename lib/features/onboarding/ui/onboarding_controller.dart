@@ -17,11 +17,18 @@ class OnboardingController extends _$OnboardingController {
     final settings = ref.watch(settingsRepositoryProvider);
     var done = await settings.read(AppSettings.onboardingTutorialDone);
     final hints = await settings.read(AppSettings.onboardingSeenHints);
-    // An install that already swiped doesn't need the tutorial; marked once
-    // so the query never runs again.
-    if (!done && await ref.read(undoRepositoryProvider).hasAnyAction()) {
-      done = true;
-      settings.write(AppSettings.onboardingTutorialDone, true).fireAndForget();
+    // An install that already swiped doesn't need the tutorial. Checked only
+    // once per install, so "Show tutorial again" survives a restart.
+    if (!await settings.read(AppSettings.onboardingExistingChecked)) {
+      if (!done && await ref.read(undoRepositoryProvider).hasAnyAction()) {
+        done = true;
+        settings
+            .write(AppSettings.onboardingTutorialDone, true)
+            .fireAndForget();
+      }
+      settings
+          .write(AppSettings.onboardingExistingChecked, true)
+          .fireAndForget();
     }
     return OnboardingState(tutorialDone: done, seenHints: hints.toSet());
   }
@@ -58,7 +65,10 @@ class OnboardingController extends _$OnboardingController {
     state = AsyncData(current.copyWith(seenHints: hints));
     ref
         .read(settingsRepositoryProvider)
-        .write(AppSettings.onboardingSeenHints, List<String>.unmodifiable(hints))
+        .write(
+          AppSettings.onboardingSeenHints,
+          List<String>.unmodifiable(hints),
+        )
         .fireAndForget();
   }
 }

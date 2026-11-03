@@ -81,6 +81,9 @@
     "bulut": "cloud:on",
     "bulutta": "cloud:on",
     "buluttaki": "cloud:on",
+    "bulutta değil": "cloud:off",
+    "yüklenmemiş": "cloud:off",
+    "yüklenmedi": "cloud:off",
 
     "kedi": "label:cat",
     "kediler": "label:cat",

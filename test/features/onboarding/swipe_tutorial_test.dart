@@ -175,6 +175,41 @@ void main() {
       );
     });
 
+    test(
+      'Show tutorial again survives a restart of an install with swipes',
+      () async {
+        final c = launch();
+        final session = await c
+            .read(sessionRepositoryProvider)
+            .getOrCreateActive();
+        await db
+            .into(db.sessionActions)
+            .insert(
+              SessionActionsCompanion.insert(
+                sessionId: session.id,
+                seq: 1,
+                actionType: 'keep',
+                fileId: 'ms:1',
+                payload: '{}',
+                previousState: '{}',
+                status: ActionStatus.applied,
+                createdAt: DateTime.utc(2025),
+              ),
+            );
+        expect(
+          (await c.read(onboardingControllerProvider.future)).tutorialDone,
+          isTrue,
+        );
+        c.read(onboardingControllerProvider.notifier).showAgain();
+        await c.read(dbWriteQueueProvider).flush();
+        final again = launch();
+        expect(
+          (await again.read(onboardingControllerProvider.future)).tutorialDone,
+          isFalse,
+        );
+      },
+    );
+
     test('hasAnyAction is false on an empty table', () async {
       final c = launch();
       expect(await c.read(undoRepositoryProvider).hasAnyAction(), isFalse);

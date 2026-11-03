@@ -85,6 +85,9 @@
     "cloud": "cloud:on",
     "in de cloud": "cloud:on",
     "op de cloud": "cloud:on",
+    "niet in cloud": "cloud:off",
+    "niet geüpload": "cloud:off",
+    "niet geupload": "cloud:off",
 
     "kat": "label:cat",
     "katten": "label:cat",

@@ -118,6 +118,7 @@ const Set<String> excludedBackupSettings = {
   // L3: what this device's user has already seen.
   'onboarding.tutorialDone',
   'onboarding.seenHints',
+  'onboarding.existingChecked',
 };
 
 final Map<String, BackupSetting> backupSettingsByName = Map.unmodifiable({

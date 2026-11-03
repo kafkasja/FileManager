@@ -6901,4 +6901,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudSwipeOnCloudTitle => 'On cloud';
+
+  @override
+  String get backupUndoBlocked =>
+      'the trash dialog was declined, so nothing changed';
 }

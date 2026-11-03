@@ -9704,6 +9704,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On cloud'**
   String get cloudSwipeOnCloudTitle;
+
+  /// X6: reason inside backupUndoFailed when the open deck's queued deletes could not be committed (declined system trash dialog).
+  ///
+  /// In en, this message translates to:
+  /// **'the trash dialog was declined, so nothing changed'**
+  String get backupUndoBlocked;
 }
 
 class _AppLocalizationsDelegate

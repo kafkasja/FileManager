@@ -8,6 +8,7 @@ import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
 import 'package:kfm/features/backup/ui/import_preview_screen.dart';
+import 'package:kfm/features/presets/domain/preset.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:path/path.dart' as p;
 
@@ -132,6 +133,9 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     try {
       await undoImportAndSync(container);
       text = l10n.backupUndone;
+    } on PresetSwitchBlocked {
+      // Declined system trash dialog: the open deck's queued deletes stay.
+      text = l10n.backupUndoFailed(l10n.backupUndoBlocked);
     } on Object catch (e) {
       text = l10n.backupUndoFailed(e.toString());
     } finally {

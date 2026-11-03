@@ -378,6 +378,13 @@ abstract final class AppSettings {
     defaultValue: false,
   );
 
+  /// L3. The one-time "this install already swiped" check ran, so a later
+  /// "Show tutorial again" isn't undone by it on the next start.
+  static final SettingKey<bool> onboardingExistingChecked = SettingKey.boolean(
+    'onboarding.existingChecked',
+    defaultValue: false,
+  );
+
   /// L3. One-time feature hints already shown ('presets', 'actionBar').
   static final SettingKey<List<String>> onboardingSeenHints =
       SettingKey<List<String>>(

@@ -1584,5 +1584,21 @@
   "tutorialShowAgain": "Öğreticiyi tekrar göster",
   "hintPresets": "Hazır ayar, kaydırma düzenini ve filtreni kaydeder. Tek dokunuşla geçiş yap.",
   "hintActionBar": "Ek işlemler burada. Ayarlar → Kaydırma bölümünden kapatabilirsin.",
-  "hintDismiss": "İpucunu kapat"
+  "hintDismiss": "İpucunu kapat",
+  "cloudCopyLeftOver": "{reason}. Bulut klasöründe bir kopya kaldı",
+  "cloudOriginalNotFound": "Orijinal bulunamadı, hiçbir şey silinmedi",
+  "cloudBadgeOnCloud": "KFM tarafından yüklendi (son bilinen durum, anlık kontrol değil)",
+  "cloudBadgeChanged": "Yüklendikten sonra değişti",
+  "cloudShowBadge": "Bulut simgesini göster",
+  "cloudBadgeHelp": "Bulut simgesi, KFM'nin bu dosyayı bulut uygulamana verdiği anlamına gelir. Bu bilgi bu telefonda saklanır, bu yüzden çevrimdışıyken de görünür. Anlık bir kontrol değildir: KFM yüklemenin bitip bitmediğini veya kopyanın sonradan silinip silinmediğini göremez. Dosya yüklendikten sonra değişirse simge de değişir. Yalnızca KFM ile yüklenen dosyalar işaretlenir.",
+  "cloudInfoUploaded": "KFM tarafından yüklendi: {destination} · {date}",
+  "cloudInfoChanged": "Yüklendikten sonra değişti: {destination}",
+  "cloudInfoRemoved": "{destination} (kaldırıldı)",
+  "cloudFilterRow": "Bulut",
+  "cloudFilterAny": "Tümü",
+  "cloudFilterOn": "Bulutta",
+  "cloudFilterNotOn": "Bulutta değil",
+  "cloudSwipeOnCloud": "Zaten bulutta olan dosyaları kaydır",
+  "cloudSwipeOnCloudTitle": "Bulutta",
+  "backupUndoBlocked": "çöp kutusu penceresi reddedildi, hiçbir şey değişmedi"
 }

@@ -177,7 +177,9 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
       if (opensInPreview(f)) {
         unawaited(_preview(i));
       } else {
-        unawaited(openWithOrExplain(context, ref, f));
+        // openFile, not "Open with": X5 APKs and text files have their own
+        // screens.
+        unawaited(openFile(context, ref, f));
       }
     }
 

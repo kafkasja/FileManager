@@ -6752,6 +6752,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cloudWriteError => 'Bulut uygulaması dosyayı kabul etmedi';
 
   @override
+  String cloudCopyLeftOver(String reason) {
+    return '$reason. Bulut klasöründe bir kopya kaldı';
+  }
+
+  @override
+  String get cloudOriginalNotFound =>
+      'Orijinal bulunamadı, hiçbir şey silinmedi';
+
+  @override
   String get cloudGpsNote =>
       'KFM konumu okuyamadığı için fotoğraflar konumsuz yükleniyor.';
 
@@ -6868,4 +6877,55 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hintDismiss => 'İpucunu kapat';
+
+  @override
+  String get cloudBadgeOnCloud =>
+      'KFM tarafından yüklendi (son bilinen durum, anlık kontrol değil)';
+
+  @override
+  String get cloudBadgeChanged => 'Yüklendikten sonra değişti';
+
+  @override
+  String get cloudShowBadge => 'Bulut simgesini göster';
+
+  @override
+  String get cloudBadgeHelp =>
+      'Bulut simgesi, KFM\'nin bu dosyayı bulut uygulamana verdiği anlamına gelir. Bu bilgi bu telefonda saklanır, bu yüzden çevrimdışıyken de görünür. Anlık bir kontrol değildir: KFM yüklemenin bitip bitmediğini veya kopyanın sonradan silinip silinmediğini göremez. Dosya yüklendikten sonra değişirse simge de değişir. Yalnızca KFM ile yüklenen dosyalar işaretlenir.';
+
+  @override
+  String cloudInfoUploaded(String destination, String date) {
+    return 'KFM tarafından yüklendi: $destination · $date';
+  }
+
+  @override
+  String cloudInfoChanged(String destination) {
+    return 'Yüklendikten sonra değişti: $destination';
+  }
+
+  @override
+  String cloudInfoRemoved(String destination) {
+    return '$destination (kaldırıldı)';
+  }
+
+  @override
+  String get cloudFilterRow => 'Bulut';
+
+  @override
+  String get cloudFilterAny => 'Tümü';
+
+  @override
+  String get cloudFilterOn => 'Bulutta';
+
+  @override
+  String get cloudFilterNotOn => 'Bulutta değil';
+
+  @override
+  String get cloudSwipeOnCloud => 'Zaten bulutta olan dosyaları kaydır';
+
+  @override
+  String get cloudSwipeOnCloudTitle => 'Bulutta';
+
+  @override
+  String get backupUndoBlocked =>
+      'çöp kutusu penceresi reddedildi, hiçbir şey değişmedi';
 }
