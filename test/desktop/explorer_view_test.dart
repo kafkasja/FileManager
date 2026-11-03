@@ -68,4 +68,59 @@ void main() {
       _Probe.created = 0;
     });
   }
+
+  testWidgets('an autofocus view takes the focus again when its section is '
+      'shown again (keys work after a sidebar switch)', (tester) async {
+    Widget section(String id, {required bool active}) => Offstage(
+      offstage: !active,
+      child: TickerMode(
+        enabled: active,
+        child: ExplorerView<String>(
+          key: ValueKey(id),
+          autofocus: true,
+          items: ['$id-a', '$id-b'],
+          idOf: (s) => s,
+          layout: ExplorerLayout.details,
+          selection: ExplorerSelection.empty,
+          onSelectionChanged: (_) {},
+          tileBuilder: (context, s, {required extent}) => Text(s),
+          columns: [
+            ExplorerColumn<String>(
+              id: 'name',
+              label: 'Name',
+              expand: true,
+              cell: (context, s) => Text(s),
+            ),
+          ],
+        ),
+      ),
+    );
+    Widget shell(String current) => MaterialApp(
+      home: Scaffold(
+        body: Stack(
+          children: [
+            section('sort', active: current == 'sort'),
+            section('browse', active: current == 'browse'),
+          ],
+        ),
+      ),
+    );
+    bool focusedIn(String id) {
+      final primary = FocusManager.instance.primaryFocus?.context;
+      return primary != null &&
+          primary.findAncestorWidgetOfExactType<ExplorerView<String>>()?.key ==
+              ValueKey(id);
+    }
+
+    await tester.pumpWidget(shell('sort'));
+    await tester.pump();
+    await tester.pumpWidget(shell('browse'));
+    await tester.pump();
+    await tester.pumpWidget(shell('sort'));
+    await tester.pump();
+    expect(focusedIn('sort'), isTrue);
+    await tester.pumpWidget(shell('browse'));
+    await tester.pump();
+    expect(focusedIn('browse'), isTrue);
+  });
 }

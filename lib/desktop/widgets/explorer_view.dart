@@ -278,6 +278,25 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
 
   static const _dropKeyPrefix = 'drop-';
 
+  /// Whether this view's section is the shown one (go_router keeps the
+  /// other shell branches alive with tickers off).
+  bool? _active;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final active = TickerMode.valuesOf(context).enabled;
+    // Back on this section (sidebar click): the keys work at once again.
+    // `autofocus` only acts on the first build, and the section left
+    // behind keeps the focus otherwise.
+    if (widget.autofocus && _active == false && active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_focus.hasFocus) _focus.requestFocus();
+      });
+    }
+    _active = active;
+  }
+
   @override
   void didUpdateWidget(ExplorerView<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
