@@ -6928,4 +6928,42 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get backupUndoBlocked =>
       'çöp kutusu penceresi reddedildi, hiçbir şey değişmedi';
+
+  @override
+  String fileOpInUse(String name) {
+    return '$name başka bir program tarafından kullanılıyor';
+  }
+
+  @override
+  String get fileOpNoTrash => 'Bu sürücüde Geri Dönüşüm Kutusu yok';
+
+  @override
+  String get windowsRootsTitle => 'KFM\'nin taradığı klasörler';
+
+  @override
+  String get windowsRootsHint =>
+      'KFM bu klasörlerdeki fotoğrafları, videoları ve dosyaları gösterir.';
+
+  @override
+  String get windowsRootsNotAvailable => 'Kullanılamıyor';
+
+  @override
+  String get windowsRootsAdd => 'Klasör ekle';
+
+  @override
+  String get windowsRootsAddConfirm => 'Ekle';
+
+  @override
+  String windowsRootsRemove(String folder) {
+    return '$folder kaldır';
+  }
+
+  @override
+  String get windowsRootsReset => 'Varsayılanlara dön';
+
+  @override
+  String get windowsRootsPathLabel => 'Klasör yolu';
+
+  @override
+  String get windowsRootsPathMissing => 'Bu yolda klasör yok';
 }

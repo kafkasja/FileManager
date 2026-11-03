@@ -9710,6 +9710,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'the trash dialog was declined, so nothing changed'**
   String get backupUndoBlocked;
+
+  /// PL1: a file another program has open on Windows.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is in use by another program'**
+  String fileOpInUse(String name);
+
+  /// PL1: trashing on a Windows drive without a Recycle Bin.
+  ///
+  /// In en, this message translates to:
+  /// **'This drive has no Recycle Bin'**
+  String get fileOpNoTrash;
+
+  /// PL1: Windows settings section listing the index roots.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders KFM scans'**
+  String get windowsRootsTitle;
+
+  /// PL1: explanation under the Windows index roots title.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM shows the photos, videos and files in these folders.'**
+  String get windowsRootsHint;
+
+  /// PL1: an index root folder that is gone or on an unplugged drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get windowsRootsNotAvailable;
+
+  /// PL1: adds a folder to the Windows index roots.
+  ///
+  /// In en, this message translates to:
+  /// **'Add folder'**
+  String get windowsRootsAdd;
+
+  /// PL1: confirm button of the add-folder dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get windowsRootsAddConfirm;
+
+  /// PL1: tooltip of the remove button of one index root.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {folder}'**
+  String windowsRootsRemove(String folder);
+
+  /// PL1: back to Pictures, Videos, Downloads and Documents.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get windowsRootsReset;
+
+  /// PL1: text field label in the add-folder dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder path'**
+  String get windowsRootsPathLabel;
+
+  /// PL1: add-folder dialog error.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no folder at this path'**
+  String get windowsRootsPathMissing;
 }
 
 class _AppLocalizationsDelegate

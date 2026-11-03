@@ -394,6 +394,18 @@ abstract final class AppSettings {
             j is List ? List.unmodifiable(j.whereType<String>()) : const [],
         encode: (v) => v,
       );
+
+  /// PL1. Folders the Windows index scans; empty = the known folders
+  /// Pictures, Videos, Downloads and Documents. Non-empty = exactly these
+  /// ('/'-separated absolute paths).
+  static final SettingKey<List<String>> windowsIndexRoots =
+      SettingKey<List<String>>(
+        'windows.indexRoots',
+        const [],
+        decode: (j) =>
+            j is List ? List.unmodifiable(j.whereType<String>()) : const [],
+        encode: (v) => v,
+      );
 }
 
 /// B4: the action of a drag & drop onto a folder.

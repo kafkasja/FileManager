@@ -208,19 +208,28 @@ final class FileSourceProvider
   }
 }
 
-String _$fileSourceHash() => r'faff00ff6295425ef58dd573bc613aa228c201a3';
+String _$fileSourceHash() => r'd592d5d9906c47c08a22edcae09306769a8478a7';
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
+/// Windows: the Pictures known folder (its profile path; the channel's
+/// answer may differ for a redirected folder, which only matters as a
+/// starting point).
 
 @ProviderFor(defaultNewFolderParent)
 final defaultNewFolderParentProvider = DefaultNewFolderParentProvider._();
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
+/// Windows: the Pictures known folder (its profile path; the channel's
+/// answer may differ for a redirected folder, which only matters as a
+/// starting point).
 
 final class DefaultNewFolderParentProvider
     extends $FunctionalProvider<String, String, String>
     with $Provider<String> {
   /// Where "New folder…" goes when no folder is selected (P2 folder picker).
+  /// Windows: the Pictures known folder (its profile path; the channel's
+  /// answer may differ for a redirected folder, which only matters as a
+  /// starting point).
   DefaultNewFolderParentProvider._()
     : super(
         from: null,
@@ -255,4 +264,4 @@ final class DefaultNewFolderParentProvider
 }
 
 String _$defaultNewFolderParentHash() =>
-    r'ede5bdbd751322a865cae4ff2c8c6add7a9248a4';
+    r'e77483ce4ef201fa74bd829a8fd5fe4be5d94179';

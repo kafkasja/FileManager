@@ -17,7 +17,11 @@ import 'package:kfm/core/files/saf/saf_file_source.dart';
 import 'package:kfm/core/files/saf/saf_pending_folder.dart';
 import 'package:kfm/core/files/staging_dir.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
+import 'package:kfm/core/files/windows/windows_file_source.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
+import 'package:kfm/core/platform/windows/windows_channel.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/external_storage/data/tracked_file_source.dart';
 import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
@@ -132,11 +136,29 @@ FileSource fileSource(Ref ref) {
       tracker: ref.watch(volumeActivityTrackerProvider.notifier),
     );
   }
+  if (isWindowsHost) {
+    // PL1: dart:io + the Recycle Bin channel. No pending folder (the bin
+    // takes every kind), no SAF/MTP places.
+    final roots = ref.watch(windowsIndexRootsProvider);
+    final windows = WindowsFileSource(
+      channel: ref.watch(windowsChannelProvider),
+      indexRoots: roots.current,
+      tempLedger: ref.watch(tempFileLedgerProvider.future),
+    );
+    ref.onDispose(windows.dispose);
+    return windows;
+  }
   throw UnsupportedError(
-    'FileSource not implemented for ${Platform.operatingSystem} yet (PL1/PL2)',
+    'FileSource not implemented for ${Platform.operatingSystem} yet (PL2)',
   );
 }
 
 /// Where "New folder…" goes when no folder is selected (P2 folder picker).
+/// Windows: the Pictures known folder (its profile path; the channel's
+/// answer may differ for a redirected folder, which only matters as a
+/// starting point).
 @Riverpod(keepAlive: true)
-String defaultNewFolderParent(Ref ref) => '$androidPrimaryRoot/Pictures';
+String defaultNewFolderParent(Ref ref) => isWindowsHost
+    ? fallbackKnownFolders(Platform.environment)[KnownFolder.pictures] ??
+          '$androidPrimaryRoot/Pictures'
+    : '$androidPrimaryRoot/Pictures';

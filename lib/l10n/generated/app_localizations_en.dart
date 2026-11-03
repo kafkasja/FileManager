@@ -6905,4 +6905,42 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backupUndoBlocked =>
       'the trash dialog was declined, so nothing changed';
+
+  @override
+  String fileOpInUse(String name) {
+    return '$name is in use by another program';
+  }
+
+  @override
+  String get fileOpNoTrash => 'This drive has no Recycle Bin';
+
+  @override
+  String get windowsRootsTitle => 'Folders KFM scans';
+
+  @override
+  String get windowsRootsHint =>
+      'KFM shows the photos, videos and files in these folders.';
+
+  @override
+  String get windowsRootsNotAvailable => 'Not available';
+
+  @override
+  String get windowsRootsAdd => 'Add folder';
+
+  @override
+  String get windowsRootsAddConfirm => 'Add';
+
+  @override
+  String windowsRootsRemove(String folder) {
+    return 'Remove $folder';
+  }
+
+  @override
+  String get windowsRootsReset => 'Reset to defaults';
+
+  @override
+  String get windowsRootsPathLabel => 'Folder path';
+
+  @override
+  String get windowsRootsPathMissing => 'There is no folder at this path';
 }

@@ -1600,5 +1600,16 @@
   "cloudFilterNotOn": "Bulutta değil",
   "cloudSwipeOnCloud": "Zaten bulutta olan dosyaları kaydır",
   "cloudSwipeOnCloudTitle": "Bulutta",
-  "backupUndoBlocked": "çöp kutusu penceresi reddedildi, hiçbir şey değişmedi"
+  "backupUndoBlocked": "çöp kutusu penceresi reddedildi, hiçbir şey değişmedi",
+  "fileOpInUse": "{name} başka bir program tarafından kullanılıyor",
+  "fileOpNoTrash": "Bu sürücüde Geri Dönüşüm Kutusu yok",
+  "windowsRootsTitle": "KFM'nin taradığı klasörler",
+  "windowsRootsHint": "KFM bu klasörlerdeki fotoğrafları, videoları ve dosyaları gösterir.",
+  "windowsRootsNotAvailable": "Kullanılamıyor",
+  "windowsRootsAdd": "Klasör ekle",
+  "windowsRootsAddConfirm": "Ekle",
+  "windowsRootsRemove": "{folder} kaldır",
+  "windowsRootsReset": "Varsayılanlara dön",
+  "windowsRootsPathLabel": "Klasör yolu",
+  "windowsRootsPathMissing": "Bu yolda klasör yok"
 }

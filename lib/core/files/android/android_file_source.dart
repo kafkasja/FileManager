@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:kfm/core/files/android/files_channel.dart';
-import 'package:kfm/core/files/android/fs_walker.dart';
 import 'package:kfm/core/files/android/media_mapper.dart';
 import 'package:kfm/core/files/file_ids.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
@@ -12,6 +11,7 @@ import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
+import 'package:kfm/core/files/io/fs_walker.dart';
 import 'package:kfm/core/files/io_errors.dart';
 import 'package:kfm/core/files/pending_folder.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
@@ -447,10 +447,7 @@ class AndroidFileSource implements FileSource {
       );
       return _mediaRef(row);
     }
-    return await _registerSharedInCopy(
-      f,
-      await _copyPath(f, '$target/$name'),
-    );
+    return await _registerSharedInCopy(f, await _copyPath(f, '$target/$name'));
   }
 
   @override

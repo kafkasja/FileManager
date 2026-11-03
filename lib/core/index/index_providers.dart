@@ -8,9 +8,12 @@ import 'package:kfm/core/index/media_change_source.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/index/media_store_counts.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/platform/volumes/volumes_providers.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
+import 'package:kfm/core/platform/windows/shell_thumbnails.dart';
 import 'package:kfm/core/thumbs/thumbnail_cache.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -24,10 +27,16 @@ MediaIndexDao mediaIndexDao(Ref ref) =>
 bool _canSeeAllFiles(Ref ref) =>
     ref.read(storageAccessControllerProvider).value?.canSeeAllFiles ?? false;
 
-/// Live MediaStore changes. Empty off Android and in tests.
+/// Live MediaStore changes (Android), directory watchers over the index
+/// roots (Windows, PL1). Empty elsewhere and in tests.
 @Riverpod(keepAlive: true)
-Raw<Stream<MediaChange>> mediaChanges(Ref ref) =>
-    Platform.isAndroid ? photoManagerChanges() : const Stream.empty();
+Raw<Stream<MediaChange>> mediaChanges(Ref ref) {
+  if (Platform.isAndroid) return photoManagerChanges();
+  if (isWindowsHost) {
+    return windowsDirectoryChanges(ref.watch(windowsIndexRootsProvider).watch());
+  }
+  return const Stream.empty();
+}
 
 /// N7: Files-table changes (non-media files) from the native observer.
 /// Empty off Android and in tests. The observer runs only while listened
@@ -143,6 +152,8 @@ Future<ThumbnailCache> thumbnailCache(Ref ref) async {
     dir: Directory('${base.path}/thumbs'),
     generator: Platform.isAndroid
         ? androidThumbnailGenerator()
+        : isWindowsHost
+        ? shellThumbnailGenerator(ref.watch(windowsChannelProvider))
         : photoManagerThumbnail,
     maxDiskBytes: () async =>
         await settings.read(AppSettings.thumbCacheMaxMb) * 1024 * 1024,

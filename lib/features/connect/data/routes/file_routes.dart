@@ -267,7 +267,9 @@ Response _fileOpError(FileOpException e) => apiError(switch (e.failure) {
   FileOpFailure.unsupported ||
   FileOpFailure.ioError ||
   FileOpFailure.unavailable ||
-  FileOpFailure.volumeEjecting => ApiErrorCode.internal,
+  FileOpFailure.volumeEjecting ||
+  FileOpFailure.inUse ||
+  FileOpFailure.noTrash => ApiErrorCode.internal,
 });
 
 String _failureWire(FileOpFailure f) => switch (f) {

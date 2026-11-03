@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/backup/ui/backup_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
@@ -15,6 +16,7 @@ import 'package:kfm/features/settings/ui/developer_section.dart';
 import 'package:kfm/features/settings/ui/permissions_section.dart';
 import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/settings/ui/storage_cache_section.dart';
+import 'package:kfm/features/settings/ui/windows_roots_section.dart';
 import 'package:kfm/features/similar/ui/similar_section.dart';
 import 'package:kfm/features/smart_groups/ui/smart_groups_settings_section.dart';
 import 'package:kfm/features/storage/ui/storage_overview_section.dart';
@@ -70,6 +72,13 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       titleBuilder: (c) => c.l10n.settingsPermissions,
       builder: (_) => const PermissionsSection(),
     ),
+    // PL1: what the Windows index scans (Android scans the whole storage).
+    if (isWindowsHost)
+      SettingsSection(
+        order: 450,
+        titleBuilder: (c) => c.l10n.windowsRootsTitle,
+        builder: (_) => const WindowsRootsSection(),
+      ),
     SettingsSection(
       order: 500,
       titleBuilder: (c) => c.l10n.settingsStorage,
