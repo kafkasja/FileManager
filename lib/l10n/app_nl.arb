@@ -1677,5 +1677,17 @@
   "desktopDropCtrlHint": "Houd Ctrl ingedrukt om te kopiëren",
   "desktopDropFoldersSkipped": "{count, plural, =1{1 map overgeslagen: sleep de bestanden erin} other{{count} mappen overgeslagen: sleep de bestanden erin}}",
   "desktopDropNothing": "Niets om hierheen te kopiëren",
-  "desktopDragOffer": "{files} · {action}"
+  "desktopDragOffer": "{files} · {action}",
+  "desktopTrashAll": "Alles ({count})",
+  "desktopTrashGroup": "{name} · {summary}",
+  "desktopTrashRecycleBin": "Prullenbak",
+  "desktopTrashOriginalLocation": "Oorspronkelijke locatie",
+  "desktopTrashDeleted": "Verwijderd op",
+  "desktopTrashDaysLeft": "Bewaard voor",
+  "desktopTrashWhere": "Waar",
+  "desktopRefresh": "Vernieuwen",
+  "desktopDevicesTitle": "Een telefoon of andere pc verbinden",
+  "desktopDevicesHint": "Beide apparaten hebben KFM en hetzelfde wifi-netwerk nodig. Er wordt niets gedeeld tot je hieronder kiest.",
+  "desktopDevicesShareHint": "Toon een QR-code en een code voor je telefoon",
+  "desktopDevicesConnectHint": "Verbind met een apparaat dat een code toont"
 }

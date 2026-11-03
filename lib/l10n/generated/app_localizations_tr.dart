@@ -7229,4 +7229,46 @@ class AppLocalizationsTr extends AppLocalizations {
   String desktopDragOffer(String files, String action) {
     return '$files · $action';
   }
+
+  @override
+  String desktopTrashAll(int count) {
+    return 'Tümü ($count)';
+  }
+
+  @override
+  String desktopTrashGroup(String name, String summary) {
+    return '$name · $summary';
+  }
+
+  @override
+  String get desktopTrashRecycleBin => 'Geri Dönüşüm Kutusu';
+
+  @override
+  String get desktopTrashOriginalLocation => 'Özgün konum';
+
+  @override
+  String get desktopTrashDeleted => 'Silinme tarihi';
+
+  @override
+  String get desktopTrashDaysLeft => 'Saklama süresi';
+
+  @override
+  String get desktopTrashWhere => 'Nerede';
+
+  @override
+  String get desktopRefresh => 'Yenile';
+
+  @override
+  String get desktopDevicesTitle => 'Bir telefon veya başka bir PC bağlayın';
+
+  @override
+  String get desktopDevicesHint =>
+      'İki cihazda da KFM ve aynı Wi-Fi gerekir. Aşağıdan seçene kadar hiçbir şey paylaşılmaz.';
+
+  @override
+  String get desktopDevicesShareHint =>
+      'Telefonunuz için bir QR kod ve kod gösterin';
+
+  @override
+  String get desktopDevicesConnectHint => 'Kod gösteren bir cihaza bağlanın';
 }

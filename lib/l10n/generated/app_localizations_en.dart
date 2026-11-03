@@ -7218,4 +7218,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopDragOffer(String files, String action) {
     return '$files · $action';
   }
+
+  @override
+  String desktopTrashAll(int count) {
+    return 'All ($count)';
+  }
+
+  @override
+  String desktopTrashGroup(String name, String summary) {
+    return '$name · $summary';
+  }
+
+  @override
+  String get desktopTrashRecycleBin => 'Recycle Bin';
+
+  @override
+  String get desktopTrashOriginalLocation => 'Original location';
+
+  @override
+  String get desktopTrashDeleted => 'Date deleted';
+
+  @override
+  String get desktopTrashDaysLeft => 'Kept for';
+
+  @override
+  String get desktopTrashWhere => 'Where';
+
+  @override
+  String get desktopRefresh => 'Refresh';
+
+  @override
+  String get desktopDevicesTitle => 'Connect a phone or another PC';
+
+  @override
+  String get desktopDevicesHint =>
+      'Both devices need KFM and the same Wi-Fi. Nothing is shared until you choose below.';
+
+  @override
+  String get desktopDevicesShareHint =>
+      'Show a QR code and a code for your phone';
+
+  @override
+  String get desktopDevicesConnectHint =>
+      'Connect to a device that shows a code';
 }

@@ -7282,4 +7282,47 @@ class AppLocalizationsNl extends AppLocalizations {
   String desktopDragOffer(String files, String action) {
     return '$files · $action';
   }
+
+  @override
+  String desktopTrashAll(int count) {
+    return 'Alles ($count)';
+  }
+
+  @override
+  String desktopTrashGroup(String name, String summary) {
+    return '$name · $summary';
+  }
+
+  @override
+  String get desktopTrashRecycleBin => 'Prullenbak';
+
+  @override
+  String get desktopTrashOriginalLocation => 'Oorspronkelijke locatie';
+
+  @override
+  String get desktopTrashDeleted => 'Verwijderd op';
+
+  @override
+  String get desktopTrashDaysLeft => 'Bewaard voor';
+
+  @override
+  String get desktopTrashWhere => 'Waar';
+
+  @override
+  String get desktopRefresh => 'Vernieuwen';
+
+  @override
+  String get desktopDevicesTitle => 'Een telefoon of andere pc verbinden';
+
+  @override
+  String get desktopDevicesHint =>
+      'Beide apparaten hebben KFM en hetzelfde wifi-netwerk nodig. Er wordt niets gedeeld tot je hieronder kiest.';
+
+  @override
+  String get desktopDevicesShareHint =>
+      'Toon een QR-code en een code voor je telefoon';
+
+  @override
+  String get desktopDevicesConnectHint =>
+      'Verbind met een apparaat dat een code toont';
 }

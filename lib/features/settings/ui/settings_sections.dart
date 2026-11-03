@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
@@ -71,6 +72,8 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       order: 400,
       titleBuilder: (c) => c.l10n.settingsPermissions,
       builder: (_) => const PermissionsSection(),
+      // Android's media / All files access; Windows needs none.
+      formFactors: const {FormFactor.mobile},
     ),
     // PL1: what the Windows index scans (Android scans the whole storage).
     if (isWindowsHost)

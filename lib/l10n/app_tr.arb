@@ -1677,5 +1677,17 @@
   "desktopDropCtrlHint": "Kopyalamak için Ctrl tuşunu basılı tutun",
   "desktopDropFoldersSkipped": "{count, plural, =1{1 klasör atlandı: içindeki dosyaları bırakın} other{{count} klasör atlandı: içindeki dosyaları bırakın}}",
   "desktopDropNothing": "Buraya kopyalanacak bir şey yok",
-  "desktopDragOffer": "{files} · {action}"
+  "desktopDragOffer": "{files} · {action}",
+  "desktopTrashAll": "Tümü ({count})",
+  "desktopTrashGroup": "{name} · {summary}",
+  "desktopTrashRecycleBin": "Geri Dönüşüm Kutusu",
+  "desktopTrashOriginalLocation": "Özgün konum",
+  "desktopTrashDeleted": "Silinme tarihi",
+  "desktopTrashDaysLeft": "Saklama süresi",
+  "desktopTrashWhere": "Nerede",
+  "desktopRefresh": "Yenile",
+  "desktopDevicesTitle": "Bir telefon veya başka bir PC bağlayın",
+  "desktopDevicesHint": "İki cihazda da KFM ve aynı Wi-Fi gerekir. Aşağıdan seçene kadar hiçbir şey paylaşılmaz.",
+  "desktopDevicesShareHint": "Telefonunuz için bir QR kod ve kod gösterin",
+  "desktopDevicesConnectHint": "Kod gösteren bir cihaza bağlanın"
 }

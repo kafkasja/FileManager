@@ -10172,6 +10172,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{files} · {action}'**
   String desktopDragOffer(String files, String action);
+
+  /// PL3: Trash filter chip with the item count.
+  ///
+  /// In en, this message translates to:
+  /// **'All ({count})'**
+  String desktopTrashAll(int count);
+
+  /// PL3: Trash filter chip, e.g. 'Recycle Bin · 3 items · 2 MB'.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {summary}'**
+  String desktopTrashGroup(String name, String summary);
+
+  /// PL3: the Windows Recycle Bin (use Windows' own name).
+  ///
+  /// In en, this message translates to:
+  /// **'Recycle Bin'**
+  String get desktopTrashRecycleBin;
+
+  /// PL3: Trash column (as in the Windows Recycle Bin).
+  ///
+  /// In en, this message translates to:
+  /// **'Original location'**
+  String get desktopTrashOriginalLocation;
+
+  /// PL3: Trash column.
+  ///
+  /// In en, this message translates to:
+  /// **'Date deleted'**
+  String get desktopTrashDeleted;
+
+  /// PL3: Trash column with '7 days left' values.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept for'**
+  String get desktopTrashDaysLeft;
+
+  /// PL3: Trash column: Recycle Bin or Pending delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Where'**
+  String get desktopTrashWhere;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get desktopRefresh;
+
+  /// PL3: Devices section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a phone or another PC'**
+  String get desktopDevicesTitle;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Both devices need KFM and the same Wi-Fi. Nothing is shared until you choose below.'**
+  String get desktopDevicesHint;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a QR code and a code for your phone'**
+  String get desktopDevicesShareHint;
+
+  /// PL3 desktop UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a device that shows a code'**
+  String get desktopDevicesConnectHint;
 }
 
 class _AppLocalizationsDelegate

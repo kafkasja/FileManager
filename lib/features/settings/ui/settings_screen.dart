@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/settings/ui/settings_sections.dart';
@@ -10,7 +11,11 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sections = ref.watch(settingsSectionsProvider);
+    final formFactor = ref.watch(formFactorProvider);
+    final sections = [
+      for (final s in ref.watch(settingsSectionsProvider))
+        if (s.formFactors.contains(formFactor)) s,
+    ];
     final spacing = context.tokens.spacing;
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.settingsTitle)),
