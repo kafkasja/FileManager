@@ -7161,4 +7161,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopBrowseNothingIndexed => 'KFM hasn\'t found files here yet';
+
+  @override
+  String desktopDragCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String desktopDropMoveTo(String name) {
+    return 'Move to $name';
+  }
+
+  @override
+  String desktopDropCopyTo(String name) {
+    return 'Copy to $name';
+  }
+
+  @override
+  String desktopDropTag(String name) {
+    return 'Add tag $name';
+  }
+
+  @override
+  String get desktopDropFavorite => 'Add to Favorites';
+
+  @override
+  String get desktopDropSend => 'Send to a device';
+
+  @override
+  String get desktopDropTrash => 'Move to Trash';
+
+  @override
+  String get desktopDropCtrlHint => 'Hold Ctrl to copy';
+
+  @override
+  String desktopDropFoldersSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders were skipped: drop the files inside them',
+      one: '1 folder was skipped: drop the files inside it',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopDropNothing => 'Nothing to copy here';
+
+  @override
+  String desktopDragOffer(String files, String action) {
+    return '$files · $action';
+  }
 }

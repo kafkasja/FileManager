@@ -5,9 +5,12 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/core/platform/host_platform.dart';
+import 'package:kfm/core/platform/windows/drag_drop_channel.dart';
+import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
+import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
@@ -32,18 +35,79 @@ class DesktopAppShell extends ConsumerStatefulWidget {
   ConsumerState<DesktopAppShell> createState() => _DesktopAppShellState();
 }
 
-class _DesktopAppShellState extends ConsumerState<DesktopAppShell> {
+class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
+    implements ExplorerDropListener {
   final _search = TextEditingController();
   final _searchFocus = FocusNode(debugLabel: 'desktopSearch');
+  late final DesktopDragController _drag;
+  WindowsDragDrop? _native;
 
   DesktopSection get _section =>
       DesktopSection.ofBranch(widget.shell.currentIndex);
 
   @override
+  void initState() {
+    super.initState();
+    _drag = ref.read(desktopDragControllerProvider)..windowSize = _windowSize;
+    if (isWindowsHost) {
+      final native = _native = WindowsDragDrop();
+      // A KFM drag that leaves the window becomes an Explorer drag of the
+      // files' paths (copy).
+      _drag.onLeaveWindow = (data) =>
+          native.startDrag([for (final f in data.files) f.path]);
+      native.listen(this);
+    }
+  }
+
+  Size? _windowSize() {
+    if (!mounted) return null;
+    final view = View.of(context);
+    return view.physicalSize / view.devicePixelRatio;
+  }
+
+  @override
   void dispose() {
+    _native?.listen(null);
+    _drag
+      ..cancel()
+      ..onLeaveWindow = null
+      ..windowSize = null;
     _search.dispose();
     _searchFocus.dispose();
     super.dispose();
+  }
+
+  // --- files dragged in from Explorer (Windows' drop target) ---------------
+
+  @override
+  bool onDragEnter(Offset position, List<String> paths) {
+    _drag.begin(
+      DesktopDragData(origin: DragOrigin.explorer, paths: paths),
+      position,
+    );
+    return _drag.offer != null;
+  }
+
+  @override
+  bool onDragOver(Offset position) {
+    _drag.update(position);
+    return _drag.offer != null;
+  }
+
+  @override
+  void onDragLeave() => _drag.cancel();
+
+  @override
+  Future<void> onDrop(Offset position, List<String> paths) async {
+    if (!_drag.active) {
+      _drag.begin(
+        DesktopDragData(origin: DragOrigin.explorer, paths: paths),
+        position,
+      );
+    } else {
+      _drag.update(position);
+    }
+    await _drag.drop();
   }
 
   void _go(DesktopSection section) => widget.shell.goBranch(
@@ -134,18 +198,23 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell> {
           autofocus: true,
           child: Scaffold(
             backgroundColor: colors.surface,
-            body: Column(
+            body: Stack(
               children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      DesktopSidebar(current: section, onSelect: _go),
-                      const VerticalDivider(width: 1),
-                      Expanded(child: content),
-                    ],
-                  ),
+                Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          DesktopSidebar(current: section, onSelect: _go),
+                          const VerticalDivider(width: 1),
+                          Expanded(child: content),
+                        ],
+                      ),
+                    ),
+                    DesktopStatusBar(section: section),
+                  ],
                 ),
-                DesktopStatusBar(section: section),
+                Positioned.fill(child: DesktopDragOverlay(controller: _drag)),
               ],
             ),
           ),

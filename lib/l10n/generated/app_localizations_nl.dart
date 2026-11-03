@@ -7225,4 +7225,61 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get desktopBrowseNothingIndexed =>
       'KFM heeft hier nog geen bestanden gevonden';
+
+  @override
+  String desktopDragCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden',
+      one: '1 bestand',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String desktopDropMoveTo(String name) {
+    return 'Verplaatsen naar $name';
+  }
+
+  @override
+  String desktopDropCopyTo(String name) {
+    return 'Kopiëren naar $name';
+  }
+
+  @override
+  String desktopDropTag(String name) {
+    return 'Tag $name toevoegen';
+  }
+
+  @override
+  String get desktopDropFavorite => 'Toevoegen aan favorieten';
+
+  @override
+  String get desktopDropSend => 'Naar een apparaat sturen';
+
+  @override
+  String get desktopDropTrash => 'Naar prullenbak';
+
+  @override
+  String get desktopDropCtrlHint => 'Houd Ctrl ingedrukt om te kopiëren';
+
+  @override
+  String desktopDropFoldersSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mappen overgeslagen: sleep de bestanden erin',
+      one: '1 map overgeslagen: sleep de bestanden erin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopDropNothing => 'Niets om hierheen te kopiëren';
+
+  @override
+  String desktopDragOffer(String files, String action) {
+    return '$files · $action';
+  }
 }

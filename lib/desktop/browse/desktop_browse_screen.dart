@@ -8,9 +8,11 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_clipboard.dart';
+import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
+import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
@@ -496,57 +498,92 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                     ),
                   ),
                 )
-              : ExplorerView<BrowseEntry>(
-                  key: _explorer,
-                  autofocus: true,
-                  items: entries,
-                  idOf: (e) => e.id,
-                  nameOf: (e) => e.name,
-                  layout: st.layout,
-                  selection: _sel,
-                  onSelectionChanged: _setSelection,
-                  sortColumn: st.sortColumn,
-                  sortDescending: st.descending,
-                  onSort: _nav.sortBy,
-                  onOpen: (e) => unawaited(_open(e)),
-                  onKey: _onKey,
-                  onContextMenu: (item, at) =>
-                      unawaited(_contextMenu(item, at)),
-                  onNearEnd: () {
-                    final q = st.filesQuery;
-                    if (q != null) {
-                      unawaited(
-                        ref.read(filePagesProvider(q).notifier).loadMore(),
-                      );
-                    }
-                  },
-                  tileBuilder: (context, e, {required extent}) => switch (e) {
-                    FileBrowseEntry(:final file) => FileTileBody(file: file),
-                    FolderBrowseEntry() => _FolderTile(entry: e),
-                  },
-                  columns: fileColumns<BrowseEntry>(
-                    context,
-                    fileOf: (e) => e is FileBrowseEntry ? e.file : null,
-                    typeOf: (e) =>
-                        e is FolderBrowseEntry ? l10n.desktopTypeFolder : null,
-                    nameCell: (context, e) => switch (e) {
-                      FileBrowseEntry(:final file) => FileNameCell(
-                        name: file.name,
-                        file: file,
-                      ),
-                      FolderBrowseEntry() => FileNameCell(
-                        name: e.name,
-                        icon: st.folder == null
-                            ? placeIcon(e.name)
-                            : Icons.folder,
-                      ),
+              : _folderDrop(
+                  st.folder,
+                  ExplorerView<BrowseEntry>(
+                    key: _explorer,
+                    autofocus: true,
+                    dragController: ref.read(desktopDragControllerProvider),
+                    dragDataOf: (ids) {
+                      final files = [
+                        for (final e in _entries)
+                          if (e is FileBrowseEntry && ids.contains(e.id))
+                            e.file,
+                      ];
+                      return files.isEmpty
+                          ? null
+                          : DesktopDragData(
+                              origin: DragOrigin.browse,
+                              files: files,
+                            );
                     },
+                    itemDropOffer: (e) => switch (e) {
+                      FolderBrowseEntry(:final path, :final available)
+                          when available =>
+                        folderDropOffer(context, ref, path),
+                      _ => null,
+                    },
+                    items: entries,
+                    idOf: (e) => e.id,
+                    nameOf: (e) => e.name,
+                    layout: st.layout,
+                    selection: _sel,
+                    onSelectionChanged: _setSelection,
+                    sortColumn: st.sortColumn,
+                    sortDescending: st.descending,
+                    onSort: _nav.sortBy,
+                    onOpen: (e) => unawaited(_open(e)),
+                    onKey: _onKey,
+                    onContextMenu: (item, at) =>
+                        unawaited(_contextMenu(item, at)),
+                    onNearEnd: () {
+                      final q = st.filesQuery;
+                      if (q != null) {
+                        unawaited(
+                          ref.read(filePagesProvider(q).notifier).loadMore(),
+                        );
+                      }
+                    },
+                    tileBuilder: (context, e, {required extent}) => switch (e) {
+                      FileBrowseEntry(:final file) => FileTileBody(file: file),
+                      FolderBrowseEntry() => _FolderTile(entry: e),
+                    },
+                    columns: fileColumns<BrowseEntry>(
+                      context,
+                      fileOf: (e) => e is FileBrowseEntry ? e.file : null,
+                      typeOf: (e) => e is FolderBrowseEntry
+                          ? l10n.desktopTypeFolder
+                          : null,
+                      nameCell: (context, e) => switch (e) {
+                        FileBrowseEntry(:final file) => FileNameCell(
+                          name: file.name,
+                          file: file,
+                        ),
+                        FolderBrowseEntry() => FileNameCell(
+                          name: e.name,
+                          icon: st.folder == null
+                              ? placeIcon(e.name)
+                              : Icons.folder,
+                        ),
+                      },
+                    ),
                   ),
                 ),
         ),
       ],
     );
   }
+
+  /// The open folder takes drops on its background (Explorer files are
+  /// copied in); Places doesn't.
+  Widget _folderDrop(String? folder, Widget child) => folder == null
+      ? child
+      : DesktopDropTarget(
+          key: const ValueKey('browse-drop'),
+          radius: 0,
+          offer: folderDropOffer(context, ref, folder),
+          child: child,
+        );
 }
 
 String _leaf(String path) {

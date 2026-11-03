@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "drag_drop.h"
 #include "win32_window.h"
 #include "windows_channel.h"
 
@@ -32,6 +33,9 @@ class FlutterWindow : public Win32Window {
 
   // com.kaf.kfm/windows (TASK-PL1); destroyed before the controller.
   std::unique_ptr<WindowsChannel> windows_channel_;
+
+  // com.kaf.kfm/dragdrop (TASK-PL3): Explorer drag & drop.
+  std::unique_ptr<DragDropChannel> drag_drop_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

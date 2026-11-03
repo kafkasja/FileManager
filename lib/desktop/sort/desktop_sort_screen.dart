@@ -7,9 +7,11 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
 import 'package:kfm/desktop/sort/sort_history.dart';
+import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
@@ -144,6 +146,15 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
       final focus = deck.upcoming.where((f) => f.id == _sel.focus);
       files.addAll(focus);
     }
+    _applyFiles(entry, deck, files);
+  }
+
+  /// [files] dragged onto [entry]'s button, or the selection.
+  void _applyFiles(
+    SortActionEntry entry,
+    SwipeDeckState deck,
+    List<FileRef> files,
+  ) {
     if (files.isEmpty) return;
     final result = _deck.applyToFiles(files, entry.action);
     if (result.problem case final p?) SwipeFeedback.explain(context, p);
@@ -322,6 +333,7 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
             flashColor: _flashColor,
             layout: layout,
             onApply: (e) => _apply(e, deck),
+            onDropApply: (e, files) => _applyFiles(e, deck, files),
             onUndo: () => unawaited(_undoSteps(1)),
             onHistory: () => setState(() => _history = !_history),
             onLayout: ref.read(desktopSortLayoutProvider.notifier).set,
@@ -390,6 +402,14 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
       layout: layout,
       selection: _sel,
       onSelectionChanged: (s) => _setSelection(s, deck),
+      dragController: ref.read(desktopDragControllerProvider),
+      dragDataOf: (ids) => DesktopDragData(
+        origin: DragOrigin.sort,
+        files: [
+          for (final f in deck.upcoming)
+            if (ids.contains(f.id)) f,
+        ],
+      ),
       tileBuilder: (context, f, {required extent}) => FileTileBody(file: f),
       columns: fileColumns<FileRef>(
         context,
@@ -416,6 +436,7 @@ class _Toolbar extends ConsumerWidget {
     required this.flashColor,
     required this.layout,
     required this.onApply,
+    required this.onDropApply,
     required this.onUndo,
     required this.onHistory,
     required this.onLayout,
@@ -432,6 +453,9 @@ class _Toolbar extends ConsumerWidget {
   final Color? flashColor;
   final ExplorerLayout layout;
   final ValueChanged<SortActionEntry> onApply;
+
+  /// Sort files dragged onto an action button.
+  final void Function(SortActionEntry entry, List<FileRef> files) onDropApply;
   final VoidCallback onUndo;
   final VoidCallback onHistory;
   final ValueChanged<ExplorerLayout> onLayout;
@@ -456,27 +480,41 @@ class _Toolbar extends ConsumerWidget {
               child: Row(
                 children: [
                   for (final e in entries) ...[
-                    _ActionButton(
-                      key: ValueKey('sort-action-${e.action.type.name}'),
-                      label: swipeActionShortLabel(
-                        l10n,
-                        e.action,
-                        deleteMode: mode,
-                        tags: tags,
+                    DesktopDropTarget(
+                      offer: (data, {required copy}) =>
+                          data.origin != DragOrigin.sort
+                          ? null
+                          : DropOffer(
+                              label: swipeActionName(
+                                l10n,
+                                e.action,
+                                mode,
+                                tags: tags,
+                              ),
+                              onDrop: () async => onDropApply(e, data.files),
+                            ),
+                      child: _ActionButton(
+                        key: ValueKey('sort-action-${e.action.type.name}'),
+                        label: swipeActionShortLabel(
+                          l10n,
+                          e.action,
+                          deleteMode: mode,
+                          tags: tags,
+                        ),
+                        tooltip: shortcutHint(
+                          l10n,
+                          swipeActionName(l10n, e.action, mode, tags: tags),
+                          DesktopKeys.label(e.key),
+                        ),
+                        keyHint: DesktopKeys.label(e.key),
+                        icon:
+                            e.action.type == SwipeActionType.trash &&
+                                mode == DeleteMode.permanent
+                            ? Icons.delete_forever_outlined
+                            : swipeActionIcon(e.action.type),
+                        color: sortActionColor(context, e.action),
+                        onPressed: hasSelection ? () => onApply(e) : null,
                       ),
-                      tooltip: shortcutHint(
-                        l10n,
-                        swipeActionName(l10n, e.action, mode, tags: tags),
-                        DesktopKeys.label(e.key),
-                      ),
-                      keyHint: DesktopKeys.label(e.key),
-                      icon:
-                          e.action.type == SwipeActionType.trash &&
-                              mode == DeleteMode.permanent
-                          ? Icons.delete_forever_outlined
-                          : swipeActionIcon(e.action.type),
-                      color: sortActionColor(context, e.action),
-                      onPressed: hasSelection ? () => onApply(e) : null,
                     ),
                     const SizedBox(width: 8),
                   ],

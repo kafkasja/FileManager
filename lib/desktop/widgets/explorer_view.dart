@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 
 /// How an [ExplorerView] lays out its items (TASK-PL3: Large icons / Grid
@@ -70,6 +71,9 @@ class ExplorerView<T> extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     this.scrollController,
+    this.dragController,
+    this.dragDataOf,
+    this.itemDropOffer,
     super.key,
   });
 
@@ -108,6 +112,14 @@ class ExplorerView<T> extends StatefulWidget {
   final FocusNode? focusNode;
   final bool autofocus;
   final ScrollController? scrollController;
+
+  /// Drag & drop (TASK-PL3 step 4): dragging selected items starts a drag
+  /// of [dragDataOf]`(the dragged ids)` on [dragController].
+  final DesktopDragController? dragController;
+  final DesktopDragData? Function(Set<String> ids)? dragDataOf;
+
+  /// Items that take drops (folders); null = none.
+  final DropOfferBuilder? Function(T item)? itemDropOffer;
 
   static const padding = 12.0;
   static const gap = 6.0;
@@ -196,6 +208,15 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   Offset? _bandEnd;
   Set<String> _bandBase = const {};
 
+  // Drag: where the primary button went down on an item.
+  Offset? _pressAt;
+  String? _pressId;
+  bool _dragging = false;
+
+  /// A plain click on an item of a multi-selection: collapsed to that item
+  /// on release, unless it became a drag (Explorer).
+  String? _deferredClick;
+
   // Type-to-find.
   String _typed = '';
   Timer? _typedReset;
@@ -214,6 +235,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
 
   @override
   void dispose() {
+    if (_dragging) widget.dragController?.cancel();
     if (widget.scrollController == null) _scroll.dispose();
     _ownFocus?.dispose();
     _typedReset?.cancel();
@@ -279,8 +301,17 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     _lastClickAt = isDouble ? null : now;
     final keys = HardwareKeyboard.instance;
     if (isDouble) {
+      _pressAt = null;
       _select(_s.click(id, _order));
       widget.onOpen?.call(item);
+      return;
+    }
+    _pressAt = e.position;
+    _pressId = id;
+    _deferredClick = null;
+    final plain = !keys.isControlPressed && !keys.isShiftPressed;
+    if (plain && _s.contains(id) && _s.count > 1 && _canDrag) {
+      _deferredClick = id;
       return;
     }
     _select(
@@ -291,6 +322,56 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
         shift: keys.isShiftPressed,
       ),
     );
+  }
+
+  bool get _canDrag =>
+      widget.dragController != null && widget.dragDataOf != null;
+
+  void _onItemMove(PointerMoveEvent e) {
+    final controller = widget.dragController;
+    final dataOf = widget.dragDataOf;
+    final at = _pressAt;
+    final id = _pressId;
+    if (controller == null || dataOf == null || at == null || id == null) {
+      return;
+    }
+    final ctrl = HardwareKeyboard.instance.isControlPressed;
+    if (_dragging) {
+      controller.update(e.position, copy: ctrl);
+      return;
+    }
+    if (e.buttons & kPrimaryMouseButton == 0) return;
+    if ((e.position - at).distance < 6) return;
+    _deferredClick = null;
+    final ids = _s.contains(id) ? _s.ids : {id};
+    final data = dataOf(ids);
+    if (data == null || data.count == 0) {
+      _pressAt = null;
+      return;
+    }
+    _dragging = true;
+    controller.begin(data, e.position, copy: ctrl);
+  }
+
+  void _onItemUp(PointerUpEvent e) {
+    _pressAt = null;
+    if (_dragging) {
+      _dragging = false;
+      unawaited(widget.dragController?.drop());
+      return;
+    }
+    final deferred = _deferredClick;
+    _deferredClick = null;
+    if (deferred != null) _select(_s.click(deferred, _order));
+  }
+
+  void _onItemCancel(PointerCancelEvent e) {
+    _pressAt = null;
+    _deferredClick = null;
+    if (_dragging) {
+      _dragging = false;
+      widget.dragController?.cancel();
+    }
   }
 
   Offset _content(Offset local) {
@@ -568,16 +649,28 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
 
   Widget _item(BuildContext context, T item, _Geometry geo) {
     final id = widget.idOf(item);
-    return _ExplorerItem(
+    final view = _ExplorerItem(
       key: ValueKey(id),
       selected: _s.contains(id),
       focused: _s.focus == id,
       details: geo.details,
       onDown: (e) => _onItemDown(e, item),
+      onMove: _onItemMove,
+      onUp: _onItemUp,
+      onCancel: _onItemCancel,
       child: geo.details
           ? _row(context, item)
           : widget.tileBuilder(context, item, extent: geo.tileWidth),
     );
+    final offer = widget.itemDropOffer?.call(item);
+    return offer == null
+        ? view
+        : DesktopDropTarget(
+            key: ValueKey('drop-$id'),
+            offer: offer,
+            radius: geo.details ? 4 : 10,
+            child: view,
+          );
   }
 
   Widget _row(BuildContext context, T item) => Row(
@@ -664,6 +757,9 @@ class _ExplorerItem extends StatefulWidget {
     required this.focused,
     required this.details,
     required this.onDown,
+    required this.onMove,
+    required this.onUp,
+    required this.onCancel,
     required this.child,
     super.key,
   });
@@ -672,6 +768,9 @@ class _ExplorerItem extends StatefulWidget {
   final bool focused;
   final bool details;
   final void Function(PointerDownEvent e) onDown;
+  final void Function(PointerMoveEvent e) onMove;
+  final void Function(PointerUpEvent e) onUp;
+  final void Function(PointerCancelEvent e) onCancel;
   final Widget child;
 
   @override
@@ -697,6 +796,9 @@ class _ExplorerItemState extends State<_ExplorerItem> {
         onExit: (_) => setState(() => _hover = false),
         child: Listener(
           onPointerDown: widget.onDown,
+          onPointerMove: widget.onMove,
+          onPointerUp: widget.onUp,
+          onPointerCancel: widget.onCancel,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 80),
             padding: widget.details ? EdgeInsets.zero : const EdgeInsets.all(4),

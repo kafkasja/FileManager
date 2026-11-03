@@ -10106,6 +10106,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'KFM hasn\'t found files here yet'**
   String get desktopBrowseNothingIndexed;
+
+  /// PL3: label next to the cursor while dragging files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String desktopDragCount(int count);
+
+  /// PL3: drop target hint while dragging (hold Ctrl to copy).
+  ///
+  /// In en, this message translates to:
+  /// **'Move to {name}'**
+  String desktopDropMoveTo(String name);
+
+  /// PL3: drop target hint while dragging.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to {name}'**
+  String desktopDropCopyTo(String name);
+
+  /// PL3: drop target hint over a tag in the sidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag {name}'**
+  String desktopDropTag(String name);
+
+  /// PL3: drop target hint over Favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Favorites'**
+  String get desktopDropFavorite;
+
+  /// PL3: drop target hint over Devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to a device'**
+  String get desktopDropSend;
+
+  /// PL3: drop target hint over Trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get desktopDropTrash;
+
+  /// PL3: second line of the drag hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold Ctrl to copy'**
+  String get desktopDropCtrlHint;
+
+  /// PL3: after dropping folders from Windows Explorer (only files are copied).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder was skipped: drop the files inside it} other{{count} folders were skipped: drop the files inside them}}'**
+  String desktopDropFoldersSkipped(int count);
+
+  /// PL3: dropped items from Explorer could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to copy here'**
+  String get desktopDropNothing;
+
+  /// PL3: drag label, e.g. '3 files · Move to Pictures'.
+  ///
+  /// In en, this message translates to:
+  /// **'{files} · {action}'**
+  String desktopDragOffer(String files, String action);
 }
 
 class _AppLocalizationsDelegate

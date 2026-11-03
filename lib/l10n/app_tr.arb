@@ -1666,5 +1666,16 @@
   "desktopBrowseCopy": "Kopyala",
   "desktopBrowseCut": "Kes",
   "desktopBrowsePaste": "Yapıştır",
-  "desktopBrowseNothingIndexed": "KFM burada henüz dosya bulmadı"
+  "desktopBrowseNothingIndexed": "KFM burada henüz dosya bulmadı",
+  "desktopDragCount": "{count, plural, =1{1 dosya} other{{count} dosya}}",
+  "desktopDropMoveTo": "{name} konumuna taşı",
+  "desktopDropCopyTo": "{name} konumuna kopyala",
+  "desktopDropTag": "{name} etiketini ekle",
+  "desktopDropFavorite": "Favorilere ekle",
+  "desktopDropSend": "Bir cihaza gönder",
+  "desktopDropTrash": "Çöpe taşı",
+  "desktopDropCtrlHint": "Kopyalamak için Ctrl tuşunu basılı tutun",
+  "desktopDropFoldersSkipped": "{count, plural, =1{1 klasör atlandı: içindeki dosyaları bırakın} other{{count} klasör atlandı: içindeki dosyaları bırakın}}",
+  "desktopDropNothing": "Buraya kopyalanacak bir şey yok",
+  "desktopDragOffer": "{files} · {action}"
 }

@@ -1666,5 +1666,16 @@
   "desktopBrowseCopy": "Kopiëren",
   "desktopBrowseCut": "Knippen",
   "desktopBrowsePaste": "Plakken",
-  "desktopBrowseNothingIndexed": "KFM heeft hier nog geen bestanden gevonden"
+  "desktopBrowseNothingIndexed": "KFM heeft hier nog geen bestanden gevonden",
+  "desktopDragCount": "{count, plural, =1{1 bestand} other{{count} bestanden}}",
+  "desktopDropMoveTo": "Verplaatsen naar {name}",
+  "desktopDropCopyTo": "Kopiëren naar {name}",
+  "desktopDropTag": "Tag {name} toevoegen",
+  "desktopDropFavorite": "Toevoegen aan favorieten",
+  "desktopDropSend": "Naar een apparaat sturen",
+  "desktopDropTrash": "Naar prullenbak",
+  "desktopDropCtrlHint": "Houd Ctrl ingedrukt om te kopiëren",
+  "desktopDropFoldersSkipped": "{count, plural, =1{1 map overgeslagen: sleep de bestanden erin} other{{count} mappen overgeslagen: sleep de bestanden erin}}",
+  "desktopDropNothing": "Niets om hierheen te kopiëren",
+  "desktopDragOffer": "{files} · {action}"
 }
