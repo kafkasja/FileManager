@@ -20,7 +20,8 @@ sealed class PreviousState {
           mode: j['mode'] as String? ?? 'trash',
           trashedItem: (j['trashedItem'] as Map?)?.cast<String, Object?>(),
         ),
-        SwipeActionType.moveTo when j['kind'] == CrossPlaceMovePreviousState.kind =>
+        SwipeActionType.moveTo
+            when j['kind'] == CrossPlaceMovePreviousState.kind =>
           CrossPlaceMovePreviousState.fromJson(j),
         SwipeActionType.moveTo => MovePreviousState(
           folderPath: j['folderPath']! as String,

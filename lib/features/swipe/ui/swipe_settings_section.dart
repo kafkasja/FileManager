@@ -6,6 +6,7 @@ import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/features/onboarding/ui/onboarding_controller.dart';
 import 'package:kfm/features/reviewed/ui/reset_reviewed_dialog.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -120,6 +121,15 @@ class SwipeSettingsSection extends ConsumerWidget {
           leading: const Icon(Icons.restart_alt),
           title: Text(l10n.settingsFreshStart),
           onTap: () => showClearSheet(context, ref),
+        ),
+        // L3: the tutorial and the one-time hints once more.
+        ListTile(
+          leading: const Icon(Icons.school_outlined),
+          title: Text(l10n.tutorialShowAgain),
+          onTap: () {
+            ref.read(onboardingControllerProvider.notifier).showAgain();
+            context.go(AppRoutes.swipe);
+          },
         ),
       ],
     );

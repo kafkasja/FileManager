@@ -8,6 +8,8 @@ import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
+import 'package:kfm/features/onboarding/domain/onboarding_state.dart';
+import 'package:kfm/features/onboarding/ui/feature_hint.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/presets/domain/preset.dart';
 import 'package:kfm/features/presets/ui/active_preset_controller.dart';
@@ -31,36 +33,44 @@ class ManagePresetsScreen extends ConsumerWidget {
         label: Text(l10n.presetNew),
         onPressed: () => _newFromCurrent(context, ref),
       ),
-      body: switch (presets) {
-        AsyncData(:final value) when value.isEmpty => const _Empty(),
-        AsyncData(:final value) => ReorderableListView(
-          buildDefaultDragHandles: false,
-          padding: const EdgeInsets.only(bottom: 96),
-          onReorderItem: (from, to) {
-            final ids = [for (final p in value) p.id];
-            ids.insert(to, ids.removeAt(from));
-            ref.read(presetRepositoryProvider).reorder(ids).ignore();
-          },
-          children: [
-            for (final (i, p) in value.indexed)
-              ListTile(
-                key: ValueKey('preset:${p.id}'),
-                leading: ReorderableDragStartListener(
-                  index: i,
-                  child: const Icon(Icons.drag_handle),
-                ),
-                title: Text(p.name),
-                subtitle: p is PresetLoadError
-                    ? Text(l10n.presetLoadError)
-                    : null,
-                onTap: () => context.go(AppRoutes.presetEditorFor(p.id)),
-                trailing: _RowMenu(entry: p),
+      body: Column(
+        children: [
+          // L3: once, on the first open.
+          FeatureHint(id: HintIds.presets, text: l10n.hintPresets),
+          Expanded(
+            child: switch (presets) {
+              AsyncData(:final value) when value.isEmpty => const _Empty(),
+              AsyncData(:final value) => ReorderableListView(
+                buildDefaultDragHandles: false,
+                padding: const EdgeInsets.only(bottom: 96),
+                onReorderItem: (from, to) {
+                  final ids = [for (final p in value) p.id];
+                  ids.insert(to, ids.removeAt(from));
+                  ref.read(presetRepositoryProvider).reorder(ids).ignore();
+                },
+                children: [
+                  for (final (i, p) in value.indexed)
+                    ListTile(
+                      key: ValueKey('preset:${p.id}'),
+                      leading: ReorderableDragStartListener(
+                        index: i,
+                        child: const Icon(Icons.drag_handle),
+                      ),
+                      title: Text(p.name),
+                      subtitle: p is PresetLoadError
+                          ? Text(l10n.presetLoadError)
+                          : null,
+                      onTap: () => context.go(AppRoutes.presetEditorFor(p.id)),
+                      trailing: _RowMenu(entry: p),
+                    ),
+                ],
               ),
-          ],
-        ),
-        AsyncError(:final error) => Center(child: Text(error.toString())),
-        _ => const Center(child: CircularProgressIndicator()),
-      },
+              AsyncError(:final error) => Center(child: Text(error.toString())),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
+          ),
+        ],
+      ),
     );
   }
 

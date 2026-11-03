@@ -112,6 +112,9 @@ const Set<String> excludedBackupSettings = {
   'updates.lastCheckAt',
   'updates.dismissedVersion',
   'updates.latestJson',
+  // L3: what this device's user has already seen.
+  'onboarding.tutorialDone',
+  'onboarding.seenHints',
 };
 
 final Map<String, BackupSetting> backupSettingsByName = Map.unmodifiable({
