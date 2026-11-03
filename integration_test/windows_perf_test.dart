@@ -399,10 +399,21 @@ Future<Map<String, Object?>> _sortRun(
         PhysicalKeyboardKey.keyK,
         'k',
       );
-      await _waitFor(
-        () => c.read(swipeDeckControllerProvider).value?.current?.id != before,
-        timeout: const Duration(seconds: 5),
-      );
+      try {
+        await _waitFor(
+          () =>
+              c.read(swipeDeckControllerProvider).value?.current?.id != before,
+          timeout: const Duration(seconds: 5),
+        );
+      } on TimeoutException {
+        final deck = c.read(swipeDeckControllerProvider).value;
+        _log(
+          'key $i did nothing: current $before, '
+          'upcoming ${deck?.upcoming.length}, '
+          'focus ${FocusManager.instance.primaryFocus}',
+        );
+        rethrow;
+      }
       // The frame that shows the change.
       await SchedulerBinding.instance.endOfFrame;
       latencies.add(clock.elapsedMicroseconds / 1000);
