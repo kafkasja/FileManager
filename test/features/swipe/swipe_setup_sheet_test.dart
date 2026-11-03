@@ -142,7 +142,13 @@ void main() {
     );
     expect(find.byKey(const ValueKey('preset-modified-dot')), findsNothing);
 
-    // Save as new… → a second preset; still on Screens.
+    // Save as new… → a second preset, active at once (X6 note) with the
+    // same session; Screens keeps its saved setup.
+    final sessionId = app.container
+        .read(swipeDeckControllerProvider)
+        .value!
+        .session
+        .id;
     await _assignUp(tester, 'Keep');
     await _tapInSheet(tester, 'Save as new…');
     await tester.enterText(find.byType(TextField).last, 'Copy');
@@ -150,7 +156,21 @@ void main() {
     await tester.pumpAndSettle();
     final all = app.container.read(presetsProvider).value!;
     expect(all.map((p) => p.name), containsAll(['Screens', 'Copy']));
-    expect(app.container.read(activePresetIdProvider).value, id);
+    final copy = all.firstWhere((p) => p.name == 'Copy').id;
+    expect(app.container.read(activePresetIdProvider).value, copy);
+    final session = app.container
+        .read(swipeDeckControllerProvider)
+        .value!
+        .session;
+    expect(session.presetId, copy);
+    expect(session.id, sessionId);
+    expect(find.byKey(const ValueKey('preset-modified-dot')), findsNothing);
+    expect(
+      ((await repo.byId(id))! as Preset).layout
+          .actionFor(SwipeDirection.up)
+          ?.type,
+      SwipeActionType.favorite,
+    );
     await tester.pump(const Duration(seconds: 5));
   });
 
