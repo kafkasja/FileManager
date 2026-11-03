@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/background/cancel_token.dart';
@@ -31,6 +34,8 @@ enum ProgressLabel {
 /// call [cancel], the task then stops after the current file.
 ///
 /// Dialogs the task opens meanwhile (collisions) show above the sheet.
+/// On the desktop (TASK-PL3: no bottom sheets) the same content shows as
+/// a small non-dismissible dialog; Esc cancels like the back button.
 Future<T> showOperationProgress<T>(
   BuildContext context, {
   required ProgressLabel label,
@@ -40,21 +45,47 @@ Future<T> showOperationProgress<T>(
   final navigator = Navigator.of(context);
   // Not disposed: the sheet still listens during its exit animation.
   final progress = ValueNotifier<OperationProgress?>(null);
-  final route = ModalBottomSheetRoute<void>(
-    builder: (_) => OperationProgressSheet(
-      progress: progress,
-      cancel: cancel,
-      label: label,
-    ),
-    capturedThemes: InheritedTheme.capture(
-      from: context,
-      to: navigator.context,
-    ),
-    barrierLabel: MaterialLocalizations.of(context).scrimLabel,
-    isScrollControlled: false,
-    isDismissible: false,
-    enableDrag: false,
-  );
+  Widget sheet(BuildContext _) =>
+      OperationProgressSheet(progress: progress, cancel: cancel, label: label);
+  final desktop = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(formFactorProvider).isDesktop;
+  final themes = InheritedTheme.capture(from: context, to: navigator.context);
+  final barrierLabel = MaterialLocalizations.of(context).scrimLabel;
+  final ModalRoute<void> route = desktop
+      ? DialogRoute<void>(
+          context: context,
+          builder: (context) => Dialog(
+            key: const ValueKey('operation-progress-dialog'),
+            // Esc = Cancel (through the sheet's PopScope); a barrier click
+            // does nothing.
+            child: CallbackShortcuts(
+              bindings: {
+                const SingleActivator(LogicalKeyboardKey.escape): () =>
+                    Navigator.of(context).maybePop(),
+              },
+              child: Focus(
+                autofocus: true,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: sheet(context),
+                ),
+              ),
+            ),
+          ),
+          themes: themes,
+          barrierDismissible: false,
+          barrierLabel: barrierLabel,
+        )
+      : ModalBottomSheetRoute<void>(
+          builder: sheet,
+          capturedThemes: themes,
+          barrierLabel: barrierLabel,
+          isScrollControlled: false,
+          isDismissible: false,
+          enableDrag: false,
+        );
   navigator.push(route);
   try {
     return await task((p) => progress.value = p);

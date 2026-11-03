@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/background/cancel_token.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
@@ -27,34 +30,45 @@ class _Run {
   final errors = <Object>[];
 }
 
-Future<_Run> _pump(WidgetTester tester, ProgressLabel label) async {
+Future<_Run> _pump(
+  WidgetTester tester,
+  ProgressLabel label, {
+  bool desktop = false,
+}) async {
   final run = _Run();
   await tester.pumpWidget(
-    MaterialApp(
-      theme: ThemeData(extensions: const [AppTokens.light]),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: TextButton(
-            onPressed: () async {
-              try {
-                run.results.add(
-                  await showOperationProgress(
-                    context,
-                    label: label,
-                    cancel: run.cancel,
-                    task: (onProgress) {
-                      run.report = onProgress;
-                      return run.done.future;
-                    },
-                  ),
-                );
-              } on _Boom catch (e) {
-                run.errors.add(e);
-              }
-            },
-            child: const Text('go'),
+    ProviderScope(
+      overrides: [
+        formFactorProvider.overrideWithValue(
+          desktop ? FormFactor.desktop : FormFactor.mobile,
+        ),
+      ],
+      child: MaterialApp(
+        theme: ThemeData(extensions: const [AppTokens.light]),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                try {
+                  run.results.add(
+                    await showOperationProgress(
+                      context,
+                      label: label,
+                      cancel: run.cancel,
+                      task: (onProgress) {
+                        run.report = onProgress;
+                        return run.done.future;
+                      },
+                    ),
+                  );
+                } on _Boom catch (e) {
+                  run.errors.add(e);
+                }
+              },
+              child: const Text('go'),
+            ),
           ),
         ),
       ),
@@ -184,6 +198,43 @@ void main() {
     run.done.complete('ok');
     await _settle(tester);
     expect(find.text('Copying 1 of 2'), findsNothing);
+    expect(find.text('collision'), findsOneWidget);
+    expect(run.results, ['ok']);
+  });
+
+  testWidgets('desktop: a dialog instead of a bottom sheet; Esc cancels, the '
+      'end closes it; collisions show above', (tester) async {
+    final run = await _pump(tester, ProgressLabel.copying, desktop: true);
+    expect(find.byKey(const ValueKey('operation-progress-dialog')), findsOne);
+    expect(find.byType(BottomSheet), findsNothing);
+    run.report!(_p(0, 2));
+    await tester.pump();
+    expect(find.text('Copying 1 of 2'), findsOneWidget);
+
+    // A barrier click doesn't close it; Esc asks to cancel.
+    await tester.tapAt(const Offset(5, 5));
+    await _settle(tester);
+    expect(find.text('Copying 1 of 2'), findsOneWidget);
+    expect(run.cancel.isCancelled, isFalse);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _settle(tester);
+    expect(run.cancel.isCancelled, isTrue);
+    expect(find.text('Copying 1 of 2'), findsOneWidget);
+
+    final context = tester.element(find.text('Copying 1 of 2'));
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (_) => const AlertDialog(content: Text('collision')),
+      ),
+    );
+    await _settle(tester);
+    run.done.complete('ok');
+    await _settle(tester);
+    expect(
+      find.byKey(const ValueKey('operation-progress-dialog')),
+      findsNothing,
+    );
     expect(find.text('collision'), findsOneWidget);
     expect(run.results, ['ok']);
   });
