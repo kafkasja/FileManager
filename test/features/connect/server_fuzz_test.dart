@@ -764,6 +764,9 @@ void main() {
 
 class _NoThumbs implements ThumbnailCache {
   @override
+  bool hasFailed(FileRef f) => false;
+
+  @override
   Future<Uint8List?> get(
     FileRef f, {
     ThumbPriority priority = ThumbPriority.visible,

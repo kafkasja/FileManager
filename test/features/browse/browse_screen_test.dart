@@ -229,7 +229,8 @@ void main() {
 
     await tester.tap(find.text('manual.pdf'));
     await tester.pumpAndSettle();
-    expect(openWith.opened.single.name, 'manual.pdf');
+    // A tap opens the default app (Android: the chooser).
+    expect(openWith.openedDefault.single.name, 'manual.pdf');
 
     openWith.noApp = true;
     await tester.tap(find.text('manual.pdf'));

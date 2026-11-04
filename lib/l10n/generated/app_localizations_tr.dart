@@ -689,6 +689,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get videoCantPlay => 'Bu video oynatılamıyor';
 
   @override
+  String get videoDamaged => 'Bu dosya oynatılamıyor — hasarlı olabilir';
+
+  @override
+  String get imageDamaged => 'Bu dosya gösterilemiyor — hasarlı olabilir';
+
+  @override
   String get videoTapForSound => 'Ses için dokun';
 
   @override

@@ -68,7 +68,8 @@ void main() {
       noticeShown = true;
     },
     attentionRequests: attention.stream,
-    beforeQuit: () async => events.add('flush'),
+    beforeQuit: () async =>
+        events.add(shell.calls.contains('hide') ? 'flush (hidden)' : 'flush'),
   )..start();
 
   setUp(() {
@@ -80,10 +81,11 @@ void main() {
     attention = StreamController.broadcast();
   });
 
-  test('not sharing: closing quits after flushing writes', () async {
+  test('not sharing: hides at once, flushes writes, then quits', () async {
     await flow().onCloseRequested();
-    expect(events, ['flush']);
-    expect(shell.calls, ['quit']);
+    // Speed fix: the window goes before anything slow runs.
+    expect(events, ['flush (hidden)']);
+    expect(shell.calls, ['hide', 'quit']);
   });
 
   test('sharing: closing hides; the first time after the notice', () async {
@@ -103,8 +105,8 @@ void main() {
     sharing = true;
     stopOnClose = true;
     await flow().onCloseRequested();
-    expect(events, ['stopSharing', 'flush']);
-    expect(shell.calls, ['quit']);
+    expect(events, ['stopSharing', 'flush (hidden)']);
+    expect(shell.calls, ['hide', 'quit']);
   });
 
   test('tray Open shows the window, Quit stops sharing and quits', () async {
@@ -115,8 +117,8 @@ void main() {
     expect(shell.calls, ['show']);
     shell.clicks.add(trayQuitKey);
     await pumpEventQueue();
-    expect(events, ['stopSharing', 'flush']);
-    expect(shell.calls, ['show', 'quit']);
+    expect(events, ['stopSharing', 'flush (hidden)']);
+    expect(shell.calls, ['show', 'hide', 'quit']);
   });
 
   test('a connection request brings the window to the front', () async {
@@ -130,7 +132,7 @@ void main() {
     flow();
     shell.close.add(null);
     await pumpEventQueue();
-    expect(shell.calls, ['quit']);
+    expect(shell.calls, ['hide', 'quit']);
   });
 
   test('TrayShareBackground: tray menu and Stop requests', () async {

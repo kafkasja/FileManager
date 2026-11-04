@@ -34,6 +34,9 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
   Uint8List? _bytes;
   ThumbnailCache? _cache;
 
+  /// No thumbnail could be made (damaged or unsupported file).
+  bool _failed = false;
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +50,7 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
         old.file.modifiedAt != widget.file.modifiedAt) {
       _cache?.cancel(old.file.id);
       _bytes = null;
+      _failed = false;
       unawaited(_load());
     }
   }
@@ -70,8 +74,12 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
     if (!DiskThumbnailCache.hasThumbnail(file)) return;
     final cache = await _cacheOnce();
     final bytes = await cache.get(file);
-    if (mounted && widget.file.id == file.id && bytes != null) {
+    if (!mounted || widget.file.id != file.id) return;
+    if (bytes != null) {
       setState(() => _bytes = bytes);
+    } else if (file.kind != FileKind.audio && cache.hasFailed(file)) {
+      // Audio without cover art keeps its note icon.
+      setState(() => _failed = true);
     }
   }
 
@@ -88,7 +96,13 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
         fit: StackFit.expand,
         children: [
           Center(
-            child: Icon(fileKindIcon(widget.file.kind), color: scheme.outline),
+            child: _failed
+                ? Icon(
+                    Icons.broken_image_outlined,
+                    key: const ValueKey('thumbnail-failed'),
+                    color: scheme.outline,
+                  )
+                : Icon(fileKindIcon(widget.file.kind), color: scheme.outline),
           ),
           if (remote != null)
             Image(

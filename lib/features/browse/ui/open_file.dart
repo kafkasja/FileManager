@@ -34,20 +34,32 @@ Future<void> openFile(BuildContext context, WidgetRef ref, FileRef f) async {
         rootNavigator: true,
       ).push(TextViewerScreen.route(f));
     case _:
-      await openWithOrExplain(context, ref, f);
+      await openOrExplain(context, ref, f);
   }
 }
+
+/// The file's default app (Windows; the chooser on Android). Failures
+/// become a snackbar, never silence.
+Future<void> openOrExplain(BuildContext context, WidgetRef ref, FileRef f) =>
+    _handOff(context, ref, f, (s) => s.open(f));
 
 /// "Open with"; failures become a snackbar (no app, or the system refused).
 Future<void> openWithOrExplain(
   BuildContext context,
   WidgetRef ref,
   FileRef f,
+) => _handOff(context, ref, f, (s) => s.openWith(f));
+
+Future<void> _handOff(
+  BuildContext context,
+  WidgetRef ref,
+  FileRef f,
+  Future<void> Function(OpenWithService s) run,
 ) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   final l10n = context.l10n;
   try {
-    await ref.read(openWithServiceProvider).openWith(f);
+    await run(ref.read(openWithServiceProvider));
   } on FileOpException catch (e) {
     messenger?.showSnackBar(
       SnackBar(
@@ -58,6 +70,10 @@ Future<void> openWithOrExplain(
         ),
       ),
     );
+  } on Object {
+    // Anything else (a provider that failed to build, a channel error):
+    // still say so.
+    messenger?.showSnackBar(SnackBar(content: Text(l10n.openWithFailed)));
   }
 }
 

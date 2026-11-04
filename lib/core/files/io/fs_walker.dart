@@ -9,6 +9,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/io/exif_meta.dart';
 import 'package:kfm/core/files/io_errors.dart';
 import 'package:kfm/core/files/system_files.dart';
+import 'package:kfm/core/files/windows/win_attributes.dart';
 import 'package:meta/meta.dart';
 
 /// What [walkFiles] lists. Sent to the walker isolate, so plain data only.
@@ -31,7 +32,8 @@ class WalkOptions {
   final String root;
   final bool recursive;
 
-  /// Also list dot-files/folders and folders containing `.nomedia`.
+  /// Also list dot-files/folders, folders containing `.nomedia` and (on
+  /// Windows) items with the hidden attribute, marked [FileRef.hidden].
   final bool includeHidden;
 
   /// Empty = all kinds.
@@ -147,7 +149,11 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
     for (final entity in entries) {
       final name = _nameOf(entity.path);
       final path = dir == '/' ? '/$name' : '$dir/$name';
-      final dotted = name.startsWith('.');
+      // Windows: the hidden attribute counts like a leading dot (System
+      // Volume Information, $RECYCLE.BIN, desktop.ini, Thumbs.db…).
+      final dotted =
+          name.startsWith('.') ||
+          (Platform.isWindows && hasHiddenAttribute(path));
       if (dotted && !o.includeHidden) continue;
       if (isSystemTempName(name)) continue;
       // Q4: Win32 strips a trailing dot/space and maps device names, so

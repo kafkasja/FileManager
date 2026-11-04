@@ -31,6 +31,10 @@ abstract interface class ThumbnailCache {
   /// Warm the cache for what the user will see next.
   void prefetch(Iterable<FileRef> files);
 
+  /// A thumbnail was tried for [f] this session and couldn't be made
+  /// (damaged or unsupported file): the UI shows "can't preview".
+  bool hasFailed(FileRef f);
+
   /// Drops a waiting request (scrolled away). Running ones finish.
   void cancel(String fileId);
 
@@ -190,6 +194,9 @@ class DiskThumbnailCache implements ThumbnailCache {
     _pump();
     return request.completer.future;
   }
+
+  @override
+  bool hasFailed(FileRef f) => _failed.contains(_key(f));
 
   @override
   void prefetch(Iterable<FileRef> files) {

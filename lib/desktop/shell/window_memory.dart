@@ -5,15 +5,20 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/core/platform/windows/desktop_shell.dart';
+import 'package:kfm/core/platform/windows/startup_hints.dart';
 
 /// Remembers the desktop window's size and position (TASK-PL3 polish):
 /// restores the last bounds at start and saves them shortly after the user
 /// moves or resizes the window.
 class WindowMemory {
-  new(this._shell, this._settings);
+  new(this._shell, this._settings, {this._hints});
 
   final DesktopShell _shell;
   final SettingsRepository _settings;
+
+  /// Speed fix: the bounds also go to the runner's startup file, so the
+  /// next start shows the window in place before the engine runs.
+  final StartupHintsFile? _hints;
   StreamSubscription<void>? _sub;
   Timer? _debounce;
 
@@ -27,7 +32,10 @@ class WindowMemory {
   Future<void> start() async {
     final raw = await _settings.read(AppSettings.desktopWindowBounds);
     final saved = parse(raw);
-    if (saved != null) await _shell.setBounds(saved);
+    if (saved != null) {
+      await _shell.setBounds(saved);
+      await _hints?.update(bounds: saved);
+    }
     _sub = _shell.boundsChanges.listen((_) {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 600), () async {
@@ -35,6 +43,9 @@ class WindowMemory {
         _settings
             .write(AppSettings.desktopWindowBounds, format(b))
             .fireAndForget();
+        if (parse(format(b)) case final valid?) {
+          await _hints?.update(bounds: valid);
+        }
       });
     });
   }

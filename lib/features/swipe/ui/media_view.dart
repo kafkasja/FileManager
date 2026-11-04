@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/features/connect/ui/remote_image_provider.dart';
@@ -64,7 +65,27 @@ class MediaView extends ConsumerWidget {
                 gaplessPlayback: true,
                 frameBuilder: (context, child, frame, wasSync) =>
                     wasSync || frame != null ? child : const SizedBox.shrink(),
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                // Quick look (desktop) says why; the deck keeps the
+                // placeholder.
+                errorBuilder: (context, _, _) => desktopVideoControls
+                    ? Center(
+                        child: Container(
+                          key: const ValueKey('image-error'),
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            context.l10n.imageDamaged,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             if (file.kind == FileKind.video)
               VideoSurface(

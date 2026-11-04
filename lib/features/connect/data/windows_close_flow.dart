@@ -96,7 +96,14 @@ class WindowsCloseFlow {
     await _quitNow();
   }
 
+  /// The window goes first (closing looks instant), then queued writes
+  /// land, then the process ends (the runner skips the engine teardown).
   Future<void> _quitNow() async {
+    try {
+      await _shell.hide();
+    } on Object catch (e) {
+      developer.log('hide on quit failed: $e', name: 'kfm.connect');
+    }
     try {
       await _beforeQuit();
     } finally {

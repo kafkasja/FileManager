@@ -165,3 +165,73 @@ abstract class _$VideoMuted extends $Notifier<bool> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// Desktop: the videos the user paused (click on the video, the bar's
+/// play/pause button, Space). A pause sticks until they play it again,
+/// whatever shows the video next (Quick look, the viewer); the phone never
+/// pauses (videos loop, S5).
+
+@ProviderFor(VideoPaused)
+final videoPausedProvider = VideoPausedProvider._();
+
+/// Desktop: the videos the user paused (click on the video, the bar's
+/// play/pause button, Space). A pause sticks until they play it again,
+/// whatever shows the video next (Quick look, the viewer); the phone never
+/// pauses (videos loop, S5).
+final class VideoPausedProvider
+    extends $NotifierProvider<VideoPaused, Set<String>> {
+  /// Desktop: the videos the user paused (click on the video, the bar's
+  /// play/pause button, Space). A pause sticks until they play it again,
+  /// whatever shows the video next (Quick look, the viewer); the phone never
+  /// pauses (videos loop, S5).
+  VideoPausedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'videoPausedProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$videoPausedHash();
+
+  @$internal
+  @override
+  VideoPaused create() => VideoPaused();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$videoPausedHash() => r'f0fe6e5f2f97d3e99116b0aed1daedd638eae040';
+
+/// Desktop: the videos the user paused (click on the video, the bar's
+/// play/pause button, Space). A pause sticks until they play it again,
+/// whatever shows the video next (Quick look, the viewer); the phone never
+/// pauses (videos loop, S5).
+
+abstract class _$VideoPaused extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

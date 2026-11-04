@@ -821,6 +821,57 @@ EncodableValue NetworkIsPublic() {
   return EncodableValue(false);
 }
 
+// ---- open / open with (desktop Browse) ----
+
+EncodableValue OpenResult(const char* result, const std::string& message) {
+  EncodableMap m;
+  m[EncodableValue("result")] = EncodableValue(result);
+  if (!message.empty()) m[EncodableValue("message")] = EncodableValue(message);
+  return EncodableValue(m);
+}
+
+const char* OpenErrorFor(DWORD error) {
+  switch (error) {
+    case ERROR_NO_ASSOCIATION:
+      return "noApp";
+    case ERROR_FILE_NOT_FOUND:
+    case ERROR_PATH_NOT_FOUND:
+      return "notFound";
+    case ERROR_CANCELLED:
+      return "cancelled";
+    default:
+      return "failed";
+  }
+}
+
+// The file's default app (Explorer's double-click): ShellExecuteEx with
+// the default verb. No association → `noApp` (Dart then asks "Open with").
+EncodableValue OpenFile(HWND window, const std::wstring& path) {
+  SHELLEXECUTEINFOW info = {sizeof(info)};
+  info.fMask = SEE_MASK_NOASYNC | SEE_MASK_FLAG_NO_UI;
+  info.hwnd = window;
+  info.lpFile = path.c_str();
+  info.nShow = SW_SHOWNORMAL;
+  if (::ShellExecuteExW(&info)) return OpenResult("opened", "");
+  DWORD error = ::GetLastError();
+  return OpenResult(OpenErrorFor(error), HrMessage(HRESULT_FROM_WIN32(error)));
+}
+
+// Windows' "Open with" chooser (`SHOpenWithDialog`, launches the pick).
+EncodableValue OpenWith(HWND window, const std::wstring& path) {
+  OPENASINFO info = {};
+  info.pcszFile = path.c_str();
+  info.oaifInFlags = OAIF_ALLOW_REGISTRATION | OAIF_REGISTER_EXT | OAIF_EXEC;
+  HRESULT hr = ::SHOpenWithDialog(window, &info);
+  if (SUCCEEDED(hr)) return OpenResult("opened", "");
+  if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
+    return OpenResult("cancelled", "");
+  }
+  if (HRESULT_FACILITY(hr) == FACILITY_WIN32) {
+    return OpenResult(OpenErrorFor(HRESULT_CODE(hr)), HrMessage(hr));
+  }
+  return OpenResult("failed", HrMessage(hr));
+}
 
 // ---- drives (U1/U3 on Windows) ----
 
@@ -1257,6 +1308,14 @@ void WindowsChannel::HandleCall(
     Run(*quick_, result, [] { return NetworkIsPublic(); });
   } else if (method == "listDrives") {
     Run(*quick_, result, [] { return ListDrives(); });
+  } else if (method == "openFile") {
+    auto path = StringArg(args, "path");
+    HWND window = window_;
+    Run(*quick_, result, [window, path] { return OpenFile(window, path); });
+  } else if (method == "openWith") {
+    auto path = StringArg(args, "path");
+    HWND window = window_;
+    Run(*quick_, result, [window, path] { return OpenWith(window, path); });
   } else if (method == "ejectDrive") {
     auto path = StringArg(args, "path");
     Run(*quick_, result, [path] { return EjectDrive(path); });

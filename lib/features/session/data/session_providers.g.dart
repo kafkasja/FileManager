@@ -182,7 +182,7 @@ final class DeleteQueueProvider
   }
 }
 
-String _$deleteQueueHash() => r'b9db25b7b8b5200633adfc8213c5985a356af8fc';
+String _$deleteQueueHash() => r'2f4618b9b5b58611a83fca7afd93df0044f4a54a';
 
 /// PL1: the UI side of [DeleteQueue]'s no-Recycle-Bin question
 /// (`NoTrashPrompter` in the app shell answers it).

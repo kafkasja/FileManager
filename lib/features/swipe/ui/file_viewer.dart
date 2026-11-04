@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -238,7 +239,7 @@ class _FileViewerState extends ConsumerState<FileViewer> {
       );
     }
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -284,6 +285,10 @@ class _FileViewerState extends ConsumerState<FileViewer> {
         ],
       ),
     );
+    // Desktop: Space plays / pauses a video.
+    return ref.watch(formFactorProvider).isDesktop
+        ? DesktopVideoKeys(file: file, child: scaffold)
+        : scaffold;
   }
 }
 
@@ -466,7 +471,7 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
     final actions = file == null
         ? const <Widget>[]
         : widget.actions?.call(context, file) ?? const <Widget>[];
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -517,6 +522,10 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
         ],
       ),
     );
+    // Desktop: Space plays / pauses a video.
+    return ref.watch(formFactorProvider).isDesktop
+        ? DesktopVideoKeys(file: file, child: scaffold)
+        : scaffold;
   }
 }
 
@@ -553,6 +562,9 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
   @override
   void initState() {
     super.initState();
+    // Desktop: an opened video plays at once (click / Space pause it);
+    // the phone waits for ▶ (B7).
+    _playing = ref.read(formFactorProvider).isDesktop;
     unawaited(_checkExists());
   }
 

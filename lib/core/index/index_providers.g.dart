@@ -501,4 +501,4 @@ final class ThumbnailCacheProvider
   }
 }
 
-String _$thumbnailCacheHash() => r'16c060ccbdf528f2b1cba04fdcaf44ad80d78ada';
+String _$thumbnailCacheHash() => r'935b33cf9905e43f200b1be6f2822c44139eec0e';

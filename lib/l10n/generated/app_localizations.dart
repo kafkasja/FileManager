@@ -958,6 +958,18 @@ abstract class AppLocalizations {
   /// **'Can\'t play this video'**
   String get videoCantPlay;
 
+  /// No description provided for @videoDamaged.
+  ///
+  /// In en, this message translates to:
+  /// **'This file can\'t be played — it may be damaged'**
+  String get videoDamaged;
+
+  /// No description provided for @imageDamaged.
+  ///
+  /// In en, this message translates to:
+  /// **'This file can\'t be shown — it may be damaged'**
+  String get imageDamaged;
+
   /// No description provided for @videoTapForSound.
   ///
   /// In en, this message translates to:

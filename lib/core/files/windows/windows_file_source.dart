@@ -11,6 +11,7 @@ import 'package:kfm/core/files/io/fs_walker.dart';
 import 'package:kfm/core/files/io_errors.dart';
 import 'package:kfm/core/files/temp_file_ledger.dart';
 import 'package:kfm/core/files/trash_types.dart';
+import 'package:kfm/core/files/windows/win_attributes.dart';
 import 'package:kfm/core/platform/windows/windows_channel.dart';
 
 /// Windows [FileSource] (TASK-PL1): everything through dart:io, the Recycle
@@ -38,10 +39,15 @@ class WindowsFileSource implements FileSource {
   /// next to the index roots (like Android's SD cards), so their rows stay.
   final Future<List<String>> Function()? _removableRoots;
 
-  Future<List<String>> _scanRoots() async => outermostRoots([
+  Future<List<String>> _scanRoots() async => _lastRoots = outermostRoots([
     ...await _indexRoots(),
     ...?await _removableRoots?.call(),
   ]);
+
+  /// The roots of the last scan: a file's hidden attribute check stops at
+  /// its root, as in the walker (an index root inside a hidden folder,
+  /// e.g. under AppData, is the user's choice).
+  List<String>? _lastRoots;
   final Stream<List<FileRef>> Function(WalkOptions options) _walker;
   final Future<TempFileLedger?>? _tempLedger;
 
@@ -481,7 +487,35 @@ class WindowsFileSource implements FileSource {
     if (!isWin32AddressableName(nameOf(path))) return null;
     final stat = await FileStat.stat(path);
     if (stat.type != FileSystemEntityType.file) return null;
+    if (_lastRoots == null) {
+      try {
+        await _scanRoots();
+      } on Object {
+        _lastRoots = const [];
+      }
+    }
     return _ref(path, size: stat.size, modified: stat.modified.toUtc());
+  }
+
+  /// The Windows hidden attribute on [path] or a folder between it and its
+  /// scan root (only [path] itself outside every root).
+  bool _hiddenOnDisk(String path) {
+    final lower = path.toLowerCase();
+    String? root;
+    for (final r in _lastRoots ?? const <String>[]) {
+      final rl = r.toLowerCase();
+      if (lower.startsWith('$rl/') &&
+          (root == null || r.length > root.length)) {
+        root = r;
+      }
+    }
+    if (root == null) return hasHiddenAttribute(path);
+    var p = path;
+    while (p.length > root.length) {
+      if (hasHiddenAttribute(p)) return true;
+      p = parentOf(p);
+    }
+    return false;
   }
 
   Future<FileRef> _statOrThrow(String path, String why) async =>
@@ -500,7 +534,8 @@ class WindowsFileSource implements FileSource {
       modifiedAt: modified,
       folderPath: folder,
       origin: FileOrigin.local,
-      hidden: name.startsWith('.') || isInHiddenFolder(path),
+      hidden:
+          name.startsWith('.') || isInHiddenFolder(path) || _hiddenOnDisk(path),
     );
   }
 
