@@ -225,6 +225,8 @@ class _RemoveDialogState extends State<_RemoveDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.aiModelsRemoveTitle(megabytes(widget.totalBytes))),
       content: Column(
         mainAxisSize: MainAxisSize.min,

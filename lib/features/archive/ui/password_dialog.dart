@@ -100,6 +100,8 @@ class _PasswordDialogState<T extends Object> extends State<PasswordDialog<T>> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.archivePasswordTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

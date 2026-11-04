@@ -71,6 +71,8 @@ Future<void> startDownload(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
+        // Scrolls on short screens (a phone in landscape, big text).
+        scrollable: true,
         title: Text(l10n.transferDownloadTitle(files.length)),
         content: Column(
           mainAxisSize: MainAxisSize.min,

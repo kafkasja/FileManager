@@ -134,7 +134,13 @@ class _FavoritesCard extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    Text(l10n.collectionsFileCount(count)),
+                    // Wraps instead of pushing the row wider (big text).
+                    Flexible(
+                      child: Text(
+                        l10n.collectionsFileCount(count),
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
                   ],
                 ),
                 if (thumbs.isNotEmpty) ...[
@@ -216,6 +222,8 @@ Future<void> confirmDeleteTag(BuildContext context, Tag tag) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.tagDeleteTitle(tag.name)),
       content: Column(
         mainAxisSize: MainAxisSize.min,

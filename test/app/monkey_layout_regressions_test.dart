@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
+import 'package:kfm/features/presets/ui/save_preset_dialog.dart';
+import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 
 import '../core/files/fake_file_source.dart';
@@ -58,9 +60,7 @@ void main() {
     expect(find.byType(NestedScrollView), findsNothing);
   });
 
-  testWidgets('the sort sheet scrolls on a phone in landscape', (
-    tester,
-  ) async {
+  testWidgets('the sort sheet scrolls on a phone in landscape', (tester) async {
     await _browse(tester, dp: const Size(640, 360));
     await tester.tap(find.byIcon(Icons.sort).first);
     await tester.pumpAndSettle();
@@ -134,6 +134,30 @@ void main() {
     unawaited(showFilterSheet(tester.element(find.byType(SwipeSetupStrip))));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(FilledButton, 'Apply'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('dialogs with a text field scroll on a small phone at big text', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(640, 1136)
+      ..devicePixelRatio = 2;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pumpApp(tester, files: _library());
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    unawaited(
+      showSavePresetDialog(
+        tester.element(find.byType(SwipeSetupStrip)),
+        layout: SwipeLayout.decode(''),
+        filterJson: '{"v":1}',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
