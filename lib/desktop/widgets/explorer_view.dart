@@ -253,6 +253,29 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   double _columnWidth(ExplorerColumn<T> c, double scale) =>
       (_widths[c.id] ?? c.width) * scale;
 
+  /// < 1 when the fixed columns don't fit the view's width (narrow window,
+  /// details pane open): they shrink together instead of overflowing.
+  double _squeeze = 1;
+
+  /// The room the name column keeps before the fixed columns shrink.
+  static const _minExpandColumn = 120.0;
+
+  double _shownWidth(ExplorerColumn<T> c) => _columnWidth(c, _scale) * _squeeze;
+
+  void _updateSqueeze(double width) {
+    var fixed = 0.0;
+    var expands = false;
+    for (final c in widget.columns) {
+      if (c.expand) {
+        expands = true;
+      } else {
+        fixed += _columnWidth(c, _scale);
+      }
+    }
+    final room = width - (expands ? _minExpandColumn * _scale : 0);
+    _squeeze = fixed <= room || fixed == 0 ? 1 : math.max(0, room) / fixed;
+  }
+
   List<String> get _order => [for (final i in widget.items) widget.idOf(i)];
 
   /// Item id → index for the view's items, built on first use per list.
@@ -636,6 +659,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
             box.maxWidth,
             scale: _scale = desktopTextScale(context),
           );
+          _updateSqueeze(box.maxWidth);
           final header = geo.header;
           final band = _bandStart != null && _bandEnd != null
               ? Rect.fromPoints(_bandStart!, _bandEnd!)
@@ -780,7 +804,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     );
     return c.expand
         ? Expanded(child: padded)
-        : SizedBox(width: _columnWidth(c, _scale), child: padded);
+        : SizedBox(width: _shownWidth(c), child: padded);
   }
 
   /// The drag handle on a fixed column's end edge (Explorer's column
@@ -789,7 +813,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     if (c.expand) return cell;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     return SizedBox(
-      width: _columnWidth(c, _scale),
+      width: _shownWidth(c),
       child: Stack(
         children: [
           Positioned.fill(child: Row(children: [cell])),

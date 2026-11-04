@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app_info.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
+import 'package:kfm/core/utils/read_future.dart';
 
 /// Version + the app's promises (F6), H5 error log share/clear.
 class AboutSection extends ConsumerWidget {
@@ -58,7 +59,7 @@ class AboutSection extends ConsumerWidget {
     final log = ref.read(errorLogProvider);
     final share = ref.read(errorLogSharerProvider);
     try {
-      final header = await ref.read(errorLogExportHeaderProvider.future);
+      final header = await ref.readFuture(errorLogExportHeaderProvider.future);
       final file = await log.buildExport(header);
       if (!await share(file, l10n.errorLogShareSubject)) {
         messenger.showSnackBar(

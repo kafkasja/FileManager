@@ -10,6 +10,7 @@ import 'package:kfm/app/router.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
@@ -305,7 +306,7 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
       );
     } else {
       unawaited(HapticFeedback.mediumImpact().catchError((Object _) {}));
-      final me = await ref.read(deviceIdentityProvider.future);
+      final me = await ref.readFuture(deviceIdentityProvider.future);
       if (!mounted) return;
       answer = await showDialog<OfferAnswer>(
         context: context,

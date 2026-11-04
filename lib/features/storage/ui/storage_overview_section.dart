@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -21,7 +22,7 @@ class StorageOverviewSection extends ConsumerWidget {
     final current =
         ref.watch(storageBigFileThresholdProvider).value ??
         AppSettings.storageBigFileThresholdBytes.defaultValue;
-    return ListTile(
+    return AdaptiveListTile(
       leading: const Icon(Icons.sd_storage_outlined),
       title: Text(l10n.storageBigFileThreshold),
       trailing: DropdownButton<int>(

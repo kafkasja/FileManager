@@ -5,6 +5,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/desktop/shell/desktop_drives.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
+import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_navigation.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
@@ -15,18 +16,28 @@ import 'package:kfm/features/tags/data/tag_providers.dart';
 /// Left sidebar (TASK-PL3 PL3-2 a): the sections, then Places and
 /// Collections. Collapses to icons.
 class DesktopSidebar extends ConsumerWidget {
-  const new({required this.current, required this.onSelect, super.key});
+  const new({
+    required this.current,
+    required this.onSelect,
+    this.forceCollapsed = false,
+    super.key,
+  });
 
   final DesktopSection current;
   final ValueChanged<DesktopSection> onSelect;
 
-  static const width = 232.0;
-  static const collapsedWidth = 60.0;
+  /// Icons only whatever the user chose: a narrow window with the details
+  /// pane open (the toggle is disabled then).
+  final bool forceCollapsed;
+
+  static const double width = DesktopLayout.sidebarWidth;
+  static const double collapsedWidth = DesktopLayout.sidebarCollapsedWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final collapsed = ref.watch(desktopSidebarCollapsedProvider);
+    final collapsed =
+        forceCollapsed || ref.watch(desktopSidebarCollapsedProvider);
     final places = ref.watch(desktopPlacesProvider).value ?? const [];
     final tags = (ref.watch(tagsByIdProvider).value?.values.toList() ?? [])
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -38,97 +49,122 @@ class DesktopSidebar extends ConsumerWidget {
       (DesktopSection.devices, Icons.devices_outlined, Icons.devices),
       (DesktopSection.settings, Icons.settings_outlined, Icons.settings),
     ];
+    final target = collapsed ? collapsedWidth : width;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      width: collapsed ? collapsedWidth : width,
+      // Forced (details pane in a narrow window): at once, so the content
+      // never sees the old width next to the pane.
+      duration: forceCollapsed
+          ? Duration.zero
+          : const Duration(milliseconds: 120),
+      width: target,
       color: colors.surfaceContainerLow,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(10, 8, 10, 4),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: IconButton(
-                key: const ValueKey('desktop-sidebar-toggle'),
-                tooltip: collapsed
-                    ? l10n.desktopSidebarExpand
-                    : l10n.desktopSidebarCollapse,
-                icon: const Icon(Icons.menu),
-                onPressed: () =>
-                    ref.read(desktopSidebarCollapsedProvider.notifier).toggle(),
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
-              children: [
-                for (final (s, icon, selectedIcon) in sections)
-                  _droppable(
-                    switch (s) {
-                      DesktopSection.trash => trashDropOffer(context, ref),
-                      DesktopSection.devices => devicesDropOffer(context, ref),
-                      _ => null,
-                    },
-                    SidebarItem(
-                      key: ValueKey('desktop-nav-${s.name}'),
-                      icon: s == current ? selectedIcon : icon,
-                      label: desktopSectionLabel(l10n, s),
-                      selected: s == current,
-                      collapsed: collapsed,
-                      onTap: () => onSelect(s),
-                    ),
-                  ),
-                if (!collapsed) _Header(l10n.desktopSidebarPlaces),
-                if (collapsed) const Divider(),
-                for (final p in places)
-                  _droppable(
-                    p.available ? folderDropOffer(context, ref, p.path) : null,
-                    SidebarItem(
-                      key: ValueKey('desktop-place-${p.path}'),
-                      icon: placeIcon(p.name),
-                      label: p.name,
-                      tooltip: p.path,
-                      collapsed: collapsed,
-                      enabled: p.available,
-                      onTap: () => openDesktopFolder(context, ref, p.path),
-                    ),
-                  ),
-                if (places.isEmpty && !collapsed) _Hint(l10n.desktopNoPlaces),
-                // PL1: drives (system, other disks, USB sticks with Eject).
-                DesktopDriveItems(collapsed: collapsed),
-                if (!collapsed) _Header(l10n.desktopSidebarCollections),
-                if (collapsed) const Divider(),
-                _droppable(
-                  favoriteDropOffer(context, ref),
-                  SidebarItem(
-                    key: const ValueKey('desktop-favorites'),
-                    icon: Icons.star_outline,
-                    label: l10n.desktopFavorites,
-                    collapsed: collapsed,
-                    onTap: () => context.go(AppRoutes.collectionFavorites),
+      // The items are laid out at the final width while the bar grows, so
+      // labels are revealed instead of squeezed (they overflowed by 8 px
+      // for a frame on every expand).
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: AlignmentDirectional.topStart,
+          minWidth: target,
+          maxWidth: target,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(10, 8, 10, 4),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: IconButton(
+                    key: const ValueKey('desktop-sidebar-toggle'),
+                    tooltip: collapsed
+                        ? l10n.desktopSidebarExpand
+                        : l10n.desktopSidebarCollapse,
+                    icon: const Icon(Icons.menu),
+                    onPressed: forceCollapsed
+                        ? null
+                        : () => ref
+                              .read(desktopSidebarCollapsedProvider.notifier)
+                              .toggle(),
                   ),
                 ),
-                for (final t in tags)
-                  _droppable(
-                    tagDropOffer(context, ref, t.id, t.name),
-                    SidebarItem(
-                      key: ValueKey('desktop-tag-${t.id}'),
-                      icon: Icons.label_outline,
-                      iconColor: Color(t.color),
-                      label: t.name,
-                      collapsed: collapsed,
-                      onTap: () => context.go(AppRoutes.collectionTagFor(t.id)),
-                    ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-              ],
-            ),
+                  children: [
+                    for (final (s, icon, selectedIcon) in sections)
+                      _droppable(
+                        switch (s) {
+                          DesktopSection.trash => trashDropOffer(context, ref),
+                          DesktopSection.devices => devicesDropOffer(
+                            context,
+                            ref,
+                          ),
+                          _ => null,
+                        },
+                        SidebarItem(
+                          key: ValueKey('desktop-nav-${s.name}'),
+                          icon: s == current ? selectedIcon : icon,
+                          label: desktopSectionLabel(l10n, s),
+                          selected: s == current,
+                          collapsed: collapsed,
+                          onTap: () => onSelect(s),
+                        ),
+                      ),
+                    if (!collapsed) _Header(l10n.desktopSidebarPlaces),
+                    if (collapsed) const Divider(),
+                    for (final p in places)
+                      _droppable(
+                        p.available
+                            ? folderDropOffer(context, ref, p.path)
+                            : null,
+                        SidebarItem(
+                          key: ValueKey('desktop-place-${p.path}'),
+                          icon: placeIcon(p.name),
+                          label: p.name,
+                          tooltip: p.path,
+                          collapsed: collapsed,
+                          enabled: p.available,
+                          onTap: () => openDesktopFolder(context, ref, p.path),
+                        ),
+                      ),
+                    if (places.isEmpty && !collapsed)
+                      _Hint(l10n.desktopNoPlaces),
+                    // PL1: drives (system, other disks, USB sticks with Eject).
+                    DesktopDriveItems(collapsed: collapsed),
+                    if (!collapsed) _Header(l10n.desktopSidebarCollections),
+                    if (collapsed) const Divider(),
+                    _droppable(
+                      favoriteDropOffer(context, ref),
+                      SidebarItem(
+                        key: const ValueKey('desktop-favorites'),
+                        icon: Icons.star_outline,
+                        label: l10n.desktopFavorites,
+                        collapsed: collapsed,
+                        onTap: () => context.go(AppRoutes.collectionFavorites),
+                      ),
+                    ),
+                    for (final t in tags)
+                      _droppable(
+                        tagDropOffer(context, ref, t.id, t.name),
+                        SidebarItem(
+                          key: ValueKey('desktop-tag-${t.id}'),
+                          icon: Icons.label_outline,
+                          iconColor: Color(t.color),
+                          label: t.name,
+                          collapsed: collapsed,
+                          onTap: () =>
+                              context.go(AppRoutes.collectionTagFor(t.id)),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

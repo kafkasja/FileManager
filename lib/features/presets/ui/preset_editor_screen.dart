@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
@@ -152,7 +153,8 @@ class _PresetEditorState extends ConsumerState<PresetEditorScreen> {
           layout: _layout,
           filterJson: _filterJson,
         );
-    if (await ref.read(activePresetIdProvider.future) == widget.presetId) {
+    if (await ref.readFuture(activePresetIdProvider.future) ==
+        widget.presetId) {
       ref
         ..invalidate(swipeDeckControllerProvider)
         ..invalidate(swipeLayoutControllerProvider);

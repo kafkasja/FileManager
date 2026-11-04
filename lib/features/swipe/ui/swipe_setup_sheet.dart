@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -233,7 +234,8 @@ class _FilterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final on = !FileFilter.decode(filterJson).isEmpty;
-    return ListTile(
+    // The button moves under the text when the row is narrow (big text).
+    return AdaptiveListTile(
       contentPadding: EdgeInsetsDirectional.zero,
       leading: Icon(on ? Icons.filter_alt : Icons.filter_list),
       title: Text(on ? l10n.presetEditorFilterOn : l10n.presetEditorFilterNone),

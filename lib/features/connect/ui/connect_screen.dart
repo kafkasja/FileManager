@@ -416,14 +416,12 @@ class _PickDevice extends ConsumerWidget {
     ];
     return ListView(
       children: [
-        Row(
+        // The button goes under the title when both don't fit (big text).
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Expanded(
-              child: Text(
-                l10n.connectNearbyTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
+            Text(l10n.connectNearbyTitle, style: theme.textTheme.titleMedium),
             TextButton.icon(
               key: const ValueKey('connect-enter-address'),
               onPressed: () => _askAddress(context, ref),

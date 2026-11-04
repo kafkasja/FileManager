@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/core/utils/read_future.dart';
 
 /// Settings → Storage: thumbnail cache size + clear (F5).
 class StorageCacheSection extends ConsumerStatefulWidget {
@@ -17,12 +18,12 @@ class _StorageCacheSectionState extends ConsumerState<StorageCacheSection> {
   late Future<int> _size = _readSize();
 
   Future<int> _readSize() async {
-    final cache = await ref.read(thumbnailCacheProvider.future);
+    final cache = await ref.readFuture(thumbnailCacheProvider.future);
     return await cache.diskSizeBytes();
   }
 
   Future<void> _clear() async {
-    final cache = await ref.read(thumbnailCacheProvider.future);
+    final cache = await ref.readFuture(thumbnailCacheProvider.future);
     await cache.clear();
     if (mounted) setState(() => _size = _readSize());
   }

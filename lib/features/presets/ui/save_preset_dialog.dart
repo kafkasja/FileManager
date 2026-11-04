@@ -78,6 +78,8 @@ class _SavePresetDialogState extends ConsumerState<_SavePresetDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.presetSaveAs),
       content: Column(
         mainAxisSize: MainAxisSize.min,

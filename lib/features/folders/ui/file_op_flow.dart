@@ -399,6 +399,8 @@ class _NameDialogState extends State<NameDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,

@@ -364,30 +364,34 @@ class _HintOverlay extends StatelessWidget {
           alignment: alignment,
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(hint.icon, color: hint.color, size: 72),
-                DecoratedBox(
-                  decoration: ShapeDecoration(
-                    shape: StadiumBorder(side: BorderSide(color: hint.color)),
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+            // Shrinks on a short card (a phone in landscape).
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(hint.icon, color: hint.color, size: 72),
+                  DecoratedBox(
+                    decoration: ShapeDecoration(
+                      shape: StadiumBorder(side: BorderSide(color: hint.color)),
+                      color: Theme.of(context).colorScheme.surface,
                     ),
-                    child: Text(
-                      hint.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(color: hint.color),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      child: Text(
+                        hint.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(color: hint.color),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

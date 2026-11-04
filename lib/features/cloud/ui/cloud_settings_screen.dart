@@ -115,6 +115,8 @@ class _CloudSettingsScreenState extends ConsumerState<CloudSettingsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
+          // Scrolls on short screens (a phone in landscape, big text).
+          scrollable: true,
           title: Text(l10n.cloudRemoveTitle(d.label)),
           content: Column(
             mainAxisSize: MainAxisSize.min,

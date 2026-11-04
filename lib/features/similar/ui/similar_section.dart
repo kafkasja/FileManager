@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -40,7 +41,7 @@ class SimilarSection extends ConsumerWidget {
               settings.write(AppSettings.similarEnabled, v).fireAndForget(),
         ),
         if (enabled) ...[
-          ListTile(
+          AdaptiveListTile(
             title: Text(l10n.similarSettingStrictness),
             trailing: DropdownButton<String>(
               value: strictnessValues.contains(strictness) ? strictness : null,

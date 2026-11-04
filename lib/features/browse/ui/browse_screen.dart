@@ -223,57 +223,68 @@ class BrowseScreen extends ConsumerWidget {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: EdgeInsetsDirectional.symmetric(
-                horizontal: spacing * 2,
-                vertical: spacing / 2,
-              ),
-              child: SegmentedButton<BrowseLayout>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: BrowseLayout.all,
-                    label: SegmentLabel(l10n.browseModeAll),
-                    icon: compact ? null : const Icon(Icons.grid_view),
-                  ),
-                  ButtonSegment(
-                    value: BrowseLayout.folders,
-                    label: SegmentLabel(l10n.browseModeFolders),
-                    icon: compact ? null : const Icon(Icons.folder_outlined),
-                  ),
-                  ButtonSegment(
-                    value: BrowseLayout.sameTime,
-                    label: SegmentLabel(l10n.browseModeSameTime),
-                    icon: compact
-                        ? null
-                        : const Icon(Icons.burst_mode_outlined),
-                  ),
-                ],
-                selected: {view.layout},
-                onSelectionChanged: (s) => controller.setLayout(s.first),
-              ),
-            ),
-            KindChipsRow(
-              scope: view.query.copyWith(kinds: const {}),
-              selected: view.kinds,
-              onSelect: controller.setKind,
-            ),
-            Padding(
-              padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
-              child: Text(
-                // Same time always goes by date (B3).
-                view.layout == BrowseLayout.sameTime
-                    ? sortLabel(
-                        l10n,
-                        FileSort(FileSortField.date, descending: newestFirst),
-                      )
-                    : sortLabel(l10n, view.sort),
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ),
-            const SelectionHint(),
             Expanded(
-              child: _Body(view: view, canSeeAll: canSeeAll),
+              child: _HeaderAndBody(
+                header: [
+                  Padding(
+                    padding: EdgeInsetsDirectional.symmetric(
+                      horizontal: spacing * 2,
+                      vertical: spacing / 2,
+                    ),
+                    child: SegmentedButton<BrowseLayout>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: BrowseLayout.all,
+                          label: SegmentLabel(l10n.browseModeAll),
+                          icon: compact ? null : const Icon(Icons.grid_view),
+                        ),
+                        ButtonSegment(
+                          value: BrowseLayout.folders,
+                          label: SegmentLabel(l10n.browseModeFolders),
+                          icon: compact
+                              ? null
+                              : const Icon(Icons.folder_outlined),
+                        ),
+                        ButtonSegment(
+                          value: BrowseLayout.sameTime,
+                          label: SegmentLabel(l10n.browseModeSameTime),
+                          icon: compact
+                              ? null
+                              : const Icon(Icons.burst_mode_outlined),
+                        ),
+                      ],
+                      selected: {view.layout},
+                      onSelectionChanged: (s) => controller.setLayout(s.first),
+                    ),
+                  ),
+                  KindChipsRow(
+                    scope: view.query.copyWith(kinds: const {}),
+                    selected: view.kinds,
+                    onSelect: controller.setKind,
+                  ),
+                  Padding(
+                    padding: EdgeInsetsDirectional.symmetric(
+                      horizontal: spacing * 2,
+                    ),
+                    child: Text(
+                      // Same time always goes by date (B3).
+                      view.layout == BrowseLayout.sameTime
+                          ? sortLabel(
+                              l10n,
+                              FileSort(
+                                FileSortField.date,
+                                descending: newestFirst,
+                              ),
+                            )
+                          : sortLabel(l10n, view.sort),
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ),
+                  const SelectionHint(),
+                ],
+                body: _Body(view: view, canSeeAll: canSeeAll),
+              ),
             ),
             const SelectionBar(),
           ],
@@ -487,4 +498,43 @@ class _FolderList extends ConsumerWidget {
       _ => const SliverToBoxAdapter(child: LinearProgressIndicator()),
     };
   }
+}
+
+/// The mode/kind/sort header above the results. On a short screen (a phone
+/// in landscape, big text) the header scrolls away with the results instead
+/// of squeezing them to nothing (it overflowed by up to 104 px).
+class _HeaderAndBody extends StatelessWidget {
+  const new({required this.header, required this.body});
+
+  final List<Widget> header;
+  final Widget body;
+
+  /// Below this height the header scrolls.
+  static const shortHeight = 420.0;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      if (box.maxHeight >= shortHeight) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ...header,
+            Expanded(child: body),
+          ],
+        );
+      }
+      return NestedScrollView(
+        headerSliverBuilder: (context, _) => [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: header,
+            ),
+          ),
+        ],
+        body: body,
+      );
+    },
+  );
 }

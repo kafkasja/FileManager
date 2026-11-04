@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
@@ -234,7 +235,7 @@ class _Empty extends ConsumerWidget {
       String help,
       Future<void> Function() onCreate,
     ) => Card(
-      child: ListTile(
+      child: AdaptiveListTile(
         title: Text(title),
         subtitle: Text(help),
         trailing: TextButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/presets/data/preset_repository.dart';
 import 'package:kfm/features/reviewed/data/reviewed_repository.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -12,7 +13,7 @@ Future<void> showResetReviewedDialog(
 ) async {
   final l10n = context.l10n;
   final counts = await ref.read(reviewedRepositoryProvider).fileCounts();
-  final presets = await ref.read(presetsProvider.future);
+  final presets = await ref.readFuture(presetsProvider.future);
   if (!context.mounted) return;
   // (key, name); null key = all presets.
   final options = <(int?, String)>[

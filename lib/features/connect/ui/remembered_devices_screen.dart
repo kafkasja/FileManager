@@ -306,6 +306,8 @@ class _DeviceCard extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        // Scrolls on short screens (a phone in landscape, big text).
+        scrollable: true,
         title: Text(l10n.rememberedRemoveTitle(device.name)),
         content: Column(
           mainAxisSize: MainAxisSize.min,

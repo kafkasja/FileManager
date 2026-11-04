@@ -502,8 +502,17 @@ class _ScrubBarState extends State<_ScrubBar> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  // Shrinks to the 40 px bar at big text sizes (overflowed
+                  // by 12 px at 2.0).
                   if (_dragFraction != null)
-                    _Pill(text: formatDuration(total * _dragFraction!)),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: _Pill(
+                          text: formatDuration(total * _dragFraction!),
+                        ),
+                      ),
+                    ),
                   LinearProgressIndicator(
                     value: fraction.clamp(0.0, 1.0),
                     minHeight: 4,

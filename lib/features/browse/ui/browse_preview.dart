@@ -238,10 +238,14 @@ class FileInfoCard extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FilledButton.icon(
-              onPressed: () => unawaited(openWithOrExplain(context, ref, file)),
-              icon: const Icon(Icons.open_in_new),
-              label: Text(context.l10n.openWith),
+            // Its label wraps instead of pushing the menu off (big text).
+            Flexible(
+              child: FilledButton.icon(
+                onPressed: () =>
+                    unawaited(openWithOrExplain(context, ref, file)),
+                icon: const Icon(Icons.open_in_new),
+                label: Text(context.l10n.openWith),
+              ),
             ),
             // B4's single-file menu (B5 adds its zip items there).
             FileActionsMenuButton(file: file),

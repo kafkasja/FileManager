@@ -117,13 +117,12 @@ class KindChipsRow extends ConsumerWidget {
         ),
       );
     }
-    return SizedBox(
-      height: 48,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
-        children: chips,
-      ),
+    // As tall as the chips: a fixed 48 dp clipped them at big text sizes
+    // (L5), which also tripped a TextPainter assert while painting.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
+      child: Row(children: chips),
     );
   }
 }

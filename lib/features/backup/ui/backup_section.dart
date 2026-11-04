@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
@@ -46,7 +47,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
   }
 
   Future<File> _tempFile(String name) async {
-    final dir = await ref.read(backupCacheDirProvider.future);
+    final dir = await ref.readFuture(backupCacheDirProvider.future);
     return File(p.join(dir.path, name));
   }
 

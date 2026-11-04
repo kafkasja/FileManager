@@ -109,6 +109,8 @@ class _NewTagDialogState extends ConsumerState<_NewTagDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.tagNewTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

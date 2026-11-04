@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
@@ -31,7 +32,7 @@ class PendingUnavailableList extends ConsumerWidget {
       children: [
         Text(l10n.pendingUnavailableBody),
         if (access != null && !access.canSeeAllFiles)
-          ListTile(
+          AdaptiveListTile(
             contentPadding: EdgeInsetsDirectional.zero,
             leading: const Icon(Icons.folder_open_outlined),
             title: Text(l10n.pendingUnavailableGrantAccess),

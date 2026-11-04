@@ -286,6 +286,8 @@ Future<void> confirmAndSend(
   final choice = await showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.sendConfirmTitle(files.length, size, name)),
       content: Column(
         mainAxisSize: MainAxisSize.min,

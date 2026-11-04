@@ -736,6 +736,8 @@ class _SizeRangeDialogState extends State<SizeRangeDialog> {
     final l10n = context.l10n;
     final formatters = [FilteringTextInputFormatter.allow(RegExp('[0-9.,]'))];
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.searchSizeCustomTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

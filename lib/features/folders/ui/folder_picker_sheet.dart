@@ -19,6 +19,7 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/cloud/domain/cloud_destination.dart';
@@ -378,7 +379,7 @@ class _FolderPickerState extends ConsumerState<_FolderPicker> {
   Future<void> _pick(String path, {required bool needsAccess}) async {
     if (_isDisabled(path)) return;
     if (needsAccess && !await ensureAllFilesAccess(context, ref)) return;
-    final recent = await ref.read(_recentTargets.future);
+    final recent = await ref.readFuture(_recentTargets.future);
     final next = [
       path,
       ...recent.where((p) => p != path),
@@ -599,6 +600,8 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      // Scrolls on short screens (a phone in landscape, big text).
+      scrollable: true,
       title: Text(l10n.folderPickerNewTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

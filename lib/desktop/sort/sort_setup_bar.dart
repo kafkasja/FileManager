@@ -96,15 +96,18 @@ class SortSetupBar extends ConsumerWidget {
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 220),
-                      child: Text(
-                        l10n.desktopSortPreset(name),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        semanticsLabel: modified
-                            ? l10n.swipeSetupPresetModifiedSemantics(name)
-                            : l10n.swipeSetupPresetSemantics(name),
+                    // Shrinks (ellipsis) in a narrow window.
+                    Flexible(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 220),
+                        child: Text(
+                          l10n.desktopSortPreset(name),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          semanticsLabel: modified
+                              ? l10n.swipeSetupPresetModifiedSemantics(name)
+                              : l10n.swipeSetupPresetSemantics(name),
+                        ),
                       ),
                     ),
                     if (modified)
