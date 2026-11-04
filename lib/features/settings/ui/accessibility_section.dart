@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/handed.dart';
+import 'package:kfm/app/layout/segment_label.dart';
 import 'package:kfm/app/layout/text_scale.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -43,15 +44,15 @@ class AccessibilitySection extends ConsumerWidget {
             segments: [
               ButtonSegment(
                 value: AppTextSize.system,
-                label: Text(l10n.textSizeSystem),
+                label: SegmentLabel(l10n.textSizeSystem),
               ),
               ButtonSegment(
                 value: AppTextSize.large,
-                label: Text(l10n.textSizeLarge),
+                label: SegmentLabel(l10n.textSizeLarge),
               ),
               ButtonSegment(
                 value: AppTextSize.extraLarge,
-                label: Text(l10n.textSizeExtraLarge),
+                label: SegmentLabel(l10n.textSizeExtraLarge),
               ),
             ],
             selected: {size},

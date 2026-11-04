@@ -5,6 +5,8 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/stats/data/stats_repository.dart';
+import 'package:kfm/features/stats/ui/session_summary_sheet.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
 import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -52,6 +54,27 @@ Future<TestApp> _pumpBig(
   await app.container
       .read(settingsRepositoryProvider)
       .write(AppSettings.textSize, size);
+  await tester.pump(const Duration(seconds: 1));
+  await tester.pumpAndSettle();
+  return app;
+}
+
+/// TASK-Q (Q2): an old 480x800 hdpi phone (320x533 dp) at font scale 2.0.
+Future<TestApp> _pumpSmall(WidgetTester tester) async {
+  tester.view
+    ..physicalSize = const Size(480, 800)
+    ..devicePixelRatio = 1.5;
+  tester.platformDispatcher.textScaleFactorTestValue = 2;
+  addTearDown(tester.view.reset);
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+  final library = FakeFileSource();
+  for (var i = 0; i < 3; i++) {
+    library.addFile(
+      '/s/DCIM/a_rather_long_photo_file_name_$i.jpg',
+      modifiedAt: DateTime.utc(2025, 1, 1, 0, i),
+    );
+  }
+  final app = await pumpApp(tester, files: library);
   await tester.pump(const Duration(seconds: 1));
   await tester.pumpAndSettle();
   return app;
@@ -200,5 +223,43 @@ void main() {
     );
     expect(preview.textScaler!.scale(14), closeTo(14 * 1.25 * 1.3, 1e-9));
     expect(_bodyScale(tester), closeTo(14 * 1.25 * 1.3, 1e-9));
+  });
+
+  testWidgets('320 dp, font 2.0: session summary fits and OK is reachable', (
+    tester,
+  ) async {
+    await _pumpSmall(tester);
+    final context = tester.element(find.byType(Scaffold).first);
+    showSessionSummary(
+      context,
+      const SessionStats(
+        reviewed: 84,
+        toTrashBytes: 5 * 1024 * 1024,
+        freedBytes: 3 * 1024 * 1024,
+      ),
+    ).ignore();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final ok = find.text('OK');
+    await tester.ensureVisible(ok);
+    await tester.pumpAndSettle();
+    await tester.tap(ok);
+    await tester.pumpAndSettle();
+    expect(find.text('Session finished'), findsNothing);
+  });
+
+  testWidgets('320 dp: Browse segments drop icons, labels stay one line', (
+    tester,
+  ) async {
+    await _pumpSmall(tester);
+    await tester.tap(_tab(Icons.folder_outlined));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.grid_view), findsNothing);
+    for (final label in ['All files', 'Folders', 'Same time']) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.maxLines, 1, reason: label);
+      expect(text.softWrap, isFalse, reason: label);
+    }
   });
 }

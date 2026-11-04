@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/segment_label.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
@@ -48,6 +49,7 @@ class BrowseScreen extends ConsumerWidget {
         ref.watch(storageAccessControllerProvider).value?.canSeeAllFiles ??
         false;
     final spacing = context.tokens.spacing;
+    final compact = compactSegments(context);
     final canGoUp = view.folder != null;
     final selection = ref.watch(selectionControllerProvider).value;
     final mode = selection?.mode ?? SelectionMode.normal;
@@ -231,18 +233,20 @@ class BrowseScreen extends ConsumerWidget {
                 segments: [
                   ButtonSegment(
                     value: BrowseLayout.all,
-                    label: Text(l10n.browseModeAll),
-                    icon: const Icon(Icons.grid_view),
+                    label: SegmentLabel(l10n.browseModeAll),
+                    icon: compact ? null : const Icon(Icons.grid_view),
                   ),
                   ButtonSegment(
                     value: BrowseLayout.folders,
-                    label: Text(l10n.browseModeFolders),
-                    icon: const Icon(Icons.folder_outlined),
+                    label: SegmentLabel(l10n.browseModeFolders),
+                    icon: compact ? null : const Icon(Icons.folder_outlined),
                   ),
                   ButtonSegment(
                     value: BrowseLayout.sameTime,
-                    label: Text(l10n.browseModeSameTime),
-                    icon: const Icon(Icons.burst_mode_outlined),
+                    label: SegmentLabel(l10n.browseModeSameTime),
+                    icon: compact
+                        ? null
+                        : const Icon(Icons.burst_mode_outlined),
                   ),
                 ],
                 selected: {view.layout},

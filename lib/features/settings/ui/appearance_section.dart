@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app_info.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
+import 'package:kfm/app/layout/segment_label.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -22,6 +23,7 @@ class AppearanceSection extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider).value ?? ThemeMode.system;
     final locale = ref.watch(appLocaleProvider).value;
     final spacing = context.tokens.spacing;
+    final compact = compactSegments(context);
 
     final tags = [
       for (final l in AppLocalizations.supportedLocales) l.toLanguageTag(),
@@ -35,21 +37,24 @@ class AppearanceSection extends ConsumerWidget {
         Padding(
           padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
           child: SegmentedButton<ThemeMode>(
+            showSelectedIcon: !compact,
             segments: [
               ButtonSegment(
                 value: ThemeMode.system,
-                label: Text(l10n.themeSystem),
-                icon: const Icon(Icons.brightness_auto_outlined),
+                label: SegmentLabel(l10n.themeSystem),
+                icon: compact
+                    ? null
+                    : const Icon(Icons.brightness_auto_outlined),
               ),
               ButtonSegment(
                 value: ThemeMode.light,
-                label: Text(l10n.themeLight),
-                icon: const Icon(Icons.light_mode_outlined),
+                label: SegmentLabel(l10n.themeLight),
+                icon: compact ? null : const Icon(Icons.light_mode_outlined),
               ),
               ButtonSegment(
                 value: ThemeMode.dark,
-                label: Text(l10n.themeDark),
-                icon: const Icon(Icons.dark_mode_outlined),
+                label: SegmentLabel(l10n.themeDark),
+                icon: compact ? null : const Icon(Icons.dark_mode_outlined),
               ),
             ],
             selected: {mode},

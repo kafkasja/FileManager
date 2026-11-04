@@ -11,48 +11,55 @@ Future<void> showSessionSummary(BuildContext context, SessionStats s) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    // Q2: big text on a small screen makes it taller than the default
+    // 9/16 cap; it may then use the whole height and scrolls.
+    isScrollControlled: true,
     builder: (context) {
       final spacing = context.tokens.spacing;
       Widget line(IconData icon, String text) =>
           ListTile(leading: Icon(icon), title: Text(text));
       return SafeArea(
-        child: Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(
-            spacing * 2,
-            0,
-            spacing * 2,
-            spacing * 2,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.summaryTitle,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              line(
-                Icons.check_circle_outline,
-                l10n.summaryReviewed(s.reviewed),
-              ),
-              if (s.toTrashBytes > 0)
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(
+              spacing * 2,
+              0,
+              spacing * 2,
+              spacing * 2,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.summaryTitle,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 line(
-                  Icons.delete_outline,
-                  l10n.summaryToTrash(
-                    formatBytes(s.toTrashBytes, locale: locale),
+                  Icons.check_circle_outline,
+                  l10n.summaryReviewed(s.reviewed),
+                ),
+                if (s.toTrashBytes > 0)
+                  line(
+                    Icons.delete_outline,
+                    l10n.summaryToTrash(
+                      formatBytes(s.toTrashBytes, locale: locale),
+                    ),
                   ),
+                if (s.freedBytes > 0)
+                  line(
+                    Icons.cleaning_services_outlined,
+                    l10n.summaryFreed(
+                      formatBytes(s.freedBytes, locale: locale),
+                    ),
+                  ),
+                SizedBox(height: spacing),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.ok),
                 ),
-              if (s.freedBytes > 0)
-                line(
-                  Icons.cleaning_services_outlined,
-                  l10n.summaryFreed(formatBytes(s.freedBytes, locale: locale)),
-                ),
-              SizedBox(height: spacing),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.ok),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
