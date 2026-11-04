@@ -12,6 +12,7 @@ import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_clipboard.dart';
 import 'package:kfm/desktop/browse/disk_folders.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
+import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
 import 'package:kfm/desktop/widgets/column_widths.dart';
@@ -525,10 +526,9 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
           ),
           // Narrow (800 px window with the details pane): the labelled
           // buttons become icons with tooltips.
-          child: LayoutBuilder(
-            builder: (context, box) {
-              final compact =
-                  box.maxWidth < MediaQuery.textScalerOf(context).scale(600);
+          child: Builder(
+            builder: (context) {
+              final compact = DesktopLayout.compact(context, ref, 800);
               return Row(
                 children: [
                   IconButton(

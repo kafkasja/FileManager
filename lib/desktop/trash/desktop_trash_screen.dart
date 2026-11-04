@@ -7,6 +7,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
@@ -217,10 +218,9 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
           ),
           // Narrow (800 px window with the details pane): Restore and
           // Delete forever become icons with tooltips.
-          child: LayoutBuilder(
-            builder: (context, box) {
-              final compact =
-                  box.maxWidth < MediaQuery.textScalerOf(context).scale(560);
+          child: Builder(
+            builder: (context) {
+              final compact = DesktopLayout.compact(context, ref, 680);
               return Row(
                 children: [
                   Expanded(

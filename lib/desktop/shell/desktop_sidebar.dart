@@ -5,6 +5,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/desktop/shell/desktop_drives.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
+import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_navigation.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
@@ -29,8 +30,8 @@ class DesktopSidebar extends ConsumerWidget {
   /// pane open (the toggle is disabled then).
   final bool forceCollapsed;
 
-  static const width = 232.0;
-  static const collapsedWidth = 60.0;
+  static const double width = DesktopLayout.sidebarWidth;
+  static const double collapsedWidth = DesktopLayout.sidebarCollapsedWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -11,6 +11,7 @@ import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/drag_drop_channel.dart';
 import 'package:kfm/core/platform/windows/startup_hints.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
+import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
@@ -154,6 +155,12 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
     final base = Theme.of(context);
     final section = _section;
     final details = ref.watch(desktopDetailsPaneProvider);
+    final sidebarCollapsed =
+        DesktopLayout.sidebarForcedCollapsed(
+          MediaQuery.sizeOf(context).width,
+          details: details,
+        ) ||
+        ref.watch(desktopSidebarCollapsedProvider);
     final focused = ref.watch(desktopFocusedFileProvider(section));
     final colors = base.colorScheme;
     final l10n = context.l10n;
@@ -183,8 +190,8 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
         ),
         const Divider(height: 1),
         Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) => Row(
+          child: Builder(
+            builder: (context) => Row(
               children: [
                 Expanded(child: widget.shell),
                 if (details) ...[
@@ -192,7 +199,13 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
                   SizedBox(
                     // At most a third of a narrow window (800 px minimum), so
                     // Sort's and Browse's toolbars keep their room.
-                    width: (constraints.maxWidth / 3).clamp(220, 340),
+                    width: DesktopLayout.detailsWidth(
+                      MediaQuery.sizeOf(context).width -
+                          (sidebarCollapsed
+                              ? DesktopLayout.sidebarCollapsedWidth
+                              : DesktopLayout.sidebarWidth) -
+                          1,
+                    ),
                     child: focused == null
                         ? Center(
                             child: Padding(
@@ -251,8 +264,10 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
                               // Below 1000 px the details pane takes the
                               // sidebar's labels' room (800 px minimum window).
                               forceCollapsed:
-                                  details &&
-                                  MediaQuery.sizeOf(context).width < 1000,
+                                  DesktopLayout.sidebarForcedCollapsed(
+                                    MediaQuery.sizeOf(context).width,
+                                    details: details,
+                                  ),
                             ),
                             const VerticalDivider(width: 1),
                             Expanded(child: content),

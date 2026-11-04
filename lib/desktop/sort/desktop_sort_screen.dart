@@ -9,6 +9,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
+import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
 import 'package:kfm/desktop/sort/sort_history.dart';
@@ -529,10 +530,9 @@ class _Toolbar extends ConsumerWidget {
       ),
       // Narrow (800 px window with the details pane, or while the sidebar
       // animates): Undo becomes an icon with a tooltip.
-      child: LayoutBuilder(
-        builder: (context, box) {
-          final compact =
-              box.maxWidth < MediaQuery.textScalerOf(context).scale(520);
+      child: Builder(
+        builder: (context) {
+          final compact = DesktopLayout.compact(context, ref, 640);
           return Row(
             children: [
               Expanded(
