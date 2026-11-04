@@ -356,6 +356,8 @@
   },
   "viewerClose": "Close",
   "videoCantPlay": "Can't play this video",
+  "videoDamaged": "This file can't be played — it may be damaged",
+  "imageDamaged": "This file can't be shown — it may be damaged",
   "videoTapForSound": "Tap for sound",
   "videoOpenFullscreen": "Open fullscreen",
   "customizeSwipes": "Customize swipes",

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/media_damage.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
@@ -47,6 +48,11 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   VideoHandle? _handle;
   Object? _error;
 
+  /// Opening takes a while (a big or broken file): a spinner after a
+  /// moment instead of a silent black picture.
+  bool _slow = false;
+  Timer? _slowTimer;
+
   /// False while the tab is hidden (go_router turns tickers off there): a
   /// hidden deck doesn't play, and plays again when shown (B7).
   bool? _visible;
@@ -77,6 +83,11 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   @override
   void initState() {
     super.initState();
+    _slowTimer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted && _handle == null && _error == null) {
+        setState(() => _slow = true);
+      }
+    });
     unawaited(_obtain());
   }
 
@@ -88,6 +99,7 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
 
   @override
   void dispose() {
+    _slowTimer?.cancel();
     // The pool owns the player; only stop it playing.
     _handle?.pause().ignore();
     super.dispose();
@@ -151,8 +163,25 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
                 ? Center(child: handle.view(fallbackSize: _fileSize))
                 : const SizedBox.shrink(),
           ),
-        if (_error != null)
-          Center(child: _Pill(text: context.l10n.videoCantPlay)),
+        if (_error case final e?)
+          Center(
+            child: _Pill(
+              key: const ValueKey('video-error'),
+              icon: e is DamagedFileException
+                  ? Icons.broken_image_outlined
+                  : null,
+              text: e is DamagedFileException
+                  ? context.l10n.videoDamaged
+                  : context.l10n.videoCantPlay,
+            ),
+          )
+        else if (handle == null && _slow)
+          const Center(
+            child: SizedBox.square(
+              dimension: 32,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+          ),
         if (desktop) ...[
           // A click on the picture plays / pauses (only once this surface
           // plays: an inactive one leaves the click to its parent, e.g.
@@ -411,7 +440,7 @@ class _ScrubBarState extends State<_ScrubBar> {
 }
 
 class _Pill extends StatelessWidget {
-  const new({required this.text, this.icon});
+  const new({required this.text, this.icon, super.key});
 
   final String text;
   final IconData? icon;

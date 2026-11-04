@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:kfm/core/platform/windows/windows_channel.dart';
@@ -13,7 +14,14 @@ ThumbGenerator shellThumbnailGenerator(WindowsChannel channel) =>
         return null;
       }
       try {
-        return await channel.thumbnail(f.path, size);
+        // A broken file can keep the Shell busy: give up (shown as "can't
+        // preview") instead of a placeholder that never changes.
+        return await channel
+            .thumbnail(f.path, size)
+            .timeout(const Duration(seconds: 20));
+      } on TimeoutException {
+        developer.log('shell thumb timed out ${f.id}', name: 'kfm.thumbs');
+        return null;
       } on WindowsChannelException catch (e) {
         if (e.code != 'MISSING') {
           developer.log('shell thumb failed ${f.id}: $e', name: 'kfm.thumbs');

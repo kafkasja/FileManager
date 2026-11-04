@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/media_damage.dart';
 import 'package:kfm/features/connect/data/loopback_media_proxy.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 import 'package:media_kit/media_kit.dart';
@@ -16,10 +17,14 @@ import 'package:video_player/video_player.dart' show VideoPlayerValue;
 /// has no Windows backend). The player's streams are folded into a
 /// [VideoPlayerValue] for [state]. A connected device's video streams
 /// through N5's loopback proxy like [PlayerHandle].
+///
+/// A file that can't play ([DamagedFileException]): its first 64 KiB are
+/// zero bytes (checked before libmpv opens it), libmpv reports an error,
+/// or no duration arrives within [openTimeout].
 class MediaKitHandle implements VideoHandle {
   new(this._file, {this._mediaProxy, this.openTimeout = _defaultTimeout});
 
-  static const _defaultTimeout = Duration(seconds: 15);
+  static const _defaultTimeout = Duration(seconds: 8);
 
   final FileRef _file;
   final Future<LoopbackMediaProxy> Function()? _mediaProxy;
@@ -60,6 +65,9 @@ class MediaKitHandle implements VideoHandle {
   Future<void> initialize() async {
     final location = await _location();
     if (_disposed) throw StateError('disposed');
+    if (_file.origin != FileOrigin.remote && await looksDamaged(location)) {
+      throw DamagedFileException(location, 'only zero bytes');
+    }
     final player = _player = Player();
     _controller = VideoController(player);
     // The controller creates its texture after the next frame, and
@@ -80,9 +88,7 @@ class MediaKitHandle implements VideoHandle {
       s.error.listen((e) {
         _update((v) => v.copyWith(errorDescription: e));
         if (!ready.isCompleted) {
-          ready.completeError(
-            FileOpException(FileOpFailure.ioError, 'media_kit: $e'),
-          );
+          ready.completeError(DamagedFileException(location, 'media_kit: $e'));
         }
       }),
     ]);
@@ -90,10 +96,7 @@ class MediaKitHandle implements VideoHandle {
     try {
       await ready.future.timeout(openTimeout);
     } on TimeoutException {
-      throw const FileOpException(
-        FileOpFailure.ioError,
-        'media_kit: no duration (not a playable video)',
-      );
+      throw DamagedFileException(location, 'media_kit: no duration in time');
     }
     if (_disposed) throw StateError('disposed');
     _updateSize(player);

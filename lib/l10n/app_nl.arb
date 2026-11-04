@@ -143,6 +143,8 @@
   "clearNewSessionDeletes": "{count, plural, =0{Er wacht niets om verwijderd te worden.} =1{1 wachtende verwijdering wordt uitgevoerd.} other{{count} wachtende verwijderingen worden uitgevoerd.}}",
   "viewerClose": "Sluiten",
   "videoCantPlay": "Kan deze video niet afspelen",
+  "videoDamaged": "Dit bestand kan niet worden afgespeeld — het is mogelijk beschadigd",
+  "imageDamaged": "Dit bestand kan niet worden weergegeven — het is mogelijk beschadigd",
   "videoTapForSound": "Tik voor geluid",
   "videoOpenFullscreen": "Volledig scherm",
   "customizeSwipes": "Swipes aanpassen",

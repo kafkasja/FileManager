@@ -692,6 +692,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get videoCantPlay => 'Kan deze video niet afspelen';
 
   @override
+  String get videoDamaged =>
+      'Dit bestand kan niet worden afgespeeld — het is mogelijk beschadigd';
+
+  @override
+  String get imageDamaged =>
+      'Dit bestand kan niet worden weergegeven — het is mogelijk beschadigd';
+
+  @override
   String get videoTapForSound => 'Tik voor geluid';
 
   @override

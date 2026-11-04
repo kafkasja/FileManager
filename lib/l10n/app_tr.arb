@@ -143,6 +143,8 @@
   "clearNewSessionDeletes": "{count, plural, =0{Silinmeyi bekleyen bir şey yok.} =1{Bekleyen 1 silme işlemi yapılacak.} other{Bekleyen {count} silme işlemi yapılacak.}}",
   "viewerClose": "Kapat",
   "videoCantPlay": "Bu video oynatılamıyor",
+  "videoDamaged": "Bu dosya oynatılamıyor — hasarlı olabilir",
+  "imageDamaged": "Bu dosya gösterilemiyor — hasarlı olabilir",
   "videoTapForSound": "Ses için dokun",
   "videoOpenFullscreen": "Tam ekran aç",
   "customizeSwipes": "Kaydırmaları özelleştir",

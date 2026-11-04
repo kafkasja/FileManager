@@ -688,6 +688,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoCantPlay => 'Can\'t play this video';
 
   @override
+  String get videoDamaged => 'This file can\'t be played — it may be damaged';
+
+  @override
+  String get imageDamaged => 'This file can\'t be shown — it may be damaged';
+
+  @override
   String get videoTapForSound => 'Tap for sound';
 
   @override
