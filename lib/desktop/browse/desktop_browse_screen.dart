@@ -523,57 +523,92 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
             horizontal: 8,
             vertical: 6,
           ),
-          child: Row(
-            children: [
-              IconButton(
-                key: const ValueKey('browse-back'),
-                tooltip: shortcutHint(l10n, l10n.desktopBrowseBack, 'Alt+←'),
-                icon: const Icon(Icons.arrow_back),
-                onPressed: st.back.isEmpty ? null : _nav.goBack,
-              ),
-              IconButton(
-                tooltip: shortcutHint(l10n, l10n.desktopBrowseForward, 'Alt+→'),
-                icon: const Icon(Icons.arrow_forward),
-                onPressed: st.forward.isEmpty ? null : _nav.goForward,
-              ),
-              IconButton(
-                key: const ValueKey('browse-up'),
-                tooltip: shortcutHint(l10n, l10n.desktopBrowseUp, 'Alt+↑'),
-                icon: const Icon(Icons.arrow_upward),
-                onPressed: st.folder == null
-                    ? null
-                    : () => _nav.up(roots: _roots),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DesktopBreadcrumb(folder: st.folder, onOpen: _nav.open),
-              ),
-              if (lastOp != null) ...[
-                FilledButton.tonalIcon(
-                  key: const ValueKey('browse-undo'),
-                  onPressed: () => unawaited(_undo()),
-                  icon: const Icon(Icons.undo, size: 18),
-                  label: Text(l10n.undo),
-                ),
-                const SizedBox(width: 4),
-              ],
-              if (st.folder != null)
-                TextButton.icon(
-                  key: const ValueKey('browse-sort-these'),
-                  onPressed: () => unawaited(_sortThese()),
-                  icon: const Icon(Icons.swipe_outlined, size: 18),
-                  label: Text(l10n.desktopBrowseSortThese),
-                ),
-              IconButton(
-                key: const ValueKey('browse-show-hidden'),
-                tooltip: l10n.browseShowHidden,
-                isSelected: st.showHidden,
-                icon: const Icon(Icons.visibility_off_outlined),
-                selectedIcon: const Icon(Icons.visibility_outlined),
-                onPressed: () => _nav.setShowHidden(show: !st.showHidden),
-              ),
-              LayoutSwitch(layout: st.layout, onChanged: _nav.setLayout),
-            ],
+          // Narrow (800 px window with the details pane): the labelled
+          // buttons become icons with tooltips.
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final compact =
+                  box.maxWidth < MediaQuery.textScalerOf(context).scale(600);
+              return Row(
+                children: [
+                  IconButton(
+                    key: const ValueKey('browse-back'),
+                    tooltip: shortcutHint(
+                      l10n,
+                      l10n.desktopBrowseBack,
+                      'Alt+←',
+                    ),
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: st.back.isEmpty ? null : _nav.goBack,
+                  ),
+                  IconButton(
+                    tooltip: shortcutHint(
+                      l10n,
+                      l10n.desktopBrowseForward,
+                      'Alt+→',
+                    ),
+                    icon: const Icon(Icons.arrow_forward),
+                    onPressed: st.forward.isEmpty ? null : _nav.goForward,
+                  ),
+                  IconButton(
+                    key: const ValueKey('browse-up'),
+                    tooltip: shortcutHint(l10n, l10n.desktopBrowseUp, 'Alt+↑'),
+                    icon: const Icon(Icons.arrow_upward),
+                    onPressed: st.folder == null
+                        ? null
+                        : () => _nav.up(roots: _roots),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DesktopBreadcrumb(
+                      folder: st.folder,
+                      onOpen: _nav.open,
+                    ),
+                  ),
+                  if (lastOp != null) ...[
+                    if (compact)
+                      IconButton.filledTonal(
+                        key: const ValueKey('browse-undo'),
+                        tooltip: l10n.undo,
+                        onPressed: () => unawaited(_undo()),
+                        icon: const Icon(Icons.undo, size: 18),
+                      )
+                    else
+                      FilledButton.tonalIcon(
+                        key: const ValueKey('browse-undo'),
+                        onPressed: () => unawaited(_undo()),
+                        icon: const Icon(Icons.undo, size: 18),
+                        label: Text(l10n.undo),
+                      ),
+                    const SizedBox(width: 4),
+                  ],
+                  if (st.folder != null)
+                    if (compact)
+                      IconButton(
+                        key: const ValueKey('browse-sort-these'),
+                        tooltip: l10n.desktopBrowseSortThese,
+                        onPressed: () => unawaited(_sortThese()),
+                        icon: const Icon(Icons.swipe_outlined, size: 18),
+                      )
+                    else
+                      TextButton.icon(
+                        key: const ValueKey('browse-sort-these'),
+                        onPressed: () => unawaited(_sortThese()),
+                        icon: const Icon(Icons.swipe_outlined, size: 18),
+                        label: Text(l10n.desktopBrowseSortThese),
+                      ),
+                  IconButton(
+                    key: const ValueKey('browse-show-hidden'),
+                    tooltip: l10n.browseShowHidden,
+                    isSelected: st.showHidden,
+                    icon: const Icon(Icons.visibility_off_outlined),
+                    selectedIcon: const Icon(Icons.visibility_outlined),
+                    onPressed: () => _nav.setShowHidden(show: !st.showHidden),
+                  ),
+                  LayoutSwitch(layout: st.layout, onChanged: _nav.setLayout),
+                ],
+              );
+            },
           ),
         ),
         const Divider(height: 1),

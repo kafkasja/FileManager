@@ -527,143 +527,171 @@ class _Toolbar extends ConsumerWidget {
         horizontal: 12,
         vertical: 8,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final e in ordered) ...[
-                    DesktopDropTarget(
-                      offer: (data, {required copy}) =>
-                          data.origin != DragOrigin.sort
-                          ? null
-                          : DropOffer(
-                              label: swipeActionName(
-                                l10n,
-                                e.action,
-                                mode,
-                                tags: tags,
-                              ),
-                              onDrop: () async => onDropApply(e, data.files),
+      // Narrow (800 px window with the details pane, or while the sidebar
+      // animates): Undo becomes an icon with a tooltip.
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final compact =
+              box.maxWidth < MediaQuery.textScalerOf(context).scale(520);
+          return Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final e in ordered) ...[
+                        DesktopDropTarget(
+                          offer: (data, {required copy}) =>
+                              data.origin != DragOrigin.sort
+                              ? null
+                              : DropOffer(
+                                  label: swipeActionName(
+                                    l10n,
+                                    e.action,
+                                    mode,
+                                    tags: tags,
+                                  ),
+                                  onDrop: () async =>
+                                      onDropApply(e, data.files),
+                                ),
+                          child: _ActionButton(
+                            key: ValueKey('sort-action-${e.action.type.name}'),
+                            label: swipeActionShortLabel(
+                              l10n,
+                              e.action,
+                              deleteMode: mode,
+                              tags: tags,
                             ),
-                      child: _ActionButton(
-                        key: ValueKey('sort-action-${e.action.type.name}'),
-                        label: swipeActionShortLabel(
-                          l10n,
-                          e.action,
-                          deleteMode: mode,
-                          tags: tags,
+                            tooltip: shortcutHint(
+                              l10n,
+                              swipeActionName(l10n, e.action, mode, tags: tags),
+                              DesktopKeys.label(e.key),
+                            ),
+                            keyHint: DesktopKeys.label(e.key),
+                            icon:
+                                e.action.type == SwipeActionType.trash &&
+                                    mode == DeleteMode.permanent
+                                ? Icons.delete_forever_outlined
+                                : swipeActionIcon(e.action.type),
+                            color: sortActionColor(context, e.action),
+                            onPressed: hasSelection ? () => onApply(e) : null,
+                          ),
                         ),
+                        const SizedBox(width: 8),
+                      ],
+                      _ActionButton(
+                        key: const ValueKey('sort-favorite'),
+                        label: l10n.desktopSortFavorite,
                         tooltip: shortcutHint(
                           l10n,
-                          swipeActionName(l10n, e.action, mode, tags: tags),
-                          DesktopKeys.label(e.key),
+                          l10n.desktopSortFavorite,
+                          DesktopKeys.label(DesktopKeys.favorite),
                         ),
-                        keyHint: DesktopKeys.label(e.key),
-                        icon:
-                            e.action.type == SwipeActionType.trash &&
-                                mode == DeleteMode.permanent
-                            ? Icons.delete_forever_outlined
-                            : swipeActionIcon(e.action.type),
-                        color: sortActionColor(context, e.action),
-                        onPressed: hasSelection ? () => onApply(e) : null,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  _ActionButton(
-                    key: const ValueKey('sort-favorite'),
-                    label: l10n.desktopSortFavorite,
-                    tooltip: shortcutHint(
-                      l10n,
-                      l10n.desktopSortFavorite,
-                      DesktopKeys.label(DesktopKeys.favorite),
-                    ),
-                    keyHint: DesktopKeys.label(DesktopKeys.favorite),
-                    icon: Icons.star_outline,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    onPressed: hasSelection ? onFavorite : null,
-                  ),
-                  const SizedBox(width: 8),
-                  _ActionButton(
-                    key: const ValueKey('sort-tag'),
-                    label: l10n.desktopSortTag,
-                    tooltip: shortcutHint(
-                      l10n,
-                      l10n.desktopSortTag,
-                      DesktopKeys.label(DesktopKeys.tag),
-                    ),
-                    keyHint: DesktopKeys.label(DesktopKeys.tag),
-                    icon: Icons.label_outline,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    onPressed: hasSelection ? onTag : null,
-                  ),
-                  const SizedBox(width: 8),
-                  if (!hasSelection)
-                    Text(
-                      l10n.desktopSortSelectHint,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                        keyHint: DesktopKeys.label(DesktopKeys.favorite),
+                        icon: Icons.star_outline,
                         color: theme.colorScheme.onSurfaceVariant,
+                        onPressed: hasSelection ? onFavorite : null,
                       ),
-                    ),
-                  if (flash case final text?)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(start: 8),
-                      child: Text(
-                        text,
-                        key: const ValueKey('sort-flash'),
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: flashColor,
+                      const SizedBox(width: 8),
+                      _ActionButton(
+                        key: const ValueKey('sort-tag'),
+                        label: l10n.desktopSortTag,
+                        tooltip: shortcutHint(
+                          l10n,
+                          l10n.desktopSortTag,
+                          DesktopKeys.label(DesktopKeys.tag),
                         ),
+                        keyHint: DesktopKeys.label(DesktopKeys.tag),
+                        icon: Icons.label_outline,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        onPressed: hasSelection ? onTag : null,
                       ),
-                    ),
-                ],
+                      const SizedBox(width: 8),
+                      if (!hasSelection)
+                        Text(
+                          l10n.desktopSortSelectHint,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      if (flash case final text?)
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 8),
+                          child: Text(
+                            text,
+                            key: const ValueKey('sort-flash'),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: flashColor,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            l10n.desktopSortLeft(deck.remaining),
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(width: 12),
-          // Always visible (round 7: older users don't know Ctrl+Z).
-          FilledButton.tonalIcon(
-            key: const ValueKey('sort-undo'),
-            onPressed: undoable > 0 && !undoing ? onUndo : null,
-            icon: undoing
-                ? const SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.undo, size: 18),
-            label: Text(l10n.undo),
-            style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            key: const ValueKey('sort-history-toggle'),
-            isSelected: history,
-            tooltip: shortcutHint(
-              l10n,
-              l10n.desktopSortHistory,
-              DesktopKeys.label(DesktopKeys.history),
-            ),
-            icon: const Icon(Icons.history),
-            onPressed: onHistory,
-          ),
-          LayoutSwitch(layout: layout, onChanged: onLayout),
-          if (deck.swiped > 0) ...[
-            const SizedBox(width: 4),
-            TextButton(
-              key: const ValueKey('sort-done'),
-              onPressed: onDone,
-              child: Text(l10n.swipeDone),
-            ),
-          ],
-        ],
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  l10n.desktopSortLeft(deck.remaining),
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Always visible (round 7: older users don't know Ctrl+Z).
+              if (compact)
+                IconButton.filledTonal(
+                  key: const ValueKey('sort-undo'),
+                  tooltip: l10n.undo,
+                  onPressed: undoable > 0 && !undoing ? onUndo : null,
+                  icon: undoing
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.undo, size: 18),
+                )
+              else
+                FilledButton.tonalIcon(
+                  key: const ValueKey('sort-undo'),
+                  onPressed: undoable > 0 && !undoing ? onUndo : null,
+                  icon: undoing
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.undo, size: 18),
+                  label: Text(l10n.undo),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              const SizedBox(width: 4),
+              IconButton(
+                key: const ValueKey('sort-history-toggle'),
+                isSelected: history,
+                tooltip: shortcutHint(
+                  l10n,
+                  l10n.desktopSortHistory,
+                  DesktopKeys.label(DesktopKeys.history),
+                ),
+                icon: const Icon(Icons.history),
+                onPressed: onHistory,
+              ),
+              LayoutSwitch(layout: layout, onChanged: onLayout),
+              if (deck.swiped > 0) ...[
+                const SizedBox(width: 4),
+                TextButton(
+                  key: const ValueKey('sort-done'),
+                  onPressed: onDone,
+                  child: Text(l10n.swipeDone),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

@@ -183,33 +183,37 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
         ),
         const Divider(height: 1),
         Expanded(
-          child: Row(
-            children: [
-              Expanded(child: widget.shell),
-              if (details) ...[
-                const VerticalDivider(width: 1),
-                SizedBox(
-                  width: 340,
-                  child: focused == null
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.all(24),
-                            child: Text(
-                              l10n.desktopDetailsNothing,
-                              textAlign: TextAlign.center,
-                              style: base.textTheme.bodyMedium?.copyWith(
-                                color: colors.onSurfaceVariant,
+          child: LayoutBuilder(
+            builder: (context, constraints) => Row(
+              children: [
+                Expanded(child: widget.shell),
+                if (details) ...[
+                  const VerticalDivider(width: 1),
+                  SizedBox(
+                    // At most a third of a narrow window (800 px minimum), so
+                    // Sort's and Browse's toolbars keep their room.
+                    width: (constraints.maxWidth / 3).clamp(220, 340),
+                    child: focused == null
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.all(24),
+                              child: Text(
+                                l10n.desktopDetailsNothing,
+                                textAlign: TextAlign.center,
+                                style: base.textTheme.bodyMedium?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
                               ),
                             ),
+                          )
+                        : FileDetailsView(
+                            key: ValueKey(focused.id),
+                            file: focused,
                           ),
-                        )
-                      : FileDetailsView(
-                          key: ValueKey(focused.id),
-                          file: focused,
-                        ),
-                ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ],
@@ -223,33 +227,60 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
               ref.read(desktopDetailsPaneProvider.notifier).toggle(),
           DesktopKeys.find: _searchFocus.requestFocus,
         },
-        child: FocusScope(
-          autofocus: true,
-          child: Scaffold(
-            backgroundColor: colors.surface,
-            body: Stack(
-              children: [
-                Column(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          DesktopSidebar(current: section, onSelect: _go),
-                          const VerticalDivider(width: 1),
-                          Expanded(child: content),
-                        ],
+        // Arrow keys while nothing inside is focused (the shell's own scope
+        // has primary focus, e.g. after switching sections) would search
+        // every focusable in the window, including pages under the current
+        // one that aren't laid out (assert 'hasSize' in debug, a null
+        // size in release). Nothing is focused, so there's nowhere to move.
+        child: Actions(
+          actions: {DirectionalFocusIntent: _ShellDirectionalFocusAction()},
+          child: FocusScope(
+            autofocus: true,
+            child: Scaffold(
+              backgroundColor: colors.surface,
+              body: Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            DesktopSidebar(
+                              current: section,
+                              onSelect: _go,
+                              // Below 1000 px the details pane takes the
+                              // sidebar's labels' room (800 px minimum window).
+                              forceCollapsed:
+                                  details &&
+                                  MediaQuery.sizeOf(context).width < 1000,
+                            ),
+                            const VerticalDivider(width: 1),
+                            Expanded(child: content),
+                          ],
+                        ),
                       ),
-                    ),
-                    DesktopStatusBar(section: section),
-                  ],
-                ),
-                Positioned.fill(child: DesktopDragOverlay(controller: _drag)),
-              ],
+                      DesktopStatusBar(section: section),
+                    ],
+                  ),
+                  Positioned.fill(child: DesktopDragOverlay(controller: _drag)),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// Moves focus like the default action, except when the focused node is a
+/// scope with nothing focused inside (see the shell's build).
+class _ShellDirectionalFocusAction extends DirectionalFocusAction {
+  @override
+  void invoke(DirectionalFocusIntent intent) {
+    final primary = primaryFocus;
+    if (primary is FocusScopeNode && primary.focusedChild == null) return;
+    super.invoke(intent);
   }
 }
 
