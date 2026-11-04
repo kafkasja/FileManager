@@ -264,16 +264,7 @@ class DiskThumbnailCache implements ThumbnailCache {
         if (bytes == null) {
           _failed.add(r.key);
         } else {
-          await file.parent.create(recursive: true);
-          await file.writeAsBytes(bytes, flush: true);
-          _written += bytes.length;
-          if (_diskBytes case final known?) {
-            _diskBytes = known + bytes.length;
-          }
-          if (++_writesSinceTrim >= trimEvery) {
-            _writesSinceTrim = 0;
-            _scheduleTrim();
-          }
+          await _writeToDisk(file, bytes);
         }
       }
       if (bytes != null) {
@@ -290,6 +281,35 @@ class DiskThumbnailCache implements ThumbnailCache {
       );
       _failed.add(r.key);
       r.completer.complete();
+    }
+  }
+
+  /// Q4: written under a temp name and renamed, so a full disk or a kill
+  /// mid-write never leaves a truncated thumbnail at the real path (it
+  /// would be served as a broken image on every later start). A failed
+  /// write only costs the disk copy: the thumbnail is still shown.
+  Future<void> _writeToDisk(File file, Uint8List bytes) async {
+    final tmp = File('${file.path}.tmp');
+    try {
+      await file.parent.create(recursive: true);
+      await tmp.writeAsBytes(bytes, flush: true);
+      await tmp.rename(file.path);
+    } on FileSystemException catch (e) {
+      developer.log('thumbnail not cached: $e', name: 'kfm.thumbs');
+      try {
+        if (tmp.existsSync()) tmp.deleteSync();
+      } on FileSystemException {
+        // Trimmed later with the rest of the cache.
+      }
+      return;
+    }
+    _written += bytes.length;
+    if (_diskBytes case final known?) {
+      _diskBytes = known + bytes.length;
+    }
+    if (++_writesSinceTrim >= trimEvery) {
+      _writesSinceTrim = 0;
+      _scheduleTrim();
     }
   }
 
