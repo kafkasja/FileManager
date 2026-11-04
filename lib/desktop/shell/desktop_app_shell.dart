@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
+import 'package:kfm/app/widgets/db_startup_banner.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
@@ -148,6 +149,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
     final content = Column(
       children: [
         const DbErrorBanner(),
+        const DbStartupBanner(),
         const ExternalNotices(),
         const IncomingOfferPrompter(),
         const ShareInPrompter(),

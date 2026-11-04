@@ -70,9 +70,9 @@ Future<List<String>> readDirectPathRemovableRoots(
 
 /// PL1: roots of the mounted removable drives on Windows (USB sticks, SD
 /// cards, USB disks). Full scans walk them next to the index roots.
-Future<List<String>> readMountedRemovableRoots(VolumesPlatform volumes) async =>
-    [
-      for (final v in await volumes.list())
-        if (!v.isPrimary && !v.isFixed && v.isRemovable && v.isMounted)
-          ?v.rootPath,
-    ];
+Future<List<String>> readMountedRemovableRoots(
+  VolumesPlatform volumes,
+) async => [
+  for (final v in await volumes.list())
+    if (!v.isPrimary && !v.isFixed && v.isRemovable && v.isMounted) ?v.rootPath,
+];

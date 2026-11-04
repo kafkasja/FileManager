@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app.dart';
 import 'package:kfm/core/background/background_scheduler.dart';
+import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/db_startup_check.dart';
 import 'package:kfm/core/diagnostics/error_log.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/platform/host_platform.dart';
@@ -54,10 +56,25 @@ Future<void> main() async {
         .ignore();
     return false; // the engine still prints it to logcat
   };
+  // Q6: a damaged database file is moved aside before drift opens it, so
+  // KFM starts fresh instead of failing every query on every start.
+  final dbReport = await checkDatabaseFile(await appDatabaseFile());
+  if (dbReport.state != DbStartupState.ok) {
+    log
+        .record(
+          ErrorLogEntry(
+            at: DateTime.now().toUtc(),
+            source: ErrorSource.db,
+            error: 'startup check: ${dbReport.state.name} ${dbReport.detail}',
+          ),
+        )
+        .ignore();
+  }
   runApp(
     ProviderScope(
       overrides: [
         errorLogProvider.overrideWithValue(log),
+        dbStartupReportProvider.overrideWithValue(dbReport),
         if (Platform.isAndroid)
           backgroundSchedulerProvider.overrideWithValue(
             WorkmanagerScheduler(pendingPurgeDispatcher),

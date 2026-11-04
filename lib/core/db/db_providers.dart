@@ -1,4 +1,5 @@
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/db/db_startup_check.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -29,3 +30,8 @@ SettingsRepository settingsRepository(Ref ref) => SettingsRepository(
 @Riverpod(keepAlive: true)
 Stream<DbWriteError> dbWriteErrors(Ref ref) =>
     ref.watch(dbWriteQueueProvider).errors;
+
+/// Q6: what the startup check found (`main` overrides it with the result of
+/// `checkDatabaseFile`); `DbStartupBanner` tells the user.
+@Riverpod(keepAlive: true)
+DbStartupReport dbStartupReport(Ref ref) => DbStartupReport.ok;

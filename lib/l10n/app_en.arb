@@ -10,6 +10,16 @@
   "tabTrash": "Trash",
   "tabSettings": "Settings",
   "dbWriteError": "Couldn't save your last change.",
+  "dbResetNotice": "KFM's data was damaged, so KFM started fresh. Your photos and files were not touched; sessions, tags and settings are reset. The damaged copy was kept as {name}.",
+  "@dbResetNotice": {
+    "description": "Startup banner after a corrupt database file was moved aside.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dbUnavailableNotice": "KFM can't open its data right now. Another program may be using it. Close it and restart KFM. Your files were not touched.",
   "dismiss": "Dismiss",
   "retry": "Try again",
   "indexingCount": "{count, plural, =1{Indexing 1 file…} other{Indexing {count} files…}}",

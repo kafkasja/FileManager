@@ -31,6 +31,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get dbWriteError => 'Je laatste wijziging kan niet worden opgeslagen.';
 
   @override
+  String dbResetNotice(String name) {
+    return 'De gegevens van KFM waren beschadigd, dus KFM is opnieuw begonnen. Je foto\'s en bestanden zijn niet aangeraakt; sessies, tags en instellingen zijn gewist. De beschadigde kopie is bewaard als $name.';
+  }
+
+  @override
+  String get dbUnavailableNotice =>
+      'KFM kan zijn gegevens nu niet openen. Misschien gebruikt een ander programma ze. Sluit dat en start KFM opnieuw. Je bestanden zijn niet aangeraakt.';
+
+  @override
   String get dismiss => 'Sluiten';
 
   @override

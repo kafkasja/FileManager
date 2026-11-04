@@ -31,6 +31,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dbWriteError => 'Couldn\'t save your last change.';
 
   @override
+  String dbResetNotice(String name) {
+    return 'KFM\'s data was damaged, so KFM started fresh. Your photos and files were not touched; sessions, tags and settings are reset. The damaged copy was kept as $name.';
+  }
+
+  @override
+  String get dbUnavailableNotice =>
+      'KFM can\'t open its data right now. Another program may be using it. Close it and restart KFM. Your files were not touched.';
+
+  @override
   String get dismiss => 'Dismiss';
 
   @override
