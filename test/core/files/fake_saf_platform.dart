@@ -100,6 +100,9 @@ class FakeSafPlatform implements SafPlatform {
   /// Corrupts the next imported file (verification tests).
   bool corruptNextImport = false;
 
+  /// Q4: when set, importFile throws it (e.g. the volume is full).
+  Exception? importFailure;
+
   void _removeTree(String rel) =>
       _nodes.removeWhere((k, _) => k == rel || k.startsWith('$rel/'));
 
@@ -162,6 +165,7 @@ class FakeSafPlatform implements SafPlatform {
     String path,
   ) async {
     calls.add('importFile $name');
+    if (importFailure case final e?) throw e;
     final rel = _join(_rel(parent), name);
     if (_nodes.containsKey(rel)) {
       throw FileOpException(FileOpFailure.targetExists, rel);

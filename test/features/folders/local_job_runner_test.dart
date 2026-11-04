@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/external_storage/data/volume_activity_tracker.dart';
 import 'package:kfm/features/folders/data/fat_names.dart';
@@ -138,6 +141,101 @@ void main() {
     expect(moves.calls, isEmpty);
     expect(indexed.single.name, 'a.jpg');
     expect(await s.router.stat(usb.id), isNotNull);
+  });
+
+  group('Q4 disk full / failing source mid-copy', () {
+    const full = FileSystemException(
+      'writeFrom failed',
+      'staging/part',
+      OSError('There is not enough space on the disk.', 112),
+    );
+
+    test('a full disk stops the job as no_space: nothing written, '
+        'originals kept, staging empty, resumable', () async {
+      final files = addLocal(3);
+      s.android.readFault = (afterBytes: 2, error: full);
+      final view = await run(
+        LocalJobRequest(
+          mode: LocalJobMode.move,
+          files: files,
+          targetFolder: '${s.usb}/Photos',
+        ),
+      );
+      expect(view.job.status, LocalJobStatus.failed);
+      expect(
+        view.job.failureReason,
+        LocalJobErrors.noSpace,
+        reason: view.files.map((f) => '${f.status} ${f.failureReason}').join(),
+      );
+      // The file is queued again (Retry continues), the others untouched.
+      expect(
+        view.files.map((f) => f.status),
+        everyElement(LocalFileStatus.queued),
+      );
+      expect(s.safFake.calls.where((c) => c.startsWith('importFile')), isEmpty);
+      for (var i = 0; i < 3; i++) {
+        expect(s.safFake.existsPath('${s.usb}/Photos/p$i.jpg'), isFalse);
+        expect(await s.android.stat(files[i].id), isNotNull);
+      }
+      expect(moves.calls, isEmpty);
+      expect(s.staging.listSync(), isEmpty);
+
+      // Space freed: Retry finishes the job.
+      s.android.readFault = null;
+      await runner.resume(view.job.id);
+      await runner.idle;
+      await queue.flush();
+      final again = (await dao.job(view.job.id))!;
+      expect(again.status, LocalJobStatus.done);
+      for (var i = 0; i < 3; i++) {
+        expect(s.safFake.bytesAt('${s.usb}/Photos/p$i.jpg'), [i, i, i]);
+      }
+    });
+
+    test('the target volume full on import: no_space, original kept', () async {
+      final files = addLocal(1);
+      s.safFake.importFailure = const FileOpException(
+        FileOpFailure.noSpace,
+        'ENOSPC',
+      );
+      final view = await run(
+        LocalJobRequest(
+          mode: LocalJobMode.move,
+          files: files,
+          targetFolder: '${s.usb}/Photos',
+        ),
+      );
+      expect(view.job.failureReason, LocalJobErrors.noSpace);
+      expect(s.safFake.existsPath('${s.usb}/Photos/p0.jpg'), isFalse);
+      expect(await s.android.stat(files.single.id), isNotNull);
+      expect(moves.calls, isEmpty);
+      expect(s.staging.listSync(), isEmpty);
+    });
+
+    test('a read error mid-copy fails only that file; source kept', () async {
+      final files = addLocal(1);
+      s.android.readFault = (
+        afterBytes: 1,
+        error: const FileSystemException(
+          'read failed',
+          'x',
+          OSError('The device is not ready.', 21),
+        ),
+      );
+      final view = await run(
+        LocalJobRequest(
+          mode: LocalJobMode.move,
+          files: files,
+          targetFolder: '${s.usb}/Photos',
+        ),
+      );
+      expect(view.files.single.status, LocalFileStatus.failed);
+      expect(view.files.single.failureReason, FileOpFailure.ioError.name);
+      expect(s.safFake.existsPath('${s.usb}/Photos/p0.jpg'), isFalse);
+      expect(await s.android.stat(files.single.id), isNotNull);
+      expect(moves.calls, isEmpty);
+      expect(s.staging.listSync(), isEmpty);
+    });
   });
 
   test('a checksum mismatch fails the file and keeps the source', () async {

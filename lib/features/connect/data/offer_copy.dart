@@ -26,9 +26,18 @@ Future<({String path, int sizeBytes})?> prepareOfferCopy(
     final sink = out.openWrite();
     try {
       await sink.addStream(prepared.read(0, prepared.sizeBytes));
-    } finally {
-      await sink.close();
+    } on Object {
+      // Q4: keep the real error (a full disk), not close()'s "File closed",
+      // and leave no half copy behind.
+      try {
+        await sink.close();
+      } on Object {
+        // The first error is the one that matters.
+      }
+      if (out.existsSync()) out.deleteSync();
+      rethrow;
     }
+    await sink.close();
     return (
       path: out.path.replaceAll(r'\', '/'),
       sizeBytes: prepared.sizeBytes,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -449,7 +450,14 @@ class AiModelStore {
       if (_wifiLost) throw const _WifiLost();
       rethrow;
     } finally {
-      await sink?.close();
+      // After a failed write close() throws too ("File closed"); the first
+      // error (e.g. a full disk) is the one to report (Q4). The part is
+      // checked against its SHA-256 before install either way.
+      try {
+        await sink?.close();
+      } on Object catch (e) {
+        developer.log('model part not closed: $e', name: 'kfm.ai');
+      }
       await wifiSub?.cancel();
       client.close(force: true);
     }
