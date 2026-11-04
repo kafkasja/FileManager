@@ -53,8 +53,10 @@ void main() {
   late bool noticeShown;
   late List<String> events;
   late StreamController<void> attention;
+  var running = 0;
 
   WindowsCloseFlow flow() => WindowsCloseFlow(
+    runningJobs: () => running,
     shell: shell,
     isSharing: () => sharing,
     stopSharing: () async {
@@ -79,6 +81,50 @@ void main() {
     noticeShown = true;
     events = [];
     attention = StreamController.broadcast();
+    running = 0;
+  });
+
+  test('X8: transfers running → closing hides to the tray (once with the '
+      'transfers notice), even with "stop sharing on close"', () async {
+    running = 2;
+    noticeShown = false;
+    stopOnClose = true;
+    final f = flow();
+    var jobsNotice = 0;
+    var shareNotice = 0;
+    f
+      ..firstHideNotice = (() async => shareNotice++)
+      ..firstHideNoticeForJobs = (() async => jobsNotice++);
+    await f.onCloseRequested();
+    await f.onCloseRequested();
+    expect(jobsNotice, 1);
+    expect(shareNotice, 0);
+    expect(shell.calls, ['hide', 'hide']);
+    expect(events, ['marked']);
+  });
+
+  test('X8: tray Quit while transfers run asks first', () async {
+    running = 1;
+    final f = flow();
+    final asked = <int>[];
+    var answer = false;
+    f.confirmQuit = (n) async {
+      asked.add(n);
+      return answer;
+    };
+    shell.clicks.add(trayQuitKey);
+    await pumpEventQueue();
+    expect(asked, [1]);
+    expect(shell.calls, ['show']); // kept running
+    answer = true;
+    shell.clicks.add(trayQuitKey);
+    await pumpEventQueue();
+    expect(shell.calls, ['show', 'show', 'hide', 'quit']);
+    // Nothing running: no question.
+    running = 0;
+    shell.calls.clear();
+    await f.quit();
+    expect(asked, [1, 1]);
   });
 
   test('not sharing: hides at once, flushes writes, then quits', () async {

@@ -8,9 +8,12 @@ import 'package:kfm/core/platform/windows/desktop_shell.dart';
 /// - not sharing → quit;
 /// - sharing and "Stop sharing when the window closes" on → stop, then quit;
 /// - sharing (default) → hide; the tray icon stays (the first time after
-///   [firstHideNotice], once).
+///   [firstHideNotice], once);
+/// - X8: transfers or copies running → hide to the tray too (they go on;
+///   "Stop sharing when the window closes" doesn't end them).
 ///
-/// Tray Open → window back; tray Quit → stop sharing, then quit. A
+/// Tray Open → window back; tray Quit → (X8: while jobs run, the window
+/// comes back and [confirmQuit] asks first) stop sharing, then quit. A
 /// connection request (N3 accept prompt) brings the
 /// window to the front; it's never answered from the tray.
 class WindowsCloseFlow {
@@ -23,7 +26,13 @@ class WindowsCloseFlow {
     required this._markNoticeShown,
     required this._attentionRequests,
     required this._beforeQuit,
-  });
+    int Function()? runningJobs,
+  }) : _runningJobs = runningJobs ?? _none;
+
+  static int _none() => 0;
+
+  /// X8: transfers / local jobs / incoming uploads running right now.
+  final int Function() _runningJobs;
 
   final DesktopShell _shell;
   final bool Function() _isSharing;
@@ -39,6 +48,14 @@ class WindowsCloseFlow {
   /// Set by the UI (`WindowsCloseHost`): shows "KFM is still sharing this
   /// PC. Stop it from the tray icon." and completes when dismissed.
   Future<void> Function()? firstHideNotice;
+
+  /// X8: set by the UI: shows "Quit KFM? N transfers are still running"
+  /// (with the window in front); true = quit.
+  Future<bool> Function(int running)? confirmQuit;
+
+  /// X8: set by the UI: the one-time notice when the window first hides
+  /// because jobs run (not sharing).
+  Future<void> Function()? firstHideNoticeForJobs;
 
   final List<StreamSubscription<Object?>> _subs = [];
   bool _closing = false;
@@ -71,13 +88,15 @@ class WindowsCloseFlow {
     if (_closing) return;
     _closing = true;
     try {
-      if (!_isSharing()) return await _quitNow();
-      if (await _stopOnClose()) return await quit();
+      final jobs = _runningJobs() > 0;
+      if (!_isSharing() && !jobs) return await _quitNow();
+      if (!jobs && await _stopOnClose()) return await quit();
       if (!await _noticeShown()) {
-        await firstHideNotice?.call();
+        final forJobs = jobs && !_isSharing();
+        await (forJobs ? firstHideNoticeForJobs : firstHideNotice)?.call();
         await _markNoticeShown();
-        // Sharing may have been stopped while the notice was open.
-        if (!_isSharing()) return await _quitNow();
+        // Sharing (and the jobs) may have ended while the notice was open.
+        if (!_isSharing() && _runningJobs() == 0) return await _quitNow();
       }
       await _shell.hide();
     } finally {
@@ -87,6 +106,12 @@ class WindowsCloseFlow {
 
   /// Stops sharing (tokens die, devices see "Disconnected"), then quits.
   Future<void> quit() async {
+    final running = _runningJobs();
+    final ask = confirmQuit;
+    if (running > 0 && ask != null) {
+      await _shell.showAndFocus();
+      if (!await ask(running)) return;
+    }
     try {
       await _stopSharing();
     } on Object catch (e) {

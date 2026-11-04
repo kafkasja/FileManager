@@ -1216,6 +1216,36 @@ class WindowsChannel::WorkerPool {
 
 // ---- channel ----
 
+// ---- X8: taskbar button progress ----
+
+// [state]: none | normal | paused | error | indeterminate; [value] 0..100.
+// The ITaskbarList3 is created on first use (the taskbar button exists by
+// then) and kept; failures are ignored (no taskbar, e.g. Explorer
+// restarting).
+static void SetTaskbarProgress(HWND window, const std::wstring& state, int value) {
+  static Microsoft::WRL::ComPtr<ITaskbarList3> taskbar;
+  if (!taskbar) {
+    if (FAILED(::CoCreateInstance(CLSID_TaskbarList, nullptr,
+                                  CLSCTX_INPROC_SERVER,
+                                  IID_PPV_ARGS(&taskbar))) ||
+        FAILED(taskbar->HrInit())) {
+      taskbar.Reset();
+      return;
+    }
+  }
+  TBPFLAG flag = TBPF_NOPROGRESS;
+  if (state == L"normal") flag = TBPF_NORMAL;
+  if (state == L"paused") flag = TBPF_PAUSED;
+  if (state == L"error") flag = TBPF_ERROR;
+  if (state == L"indeterminate") flag = TBPF_INDETERMINATE;
+  if (flag != TBPF_NOPROGRESS && flag != TBPF_INDETERMINATE) {
+    if (value < 0) value = 0;
+    if (value > 100) value = 100;
+    taskbar->SetProgressValue(window, static_cast<ULONGLONG>(value), 100);
+  }
+  if (FAILED(taskbar->SetProgressState(window, flag))) taskbar.Reset();
+}
+
 WindowsChannel::WindowsChannel(flutter::BinaryMessenger* messenger, HWND window)
     : window_(window),
       ops_(std::make_unique<WorkerPool>(1)),
@@ -1316,6 +1346,11 @@ void WindowsChannel::HandleCall(
     auto path = StringArg(args, "path");
     HWND window = window_;
     Run(*quick_, result, [window, path] { return OpenWith(window, path); });
+  } else if (method == "setTaskbarProgress") {
+    // X8: transfers on the taskbar button (window thread: COM STA).
+    SetTaskbarProgress(window_, StringArg(args, "state"),
+                       static_cast<int>(IntArg(args, "value", 0)));
+    result->Success(EncodableValue());
   } else if (method == "ejectDrive") {
     auto path = StringArg(args, "path");
     Run(*quick_, result, [path] { return EjectDrive(path); });

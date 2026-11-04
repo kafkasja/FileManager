@@ -10,6 +10,7 @@ import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/core/platform/windows/windows_channel.dart';
+import 'package:kfm/features/background_jobs/data/background_jobs_providers.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
@@ -52,6 +53,9 @@ WindowsCloseFlow? windowsCloseFlow(Ref ref) {
         .events
         .where((e) => e is AcceptRequested),
     beforeQuit: () => _flushWrites(ref),
+    // X8: running jobs keep the window in the tray; quitting asks first.
+    runningJobs: () =>
+        ref.read(jobProgressAggregatorProvider).current.running.length,
   )..start();
   ref.onDispose(() => flow.dispose().ignore());
   return flow;
@@ -106,23 +110,66 @@ class _WindowsCloseHostState extends ConsumerState<WindowsCloseHost> {
   @override
   void initState() {
     super.initState();
-    _flow = ref.read(windowsCloseFlowProvider)?..firstHideNotice = _notice;
+    _flow = ref.read(windowsCloseFlowProvider)
+      ?..firstHideNotice = _notice
+      ..firstHideNoticeForJobs = _jobsNotice
+      ..confirmQuit = _confirmQuit;
   }
 
   @override
   void dispose() {
-    if (_flow?.firstHideNotice == _notice) _flow?.firstHideNotice = null;
+    final flow = _flow;
+    if (flow != null && flow.firstHideNotice == _notice) {
+      flow
+        ..firstHideNotice = null
+        ..firstHideNoticeForJobs = null
+        ..confirmQuit = null;
+    }
     super.dispose();
   }
 
-  Future<void> _notice() async {
+  /// X8: "Quit KFM? N transfers are still running."
+  Future<bool> _confirmQuit(int running) async {
+    if (!mounted) return true;
+    final l = context.l10n;
+    final quit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.jobsQuitTitle),
+        content: Text(l.jobsQuitBody(running)),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l.jobsQuitKeep),
+          ),
+          TextButton(
+            key: const ValueKey('jobs-quit-confirm'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l.jobsQuitAction),
+          ),
+        ],
+      ),
+    );
+    return quit ?? false;
+  }
+
+  Future<void> _jobsNotice() async {
+    if (!mounted) return;
+    await _notice(
+      title: context.l10n.trayNoticeTransfersTitle,
+      body: context.l10n.trayNoticeTransfersBody,
+    );
+  }
+
+  Future<void> _notice({String? title, String? body}) async {
     if (!mounted) return;
     final l = context.l10n;
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l.trayNoticeTitle),
-        content: Text(l.trayNoticeBody),
+        title: Text(title ?? l.trayNoticeTitle),
+        content: Text(body ?? l.trayNoticeBody),
         actions: [
           TextButton(
             autofocus: true,
