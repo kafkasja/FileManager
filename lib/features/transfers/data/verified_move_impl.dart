@@ -111,6 +111,11 @@ class LocalVerifiedMove implements VerifiedMove {
         if (trashed.contains(f.id)) {
           outcomes[f.id] = SourceOutcome.trashed;
           gone.add(f.id);
+        } else if (r.removed.contains(f.id)) {
+          // Q8: deleted directly (X1 shared-in copies, nothing to restore):
+          // the original is gone, not kept.
+          outcomes[f.id] = SourceOutcome.deletedPermanently;
+          gone.add(f.id);
         } else if (r.userCancelled) {
           outcomes[f.id] = SourceOutcome.keptDeclined;
         } else {

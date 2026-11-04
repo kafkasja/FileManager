@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/files_protocol.dart';
@@ -236,4 +237,58 @@ void main() {
       expect(refused.errors['ms:1'], 'forbidden_path');
     });
   });
+
+  test('Q8: an original the source deletes directly (TrashResult.removed, '
+      'X1 shared-in copies) counts as gone, not kept', () async {
+    final a = source.addFile('/d/a.jpg');
+    final b = source.addFile('/d/b.jpg');
+    final removing = LocalVerifiedMove(
+      source: _RemovingSource(source, {a.id}),
+      lock: SerialLock(),
+      removeFromIndex: (ids) async => unindexed.add(ids),
+    );
+    final r = await removing.deleteOriginals([
+      _orig(a),
+      _orig(b),
+    ], mode: DeleteMode.trash);
+    expect(r.outcomes, {
+      a.id: SourceOutcome.deletedPermanently,
+      b.id: SourceOutcome.trashed,
+    });
+    expect(r.errors, isEmpty);
+    expect(unindexed.single, unorderedEquals([a.id, b.id]));
+  });
+}
+
+/// Deletes [_removed] directly (like X1's shared-in copies) and trashes
+/// the rest through [_inner].
+class _RemovingSource extends FakeFileSource {
+  new(this._inner, this._removed);
+
+  final FakeFileSource _inner;
+  final Set<String> _removed;
+
+  @override
+  Future<FileRef?> stat(String id) => _inner.stat(id);
+
+  @override
+  Future<TrashResult> trashBatch(List<FileRef> files) async {
+    final rest = [
+      for (final f in files)
+        if (!_removed.contains(f.id)) f,
+    ];
+    await _inner.deletePermanentlyBatch([
+      for (final f in files)
+        if (_removed.contains(f.id)) f,
+    ]);
+    final r = await _inner.trashBatch(rest);
+    return TrashResult(
+      trashed: r.trashed,
+      failed: r.failed,
+      removed: {
+        for (final f in files)
+          if (_removed.contains(f.id)) f.id,
+      },
+    );
+  }
 }
