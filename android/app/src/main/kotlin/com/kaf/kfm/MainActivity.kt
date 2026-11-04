@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import java.lang.ref.WeakReference
@@ -36,6 +37,12 @@ class MainActivity : FlutterActivity() {
     /** X1: a share that started KFM. Not on a recreation or a Recents relaunch. */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Turning the phone crossfades instead of rotating a snapshot of the
+        // old screen: the default animation squeezed a playing video for a
+        // moment (S22, 2026-11-04).
+        window.attributes = window.attributes.apply {
+            rotationAnimation = WindowManager.LayoutParams.ROTATION_ANIMATION_CROSSFADE
+        }
         val fromHistory = ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
         // One instance only (see the manifest): Recents can still restore a second KFM task
         // (e.g. one left over from a build with taskAffinity="", or a dead duplicate) and

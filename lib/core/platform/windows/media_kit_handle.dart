@@ -135,6 +135,9 @@ class MediaKitHandle implements VideoHandle {
   Future<void> seekTo(Duration position) async => await _player?.seek(position);
 
   @override
+  bool get isDisposed => _disposed;
+
+  @override
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;

@@ -23,6 +23,10 @@ abstract interface class VideoHandle {
   Future<void> seekTo(Duration position);
   Future<void> dispose();
 
+  /// True once [dispose] ran: a surface still showing it must obtain a new
+  /// player (the pool evicted it), never draw it.
+  bool get isDisposed;
+
   /// The video picture, letterboxed. [fallbackSize] (MediaStore width ×
   /// height) is used while the player reports no size (seen on a device).
   Widget view({Size? fallbackSize});
@@ -94,6 +98,9 @@ class PlayerHandle implements VideoHandle {
   @override
   Future<void> seekTo(Duration position) async => await _c?.seekTo(position);
   @override
+  bool get isDisposed => _disposed;
+
+  @override
   Future<void> dispose() async {
     _disposed = true;
     _idle.dispose();
@@ -103,7 +110,7 @@ class PlayerHandle implements VideoHandle {
   @override
   Widget view({Size? fallbackSize}) {
     final c = _c;
-    if (c == null) return const SizedBox.shrink();
+    if (c == null || _disposed) return const SizedBox.shrink();
     final reported = c.value.size;
     final size = reported.width > 0 && reported.height > 0
         ? reported
@@ -131,7 +138,23 @@ class VideoControllerPool {
   final Map<String, Future<VideoHandle>> _handles = {};
   final Map<String, FileRef> _files = {};
 
+  /// Players a surface is playing right now: never evicted (evicting the
+  /// viewer's player when the deck behind it obtained its own showed "A
+  /// VideoPlayerController was used after being disposed", S22).
+  final Set<String> _playing = {};
+
   int get aliveCount => _handles.length;
+
+  /// A video surface starts or stops playing [fileId]'s player.
+  /// A playing player doesn't count toward [maxAlive]; when it stops, the
+  /// pool shrinks back to the cap.
+  void setPlaying(String fileId, {required bool playing}) {
+    if (playing) {
+      _playing.add(fileId);
+    } else if (_playing.remove(fileId)) {
+      _evictBeyond();
+    }
+  }
 
   /// The player for [file], initialised, looping and muted. Initialisation
   /// errors propagate (the surface shows "Can't play this video").
@@ -165,8 +188,17 @@ class VideoControllerPool {
   }
 
   void _evictBeyond() {
-    while (_handles.length > maxAlive) {
-      final oldest = _handles.keys.first;
+    // Playing players never go and don't count (a swiped-away card still
+    // plays for a frame or two; the viewer plays over a hidden deck).
+    // Least recently obtained first; the newest, just obtained, stays.
+    while (true) {
+      final idle = [
+        for (final id in _handles.keys)
+          if (!_playing.contains(id)) id,
+      ];
+      if (idle.length <= maxAlive) return;
+      final newest = _handles.keys.last;
+      final oldest = idle.firstWhere((id) => id != newest);
       final handle = _handles.remove(oldest)!;
       _files.remove(oldest);
       unawaited(
@@ -234,20 +266,21 @@ VideoControllerPool videoControllerPool(Ref ref) {
   return pool;
 }
 
-/// Sound is per session, not per video: once on, following videos play
-/// with sound until it's turned off (S5).
+/// Sound is per session, not per video. On by default: the phone's own
+/// volume decides (user, 2026-11-04); the pill's speaker icon mutes until
+/// it is tapped again.
 @Riverpod(keepAlive: true)
 class VideoMuted extends _$VideoMuted {
   @override
-  bool build() => true;
+  bool build() => false;
 
   void toggle() => state = !state;
 }
 
 /// Desktop: the videos the user paused (click on the video, the bar's
-/// play/pause button, Space). A pause sticks until they play it again,
-/// whatever shows the video next (Quick look, the viewer); the phone never
-/// pauses (videos loop, S5).
+/// play/pause button, Space) and the phone (a tap on the video, user
+/// 2026-11-04). A pause sticks until they play it again, whatever shows the
+/// video next (deck, Quick look, the viewer).
 @Riverpod(keepAlive: true)
 class VideoPaused extends _$VideoPaused {
   @override

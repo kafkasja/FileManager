@@ -469,9 +469,12 @@ class _DeckState extends ConsumerState<_Deck> {
                   onSwiped: _onSwiped,
                   hintFor: (d) => SwipeFeedback.hintFor(context, ref, deck, d),
                   onThresholdCrossed: () => SwipeFeedback.tick(ref),
-                  // Video: tap = sound, double tap / expand = fullscreen (S5).
+                  // Video: tap = play / pause, double tap / expand =
+                  // fullscreen (S5; the pill's icon mutes).
                   onTap: current.kind == FileKind.video
-                      ? ref.read(videoMutedProvider.notifier).toggle
+                      ? () => ref
+                            .read(videoPausedProvider.notifier)
+                            .toggle(current.id)
                       : () => openViewer(context, current).ignore(),
                   onDoubleTapDown: current.kind == FileKind.video
                       ? (_) => openViewer(context, current).ignore()

@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
@@ -40,6 +41,26 @@ void main() {
       ]);
     });
 
+    test('never evicts a player that is playing (S22 red screen)', () async {
+      final factory = FakeVideoFactory();
+      final pool = VideoControllerPool(factory: factory.call);
+      await pool.obtain(_video('viewer'));
+      pool.setPlaying('viewer', playing: true);
+      // The deck behind the viewer obtains its current + next + another.
+      for (final id in ['deck1', 'deck2', 'deck3']) {
+        await pool.obtain(_video(id));
+      }
+      await Future<void>.delayed(Duration.zero);
+      expect(factory.created[0].isDisposed, isFalse, reason: 'playing');
+      expect(factory.created[1].isDisposed, isTrue);
+      expect(pool.aliveCount, 3, reason: '2 idle + the playing one');
+      // It stops playing: the pool shrinks back to 2.
+      pool.setPlaying('viewer', playing: false);
+      await Future<void>.delayed(Duration.zero);
+      expect(factory.created[0].isDisposed, isTrue);
+      expect(pool.aliveCount, 2);
+    });
+
     test('the same file gets the same player', () async {
       final pool = VideoControllerPool(factory: FakeVideoFactory().call);
       final a = await pool.obtain(_video('a'));
@@ -74,27 +95,36 @@ void main() {
     return (app, videos);
   }
 
-  testWidgets('the current video plays muted; the next is only prepared', (
+  testWidgets('the current video plays with sound; the next is only prepared', (
     tester,
   ) async {
     final (_, videos) = await pumpVideos(tester);
     final current = videos.created.firstWhere((h) => h.file.name == 'v2.mp4');
     final next = videos.created.firstWhere((h) => h.file.name == 'v1.mp4');
-    expect(current.calls, containsAllInOrder(['volume 0.0', 'play']));
+    expect(current.calls, containsAllInOrder(['volume 1.0', 'play']));
     expect(next.calls, isNot(contains('play')));
   });
 
-  testWidgets('tap toggles sound instead of opening the viewer', (
-    tester,
-  ) async {
+  testWidgets('tap pauses / plays; the speaker icon mutes', (tester) async {
     final (app, videos) = await pumpVideos(tester);
+    final current = videos.created.firstWhere((h) => h.file.name == 'v2.mp4');
     await tester.tap(find.byType(SwipeCard));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(find.byType(FileViewer), findsNothing);
-    expect(app.container.read(videoMutedProvider), isFalse);
-    final current = videos.created.firstWhere((h) => h.file.name == 'v2.mp4');
-    expect(current.calls, contains('volume 1.0'));
+    expect(current.calls.last, 'pause');
+    expect(find.byKey(const ValueKey('video-paused')), findsOneWidget);
+    await tester.tap(find.byType(SwipeCard));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(current.calls.last, 'play');
+    expect(find.byKey(const ValueKey('video-paused')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('video-mute')).last);
+    // The card's double tap (fullscreen) holds the arena ~300 ms.
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(app.container.read(videoMutedProvider), isTrue);
+    expect(current.calls, contains('volume 0.0'));
   });
 
   testWidgets('the expand button opens the viewer at once (H3)', (
