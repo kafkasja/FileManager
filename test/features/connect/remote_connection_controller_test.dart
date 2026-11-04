@@ -147,8 +147,9 @@ void main() {
     });
   });
 
-  test('a hanging beat times out after 4 s and overlapping beats are '
-      'skipped', () {
+  test('a hanging beat times out after 4 s without a retry in the same '
+      'tick; overlapping beats are skipped; a dead link is lost after 3 '
+      'ticks (Q1)', () {
     fakeAsync((async) {
       connect();
       http.on(
@@ -158,12 +159,23 @@ void main() {
       );
       async.elapse(const Duration(seconds: 5));
       expect(beats(), 1);
+      // A beat while one runs is skipped.
+      unawaited(ctl().beat());
+      expect(beats(), 1);
       async.elapse(const Duration(seconds: 4));
-      // The 4 s timeout fired: the retry is running now.
-      expect(beats(), 2);
+      // The 4 s timeout fired; no retry (it would make the tick 8 s long
+      // and skip the next one).
+      expect(beats(), 1);
       async.elapse(const Duration(seconds: 1));
-      // Tick at 10 s skipped: the retry still runs.
+      // Tick at 10 s runs.
       expect(beats(), 2);
+      // Ticks at 10 and 15 s fail too: lost 4 s after the third.
+      async.elapse(const Duration(seconds: 8, milliseconds: 900));
+      expect(state(), isA<RemoteConnected>());
+      async.elapse(const Duration(milliseconds: 200));
+      expect(reason(), DisconnectReason.networkLost);
+      expect(beats(), 3);
+      expectTornDown();
     });
   });
 

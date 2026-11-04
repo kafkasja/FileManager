@@ -130,6 +130,11 @@ List<ServerRoute> uploadRoutes(UploadRoutesEnv env) {
         write: true,
         extract: (i) async {
           final u = await own(i, orCompleted: true);
+          // Optional `{sha256}`: a malformed one is refused here (403),
+          // never published unverified or answered with a 500 (Q7).
+          if (await i.optionalJson() case final body?) {
+            CompleteUploadDto.fromJson(body);
+          }
           return [RootPathTarget(u.rootId, u.path, write: true)];
         },
       ),
@@ -291,6 +296,10 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
     return apiError(ApiErrorCode.insufficientStorage);
   }
   if (u.writing != null) return apiError(ApiErrorCode.busy);
+  // Q1: another chunk at this offset may have finished during the awaits
+  // above (a retry racing the original): checked again before writing, or
+  // the same bytes would be appended twice.
+  if (offset != u.received) return apiError(ApiErrorCode.conflict);
   final finished = Completer<void>();
   u.writing = finished.future;
   RandomAccessFile? raf;
@@ -415,11 +424,12 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
   }
   if (u.writing != null) return apiError(ApiErrorCode.busy);
   if (u.received != u.size) return apiError(ApiErrorCode.conflict);
+  // The guard's extract checked it: empty, or an object with a string
+  // sha256.
   final raw = await r.readAsString();
-  final decoded = raw.isEmpty ? null : jsonDecode(raw);
-  final body = CompleteUploadDto.fromJson(
-    decoded is Map<String, Object?> ? decoded : const {},
-  );
+  final body = raw.isEmpty
+      ? const CompleteUploadDto()
+      : CompleteUploadDto.fromJson(jsonDecode(raw) as Map<String, Object?>);
   final expected = body.sha256;
   if (expected != null) {
     final String partHash;

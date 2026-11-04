@@ -8,6 +8,11 @@ const int kTransferChunkBytes = 4 * 1024 * 1024;
 /// Free space a receiver keeps on top of the file (507 below it).
 const int kTransferSpaceMarginBytes = 64 * 1024 * 1024;
 
+/// Largest file an upload may declare (1 PiB, like N12 offers). Keeps
+/// `size + margin` far from 2^63: a near-2^63 size wrapped negative and
+/// passed the free-space check (Q7).
+const int kMaxTransferFileBytes = 1 << 50;
+
 /// Upload ids are client-made `randomHexId()`s: 32 lowercase hex. The
 /// server names its partial after it, so nothing else is accepted.
 final RegExp kUploadIdPattern = RegExp(r'^[0-9a-f]{32}$');
@@ -36,8 +41,8 @@ class CreateUploadDto {
     this.sha256,
   });
 
-  /// Throws [FormatException] on a bad id, a negative size or a missing
-  /// field.
+  /// Throws [FormatException] on a bad id, a negative or too large size
+  /// ([kMaxTransferFileBytes]) or a missing field.
   factory fromJson(Map<String, Object?> json) {
     final id = _str(json, 'uploadId');
     if (!kUploadIdPattern.hasMatch(id)) {
@@ -45,6 +50,7 @@ class CreateUploadDto {
     }
     final size = _int(json, 'size');
     if (size < 0) throw const FormatException('negative size');
+    if (size > kMaxTransferFileBytes) throw const FormatException('size');
     final sha = json['sha256'];
     return CreateUploadDto(
       uploadId: id,
@@ -107,10 +113,12 @@ class UploadStatusDto {
 class CompleteUploadDto {
   const new({this.sha256});
 
-  factory fromJson(Map<String, Object?> json) {
-    final sha = json['sha256'];
-    return CompleteUploadDto(sha256: sha is String ? sha : null);
-  }
+  /// Throws [FormatException] when `sha256` is there but not a string.
+  factory fromJson(Map<String, Object?> json) => switch (json['sha256']) {
+    null => const CompleteUploadDto(),
+    final String sha => CompleteUploadDto(sha256: sha),
+    _ => throw const FormatException('sha256'),
+  };
 
   final String? sha256;
 

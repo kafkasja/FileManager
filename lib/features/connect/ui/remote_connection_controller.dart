@@ -246,7 +246,10 @@ class RemoteConnectionController extends _$RemoteConnectionController {
 
   Future<void> _beatOnce(RemoteHttp http) async {
     // A failed beat is retried once at once: after the other device
-    // restarts, the first request may fail on a stale pooled socket.
+    // restarts, the first request may fail on a stale pooled socket. A
+    // timed-out beat is not (Q1): on a dead-but-open link the retry made
+    // every tick 8 s long, so every other tick was skipped and the loss
+    // showed after ~30 s instead of 3 ticks (~15 s).
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
         final session = await http
@@ -283,8 +286,10 @@ class RemoteConnectionController extends _$RemoteConnectionController {
           _end(DisconnectReason.remoteStopped);
           return;
         }
+        if (e.reason == RemoteUnavailableReason.timeout) break;
       } on TimeoutException {
         if (!identical(http, _http)) return;
+        break;
       }
     }
     if (++_failures >= kHeartbeatMaxFailures) {
