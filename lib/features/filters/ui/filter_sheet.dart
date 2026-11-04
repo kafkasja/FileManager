@@ -389,14 +389,25 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: f.isEmpty ? null : () => _set(FileFilter.none),
-                    child: Text(l10n.reset),
-                  ),
-                  SizedBox(width: spacing),
-                  FilledButton(
-                    onPressed: problem == null ? _apply : null,
-                    child: Text(l10n.filterApply),
+                  // The buttons stack when they don't fit (big text).
+                  Flexible(
+                    child: OverflowBar(
+                      alignment: MainAxisAlignment.end,
+                      overflowAlignment: OverflowBarAlignment.end,
+                      spacing: spacing,
+                      children: [
+                        TextButton(
+                          onPressed: f.isEmpty
+                              ? null
+                              : () => _set(FileFilter.none),
+                          child: Text(l10n.reset),
+                        ),
+                        FilledButton(
+                          onPressed: problem == null ? _apply : null,
+                          child: Text(l10n.filterApply),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

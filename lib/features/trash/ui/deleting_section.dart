@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -70,7 +71,8 @@ class DeletingSection extends ConsumerWidget {
               leading: const Icon(Icons.info_outline),
               title: Text(l10n.deleteModeNextSession),
             ),
-          ListTile(
+          // The dropdown moves under the text in a narrow pane / big text.
+          AdaptiveListTile(
             title: Text(l10n.pendingRetentionLabel),
             subtitle: Text(l10n.pendingRetentionHelp),
             isThreeLine: true,

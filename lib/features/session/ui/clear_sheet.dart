@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -12,14 +13,15 @@ import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 /// SE3 "Clear…": nothing pre-checked; options with nothing to clear are
 /// hidden; the new-session row says how many deletes it will do.
 Future<void> showClearSheet(BuildContext context, WidgetRef ref) async {
-  final deck = await ref.read(swipeDeckControllerProvider.future);
-  final summary = await ref.read(
+  final deck = await ref.readFuture(swipeDeckControllerProvider.future);
+  final summary = await ref.readFuture(
     pendingDeleteSummaryProvider(deck.session.id).future,
   );
-  final renameCount = await ref.read(
+  final renameCount = await ref.readFuture(
     renameBatchCountProvider(deck.session.id).future,
   );
-  final selected = (await ref.read(selectionControllerProvider.future)).count;
+  final selected = (await ref.readFuture(selectionControllerProvider.future))
+      .count;
   if (!context.mounted) return;
   final request = await showModalBottomSheet<ClearRequest>(
     context: context,
@@ -109,65 +111,70 @@ class _ClearSheetState extends State<_ClearSheet> {
       newSession: _newSession,
       clearSelection: _clearSelection,
     );
+    // Scrolls on short screens (small phones in landscape, big text).
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            title: Text(
-              l10n.clearMenu,
-              style: Theme.of(context).textTheme.titleLarge,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              title: Text(
+                l10n.clearMenu,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
-          ),
-          if (widget.canResetLayout)
+            if (widget.canResetLayout)
+              CheckboxListTile(
+                value: _resetLayout,
+                onChanged: (v) => setState(() => _resetLayout = v ?? false),
+                title: Text(l10n.clearResetLayout),
+                subtitle: Text(l10n.clearResetLayoutHelp),
+              ),
             CheckboxListTile(
-              value: _resetLayout,
-              onChanged: (v) => setState(() => _resetLayout = v ?? false),
-              title: Text(l10n.clearResetLayout),
-              subtitle: Text(l10n.clearResetLayoutHelp),
+              value: _newSession,
+              onChanged: (v) => setState(() => _newSession = v ?? false),
+              title: Text(l10n.clearNewSession),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.clearNewSessionHelp),
+                  Text(l10n.clearNewSessionDeletes(widget.waitingDeletes)),
+                  if (widget.renameCount > 0)
+                    Text(l10n.clearRenameDropped(widget.renameCount)),
+                ],
+              ),
+              isThreeLine: true,
             ),
-          CheckboxListTile(
-            value: _newSession,
-            onChanged: (v) => setState(() => _newSession = v ?? false),
-            title: Text(l10n.clearNewSession),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.clearNewSessionHelp),
-                Text(l10n.clearNewSessionDeletes(widget.waitingDeletes)),
-                if (widget.renameCount > 0)
-                  Text(l10n.clearRenameDropped(widget.renameCount)),
-              ],
+            if (widget.selectedCount > 0)
+              CheckboxListTile(
+                value: _clearSelection,
+                onChanged: (v) => setState(() => _clearSelection = v ?? false),
+                title: Text(l10n.clearSelectionRow(widget.selectedCount)),
+              ),
+            Padding(
+              padding: EdgeInsetsDirectional.all(spacing * 2),
+              // Wraps the buttons when they don't fit side by side.
+              child: OverflowBar(
+                alignment: MainAxisAlignment.end,
+                spacing: spacing,
+                overflowAlignment: OverflowBarAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l10n.cancel),
+                  ),
+                  FilledButton(
+                    onPressed: request.isEmpty
+                        ? null
+                        : () => Navigator.pop(context, request),
+                    child: Text(l10n.clearConfirm),
+                  ),
+                ],
+              ),
             ),
-            isThreeLine: true,
-          ),
-          if (widget.selectedCount > 0)
-            CheckboxListTile(
-              value: _clearSelection,
-              onChanged: (v) => setState(() => _clearSelection = v ?? false),
-              title: Text(l10n.clearSelectionRow(widget.selectedCount)),
-            ),
-          Padding(
-            padding: EdgeInsetsDirectional.all(spacing * 2),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(l10n.cancel),
-                ),
-                SizedBox(width: spacing),
-                FilledButton(
-                  onPressed: request.isEmpty
-                      ? null
-                      : () => Navigator.pop(context, request),
-                  child: Text(l10n.clearConfirm),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

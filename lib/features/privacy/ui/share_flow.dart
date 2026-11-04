@@ -205,8 +205,9 @@ class _ShareSheetState extends State<_ShareSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final gap = context.tokens.spacing;
+    // Scrolls on short screens; the buttons wrap when they don't fit.
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, gap),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -228,14 +229,15 @@ class _ShareSheetState extends State<_ShareSheet> {
             ),
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(gap, gap, gap, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: OverflowBar(
+                alignment: MainAxisAlignment.end,
+                overflowAlignment: OverflowBarAlignment.end,
+                spacing: gap,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(l10n.cancel),
                   ),
-                  SizedBox(width: gap),
                   FilledButton.icon(
                     key: const ValueKey('share-confirm'),
                     icon: const Icon(Icons.share_outlined),

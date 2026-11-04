@@ -793,26 +793,29 @@ class _Centered extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final spacing = context.tokens.spacing;
+    // Scrolls when the pane is short (an 800 × 600 window).
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon case final i?)
-            Icon(i, size: 48, color: theme.colorScheme.onSurfaceVariant)
-          else
-            const CircularProgressIndicator(),
-          SizedBox(height: spacing * 2),
-          Text(
-            title,
-            style: theme.textTheme.titleLarge,
-            textAlign: TextAlign.center,
-          ),
-          if (body case final b?) ...[
-            SizedBox(height: spacing),
-            Text(b, textAlign: TextAlign.center),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon case final i?)
+              Icon(i, size: 48, color: theme.colorScheme.onSurfaceVariant)
+            else
+              const CircularProgressIndicator(),
+            SizedBox(height: spacing * 2),
+            Text(
+              title,
+              style: theme.textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            if (body case final b?) ...[
+              SizedBox(height: spacing),
+              Text(b, textAlign: TextAlign.center),
+            ],
+            if (action case final a?) ...[SizedBox(height: spacing * 2), a],
           ],
-          if (action case final a?) ...[SizedBox(height: spacing * 2), a],
-        ],
+        ),
       ),
     );
   }

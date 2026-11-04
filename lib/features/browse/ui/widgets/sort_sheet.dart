@@ -52,21 +52,24 @@ class SortSheet extends ConsumerWidget {
       );
     }
 
+    // Scrolls when the sheet is short (a phone in landscape).
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            title: Text(
-              l10n.browseSortTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              title: Text(
+                l10n.browseSortTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
-          ),
-          row(FileSortField.date, l10n.browseSortDate),
-          row(FileSortField.size, l10n.browseSortSize),
-          row(FileSortField.name, l10n.browseSortName),
-        ],
+            row(FileSortField.date, l10n.browseSortDate),
+            row(FileSortField.size, l10n.browseSortSize),
+            row(FileSortField.name, l10n.browseSortName),
+          ],
+        ),
       ),
     );
   }
