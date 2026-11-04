@@ -48,6 +48,9 @@ class _ShelfHttp implements RemoteHttp {
   /// When set, chunk uploads wait for it (a send "mid-transfer").
   Completer<void>? holdPut;
   int putsWaiting = 0;
+
+  /// Completes when the first upload is held by [holdPut].
+  final Completer<void> putHeld = Completer<void>();
   final List<String> sent = [];
 
   @override
@@ -126,6 +129,7 @@ class _ShelfHttp implements RemoteHttp {
     await body.forEach(bytes.addAll);
     if (holdPut case final h?) {
       putsWaiting++;
+      if (!putHeld.isCompleted) putHeld.complete();
       await h.future;
     }
     return await _send('PUT', path, decode, bytes: bytes, query: query);
@@ -355,10 +359,8 @@ void main() {
     await service.decide(offerId, accept: true);
     http.holdPut = Completer<void>();
     await engine.checkOffers();
-    for (var i = 0; i < 300; i++) {
-      if (http.putsWaiting > 0) break;
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
+    // A chunk is in flight (no fixed poll budget: slow under -j load).
+    await http.putHeld.future.timeout(const Duration(seconds: 30));
     await service.stopByReceiver(offerId);
     http.holdPut!.complete();
     final job = await until(id, (j) => j.isFinished);

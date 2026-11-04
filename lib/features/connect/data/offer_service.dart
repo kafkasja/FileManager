@@ -567,6 +567,14 @@ class OfferService implements OfferGrants {
       ],
     );
     _cache(ended);
+    // Saved before the slow cleanup below: [status] falls back to the row
+    // once the offer left the cache, and a sender asking in between must
+    // already read the end (not "accepted": its refused upload would
+    // count as a permanent failure instead of "stopped by").
+    await _repo.save(ended);
+    for (final f in unfinished) {
+      await _repo.saveFile(o.id, f.copyWith(status: OfferFileStatus.cancelled));
+    }
     if (o.direction == OfferDirection.incoming &&
         o.status == OfferStatus.accepted) {
       final folder = o.folder;
@@ -590,10 +598,6 @@ class OfferService implements OfferGrants {
       // N12b: the client's inbox changed; staged copies go.
       _bumpInbox(o.peerFingerprint);
       await _deleteStaged(o.id);
-    }
-    await _repo.save(ended);
-    for (final f in unfinished) {
-      await _repo.saveFile(o.id, f.copyWith(status: OfferFileStatus.cancelled));
     }
     if (notify) await _publishPrompts();
     return ended;
