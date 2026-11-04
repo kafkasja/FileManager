@@ -489,6 +489,54 @@ void main() {
       },
     );
 
+    group('Q3: photo access revoked or partial', () {
+      late DeleteQueue limited;
+      setUp(() {
+        limited = DeleteQueue(
+          db: db,
+          lock: SerialLock(),
+          source: source,
+          undo: undo,
+          index: index,
+          seesAllMedia: () async => false,
+        );
+        addTearDown(limited.dispose);
+      });
+
+      test('a stuck row KFM can no longer see stays queued', () async {
+        await swipeLeft(2);
+        await markAllCommitting();
+        // Hidden by the permission, not deleted: stat() can't tell.
+        source.removeExternally('path:/s/DCIM/p0.jpg');
+        expect(await limited.recoverStuck(), 2);
+        final rows = await pending();
+        expect(rows.map((r) => r.status), [
+          PendingDeleteStatus.queued,
+          PendingDeleteStatus.queued,
+        ]);
+      });
+
+      test('a stuck row found in the trash is still committed', () async {
+        await swipeLeft(1);
+        await markAllCommitting();
+        source.trashExternally('path:/s/DCIM/p0.jpg');
+        await limited.recoverStuck();
+        final row = (await pending()).single;
+        expect(row.status, PendingDeleteStatus.committed);
+        expect(row.trashId, 'path:/s/DCIM/p0.jpg');
+      });
+
+      test('a commit never counts hidden files as deleted', () async {
+        final s = await swipeLeft(2);
+        source.removeExternally('path:/s/DCIM/p0.jpg');
+        final r = await limited.commitAll(s.id);
+        expect(r.committed, 1);
+        final rows = await pending();
+        expect(rows[0].status, PendingDeleteStatus.queued);
+        expect(rows[1].status, PendingDeleteStatus.committed);
+      });
+    });
+
     group('H2: pending folder unavailable', () {
       Future<Session> failOne() async {
         final s = await swipeLeft(2);

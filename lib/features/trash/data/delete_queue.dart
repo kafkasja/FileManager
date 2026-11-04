@@ -105,6 +105,7 @@ class DeleteQueue {
     this._remoteSource,
     this._trash,
     this._confirmNoTrash,
+    this._seesAllMedia,
     this._policy = const DeleteBatchPolicy(),
     this._clock = DateTime.now,
   });
@@ -119,6 +120,11 @@ class DeleteQueue {
 
   /// PL1: one question per batch for `noTrash` failures; null = No.
   final ConfirmNoTrash? _confirmNoTrash;
+
+  /// Q3: false while photo access is denied or partial (Android 14 "Select
+  /// photos"). A local file KFM can't stat may then still exist: it is not
+  /// "gone already" and its row stays queued. Null = always full access.
+  final Future<bool> Function()? _seesAllMedia;
   final UndoRepository _undo;
   final MediaIndexDao _index;
   final DeleteBatchPolicy _policy;
@@ -264,6 +270,7 @@ class DeleteQueue {
             ))
             .get();
     final trashed = _TrashLookup(this);
+    final sees = _SeesAllMedia(_seesAllMedia);
     for (final row in stuck) {
       final FileRef? current;
       try {
@@ -275,10 +282,11 @@ class DeleteQueue {
         await _setStatus([row.id], PendingDeleteStatus.queued);
         continue;
       }
-      if (current != null) {
+      final item = current == null ? await trashed.itemFor(row) : null;
+      if (current != null || (item == null && !await sees.forRow(row.fileId))) {
         await _setStatus([row.id], PendingDeleteStatus.queued);
       } else {
-        await _markCommitted(row, await trashed.itemFor(row));
+        await _markCommitted(row, item);
       }
     }
     return stuck.length;
@@ -475,6 +483,7 @@ class DeleteQueue {
     // delete something the user didn't see.
     final toDelete = <DeleteMode, List<(PendingDeleteRow, FileRef)>>{};
     final trashed = _TrashLookup(this, source);
+    final sees = _SeesAllMedia(_seesAllMedia);
     for (final (i, row) in rows.indexed) {
       final FileRef? current;
       try {
@@ -497,7 +506,14 @@ class DeleteQueue {
       if (current == null) {
         // Gone already (trashed elsewhere, or an interrupted earlier batch
         // that the system did carry out): keep its trash item for undo.
-        await _markCommitted(row, await trashed.itemFor(row));
+        final item = await trashed.itemFor(row);
+        if (item == null && !await sees.forRow(row.fileId)) {
+          // Q3: maybe only hidden from KFM (photo access revoked or
+          // partial): never counted as deleted, waits for access.
+          await _setStatus([row.id], PendingDeleteStatus.queued);
+          continue;
+        }
+        await _markCommitted(row, item);
         committed++;
         bytes += row.sizeBytes;
       } else if (current.modifiedAt.millisecondsSinceEpoch !=
@@ -722,6 +738,22 @@ class DeleteQueue {
 
 /// Lists the trash at most once per run, and only when a trash-mode row's
 /// file is gone.
+/// [DeleteQueue._seesAllMedia], asked once per commit / recovery and only
+/// for local rows (a remote device answers for its own files).
+class _SeesAllMedia {
+  new(this._check);
+
+  final Future<bool> Function()? _check;
+  bool? _answer;
+
+  Future<bool> forRow(String fileId) async {
+    if (sourceIdOfFile(fileId) != kLocalSourceId) return true;
+    final check = _check;
+    if (check == null) return true;
+    return _answer ??= await check();
+  }
+}
+
 class _TrashLookup {
   new(this._queue, [this._source]);
 

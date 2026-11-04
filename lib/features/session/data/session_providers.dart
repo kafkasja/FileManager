@@ -2,6 +2,8 @@ import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/permissions/storage_access.dart';
+import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_repository.dart';
 import 'package:kfm/features/swipe/data/file_source_resolver.dart';
@@ -44,6 +46,10 @@ DeleteQueue deleteQueue(Ref ref) {
     trash: FileSourceResolver.swipeTrash,
     // PL1: a Windows drive without a Recycle Bin asks first.
     confirmNoTrash: ref.watch(noTrashConfirmerProvider).confirm,
+    // Q3: a revoked or partial photo permission hides files that exist.
+    seesAllMedia: () async =>
+        (await ref.read(permissionServiceProvider).check()).media ==
+        MediaAccess.granted,
   );
   ref.onDispose(queue.dispose);
   return queue;
