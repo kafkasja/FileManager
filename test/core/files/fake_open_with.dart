@@ -6,7 +6,18 @@ import 'package:kfm/core/files/open_with.dart';
 /// without a matching app.
 class FakeOpenWith implements OpenWithService {
   final List<FileRef> opened = [];
+
+  /// [OpenWithService.open] calls (the default app).
+  final List<FileRef> openedDefault = [];
   bool noApp = false;
+
+  @override
+  Future<void> open(FileRef f) async {
+    if (noApp) {
+      throw FileOpException(FileOpFailure.unsupported, 'no app', fileId: f.id);
+    }
+    openedDefault.add(f);
+  }
 
   @override
   Future<void> openWith(FileRef f) async {

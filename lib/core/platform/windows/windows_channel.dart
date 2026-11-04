@@ -63,6 +63,10 @@ class BinRestoreResult {
   final String? message;
 }
 
+/// What [WindowsChannel.openFile] / [WindowsChannel.openWith] did
+/// (`failed` is thrown as [WindowsChannelException]).
+enum ShellOpenResult { opened, noApp, notFound, cancelled, failed }
+
 /// One drive letter ([WindowsChannel.listDrives]). CD drives and empty card
 /// reader slots aren't listed.
 @immutable
@@ -246,6 +250,12 @@ class WindowsChannelException implements Exception {
 ///   `IShellItemImageFactory::GetImage(SIIGBF_THUMBNAILONLY |
 ///   SIIGBF_BIGGERSIZEOK)`, longest side `size` px; null when Windows has no
 ///   thumbnail (missing HEIF codec…).
+/// - `openFile {path}` → `{result, message?}`: `ShellExecuteExW` with the
+///   default verb (`SEE_MASK_NOASYNC | SEE_MASK_FLAG_NO_UI`); `result` ∈
+///   `opened`, `noApp` (`ERROR_NO_ASSOCIATION`), `notFound`, `cancelled`,
+///   `failed`.
+/// - `openWith {path}` → same shape: `SHOpenWithDialog` (`OAIF_EXEC`), the
+///   Windows "Open with" chooser; closing it is `cancelled`.
 /// - `networkIsPublic` → bool: `INetworkListManager` → any connected
 ///   network with category `NLM_NETWORK_CATEGORY_PUBLIC`.
 /// - `listDrives` → `[{path: "E:", system, type, removable, mounted, uuid?,
@@ -375,6 +385,26 @@ class WindowsChannel {
 
   Future<Uint8List?> thumbnail(String path, int size) =>
       _call<Uint8List>('thumbnail', {'path': toNative(path), 'size': size});
+
+  /// The file's default app ([ShellOpenResult.noApp] when there is none).
+  Future<ShellOpenResult> openFile(String path) => _open('openFile', path);
+
+  /// The Windows "Open with" chooser for [path].
+  Future<ShellOpenResult> openWith(String path) => _open('openWith', path);
+
+  Future<ShellOpenResult> _open(String method, String path) async {
+    final raw =
+        await _call<Map<Object?, Object?>>(method, {'path': toNative(path)}) ??
+        const {};
+    final result = ShellOpenResult.values.firstWhere(
+      (r) => r.name == raw['result'],
+      orElse: () => ShellOpenResult.failed,
+    );
+    if (result == ShellOpenResult.failed) {
+      throw WindowsChannelException('OPEN', '${raw['message'] ?? method}');
+    }
+    return result;
+  }
 
   Future<bool> networkIsPublic() async =>
       await _call<bool>('networkIsPublic') ?? false;

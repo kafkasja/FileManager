@@ -129,6 +129,31 @@ class FakeWindowsChannel implements WindowsChannel {
     return null;
   }
 
+  /// What [openFile] / [openWith] answer, and the paths they got.
+  ShellOpenResult openFileResult = ShellOpenResult.opened;
+  ShellOpenResult openWithResult = ShellOpenResult.opened;
+  final List<String> openedPaths = [];
+
+  @override
+  Future<ShellOpenResult> openFile(String path) async {
+    _check('openFile');
+    openedPaths.add(path);
+    if (openFileResult == ShellOpenResult.failed) {
+      throw const WindowsChannelException('OPEN', 'refused');
+    }
+    return openFileResult;
+  }
+
+  @override
+  Future<ShellOpenResult> openWith(String path) async {
+    _check('openWith');
+    openedPaths.add(path);
+    if (openWithResult == ShellOpenResult.failed) {
+      throw const WindowsChannelException('OPEN', 'refused');
+    }
+    return openWithResult;
+  }
+
   @override
   Future<bool> networkIsPublic() async {
     _check('networkIsPublic');
