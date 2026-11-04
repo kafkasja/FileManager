@@ -208,6 +208,56 @@ void main() {
     await checkDatabaseFile(dbFile, now: () => at);
     expect(photo.readAsBytesSync(), [1, 2]);
   });
+
+  test(
+    'Q4: database disk full: the failed write is reported, earlier rows '
+    'and the file stay intact, writing works again once space is back',
+    () async {
+      await seed(rows: 10);
+      final db = open();
+      final queue = DbWriteQueue();
+      final errors = <DbWriteError>[];
+      final sub = queue.errors.listen(errors.add);
+      final repo = SettingsRepository(db, queue);
+      // A full disk as SQLite sees it: no page may be added.
+      final pages = await db.customSelect('PRAGMA page_count').getSingle();
+      await db.customStatement(
+        'PRAGMA max_page_count = ${pages.read<int>('page_count')}',
+      );
+      await expectLater(
+        queue.enqueue(null, () async {
+          await db.transaction(() async {
+            for (var i = 0; i < 2000; i++) {
+              await db.customStatement(
+                "INSERT INTO settings(key, value) VALUES ('big$i', "
+                "'${'y' * 500}')",
+              );
+            }
+          });
+        }),
+        throwsA(isA<Object>()),
+      );
+      await queue.flush();
+      expect(errors, hasLength(1));
+      // Nothing of the failed transaction, everything from before.
+      final n = await db
+          .customSelect('SELECT count(*) AS c FROM settings')
+          .getSingle();
+      expect(n.read<int>('c'), 10);
+      // Space is back.
+      await db.customStatement('PRAGMA max_page_count = 1073741823');
+      await repo.write(AppSettings.themeMode, 'dark');
+      expect(await repo.read(AppSettings.themeMode), 'dark');
+      await sub.cancel();
+      await queue.close();
+      await db.close();
+      final check = await checkDatabaseFile(dbFile, now: () => at);
+      expect(check.state, DbStartupState.ok);
+      final quick = sqlite3.open(dbFile.path);
+      expect(quick.select('PRAGMA quick_check').single.values.single, 'ok');
+      quick.close();
+    },
+  );
 }
 
 extension on File {
