@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:kfm/features/connect/domain/device_identity.dart';
@@ -238,7 +240,23 @@ class ShareServer {
     server
       ..idleTimeout = const Duration(seconds: 30)
       ..serverHeader = null;
-    shelf_io.serveRequests(server, _pipeline(addresses), poweredByHeader: null);
+    // Q1: a response body cut on purpose (Disconnect, a replaced session,
+    // a scope edit) or a client gone mid-request ends in an async error
+    // inside dart:io ("Content size below specified contentLength"; the
+    // client sees the abort). shelf only catches those in the root zone;
+    // this keeps them per connection in any zone instead of surfacing as
+    // uncaught app errors.
+    runZonedGuarded(
+      () => shelf_io.serveRequests(
+        server,
+        _pipeline(addresses),
+        poweredByHeader: null,
+      ),
+      (e, _) => developer.log(
+        'share server: connection ended: ${e.runtimeType}',
+        name: 'kfm.connect',
+      ),
+    );
     _server = server;
     return _running = ShareServerState(
       status: ShareServerStatus.running,
