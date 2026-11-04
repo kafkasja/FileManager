@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:kfm/features/connect/data/guarded_server_socket.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
@@ -200,6 +201,7 @@ class ShareServer {
     InternetAddress? bindAddress,
     this._preferredPort,
     this._savePort,
+    this.firstRequestTimeout = kFirstRequestTimeout,
   }) : _addresses = addresses ?? localShareAddresses,
        _bindAddress = bindAddress ?? InternetAddress.anyIPv4;
 
@@ -215,7 +217,12 @@ class ShareServer {
   /// `anyIPv4` in the app (`privateNetworkOnly` rejects peers outside the
   /// served subnets); loopback in tests.
   final InternetAddress _bindAddress;
+
+  /// Q7: a connection without a complete first request after this long is
+  /// closed (tests shorten it).
+  final Duration firstRequestTimeout;
   HttpServer? _server;
+  GuardedServerSocket? _socket;
   ShareServerState _running = ShareServerState.stopped;
 
   bool get isRunning => _server != null;
@@ -236,8 +243,8 @@ class ShareServer {
         error: NoLocalNetworkException(),
       );
     }
-    final server = await _bind(ctx);
-    server
+    final socket = await _bind(ctx);
+    final server = HttpServer.listenOn(socket)
       ..idleTimeout = const Duration(seconds: 30)
       ..serverHeader = null;
     // Q1: a response body cut on purpose (Disconnect, a replaced session,
@@ -248,7 +255,11 @@ class ShareServer {
     // uncaught app errors.
     runZonedGuarded(
       () => shelf_io.serveRequests(
-        server,
+        // Q7: headers complete → the connection's watchdog ends.
+        server.map((r) {
+          socket.firstRequest(r.connectionInfo);
+          return r;
+        }),
         _pipeline(addresses),
         poweredByHeader: null,
       ),
@@ -258,6 +269,7 @@ class ShareServer {
       ),
     );
     _server = server;
+    _socket = socket;
     return _running = ShareServerState(
       status: ShareServerStatus.running,
       addresses: addresses,
@@ -266,7 +278,7 @@ class ShareServer {
     );
   }
 
-  Future<HttpServer> _bind(SecurityContext ctx) async {
+  Future<GuardedServerSocket> _bind(SecurityContext ctx) async {
     int? preferred;
     try {
       preferred = await _preferredPort?.call();
@@ -275,12 +287,22 @@ class ShareServer {
     }
     if (preferred != null && preferred > 0 && preferred < 65536) {
       try {
-        return await HttpServer.bindSecure(_bindAddress, preferred, ctx);
+        return await GuardedServerSocket.bind(
+          _bindAddress,
+          preferred,
+          ctx,
+          firstRequestTimeout: firstRequestTimeout,
+        );
       } on SocketException {
         // Taken by another app: fall through to a random port.
       }
     }
-    final server = await HttpServer.bindSecure(_bindAddress, 0, ctx);
+    final server = await GuardedServerSocket.bind(
+      _bindAddress,
+      0,
+      ctx,
+      firstRequestTimeout: firstRequestTimeout,
+    );
     if (server.port != preferred) {
       try {
         await _savePort?.call(server.port);
@@ -294,8 +316,12 @@ class ShareServer {
   /// Closes the port and drops open connections immediately.
   Future<void> stop() async {
     final s = _server;
+    final socket = _socket;
     _server = null;
+    _socket = null;
     _running = ShareServerState.stopped;
     await s?.close(force: true);
+    // `listenOn` leaves the listening socket open on close.
+    await socket?.close();
   }
 }

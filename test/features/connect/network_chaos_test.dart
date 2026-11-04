@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/core/background/file_hasher.dart';
 import 'package:kfm/core/background/serial_lock.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
@@ -14,6 +15,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/media_index_dao.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/device_identity_repository_impl.dart';
+import 'package:kfm/features/connect/data/guarded_server_socket.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
@@ -40,6 +42,7 @@ import 'package:kfm/features/transfers/data/transfers_dao.dart';
 import 'package:kfm/features/transfers/data/verified_move_impl.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/domain/transfer_preprocessor.dart';
+import 'package:shelf/shelf.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/chaos_proxy.dart';
@@ -74,16 +77,24 @@ class _Peer {
   late int port;
   late String fp;
 
-  static Future<_Peer> start() async {
+  /// Q8: awaited before the server hashes a finished upload's part (holds
+  /// a `complete` while the link is cut).
+  Future<void> Function()? beforePartHash;
+  int completeHashes = 0;
+  int completeRequests = 0;
+
+  static Future<_Peer> start({
+    Duration firstRequestTimeout = kFirstRequestTimeout,
+  }) async {
     final peer = _Peer._(
       AppDatabase(NativeDatabase.memory()),
       await Directory.systemTemp.createTemp('kfm_chaos_server'),
     );
-    await peer._start();
+    await peer._start(firstRequestTimeout);
     return peer;
   }
 
-  Future<void> _start() async {
+  Future<void> _start(Duration firstRequestTimeout) async {
     final identity = DeviceIdentityRepositoryImpl(
       store: InMemorySecretStore(),
       displayName: () async => 'Phone A',
@@ -106,40 +117,48 @@ class _Peer {
     );
     server = ShareServer(
       identity,
-      (served) => buildSharePipeline(
-        served: served,
-        authenticate: authenticate(sessions),
-        sizeLimitExempt: isUploadChunkRequest,
-        routes: [
-          ...sessionRoutes(sessions, changeToken: (_) async => null),
-          ...fileRoutes(
-            FileRoutesEnv(
-              guard: guard,
-              scopeOf: scopes.scopeOf,
-              sessions: sessions,
-              source: () => files,
-              dao: () => dao,
-              addToIndex: (_) async {},
-              canSeeAllFiles: () => true,
-              thumbnails: () async => throw UnimplementedError(),
-              trash: () => trash,
-              diskLength: (_) async => null,
+      (served) => _countCompletes(
+        buildSharePipeline(
+          served: served,
+          authenticate: authenticate(sessions),
+          sizeLimitExempt: isUploadChunkRequest,
+          routes: [
+            ...sessionRoutes(sessions, changeToken: (_) async => null),
+            ...fileRoutes(
+              FileRoutesEnv(
+                guard: guard,
+                scopeOf: scopes.scopeOf,
+                sessions: sessions,
+                source: () => files,
+                dao: () => dao,
+                addToIndex: (_) async {},
+                canSeeAllFiles: () => true,
+                thumbnails: () async => throw UnimplementedError(),
+                trash: () => trash,
+                diskLength: (_) async => null,
+              ),
             ),
-          ),
-          ...uploadRoutes(
-            UploadRoutesEnv(
-              guard: guard,
-              sessions: sessions,
-              uploads: uploads,
-              source: () => files,
-              addToIndex: (_) async {},
-              stagingFreeBytes: () async => null,
+            ...uploadRoutes(
+              UploadRoutesEnv(
+                guard: guard,
+                sessions: sessions,
+                uploads: uploads,
+                source: () => files,
+                addToIndex: (_) async {},
+                stagingFreeBytes: () async => null,
+                hashPath: (path) async {
+                  completeHashes++;
+                  await beforePartHash?.call();
+                  return await hashFileInIsolate(path);
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       addresses: () async => _loopback,
       bindAddress: InternetAddress.loopbackIPv4,
+      firstRequestTimeout: firstRequestTimeout,
     );
     final state = await server.start();
     port = state.port!;
@@ -151,6 +170,11 @@ class _Peer {
       ]),
     );
   }
+
+  Handler _countCompletes(Handler h) => (r) async {
+    if (r.url.path.endsWith('/complete')) completeRequests++;
+    return await h(r);
+  };
 
   /// A new session for the client (pairing is tested elsewhere).
   String issue([String clientFp = '']) => sessions
@@ -367,6 +391,47 @@ void main() {
       );
       expect(s.received, 10);
       direct.close();
+    });
+
+    test('Q7: a chunk upload that stops moving on a dead-but-open link '
+        'times out by itself (no heartbeat teardown needed)', () async {
+      final c = client()..putStallTimeout = const Duration(seconds: 1);
+      final id = 'e2' * 16;
+      await c.postJson(
+        ApiRoutes.uploads,
+        CreateUploadDto(
+          uploadId: id,
+          rootId: 'cam',
+          path: '',
+          name: 'stall.jpg',
+          size: 10,
+        ).toJson(),
+        decode: UploadStatusDto.fromJson,
+      );
+      final body = StreamController<List<int>>()..add(List.filled(5, 7));
+      final hung = c.putStream(
+        ApiRoutes.uploadChunk(id),
+        body.stream,
+        10,
+        query: const {'offset': '0'},
+        decode: UploadStatusDto.fromJson,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      proxy.blackhole = true;
+      final watch = Stopwatch()..start();
+      await expectLater(
+        hung,
+        throwsA(
+          isA<RemoteUnavailableException>().having(
+            (e) => e.reason,
+            'reason',
+            RemoteUnavailableReason.timeout,
+          ),
+        ),
+      );
+      expect(watch.elapsed, lessThan(const Duration(seconds: 3)));
+      unawaited(body.close());
+      c.close();
     });
 
     test('two clients at once and the same client twice: the replaced '
@@ -605,6 +670,62 @@ void main() {
       });
     }
 
+    for (final mode in TransferMode.values) {
+      test('upload (${mode.name}): the link drops while the other device '
+          'checks the finished file; the retry joins the running complete: '
+          'one file, bytes sent once, original trashed once', () async {
+        final bytes = _random(1024 * 1024, 7);
+        final src = local.addFile('$_root/DCIM/Camera/q8.jpg', bytes: bytes);
+        final held = Completer<void>();
+        final release = Completer<void>();
+        peer.beforePartHash = () async {
+          if (!held.isCompleted) held.complete();
+          await release.future;
+        };
+        final id = await engine.enqueueUpload(
+          [src],
+          peerFingerprint: peer.fp,
+          peerName: 'Phone A',
+          rootId: 'cam',
+          path: '',
+          mode: mode,
+        );
+        await held.future.timeout(const Duration(seconds: 30));
+        // The complete's answer can't arrive: the link drops for 1 s.
+        await proxy.drop(const Duration(seconds: 1));
+        // The client comes back and asks again (status, then complete)
+        // while the first complete still runs on the other side.
+        await _settle(
+          () => peer.completeRequests >= 2,
+          timeout: const Duration(seconds: 20),
+        );
+        expect(peer.completeRequests, 2, reason: 'asked again while held');
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        release.complete();
+        final job = await until(id, settled);
+        final f = job.files.single;
+        expect(f.status, TransferFileStatus.done, reason: f.error);
+        final copies = peer.files.files
+            .where((x) => x.folderPath == _dcim)
+            .toList();
+        expect(copies.map((x) => x.name), ['q8.jpg'], reason: 'one copy');
+        expect(peer.files.bytesOf(copies.single.id), bytes);
+        expect(peer.completeHashes, 1, reason: 'published once');
+        expect(proxy.upstreamBytes, lessThan(bytes.length * 1.5));
+        expect(peer.partials(), isEmpty);
+        if (mode == TransferMode.move) {
+          expect(f.sourceOutcome, SourceOutcome.trashed);
+          expect(await local.stat(src.id), isNull);
+          expect(
+            local.calls.where((c) => c.startsWith('trashBatch')),
+            hasLength(1),
+          );
+        } else {
+          expect(local.bytesOf(src.id), bytes);
+        }
+      });
+    }
+
     test('flapping (10 drops) mid-download: finishes; bounded retries; no '
         'leaked sockets or timers', () async {
       final bytes = _random(3 * 1024 * 1024, 6);
@@ -752,6 +873,70 @@ void main() {
       for (final s in [...slow, ...plain]) {
         s.destroy();
       }
+    });
+
+    test('Q7: sockets that never finish their first request (slowloris, '
+        'TCP without TLS) are closed after the watchdog; a slow download '
+        'that runs longer is not cut', () async {
+      final quick = await _Peer.start(
+        firstRequestTimeout: const Duration(seconds: 1),
+      );
+      addTearDown(quick.stop);
+      final ended = <Future<void>>[];
+      Future<void> endOf(Socket s) {
+        final done = Completer<void>();
+        s.listen(
+          (_) {},
+          onError: (Object _) {
+            if (!done.isCompleted) done.complete();
+          },
+          onDone: () {
+            if (!done.isCompleted) done.complete();
+          },
+        );
+        return done.future;
+      }
+
+      final slow = await SecureSocket.connect(
+        InternetAddress.loopbackIPv4,
+        quick.port,
+        onBadCertificate: (_) => true,
+      );
+      slow.write('GET /v1/session HTTP/1.1\r\nHost: x\r\n');
+      ended.add(endOf(slow));
+      final plain = await Socket.connect(
+        InternetAddress.loopbackIPv4,
+        quick.port,
+      );
+      ended.add(endOf(plain));
+
+      // A 2 MB download at 512 KB/s (~4 s) over a throttled link.
+      final bytes = _random(2 * 1024 * 1024, 9);
+      final src = quick.files.addFile('$_dcim/slow.jpg', bytes: bytes);
+      quick.scopes.set(
+        _clientFp,
+        const ShareScope([
+          SharedRoot(id: 'cam', path: _dcim, label: 'DCIM', readOnly: false),
+        ]),
+      );
+      final link = await ChaosProxy.start(quick.port);
+      addTearDown(link.close);
+      link.bytesPerSecond = 512 * 1024;
+      final c = PinnedClient.pinned(link.uri(), quick.fp)
+        ..bearerToken = quick.issue();
+      addTearDown(c.close);
+      final watch = Stopwatch()..start();
+      final res = await c.getStream(ApiRoutes.fileContent(src.id));
+      final got = <int>[];
+      await res.forEach(got.addAll);
+      expect(watch.elapsed, greaterThan(const Duration(seconds: 2)));
+      expect(got.length, bytes.length);
+      expect(_sha(got), _sha(bytes));
+
+      // Both idle sockets were closed by the server long before.
+      await Future.wait(ended).timeout(const Duration(seconds: 1));
+      slow.destroy();
+      plain.destroy();
     });
 
     test('a huge header or request line is refused without taking the '
