@@ -9,6 +9,10 @@ const kBackupFormat = 'kfm-backup';
 /// The newest file schema this build reads and the one it writes.
 const kBackupSchema = 1;
 
+/// Q6: bigger files aren't read (a backup of 100k files is a few tens of MB;
+/// a wrongly picked video must not fill the cache or the memory).
+const int kMaxBackupFileBytes = 128 * 1024 * 1024;
+
 enum BackupProblem {
   /// Not JSON, or not a KFM backup.
   notBackup,

@@ -82,5 +82,15 @@ void main() {
     expect(WindowMemory.parse('1,2,3'), isNull);
     expect(WindowMemory.parse('0,0,300,200'), isNull);
     expect(WindowMemory.parse('-5000,0,1280,800'), isNull);
+    // Q6: garbage rows.
+    for (final raw in [
+      'NaN,0,1280,800',
+      '0,0,Infinity,800',
+      '0,0,1280,1e308',
+      '1e9,0,1280,800',
+      '0,0,1280,-Infinity',
+    ]) {
+      expect(WindowMemory.parse(raw), isNull, reason: raw);
+    }
   });
 }

@@ -42,6 +42,8 @@ Future<TestApp> pumpApp(
   // L3: the first-time tutorial would cover the swipe screen; only the
   // onboarding tests want it.
   bool tutorialDone = true,
+  // Rows written before the app starts (e.g. Q6 garbage settings).
+  Future<void> Function(AppDatabase db)? seedDb,
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   final db = AppDatabase(NativeDatabase.memory());
@@ -55,6 +57,7 @@ Future<TestApp> pumpApp(
           ),
         );
   }
+  await seedDb?.call(db);
   final service = permissions ?? FakePermissionService();
   final fileSource = files ?? FakeFileSource();
   final thumbDir = Directory.systemTemp.createTempSync('kfm_app_thumbs');

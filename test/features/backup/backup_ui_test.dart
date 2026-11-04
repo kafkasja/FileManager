@@ -9,6 +9,7 @@ import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/data/backup_service.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
@@ -20,10 +21,16 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'backup_test_utils.dart';
 
 class _FakeDocs implements BackupDocuments {
-  new(this.content);
+  new(this.content, {this.bytes, this.honorLimit = true});
 
   /// What the picked file contains; null = the picker is cancelled.
   final String? content;
+
+  /// Q6: the picked file is this big instead (zeros past the content).
+  final int? bytes;
+
+  /// Like the Android channel: stop at `maxBytes` with `TOO_BIG`.
+  final bool honorLimit;
   String? written;
 
   @override
@@ -35,8 +42,25 @@ class _FakeDocs implements BackupDocuments {
       content == null ? null : 'content://doc/in';
 
   @override
-  Future<void> readDocument(String uri, String destPath) =>
-      File(destPath).writeAsString(content!);
+  Future<void> readDocument(
+    String uri,
+    String destPath, {
+    int? maxBytes,
+  }) async {
+    final size = bytes;
+    if (size == null) {
+      await File(destPath).writeAsString(content!);
+      return;
+    }
+    if (honorLimit && maxBytes != null && size > maxBytes) {
+      throw const FilesChannelException('TOO_BIG', 'over the limit');
+    }
+    final raf = await File(destPath).open(mode: FileMode.write);
+    await raf.writeString(content!);
+    await raf.setPosition(size - 1);
+    await raf.writeByte(0);
+    await raf.close();
+  }
 
   @override
   Future<void> writeDocument(String uri, String srcPath) async {
@@ -108,6 +132,37 @@ void main() {
     await tapAndSettle(tester, find.byKey(const ValueKey('backup-import')));
     expect(find.text("This isn't a KFM backup."), findsOneWidget);
     expect(await tester.runAsync(() => dumpUserTables(db)), before);
+  });
+
+  testWidgets('Q6: a huge picked file is refused, nothing written', (
+    tester,
+  ) async {
+    for (final honorLimit in [true, false]) {
+      await pumpSection(
+        tester,
+        _FakeDocs(
+          '{"format": "$kBackupFormat", "schema": 1, ',
+          bytes: kMaxBackupFileBytes + 1,
+          honorLimit: honorLimit,
+        ),
+      );
+      final before = await tester.runAsync(() => dumpUserTables(db));
+      await tapAndSettle(tester, find.byKey(const ValueKey('backup-import')));
+      expect(
+        find.text("This isn't a KFM backup."),
+        findsOneWidget,
+        reason: 'honorLimit $honorLimit',
+      );
+      expect(await tester.runAsync(() => dumpUserTables(db)), before);
+      // The staged copy is gone.
+      expect(
+        tmp.listSync(recursive: true).whereType<File>().where(
+          (f) => f.path.endsWith('import.json'),
+        ),
+        isEmpty,
+      );
+      await tester.pumpWidget(const SizedBox());
+    }
   });
 
   testWidgets('a newer backup is refused', (tester) async {

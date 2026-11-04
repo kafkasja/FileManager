@@ -275,8 +275,12 @@ class FilesChannel {
       _invoke<bool>('writeDocument', {'uri': uri, 'srcPath': srcPath});
 
   /// X6: copies the picked document [uri] to the local file [destPath].
-  Future<void> readDocument(String uri, String destPath) =>
-      _invoke<bool>('readDocument', {'uri': uri, 'destPath': destPath});
+  Future<void> readDocument(String uri, String destPath, {int? maxBytes}) =>
+      _invoke<bool>('readDocument', {
+        'uri': uri,
+        'destPath': destPath,
+        'maxBytes': ?maxBytes,
+      });
 
   /// The tree URIs this app holds a persisted grant for.
   Future<List<String>> persistedTrees() async {

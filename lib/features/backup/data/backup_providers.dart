@@ -16,7 +16,10 @@ abstract interface class BackupDocuments {
   Future<String?> createDocument(String name, String mime);
   Future<String?> openDocument(List<String> mimes);
   Future<void> writeDocument(String uri, String srcPath);
-  Future<void> readDocument(String uri, String destPath);
+
+  /// Copies the document to [destPath]. Fails with a [FilesChannelException]
+  /// `TOO_BIG` (partial copy removed) when it is over [maxBytes].
+  Future<void> readDocument(String uri, String destPath, {int? maxBytes});
 }
 
 class ChannelBackupDocuments implements BackupDocuments {
@@ -37,8 +40,8 @@ class ChannelBackupDocuments implements BackupDocuments {
       _channel.writeDocument(uri, srcPath);
 
   @override
-  Future<void> readDocument(String uri, String destPath) =>
-      _channel.readDocument(uri, destPath);
+  Future<void> readDocument(String uri, String destPath, {int? maxBytes}) =>
+      _channel.readDocument(uri, destPath, maxBytes: maxBytes);
 }
 
 @Riverpod(keepAlive: true)
