@@ -475,7 +475,11 @@ class AndroidFileSource implements FileSource {
     if (media.isEmpty || await _sdkInt() < 30 || _canSeeAllFiles()) {
       return true;
     }
-    if (await _guard(null, _channel.canManageMedia)) return true;
+    // No shortcut for Media management: MANAGE_MEDIA only lets the system
+    // skip the dialog, it grants no write access by itself. Without the batch
+    // request every file would hit NEEDS_CONSENT and ask on its own (one
+    // dialog per photo on API 37); when the system skips, this returns at
+    // once.
     for (final chunk in _chunks(media)) {
       final granted = await _guard(
         null,
