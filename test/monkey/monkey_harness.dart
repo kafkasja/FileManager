@@ -89,14 +89,32 @@ FakeFileSource monkeyLibrary() {
   return files;
 }
 
+/// One reported error, described when reported: describing it later can
+/// walk elements that are gone by then (and report a "deactivated widget's
+/// ancestor" error of its own).
+class ReportedError {
+  new(this.details) : text = _describe(details);
+
+  final FlutterErrorDetails details;
+  final String text;
+
+  static String _describe(FlutterErrorDetails d) {
+    try {
+      return d.toString();
+    } on Object {
+      return d.exceptionAsString();
+    }
+  }
+}
+
 /// Collects every FlutterError reported while installed.
 class ErrorCollector {
-  final List<FlutterErrorDetails> errors = [];
+  final List<ReportedError> errors = [];
   FlutterExceptionHandler? _previous;
 
   void install() {
     _previous = FlutterError.onError;
-    FlutterError.onError = errors.add;
+    FlutterError.onError = (d) => errors.add(ReportedError(d));
   }
 
   void uninstall() => FlutterError.onError = _previous;
@@ -204,13 +222,26 @@ String _screenSummary() {
 
 /// Known Flutter framework assertions that are not app bugs (see
 /// archive/notes/monkey-notes.md): TextPainter's paint-only paragraph
-/// rebuild measuring a different size after a text-scale change.
+/// rebuild measuring a different size after a text-scale change, and the
+/// ones listed inline.
 /// Also a SnackBar whose action label is wider than the bar: Material
 /// can't shrink or wrap the action (its overflow row is built by the
 /// Scaffold; the test font's 1 em glyphs make labels extra wide).
-bool _isFrameworkNoise(FlutterErrorDetails e) {
-  final text = e.toString();
+bool _isFrameworkNoise(ReportedError e) {
+  final text = e.text;
+  final stack = e.details.stack?.toString() ?? '';
   return text.contains("'debugSize == size'") ||
+      // A Tooltip's OverlayPortal laid out before its nested Overlay got
+      // the new size (sidebar animating / details pane toggled).
+      text.contains("'size == theater.size'") ||
+      // A popup menu's semantics rect while its route animates in a
+      // resized window.
+      text.contains('tried to set a non-finite rect') ||
+      // TabBarView.didChangeDependencies jumps its PageView during build
+      // and the TabBar's tab styles rebuild (desktop Devices → Transfers
+      // when the section is left mid tab change).
+      (text.contains('called during build') &&
+          stack.contains('_TabBarViewState._syncControllerOffset')) ||
       (text.contains('overflowed by') &&
           text.contains('Scaffold:file:///') &&
           find.byType(SnackBar).evaluate().isNotEmpty);
@@ -219,8 +250,7 @@ bool _isFrameworkNoise(FlutterErrorDetails e) {
 /// Overflows seen outside the supported layout envelope (not failures).
 final Set<String> layoutNotes = {};
 
-bool _isOverflow(FlutterErrorDetails e) =>
-    e.exceptionAsString().contains('overflowed by');
+bool _isOverflow(ReportedError e) => e.text.contains('overflowed by');
 
 void _check(
   WidgetTester tester,
@@ -232,18 +262,19 @@ void _check(
 ) {
   if (!monkey.layoutSupported) {
     for (final e in collector.errors.where(_isOverflow)) {
-      final where = RegExp(r'(\w+):file:///\S*?/(lib/\S+)')
-          .firstMatch(e.toString());
+      final where = RegExp(r'(\w+):file:///\S*?/(lib/\S+)').firstMatch(e.text);
       final note =
-          '${where?.group(2) ?? e.exceptionAsString()} '
+          '${where?.group(2) ?? e.details.exceptionAsString()} '
           '(${monkey.envelope})';
       if (layoutNotes.add(note)) debugPrint('MONKEY NOTE overflow $note');
     }
     collector.errors.removeWhere(_isOverflow);
   }
   for (final e in collector.errors.where(_isFrameworkNoise)) {
-    if (layoutNotes.add('framework: ${e.exceptionAsString()}')) {
-      debugPrint('MONKEY NOTE framework assert ${e.exceptionAsString()}');
+    if (layoutNotes.add('framework: ${e.details.exceptionAsString()}')) {
+      debugPrint(
+        'MONKEY NOTE framework assert ${e.details.exceptionAsString()}',
+      );
     }
   }
   collector.errors.removeWhere(_isFrameworkNoise);
@@ -262,8 +293,10 @@ void _check(
   for (final e in collector.errors.take(3)) {
     // Includes the error-causing widget's creation location.
     buf
-      ..writeln(e.toString().split('\n').take(40).join('\n'))
-      ..writeln(e.stack?.toString().split('\n').take(30).join('\n') ?? '');
+      ..writeln(e.text.split('\n').take(40).join('\n'))
+      ..writeln(
+        e.details.stack?.toString().split('\n').take(30).join('\n') ?? '',
+      );
   }
   collector.errors.clear();
   throw TestFailure(buf.toString());
