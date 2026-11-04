@@ -31,9 +31,9 @@ class AdaptiveListTile extends StatelessWidget {
   /// Passed on while the trailing widget stays at the end.
   final bool? isThreeLine;
 
-  /// Narrower than this (a desktop settings pane in an 800 px window), the
-  /// trailing widget also moves under the text: ListTile asserts when it
-  /// takes the whole row.
+  /// Narrower than this (a desktop settings pane in an 800 px window, a
+  /// phone at text 1.3; grows with the text size), the trailing widget also
+  /// moves under the text: ListTile asserts when it takes the whole row.
   static const narrowWidth = 360.0;
 
   @override
@@ -42,7 +42,9 @@ class AdaptiveListTile extends StatelessWidget {
       context,
       below:
           trailing != null &&
-          (isBigText(context) || box.maxWidth < narrowWidth),
+          (isBigText(context) ||
+              box.maxWidth <
+                  MediaQuery.textScalerOf(context).scale(narrowWidth)),
     ),
   );
 
