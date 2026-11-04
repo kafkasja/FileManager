@@ -1583,12 +1583,18 @@ String _$windowsShareCheckHash() => r'e3fb6db68eb366fcea38c4955aff8c57a650cae3';
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
 /// notification; PL1: Windows behind a tray icon.
+///
+/// X8: both go through [backgroundPresence], which also keeps transfers and
+/// local jobs alive: one service / one tray icon.
 
 @ProviderFor(shareBackground)
 final shareBackgroundProvider = ShareBackgroundProvider._();
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
 /// notification; PL1: Windows behind a tray icon.
+///
+/// X8: both go through [backgroundPresence], which also keeps transfers and
+/// local jobs alive: one service / one tray icon.
 
 final class ShareBackgroundProvider
     extends
@@ -1596,6 +1602,9 @@ final class ShareBackgroundProvider
     with $Provider<ShareBackground> {
   /// N5b: Android keeps sharing running in the background behind an ongoing
   /// notification; PL1: Windows behind a tray icon.
+  ///
+  /// X8: both go through [backgroundPresence], which also keeps transfers and
+  /// local jobs alive: one service / one tray icon.
   ShareBackgroundProvider._()
     : super(
         from: null,
@@ -1629,7 +1638,7 @@ final class ShareBackgroundProvider
   }
 }
 
-String _$shareBackgroundHash() => r'39a49e8e10b9bbd811e19e724b7a8779aa6c4862';
+String _$shareBackgroundHash() => r'd71375e834e3a173bee3c3244a275676267692de';
 
 /// Every route the share server serves. N2/N3/N4/N7/N10 append theirs here.
 
@@ -1681,7 +1690,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'd0dda99a56c437ababe177241593e908af44da9c';
+String _$shareServerRoutesHash() => r'e7d71708c4191515d048ea760830e7afc33d134d';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

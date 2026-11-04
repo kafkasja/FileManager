@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:kfm/core/platform/windows/desktop_shell.dart';
 import 'package:meta/meta.dart';
-import 'package:permission_handler/permission_handler.dart' as ph;
 
 /// Texts of the ongoing sharing notification (built from l10n in Dart; the
 /// Android side only displays them).
@@ -92,57 +89,6 @@ abstract interface class ShareBackground {
   /// Android 13+ when notifications are denied (Q8: the share screen then
   /// doesn't promise one).
   Future<bool> notificationsAllowed();
-}
-
-/// `kfm/share_service` (`ShareServiceChannel.kt`).
-class AndroidShareBackground implements ShareBackground {
-  new({MethodChannel? channel})
-    : _channel = channel ?? const MethodChannel('kfm/share_service') {
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'stopRequested') _stops.add(null);
-    });
-  }
-
-  final MethodChannel _channel;
-  final StreamController<void> _stops = StreamController.broadcast();
-  bool _askedNotifications = false;
-
-  @override
-  bool get supported => Platform.isAndroid;
-
-  @override
-  Future<void> show(ShareNotificationTexts texts) async {
-    if (!_askedNotifications) {
-      _askedNotifications = true;
-      // API 33+: without it the service still runs, but the notification
-      // (and its Stop) only shows in the system's active-apps list.
-      await ph.Permission.notification.request();
-    }
-    await _channel.invokeMethod<void>('show', texts.toMap());
-  }
-
-  @override
-  Future<void> stop() => _channel.invokeMethod<void>('stop');
-
-  @override
-  Stream<void> get stopRequests => _stops.stream;
-
-  @override
-  Future<void> showOffer(OfferNotificationTexts texts) =>
-      _channel.invokeMethod<void>('showOffer', texts.toMap());
-
-  @override
-  Future<void> cancelOffer() => _channel.invokeMethod<void>('cancelOffer');
-
-  @override
-  Future<bool> notificationsAllowed() async {
-    try {
-      return await ph.Permission.notification.isGranted;
-    } on Object {
-      // Unknown: keep the usual text.
-      return true;
-    }
-  }
 }
 
 /// Desktop, iOS and tests.

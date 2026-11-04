@@ -9,6 +9,8 @@
          and keeps CPU + Wi-Fi up while it runs. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- X8: transfers, local copies and incoming uploads keep running in the background. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"
@@ -110,11 +112,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- N5b background sharing. -->
+        <!-- N5b background sharing + X8 background transfers/copies (one service). -->
         <service
             android:name=".ShareService"
             android:exported="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:foregroundServiceType="connectedDevice|dataSync" />
+        <!-- X8: Pause / Resume / Cancel / Stop on KFM's notifications. -->
+        <receiver
+            android:name=".JobActionReceiver"
+            android:exported="false" />
         <!-- U2 (h): mount times of cards/USB drives, also while KFM is closed. -->
         <receiver
             android:name=".MountTimesReceiver"

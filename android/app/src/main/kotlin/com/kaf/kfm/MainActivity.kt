@@ -54,7 +54,18 @@ class MainActivity : FlutterActivity() {
         live = WeakReference(this)
         // No other instance is alive: any other KFM task in Recents is an empty duplicate.
         removeOtherTasks()
-        if (savedInstanceState == null && !fromHistory) takeShare(intent)
+        if (savedInstanceState == null && !fromHistory) {
+            takeShare(intent)
+            // X8: a tap on the job notification started KFM: Dart asks.
+            if (takeOpenTransfers(intent)) ShareService.pendingOpen = true
+        }
+    }
+
+    /** X8: the job notification's tap (once). */
+    private fun takeOpenTransfers(intent: Intent?): Boolean {
+        if (intent?.getStringExtra(ShareService.EXTRA_OPEN) == null) return false
+        intent.removeExtra(ShareService.EXTRA_OPEN)
+        return true
     }
 
     override fun onDestroy() {
@@ -118,6 +129,7 @@ class MainActivity : FlutterActivity() {
         super.onNewIntent(intent)
         mtpChannel?.onNewIntent(intent)
         takeShare(intent)
+        if (takeOpenTransfers(intent)) shareServiceChannel?.openTransfers()
     }
 
     @Deprecated("Needed for MediaStore consent dialogs and the SAF tree picker")

@@ -267,6 +267,9 @@ class WindowsChannelException implements Exception {
 ///
 /// Calls from the native side (`events`): `volumesChanged` (a volume
 /// arrived / was removed) and `power {state: suspend|resume}`.
+/// X8: `ITaskbarList3::SetProgressState` states.
+enum TaskbarProgress { none, normal, paused, error, indeterminate }
+
 class WindowsChannel {
   new({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(name);
@@ -405,6 +408,14 @@ class WindowsChannel {
     }
     return result;
   }
+
+  /// X8: the taskbar button's progress ([value] 0..100; ignored for
+  /// [TaskbarProgress.none] and [TaskbarProgress.indeterminate]).
+  Future<void> setTaskbarProgress(TaskbarProgress state, [int value = 0]) =>
+      _call<void>('setTaskbarProgress', {
+        'state': state.name,
+        'value': value.clamp(0, 100),
+      });
 
   Future<bool> networkIsPublic() async =>
       await _call<bool>('networkIsPublic') ?? false;

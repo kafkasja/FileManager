@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
@@ -10,6 +12,8 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
+import 'package:kfm/features/background_jobs/data/background_jobs_providers.dart';
+import 'package:kfm/features/background_jobs/data/background_presence.dart';
 import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
@@ -34,6 +38,22 @@ class App extends ConsumerStatefulWidget {
 
 class _AppState extends ConsumerState<App> {
   late final AppLifecycleListener _lifecycle;
+  BackgroundPresence? _presence;
+  StreamSubscription<void>? _openTransfers;
+
+  /// X8: a tap on the job notification opens Transfers.
+  void _followPresence(BackgroundPresence presence) {
+    if (identical(presence, _presence)) return;
+    _presence = presence;
+    unawaited(_openTransfers?.cancel());
+    _openTransfers = presence.openRequests.listen((_) {
+      final router = ref.read(routerProvider);
+      final here = router.routerDelegate.currentConfiguration.uri.path;
+      if (here != AppRoutes.transfers) {
+        unawaited(router.push(AppRoutes.transfers));
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -57,6 +77,7 @@ class _AppState extends ConsumerState<App> {
   @override
   void dispose() {
     _lifecycle.dispose();
+    unawaited(_openTransfers?.cancel());
     super.dispose();
   }
 
@@ -101,6 +122,8 @@ class _AppState extends ConsumerState<App> {
       // B9: the ⋮ menu reads favorites synchronously; listen (not watch) so
       // the set stays loaded without rebuilding the app on each change.
       ..listen(favoriteIdsProvider, (_, _) {});
+    // X8: the progress notification / tray / taskbar while jobs run.
+    _followPresence(ref.watch(backgroundPresenceProvider));
     // L1: color theme; System without a wallpaper palette falls back to blue.
     final accent = ref.watch(themeAccentProvider).value ?? AppAccent.blue;
     final seed = accentSeed(

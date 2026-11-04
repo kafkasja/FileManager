@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/widgets.dart';
 
-import 'package:kfm/app/theme/theme_providers.dart';
+import 'package:kfm/app/notification_l10n.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/share_background.dart';
@@ -38,10 +38,19 @@ class ShareServerController extends _$ShareServerController {
 
   @override
   ShareServerState build() {
-    ref.onDispose(() {
-      _stopWatchingLifecycle();
-      unawaited(_stopBackground());
-    });
+    ref
+      ..onDispose(() {
+        _stopWatchingLifecycle();
+        unawaited(_stopBackground());
+      })
+      // X8: a language switch renames the running notification at once.
+      ..listen(notificationL10nProvider, (_, _) {
+        if (_sessionsSub == null) return;
+        _shown = null;
+        unawaited(
+          _showNotification(ref.read(clientSessionStoreProvider).sessions),
+        );
+      });
     return ShareServerState.stopped;
   }
 
@@ -95,17 +104,8 @@ class ShareServerController extends _$ShareServerController {
     }
   }
 
-  AppLocalizations _notificationL10n() {
-    final locale =
-        ref.read(appLocaleProvider).value ??
-        WidgetsBinding.instance.platformDispatcher.locale;
-    final supported = AppLocalizations.supportedLocales.any(
-      (l) => l.languageCode == locale.languageCode,
-    );
-    return lookupAppLocalizations(
-      supported ? locale : AppLocalizations.supportedLocales.first,
-    );
-  }
+  /// KFM's language (the setting, or the system's), X8.
+  AppLocalizations _notificationL10n() => ref.read(notificationL10nProvider);
 
   Future<void> _stopBackground() async {
     final hadService = _shown != null || _sessionsSub != null;

@@ -29,6 +29,17 @@ class FakeWindowsChannel implements WindowsChannel {
   final Set<String> lockedPaths = {};
   final List<String> calls = [];
 
+  /// X8: taskbar progress calls, in order.
+  final List<(TaskbarProgress, int)> taskbar = [];
+
+  @override
+  Future<void> setTaskbarProgress(
+    TaskbarProgress state, [
+    int value = 0,
+  ]) async {
+    taskbar.add((state, value));
+  }
+
   /// trashId → (original path, stored path, deleted at).
   final Map<String, (String, String, DateTime)> bin = {};
   var _next = 0;

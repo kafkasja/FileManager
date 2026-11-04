@@ -13,6 +13,9 @@ import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
+import 'package:kfm/features/background_jobs/data/android_presence_port.dart';
+import 'package:kfm/features/background_jobs/data/background_jobs_providers.dart';
+import 'package:kfm/features/background_jobs/data/presence_share_background.dart';
 import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/camera_access.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
@@ -406,11 +409,30 @@ WindowsShareCheck? windowsShareCheck(Ref ref) {
 
 /// N5b: Android keeps sharing running in the background behind an ongoing
 /// notification; PL1: Windows behind a tray icon.
+///
+/// X8: both go through [backgroundPresence], which also keeps transfers and
+/// local jobs alive: one service / one tray icon.
 @Riverpod(keepAlive: true)
 ShareBackground shareBackground(Ref ref) {
-  if (Platform.isAndroid) return AndroidShareBackground();
+  final port = ref.watch(presencePortProvider);
+  if (port is AndroidPresencePort) {
+    return PresenceShareBackground(
+      ref.watch(backgroundPresenceProvider),
+      showOffer: port.showOffer,
+      cancelOffer: port.cancelOffer,
+      notificationsAllowed: port.notificationsAllowed,
+    );
+  }
   final shell = ref.watch(desktopShellProvider);
-  if (shell != null) return TrayShareBackground(shell);
+  if (shell != null) {
+    return PresenceShareBackground(
+      ref.watch(backgroundPresenceProvider),
+      // N12: an incoming offer brings the window to the front.
+      showOffer: (_) => shell.showAndFocus(),
+      cancelOffer: () async {},
+      notificationsAllowed: () async => true,
+    );
+  }
   return const NoShareBackground();
 }
 
