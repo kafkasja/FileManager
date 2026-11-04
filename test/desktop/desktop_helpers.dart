@@ -5,6 +5,7 @@ import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/features/folders/data/folder_tree_transfer.dart';
 
 import '../core/files/fake_file_source.dart';
+import '../features/swipe/fake_video.dart';
 import '../helpers/pump_app.dart';
 
 /// The desktop window size the PL3 tests use.
@@ -27,6 +28,7 @@ FakeFileSource desktopLibrary(int n, {String folder = '/s/DCIM'}) {
 Future<TestApp> pumpDesktopApp(
   WidgetTester tester, {
   FakeFileSource? files,
+  FakeVideoFactory? videos,
   List<Override> overrides = const [],
 }) async {
   tester.view
@@ -36,6 +38,7 @@ Future<TestApp> pumpDesktopApp(
   final app = await pumpApp(
     tester,
     files: files,
+    videos: videos,
     overrides: [
       formFactorProvider.overrideWithValue(FormFactor.desktop),
       // The fake file source has no disk folders to remove.

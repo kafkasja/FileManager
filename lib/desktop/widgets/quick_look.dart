@@ -7,6 +7,7 @@ import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
+import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
 
 /// An action button (and key) inside Quick look.
 @immutable
@@ -95,6 +96,13 @@ class _QuickLookState extends ConsumerState<_QuickLook> {
       return KeyEventResult.ignored;
     }
     final key = e.logicalKey;
+    // A video: Space plays / pauses it (Esc closes); otherwise Space closes.
+    if (key == LogicalKeyboardKey.space && file?.kind == FileKind.video) {
+      if (e is KeyDownEvent) {
+        ref.read(videoPausedProvider.notifier).toggle(file!.id);
+      }
+      return KeyEventResult.handled;
+    }
     if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.space) {
       _close();
       return KeyEventResult.handled;

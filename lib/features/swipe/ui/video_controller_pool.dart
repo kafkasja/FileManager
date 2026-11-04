@@ -243,3 +243,17 @@ class VideoMuted extends _$VideoMuted {
 
   void toggle() => state = !state;
 }
+
+/// Desktop: the videos the user paused (click on the video, the bar's
+/// play/pause button, Space). A pause sticks until they play it again,
+/// whatever shows the video next (Quick look, the viewer); the phone never
+/// pauses (videos loop, S5).
+@Riverpod(keepAlive: true)
+class VideoPaused extends _$VideoPaused {
+  @override
+  Set<String> build() => const {};
+
+  void toggle(String fileId) => state = state.contains(fileId)
+      ? ({...state}..remove(fileId))
+      : {...state, fileId};
+}

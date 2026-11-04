@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
@@ -25,7 +27,9 @@ class VideoSurface extends ConsumerStatefulWidget {
   final FileRef file;
 
   /// PL3 Quick look: a desktop control bar (play/pause, a scrub slider you
-  /// can click or drag, times, sound) instead of the thin phone bar.
+  /// can click or drag, times, sound) instead of the thin phone bar. The
+  /// desktop app always gets it (the viewer too), and a click on the video
+  /// plays / pauses it ([VideoPaused]).
   final bool desktopControls;
 
   /// Only the current card plays; others are prepared but paused.
@@ -47,7 +51,16 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   /// hidden deck doesn't play, and plays again when shown (B7).
   bool? _visible;
 
-  bool get _shouldPlay => widget.active && (_visible ?? true);
+  bool get _desktop =>
+      widget.desktopControls || ref.read(formFactorProvider).isDesktop;
+
+  bool get _pausedByUser =>
+      _desktop && ref.read(videoPausedProvider).contains(widget.file.id);
+
+  bool get _shouldPlay => widget.active && (_visible ?? true) && !_pausedByUser;
+
+  void _togglePlay() =>
+      ref.read(videoPausedProvider.notifier).toggle(widget.file.id);
 
   @override
   void didChangeDependencies() {
@@ -114,11 +127,19 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(videoMutedProvider, (_, muted) {
-      _handle?.setVolume(muted ? 0 : 1).ignore();
-    });
+    ref
+      ..listen(videoMutedProvider, (_, muted) {
+        _handle?.setVolume(muted ? 0 : 1).ignore();
+      })
+      // Desktop: a pause / play from the bar, a click or Space.
+      ..listen(
+        videoPausedProvider.select((s) => s.contains(widget.file.id)),
+        (_, _) => unawaited(_applyPlayback()),
+      );
     final handle = _handle;
     final muted = ref.watch(videoMutedProvider);
+    final desktop =
+        widget.desktopControls || ref.watch(formFactorProvider).isDesktop;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -132,12 +153,32 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
           ),
         if (_error != null)
           Center(child: _Pill(text: context.l10n.videoCantPlay)),
-        if (widget.desktopControls) ...[
+        if (desktop) ...[
+          // A click on the picture plays / pauses (only once this surface
+          // plays: an inactive one leaves the click to its parent, e.g.
+          // B7's ▶).
+          if (handle != null && widget.active)
+            GestureDetector(
+              key: const ValueKey('desktop-video-area'),
+              behavior: HitTestBehavior.opaque,
+              onTap: _togglePlay,
+            ),
           if (handle != null)
             Align(
               alignment: Alignment.bottomCenter,
-              // Mouse only: ← → stay Quick look's previous / next.
-              child: ExcludeFocus(child: DesktopVideoBar(handle: handle)),
+              // Mouse only: ← → stay Quick look's previous / next. In the
+              // fullscreen viewer it sits above the action buttons.
+              child: Padding(
+                padding: EdgeInsetsDirectional.only(
+                  bottom: widget.fullscreen ? 72 : 0,
+                ),
+                child: ExcludeFocus(
+                  child: DesktopVideoBar(
+                    handle: handle,
+                    onTogglePlay: _togglePlay,
+                  ),
+                ),
+              ),
             ),
         ] else ...[
           PositionedDirectional(
@@ -184,9 +225,13 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
 /// drag to seek; seeks are throttled to one per 80 ms while dragging),
 /// duration and sound.
 class DesktopVideoBar extends ConsumerStatefulWidget {
-  const new({required this.handle, super.key});
+  const new({required this.handle, this.onTogglePlay, super.key});
 
   final VideoHandle handle;
+
+  /// The play/pause button (VideoSurface keeps the user's pause); without
+  /// it the button calls the handle directly.
+  final VoidCallback? onTogglePlay;
 
   @override
   ConsumerState<DesktopVideoBar> createState() => _DesktopVideoBarState();
@@ -225,7 +270,11 @@ class _DesktopVideoBarState extends ConsumerState<DesktopVideoBar> {
         return Material(
           key: const ValueKey('desktop-video-bar'),
           color: Colors.black54,
-          child: Padding(
+          // A fixed height: the Slider takes all the height it is offered,
+          // which made the bar cover the whole video (clicks on the
+          // picture hit the bar, the picture was dimmed).
+          child: Container(
+            height: 48,
             padding: const EdgeInsetsDirectional.symmetric(horizontal: 8),
             child: Row(
               children: [
@@ -234,11 +283,13 @@ class _DesktopVideoBarState extends ConsumerState<DesktopVideoBar> {
                   tooltip: value.isPlaying ? l10n.videoPause : l10n.videoPlay,
                   color: white,
                   icon: Icon(value.isPlaying ? Icons.pause : Icons.play_arrow),
-                  onPressed: () =>
-                      (value.isPlaying
-                              ? widget.handle.pause()
-                              : widget.handle.play())
-                          .ignore(),
+                  onPressed:
+                      widget.onTogglePlay ??
+                      () =>
+                          (value.isPlaying
+                                  ? widget.handle.pause()
+                                  : widget.handle.play())
+                              .ignore(),
                 ),
                 Text(
                   formatDuration(position),
@@ -382,5 +433,32 @@ class _Pill extends StatelessWidget {
         Text(text, style: const TextStyle(color: Colors.white)),
       ],
     ),
+  );
+}
+
+/// Desktop viewers: Space plays / pauses [file] when it is a video
+/// ([VideoPaused]). Takes the keyboard focus when shown.
+class DesktopVideoKeys extends ConsumerWidget {
+  const new({required this.file, required this.child, super.key});
+
+  final FileRef? file;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Focus(
+    autofocus: true,
+    onKeyEvent: (_, e) {
+      final f = file;
+      if (f == null ||
+          f.kind != FileKind.video ||
+          e.logicalKey != LogicalKeyboardKey.space) {
+        return KeyEventResult.ignored;
+      }
+      if (e is KeyDownEvent) {
+        ref.read(videoPausedProvider.notifier).toggle(f.id);
+      }
+      return KeyEventResult.handled;
+    },
+    child: child,
   );
 }
