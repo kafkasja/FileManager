@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/app_scaffold.dart';
 import 'package:kfm/app/form_factor.dart';
+import 'package:kfm/app/layout/portrait_lock.dart';
 import 'package:kfm/app/router_extra_codec.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
@@ -251,8 +252,9 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.swipe,
-                builder: (context, state) =>
-                    desktop ? desktopSortScreen() : const SwipeScreen(),
+                builder: (context, state) => desktop
+                    ? desktopSortScreen()
+                    : const PortraitLock(child: SwipeScreen()),
                 routes: [
                   GoRoute(
                     path: 'rename',

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/portrait_lock.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
@@ -52,7 +53,7 @@ class RemoteSwipeScreen extends ConsumerWidget {
     return SwipeDeckScope(
       sourceId: sourceId,
       deviceName: _deviceName(ref, peerFingerprint, session),
-      child: SwipeScreen(sourceId: sourceId),
+      child: PortraitLock(child: SwipeScreen(sourceId: sourceId)),
     );
   }
 }
