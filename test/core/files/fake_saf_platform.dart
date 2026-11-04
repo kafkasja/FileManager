@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -94,6 +95,19 @@ class FakeSafPlatform implements SafPlatform {
   bool existsPath(String path) =>
       _nodes.containsKey(path == root ? '' : path.substring(root.length + 1));
 
+  /// Q5: the names directly in the folder at [path].
+  List<String> childNames(String path) {
+    final rel = path == root ? '' : path.substring(root.length + 1);
+    final prefix = rel.isEmpty ? '' : '$rel/';
+    return [
+      for (final k in _nodes.keys)
+        if (k.startsWith(prefix) &&
+            k.length > prefix.length &&
+            !k.substring(prefix.length).contains('/'))
+          k.substring(prefix.length),
+    ];
+  }
+
   List<int>? bytesAt(String path) =>
       _nodes[path.substring(root.length + 1)]?.bytes;
 
@@ -102,6 +116,10 @@ class FakeSafPlatform implements SafPlatform {
 
   /// Q4: when set, importFile throws it (e.g. the volume is full).
   Exception? importFailure;
+
+  /// Q5: an import of a matching name lands, then never returns (the
+  /// process "dies" before the app records it).
+  bool Function(String name)? hangAfterImport;
 
   void _removeTree(String rel) =>
       _nodes.removeWhere((k, _) => k == rel || k.startsWith('$rel/'));
@@ -176,6 +194,9 @@ class FakeSafPlatform implements SafPlatform {
       bytes = Uint8List.fromList([...bytes, 0]);
     }
     _nodes[rel] = _Node.file(bytes);
+    if (hangAfterImport?.call(name) ?? false) {
+      await Completer<void>().future;
+    }
     return _row(rel);
   }
 

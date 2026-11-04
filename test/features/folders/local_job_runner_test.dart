@@ -50,9 +50,10 @@ void main() {
     bool fat32 = false,
     int? fatMax,
     VolumeActivityTracker? tracker,
+    LocalJobsDao? withDao,
   }) => LocalJobRunner(
     onJobEnded: () => jobsEnded++,
-    dao: dao,
+    dao: withDao ?? dao,
     files: s.router,
     crossPlace: s.router.crossPlace,
     verifiedMove: moves,
@@ -141,6 +142,69 @@ void main() {
     expect(moves.calls, isEmpty);
     expect(indexed.single.name, 'a.jpg');
     expect(await s.router.stat(usb.id), isNotNull);
+  });
+
+  test('Q5: killed mid-import (file DB): the next start sweeps the temp, '
+      'resumes and ends with one copy per file, each original once', () async {
+    final dir = Directory.systemTemp.createTempSync('kfm_q5_job');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    AppDatabase open() => AppDatabase(
+      NativeDatabase(
+        File('${dir.path}/kfm.sqlite'),
+        setup: AppDatabase.setupConnection,
+      ),
+    );
+    final dbA = open();
+    final queueA = DbWriteQueue();
+    final daoA = LocalJobsDao(dbA, queueA);
+    final runnerA = build(withDao: daoA);
+    final files = addLocal(3);
+    // The second file's import lands under its temp name, then the app dies.
+    s.safFake.hangAfterImport = (name) => name.contains('-1');
+    final id = await runnerA.start(
+      LocalJobRequest(
+        mode: LocalJobMode.move,
+        files: files,
+        targetFolder: '${s.usb}/Photos',
+      ),
+    );
+    while (!s.safFake.calls.any(
+      (c) => c.startsWith('importFile') && c.contains('-1'),
+    )) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    await queueA.flush();
+    await dbA.close(); // the process is gone; runnerA never returns
+
+    s.safFake.hangAfterImport = null;
+    final dbB = open();
+    final queueB = DbWriteQueue();
+    addTearDown(() async {
+      await queueB.close();
+      await dbB.close();
+    });
+    final daoB = LocalJobsDao(dbB, queueB);
+    final runnerB = build(withDao: daoB);
+    await runnerB.recover();
+    await queueB.flush();
+    expect((await daoB.job(id))!.status, LocalJobStatus.paused);
+    await runnerB.resume(id);
+    await runnerB.idle;
+    await queueB.flush();
+
+    final job = (await daoB.job(id))!;
+    expect(job.status, LocalJobStatus.done);
+    final names = s.safFake.childNames('${s.usb}/Photos')..sort();
+    expect(names, ['p0.jpg', 'p1.jpg', 'p2.jpg']);
+    for (var i = 0; i < 3; i++) {
+      expect(s.safFake.bytesAt('${s.usb}/Photos/p$i.jpg'), [i, i, i]);
+    }
+    final finalized = [
+      for (final call in moves.calls)
+        for (final o in call) o.original.id,
+    ];
+    expect(finalized..sort(), [for (final f in files) f.id]..sort());
+    expect(s.staging.listSync(), isEmpty);
   });
 
   group('Q4 disk full / failing source mid-copy', () {
