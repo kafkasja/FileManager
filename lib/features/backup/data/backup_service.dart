@@ -236,9 +236,18 @@ class BackupService {
     int? switchTo;
     await _queue.enqueue(null, () async {
       final snapshotName = await _writeSnapshot(await _snapshot());
+      // Q5: the previous import's marker goes first. Were the app killed
+      // between this import's transaction and its marker, "Undo last
+      // import" must not restore the older snapshot (losing this import
+      // and everything changed since that one).
+      final old = File(p.join((await _snapshotDir()).path, _undoMarker));
+      if (old.existsSync()) await old.delete();
       switchTo = await _db.transaction(() => _applyPlan(plan, applySettings));
       final dir = await _snapshotDir();
-      await File(p.join(dir.path, _undoMarker)).writeAsString(snapshotName);
+      final marker = File(p.join(dir.path, _undoMarker));
+      final tmp = File('${marker.path}.tmp');
+      await tmp.writeAsString(snapshotName, flush: true);
+      await tmp.rename(marker.path);
       await _prune(dir);
     });
     return switchTo;

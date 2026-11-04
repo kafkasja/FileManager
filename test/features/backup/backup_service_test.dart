@@ -11,6 +11,7 @@ import 'package:kfm/core/db/settings/settings_repository.dart';
 import 'package:kfm/features/backup/data/backup_service.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:path/path.dart' as p;
 
 import 'backup_test_utils.dart';
 
@@ -315,6 +316,58 @@ void main() {
     await b.service.undoLastImport();
     expect(await dumpUserTables(b.db), before);
     expect(await b.service.canUndo(), isFalse);
+  });
+
+  test('Q5: killed between an import and its undo marker, undo never '
+      "restores an older import's snapshot", () async {
+    await seedA();
+    await seedB();
+    var t = DateTime.utc(2026, 11, 2, 10);
+    var calls = 0;
+    var breakMarker = false;
+    final backups = Directory('${b.dir.path}/backups');
+    final service = BackupService(
+      b.db,
+      b.queue,
+      // The marker is written through the 3rd snapshotDir call of apply.
+      snapshotDir: () async {
+        calls++;
+        return breakMarker && calls == 3
+            ? Directory('${b.dir.path}/gone/away')
+            : backups;
+      },
+      clock: () => t = t.add(const Duration(minutes: 1)),
+    );
+    final data = await service.decode(await a.service.exportJson());
+    await service.apply(
+      await service.plan(data, importedSuffix: 'imported'),
+      applySettings: true,
+    );
+    expect(await service.canUndo(), isTrue);
+    await addTag(b.db, 'After first import');
+    final afterFirst = await dumpUserTables(b.db);
+
+    // Second import: the transaction commits, then the app "dies" before
+    // the marker is written.
+    calls = 0;
+    breakMarker = true;
+    await expectLater(
+      service.apply(
+        await service.plan(data, importedSuffix: 'again'),
+        applySettings: true,
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+    breakMarker = false;
+    // (Importing the same data again changes nothing; the point is undo.)
+    expect(await dumpUserTables(b.db), afterFirst);
+    // No undo rather than a wrong one (the first snapshot predates the tag
+    // added after the first import).
+    expect(await service.canUndo(), isFalse);
+    expect(
+      backups.listSync().map((e) => p.basename(e.path)),
+      isNot(contains('undo-target.tmp')),
+    );
   });
 
   test('keeps only the newest 3 snapshots', () async {

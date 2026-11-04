@@ -681,6 +681,7 @@ class TransferEngine {
           limit: free,
           exclude: _running.keys.toSet(),
           now: _repo.now(),
+          maxRetryWait: retryCap,
         );
         for (final q in next) {
           if (_disposed || _running.length >= maxRunning) break;

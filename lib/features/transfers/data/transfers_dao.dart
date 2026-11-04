@@ -121,13 +121,18 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
 
   /// Queued files of [deviceFingerprint]'s jobs that aren't paused, oldest
   /// job first, then in `seq` order; [exclude] are already running, files
-  /// waiting for a retry after [now] are skipped (N10).
+  /// waiting for a retry after [now] are skipped (N10). A wait longer
+  /// than [maxRetryWait] (the backoff cap) can only mean the clock went
+  /// back since it was scheduled: such a file is due now (Q5), instead of
+  /// waiting until the wall clock catches up (a day for a -1 day jump).
   Future<List<QueuedTransferFile>> nextQueued(
     String deviceFingerprint, {
     required int limit,
     Set<int> exclude = const {},
     DateTime? now,
+    Duration? maxRetryWait,
   }) async {
+    final at = now ?? DateTime.now();
     final query =
         select(transferFiles).join([
             innerJoin(
@@ -145,9 +150,12 @@ class TransfersDao extends DatabaseAccessor<AppDatabase>
                 transferFiles.id.isNotIn(exclude) &
                 transfers.pauseReason.isNull() &
                 (transferFiles.nextRetryAt.isNull() |
-                    transferFiles.nextRetryAt.isSmallerOrEqualValue(
-                      now ?? DateTime.now(),
-                    )),
+                    transferFiles.nextRetryAt.isSmallerOrEqualValue(at) |
+                    (maxRetryWait == null
+                        ? const Constant(false)
+                        : transferFiles.nextRetryAt.isBiggerThanValue(
+                            at.add(maxRetryWait),
+                          ))),
           )
           ..orderBy([
             OrderingTerm.asc(transfers.createdAt),
