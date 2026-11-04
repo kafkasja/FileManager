@@ -7,6 +7,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/platform/windows/windows_clipboard.dart';
+import 'package:kfm/desktop/browse/desktop_breadcrumb.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_clipboard.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
@@ -498,7 +499,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _Breadcrumb(folder: st.folder, onOpen: _nav.open),
+                child: DesktopBreadcrumb(folder: st.folder, onOpen: _nav.open),
               ),
               if (lastOp != null) ...[
                 FilledButton.tonalIcon(
@@ -678,63 +679,6 @@ class _FolderTile extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Places › C: › Users › … ; each part opens that folder.
-class _Breadcrumb extends StatelessWidget {
-  const new({required this.folder, required this.onOpen});
-
-  final String? folder;
-  final ValueChanged<String?> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final parts = <(String?, String)>[(null, l10n.desktopSidebarPlaces)];
-    final f = folder;
-    if (f != null) {
-      final abs = f.startsWith('/');
-      var acc = '';
-      for (final seg in f.split('/')) {
-        if (seg.isEmpty) continue;
-        acc = acc.isEmpty && !abs ? seg : '$acc/$seg';
-        parts.add((acc, seg));
-      }
-    }
-    final theme = Theme.of(context);
-    return Container(
-      height: scaledExtent(context, 34),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        reverse: true,
-        child: Row(
-          children: [
-            for (final (i, (path, label)) in parts.indexed) ...[
-              if (i > 0)
-                Icon(
-                  Icons.chevron_right,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              TextButton(
-                key: ValueKey('crumb-${path ?? ''}'),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  foregroundColor: theme.colorScheme.onSurface,
-                ),
-                onPressed: () => onOpen(path),
-                child: Text(label),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
