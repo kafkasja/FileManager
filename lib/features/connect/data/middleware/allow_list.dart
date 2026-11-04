@@ -69,22 +69,28 @@ class GuardInput {
   /// The JSON object body; throws [FormatException] when it isn't one.
   Future<Map<String, Object?>> json() async {
     if (_json case final j?) return j;
-    if (_bytes == null) {
-      final all = <int>[];
-      await for (final chunk in request.read()) {
-        all.addAll(chunk);
-        // Also on size-limit-exempt routes (N10 chunks).
-        if (all.length > kMaxJsonBodyBytes) {
-          throw const FormatException('body too large');
-        }
-      }
-      _bytes = all;
-    }
-    final decoded = jsonDecode(utf8.decode(_bytes!));
+    final decoded = jsonDecode(utf8.decode(await _read()));
     if (decoded is! Map<String, Object?>) {
       throw const FormatException('body is not a JSON object');
     }
     return _json = decoded;
+  }
+
+  /// Like [json] for an optional body: null when it is empty.
+  Future<Map<String, Object?>?> optionalJson() async =>
+      (await _read()).isEmpty ? null : await json();
+
+  Future<List<int>> _read() async {
+    if (_bytes case final b?) return b;
+    final all = <int>[];
+    await for (final chunk in request.read()) {
+      all.addAll(chunk);
+      // Also on size-limit-exempt routes (N10 chunks).
+      if (all.length > kMaxJsonBodyBytes) {
+        throw const FormatException('body too large');
+      }
+    }
+    return _bytes = all;
   }
 
   Request forward() => _bytes == null ? request : request.change(body: _bytes);
