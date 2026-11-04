@@ -220,9 +220,10 @@ class _FileViewerState extends ConsumerState<FileViewer> {
             SwipeFeedback.apply(context, ref, deck!, _toast, action);
           }
         },
-        // Video: tap = sound (S5); images: tap toggles the info bar.
+        // Video: tap = play / pause (the pill's icon mutes); images: tap
+        // toggles the info bar.
         onTap: file.kind == FileKind.video
-            ? ref.read(videoMutedProvider.notifier).toggle
+            ? () => ref.read(videoPausedProvider.notifier).toggle(file.id)
             : () => setState(() => _chrome = !_chrome),
         onDoubleTapDown: _toggleZoom,
         onPinchUpdate: (d) {
@@ -631,7 +632,7 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
     if (file.kind == FileKind.video) {
       return GestureDetector(
         onTap: _playing
-            ? ref.read(videoMutedProvider.notifier).toggle
+            ? () => ref.read(videoPausedProvider.notifier).toggle(file.id)
             : () => setState(() => _playing = true),
         child: Stack(
           fit: StackFit.expand,

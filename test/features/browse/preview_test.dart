@@ -291,6 +291,6 @@ void main() {
     await tester.tap(find.text('Swipe'));
     await tester.pumpAndSettle();
     expect(calls().last, 'play');
-    expect(calls().reversed.skip(1).first, 'volume 0.0', reason: 'muted');
+    expect(calls().reversed.skip(1).first, 'volume 1.0', reason: 'sound on by default');
   });
 }

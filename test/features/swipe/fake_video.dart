@@ -42,7 +42,13 @@ class FakeVideoHandle implements VideoHandle {
   Future<void> seekTo(Duration position) async =>
       calls.add('seek ${position.inMilliseconds}');
   @override
-  Future<void> dispose() async => calls.add('dispose');
+  Future<void> dispose() async {
+    isDisposed = true;
+    calls.add('dispose');
+  }
+
+  @override
+  bool isDisposed = false;
   @override
   Widget view({Size? fallbackSize}) =>
       const ColoredBox(color: Color(0xFF000000));

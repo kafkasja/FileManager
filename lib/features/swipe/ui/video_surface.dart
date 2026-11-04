@@ -57,11 +57,8 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   /// hidden deck doesn't play, and plays again when shown (B7).
   bool? _visible;
 
-  bool get _desktop =>
-      widget.desktopControls || ref.read(formFactorProvider).isDesktop;
-
   bool get _pausedByUser =>
-      _desktop && ref.read(videoPausedProvider).contains(widget.file.id);
+      ref.read(videoPausedProvider).contains(widget.file.id);
 
   bool get _shouldPlay => widget.active && (_visible ?? true) && !_pausedByUser;
 
@@ -101,7 +98,9 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   void dispose() {
     _slowTimer?.cancel();
     // The pool owns the player; only stop it playing.
-    _handle?.pause().ignore();
+    _pool?.setPlaying(widget.file.id, playing: false);
+    final handle = _handle;
+    if (handle != null && !handle.isDisposed) handle.pause().ignore();
     super.dispose();
   }
 
@@ -113,11 +112,14 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
         : null;
   }
 
+  /// Kept for [dispose] (ref can't be read there).
+  VideoControllerPool? _pool;
+
   Future<void> _obtain() async {
     try {
-      final handle = await ref
-          .read(videoControllerPoolProvider)
-          .obtain(widget.file);
+      final pool = ref.read(videoControllerPoolProvider);
+      _pool = pool;
+      final handle = await pool.obtain(widget.file);
       if (!mounted) return;
       setState(() => _handle = handle);
       await _applyPlayback();
@@ -129,6 +131,13 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
   Future<void> _applyPlayback() async {
     final handle = _handle;
     if (handle == null) return;
+    if (handle.isDisposed) {
+      // Evicted while not playing: a new player when it plays again.
+      _handle = null;
+      if (_shouldPlay) await _obtain();
+      return;
+    }
+    _pool?.setPlaying(widget.file.id, playing: _shouldPlay);
     if (_shouldPlay) {
       await handle.setVolume(ref.read(videoMutedProvider) ? 0 : 1);
       await handle.play();
@@ -148,8 +157,20 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
         videoPausedProvider.select((s) => s.contains(widget.file.id)),
         (_, _) => unawaited(_applyPlayback()),
       );
-    final handle = _handle;
+    // An evicted player is never drawn (it would throw "used after being
+    // disposed"): the thumbnail shows until a new one is obtained.
+    final current = _handle;
+    final evicted = current != null && current.isDisposed;
+    if (evicted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_applyPlayback());
+      });
+    }
+    final handle = evicted ? null : current;
     final muted = ref.watch(videoMutedProvider);
+    final paused = ref.watch(
+      videoPausedProvider.select((s) => s.contains(widget.file.id)),
+    );
     final desktop =
         widget.desktopControls || ref.watch(formFactorProvider).isDesktop;
     return Stack(
@@ -224,27 +245,65 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
             bottom: widget.fullscreen
                 ? MediaQuery.paddingOf(context).bottom + kVideoPillAboveActions
                 : null,
-            child: handle == null
-                ? _Pill(
-                    icon: muted ? Icons.volume_off : Icons.volume_up,
-                    text: formatDuration(
-                      Duration(milliseconds: widget.file.durationMs ?? 0),
-                    ),
-                  )
-                : ValueListenableBuilder<VideoPlayerValue>(
-                    valueListenable: handle.state,
-                    builder: (context, value, _) => _Pill(
-                      key: const ValueKey('video-time-left'),
-                      icon: muted ? Icons.volume_off : Icons.volume_up,
-                      text: formatDuration(
-                        videoTimeLeft(
-                          value,
-                          fallbackMs: widget.file.durationMs ?? 0,
+            // The speaker icon mutes / unmutes (sound is on by default);
+            // a tap elsewhere on the video plays / pauses.
+            child: Semantics(
+              button: true,
+              label: muted
+                  ? context.l10n.videoSoundOn
+                  : context.l10n.videoSoundOff,
+              child: GestureDetector(
+                key: const ValueKey('video-mute'),
+                behavior: HitTestBehavior.opaque,
+                onTap: ref.read(videoMutedProvider.notifier).toggle,
+                child: Padding(
+                  // A bigger tap target than the pill itself.
+                  padding: const EdgeInsetsDirectional.all(6),
+                  child: handle == null
+                      ? _Pill(
+                          icon: muted ? Icons.volume_off : Icons.volume_up,
+                          text: formatDuration(
+                            Duration(milliseconds: widget.file.durationMs ?? 0),
+                          ),
+                        )
+                      : ValueListenableBuilder<VideoPlayerValue>(
+                          valueListenable: handle.state,
+                          builder: (context, value, _) => _Pill(
+                            key: const ValueKey('video-time-left'),
+                            icon: muted ? Icons.volume_off : Icons.volume_up,
+                            text: formatDuration(
+                              videoTimeLeft(
+                                value,
+                                fallbackMs: widget.file.durationMs ?? 0,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                ),
+              ),
+            ),
+          ),
+          if (handle != null && paused && widget.active)
+            Center(
+              child: IgnorePointer(
+                child: Semantics(
+                  label: context.l10n.videoPause,
+                  child: Container(
+                    key: const ValueKey('video-paused'),
+                    padding: const EdgeInsetsDirectional.all(12),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.pause,
+                      size: 40,
+                      color: Colors.white,
                     ),
                   ),
-          ),
+                ),
+              ),
+            ),
           if (handle != null)
             Align(
               alignment: Alignment.bottomCenter,
