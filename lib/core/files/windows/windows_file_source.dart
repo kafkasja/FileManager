@@ -98,14 +98,18 @@ class WindowsFileSource implements FileSource {
       _statPath(normalizeWindowsPath(path));
 
   @override
-  Stream<List<int>> openRead(FileRef f, {int start = 0, int? end}) =>
-      File(f.path)
-          .openRead(start, end)
-          .handleError(
-            (Object e) =>
-                throw _ioError(e as FileSystemException, f.path, fileId: f.id),
-            test: (e) => e is FileSystemException,
-          );
+  Stream<List<int>> openRead(FileRef f, {int start = 0, int? end}) {
+    if (!isWin32AddressableName(f.name)) {
+      return Stream.error(_unaddressable(f));
+    }
+    return File(f.path)
+        .openRead(start, end)
+        .handleError(
+          (Object e) =>
+              throw _ioError(e as FileSystemException, f.path, fileId: f.id),
+          test: (e) => e is FileSystemException,
+        );
+  }
 
   @override
   Future<int?> freeBytes(String folderPath) async => null;
@@ -141,6 +145,7 @@ class WindowsFileSource implements FileSource {
 
   @override
   Future<FileRef> move(FileRef f, String targetFolder) async {
+    _requireAddressable(f);
     final target = normalizeWindowsPath(targetFolder);
     if (sameWindowsPath(target, f.folderPath)) return f;
     await _requireFolder(target);
@@ -151,6 +156,7 @@ class WindowsFileSource implements FileSource {
 
   @override
   Future<FileRef> copy(FileRef f, String targetFolder) async {
+    _requireAddressable(f);
     final target = normalizeWindowsPath(targetFolder);
     await _requireFolder(target);
     final from = File(f.path);
@@ -170,6 +176,7 @@ class WindowsFileSource implements FileSource {
   @override
   Future<FileRef> rename(FileRef f, String newName) async {
     validateWindowsName(newName);
+    _requireAddressable(f);
     if (newName == f.name) return f;
     // NTFS is case-insensitive: "a.jpg" -> "A.jpg" is no clash, and goes
     // through a temp name so the new casing sticks.
@@ -268,7 +275,14 @@ class WindowsFileSource implements FileSource {
     final failed = <String, FileOpException>{};
     final trashed = <TrashedItem>[];
     if (files.isEmpty) return TrashResult(trashed: trashed, failed: failed);
-    final byPath = {for (final f in files) f.path: f};
+    final byPath = <String, FileRef>{};
+    for (final f in files) {
+      if (isWin32AddressableName(f.name)) {
+        byPath[f.path] = f;
+      } else {
+        failed[f.id] = _unaddressable(f);
+      }
+    }
     try {
       final available = await _channel.binAvailable(byPath.keys.toList());
       final binnable = <String>[];
@@ -333,6 +347,10 @@ class WindowsFileSource implements FileSource {
   Future<void> deletePermanentlyBatch(List<FileRef> files) async {
     FileOpException? first;
     for (final f in files) {
+      if (!isWin32AddressableName(f.name)) {
+        first ??= _unaddressable(f);
+        continue;
+      }
       try {
         await File(f.path).delete();
       } on PathNotFoundException {
@@ -459,6 +477,8 @@ class WindowsFileSource implements FileSource {
   }
 
   Future<FileRef?> _statPath(String path) async {
+    // "a." would stat the file "a" (Q4).
+    if (!isWin32AddressableName(nameOf(path))) return null;
     final stat = await FileStat.stat(path);
     if (stat.type != FileSystemEntityType.file) return null;
     return _ref(path, size: stat.size, modified: stat.modified.toUtc());
@@ -552,6 +572,18 @@ class WindowsFileSource implements FileSource {
       await ledger?.remove(tempPath);
     }
   }
+
+  /// Q4: a name a Win32 path can't reach ("a." means "a"): acting on it
+  /// would hit another file.
+  static void _requireAddressable(FileRef f) {
+    if (!isWin32AddressableName(f.name)) throw _unaddressable(f);
+  }
+
+  static FileOpException _unaddressable(FileRef f) => FileOpException(
+    FileOpFailure.invalidName,
+    'name Windows cannot address: "${f.name}"',
+    fileId: f.id,
+  );
 
   FileRef _emitIfChanged(FileRef old, FileRef updated) {
     if (updated.id != old.id) _idChanges.add(FileIdChange(old.id, updated));
