@@ -159,6 +159,10 @@ Future<ThumbnailCache> thumbnailCache(Ref ref) async {
         ? shellThumbnailGenerator(ref.watch(windowsChannelProvider))
         : photoManagerThumbnail,
     maxDiskBytes: () async =>
-        await settings.read(AppSettings.thumbCacheMaxMb) * 1024 * 1024,
+        thumbCacheCapBytes(await settings.read(AppSettings.thumbCacheMaxMb)),
   );
 }
+
+/// The thumbnail cache cap for the stored MB value, clamped to 16 MB..1 TB
+/// (Q6: a garbage row must not overflow or empty the cache on every write).
+int thumbCacheCapBytes(int mb) => mb.clamp(16, 1 << 20) * 1024 * 1024;

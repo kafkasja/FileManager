@@ -182,3 +182,53 @@ final class DbWriteErrorsProvider
 }
 
 String _$dbWriteErrorsHash() => r'99785c62620c9fc6ae6176bbea946fb728d6ad7a';
+
+/// Q6: what the startup check found (`main` overrides it with the result of
+/// `checkDatabaseFile`); `DbStartupBanner` tells the user.
+
+@ProviderFor(dbStartupReport)
+final dbStartupReportProvider = DbStartupReportProvider._();
+
+/// Q6: what the startup check found (`main` overrides it with the result of
+/// `checkDatabaseFile`); `DbStartupBanner` tells the user.
+
+final class DbStartupReportProvider
+    extends
+        $FunctionalProvider<DbStartupReport, DbStartupReport, DbStartupReport>
+    with $Provider<DbStartupReport> {
+  /// Q6: what the startup check found (`main` overrides it with the result of
+  /// `checkDatabaseFile`); `DbStartupBanner` tells the user.
+  DbStartupReportProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dbStartupReportProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dbStartupReportHash();
+
+  @$internal
+  @override
+  $ProviderElement<DbStartupReport> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DbStartupReport create(Ref ref) {
+    return dbStartupReport(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DbStartupReport value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DbStartupReport>(value),
+    );
+  }
+}
+
+String _$dbStartupReportHash() => r'cf27e2aa0cfbfedeaec10278db45fbe9866076f0';

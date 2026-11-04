@@ -59,6 +59,30 @@ void main() {
     expect(await fresh.diskSizeBytes(), 1000);
   });
 
+  test('Q4: the cache folder unwritable (disk full): thumbnails still show, '
+      'nothing half-written', () async {
+    // The cache "folder" is a file: every write under it fails.
+    final blocked = File('${dir.path}/blocked')..writeAsStringSync('x');
+    final c = DiskThumbnailCache(
+      dir: Directory(blocked.path),
+      generator: generator,
+      maxDiskBytes: () async => 1 << 30,
+    );
+    expect(await c.get(photo('a')), hasLength(1000));
+    expect(await c.get(photo('b')), hasLength(1000));
+    expect(blocked.readAsStringSync(), 'x');
+    expect(dir.listSync(), hasLength(1));
+  });
+
+  test('Q4: only whole thumbnails reach the cache path', () async {
+    final c = cache();
+    await c.get(photo('a'));
+    final files = dir.listSync(recursive: true).whereType<File>().toList();
+    expect(files, hasLength(1));
+    expect(files.single.path, endsWith('.jpg'));
+    expect(files.single.lengthSync(), 1000);
+  });
+
   test('an edited file (new modifiedAt) gets a new thumbnail', () async {
     final c = cache();
     await c.get(photo('a'));

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/core/db/db_providers.dart';
+import 'package:kfm/core/db/db_startup_check.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
@@ -161,5 +162,41 @@ void main() {
     await tester.pump(DbErrorBanner.visibleFor);
     await tester.pumpAndSettle();
     expect(find.text("Couldn't save your last change."), findsNothing);
+  });
+
+  testWidgets('Q6: a reset damaged database is explained until dismissed', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      overrides: [
+        dbStartupReportProvider.overrideWithValue(
+          const DbStartupReport(
+            DbStartupState.reset,
+            backupName: 'kfm.sqlite.broken-20261104-120000-000',
+          ),
+        ),
+      ],
+    );
+    expect(
+      find.textContaining('kfm.sqlite.broken-20261104-120000-000'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('were not touched'), findsOneWidget);
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('kfm.sqlite.broken'), findsNothing);
+  });
+
+  testWidgets('Q6: a database that cannot be opened says so', (tester) async {
+    await pumpApp(
+      tester,
+      overrides: [
+        dbStartupReportProvider.overrideWithValue(
+          const DbStartupReport(DbStartupState.unavailable),
+        ),
+      ],
+    );
+    expect(find.textContaining("can't open its data"), findsOneWidget);
   });
 }

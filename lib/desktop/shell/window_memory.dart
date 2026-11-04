@@ -21,6 +21,9 @@ class WindowMemory {
   static const minWidth = 800.0;
   static const minHeight = 600.0;
 
+  /// Larger saved positions or sizes are treated as garbage.
+  static const maxCoordinate = 100000.0;
+
   Future<void> start() async {
     final raw = await _settings.read(AppSettings.desktopWindowBounds);
     final saved = parse(raw);
@@ -50,6 +53,11 @@ class WindowMemory {
     final parts = raw.split(',').map(double.tryParse).toList();
     if (parts.length != 4 || parts.any((p) => p == null)) return null;
     final [x!, y!, w!, h!] = parts;
+    // Q6: NaN/Infinity or absurd sizes (a damaged or hand-edited row) never
+    // reach the window manager.
+    if (![x, y, w, h].every((v) => v.isFinite && v.abs() <= maxCoordinate)) {
+      return null;
+    }
     if (w < minWidth || h < minHeight || x < -200 || y < -50) return null;
     return Rect.fromLTWH(x, y, w, h);
   }

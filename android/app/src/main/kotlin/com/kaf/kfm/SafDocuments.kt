@@ -80,7 +80,26 @@ class SafDocuments(private val activity: Activity) {
                         val dest = File(call.argument<String>("destPath") ?: throw IllegalArgumentException("destPath"))
                         val input = context.contentResolver.openInputStream(uri)
                             ?: throw IOException("cannot open $uri for reading")
-                        input.use { i -> FileOutputStream(dest).use { i.copyTo(it) } }
+                        // Q6: a wrongly picked huge file must not fill the cache.
+                        val max = call.argument<Number>("maxBytes")?.toLong() ?: Long.MAX_VALUE
+                        var total = 0L
+                        input.use { i ->
+                            FileOutputStream(dest).use { o ->
+                                val buf = ByteArray(64 * 1024)
+                                while (true) {
+                                    val n = i.read(buf)
+                                    if (n < 0) break
+                                    total += n
+                                    if (total > max) break
+                                    o.write(buf, 0, n)
+                                }
+                            }
+                        }
+                        if (total > max) {
+                            dest.delete()
+                            main.post { result.error("TOO_BIG", "over $max bytes", null) }
+                            return@execute
+                        }
                     }
                     main.post { result.success(true) }
                 } catch (e: IllegalArgumentException) {

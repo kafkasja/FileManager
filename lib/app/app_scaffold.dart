@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
+import 'package:kfm/app/widgets/db_startup_banner.dart';
 import 'package:kfm/app/widgets/indexing_chip.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
@@ -49,6 +50,7 @@ class AppScaffold extends StatelessWidget {
       child: Column(
         children: [
           const DbErrorBanner(),
+          const DbStartupBanner(),
           // U1: "USB drive connected · Open", "Storage removed".
           const ExternalNotices(),
           // N12: send-files offer prompts and their snackbars.

@@ -130,13 +130,13 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
     final isRoot = dir == root;
     // Windows drive root `C:` (PL1): dart:io needs `C:/` for the root.
     final ioDir = _driveRoot.hasMatch(dir) ? '$dir/' : dir;
-    final noMedia = File('$dir/.nomedia').existsSync();
+    final noMedia = File(_listable('$dir/.nomedia')).existsSync();
     if (noMedia && !o.includeHidden) continue;
     final hidden = parentHidden || noMedia;
 
     final List<FileSystemEntity> entries;
     try {
-      entries = Directory(ioDir).listSync(followLinks: false);
+      entries = Directory(_listable(ioDir)).listSync(followLinks: false);
     } on FileSystemException catch (e) {
       if (isRoot) throw fileOpExceptionFromIo(e, dir);
       continue; // unreadable subfolder (Android/data, lost+found…)
@@ -150,6 +150,9 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
       final dotted = name.startsWith('.');
       if (dotted && !o.includeHidden) continue;
       if (isSystemTempName(name)) continue;
+      // Q4: Win32 strips a trailing dot/space and maps device names, so
+      // "a." would stat, move or delete the file "a". Never listed.
+      if (Platform.isWindows && !isWin32AddressableName(name)) continue;
 
       if (entity is Directory) {
         if (o.skipBuildOutput &&
@@ -217,6 +220,38 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
 }
 
 final _driveRoot = RegExp(r'^[A-Za-z]:$');
+
+/// Above this length dart:io's directory listing fails on Windows ("path
+/// not found") unless the path has the extended-length prefix.
+const _maxPlainWindowsPath = 240;
+
+final _drivePath = RegExp(r'^[A-Za-z]:[/\\]');
+
+/// Q4: [path] in a form dart:io can list on Windows even past MAX_PATH (a
+/// `\\?\` extended-length path). Unchanged elsewhere.
+String _listable(String path) {
+  if (!Platform.isWindows ||
+      path.length < _maxPlainWindowsPath ||
+      !_drivePath.hasMatch(path)) {
+    return path;
+  }
+  return '\\\\?\\${path.replaceAll('/', r'\')}';
+}
+
+const _win32DeviceNames = {
+  'con', 'prn', 'aux', 'nul', //
+  'com1', 'com2', 'com3', 'com4', 'com5', 'com6', 'com7', 'com8', 'com9',
+  'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9',
+};
+
+/// False for names that exist on NTFS (made through `\\?\` paths, WSL or
+/// another OS) but that a normal Win32 path reaches as something else: a
+/// trailing dot or space is stripped ("a." is "a") and `NUL`, `COM1`… are
+/// devices. KFM leaves such files alone (Q4).
+bool isWin32AddressableName(String name) =>
+    !name.endsWith('.') &&
+    !name.endsWith(' ') &&
+    !_win32DeviceNames.contains(name.toLowerCase());
 
 String _nameOf(String path) {
   final p = path.replaceAll(r'\', '/');

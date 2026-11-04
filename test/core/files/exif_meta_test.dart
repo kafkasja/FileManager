@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
@@ -47,6 +48,27 @@ void main() {
     expect(await readExifMeta(plain.path), isNull);
     expect(await readExifMeta(junk.path), isNull);
     expect(await readExifMeta('${dir.path}/missing.jpg'), isNull);
+  });
+
+  test('Q4: zero-byte, truncated and bit-flipped photos never throw or '
+      'hang', () async {
+    final good = _jpegWithExif();
+    final f = File('${dir.path}/x.jpg');
+    final rnd = Random(3);
+    final inputs = <List<int>>[
+      const [],
+      [0xFF, 0xD8],
+      [0xFF, 0xD8, 0xFF, 0xE1, 0xFF, 0xFF], // APP1 claiming 64 KiB
+      for (var cut = 0; cut < good.length; cut += 7) good.sublist(0, cut),
+      for (var i = 0; i < 400; i++)
+        [...good]..[rnd.nextInt(200)] = rnd.nextInt(256),
+    ];
+    final sw = Stopwatch()..start();
+    for (final bytes in inputs) {
+      f.writeAsBytesSync(bytes);
+      await readExifMeta(f.path).timeout(const Duration(seconds: 5));
+    }
+    expect(sw.elapsed, lessThan(const Duration(seconds: 60)));
   });
 
   test('the walker fills takenAt/width/height only with readExif', () async {

@@ -31,6 +31,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dbWriteError => 'Son değişikliğin kaydedilemedi.';
 
   @override
+  String dbResetNotice(String name) {
+    return 'KFM verileri bozulmuştu, bu yüzden KFM sıfırdan başladı. Fotoğraflarına ve dosyalarına dokunulmadı; oturumlar, etiketler ve ayarlar sıfırlandı. Bozuk kopya $name olarak saklandı.';
+  }
+
+  @override
+  String get dbUnavailableNotice =>
+      'KFM şu anda verilerini açamıyor. Başka bir program kullanıyor olabilir. Onu kapatıp KFM\'yi yeniden başlat. Dosyalarına dokunulmadı.';
+
+  @override
   String get dismiss => 'Kapat';
 
   @override

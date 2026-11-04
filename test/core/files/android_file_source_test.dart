@@ -193,36 +193,33 @@ void main() {
     );
   });
 
-  test(
-    'requestWriteAccess asks once for the whole batch, also with Media '
-    'management (B4: 30 moves gave 30 dialogs on API 37)',
-    () async {
-      final calls = <MethodCall>[];
-      _mockChannel((call) async {
-        calls.add(call);
-        return switch (call.method) {
-          'sdkInt' => 37,
-          'canManageMedia' => true,
-          'requestWriteConsent' => true,
-          _ => null,
-        };
-      });
-      final source = AndroidFileSource(
-        channel: FilesChannel(),
-        canSeeAllFiles: () => false,
-        folderExists: (_) async => true,
-      );
-      addTearDown(source.dispose);
-      final files = [for (var i = 1; i <= 30; i++) _ref(i)];
-      expect(await source.requestWriteAccess(files), isTrue);
-      final consent = calls.where((c) => c.method == 'requestWriteConsent');
-      expect(consent, hasLength(1));
-      expect(
-        (consent.single.arguments as Map<Object?, Object?>)['uris'],
-        hasLength(30),
-      );
-    },
-  );
+  test('requestWriteAccess asks once for the whole batch, also with Media '
+      'management (B4: 30 moves gave 30 dialogs on API 37)', () async {
+    final calls = <MethodCall>[];
+    _mockChannel((call) async {
+      calls.add(call);
+      return switch (call.method) {
+        'sdkInt' => 37,
+        'canManageMedia' => true,
+        'requestWriteConsent' => true,
+        _ => null,
+      };
+    });
+    final source = AndroidFileSource(
+      channel: FilesChannel(),
+      canSeeAllFiles: () => false,
+      folderExists: (_) async => true,
+    );
+    addTearDown(source.dispose);
+    final files = [for (var i = 1; i <= 30; i++) _ref(i)];
+    expect(await source.requestWriteAccess(files), isTrue);
+    final consent = calls.where((c) => c.method == 'requestWriteConsent');
+    expect(consent, hasLength(1));
+    expect(
+      (consent.single.arguments as Map<Object?, Object?>)['uris'],
+      hasLength(30),
+    );
+  });
 
   group('MediaStore half (mocked channel)', () {
     late AndroidFileSource source;

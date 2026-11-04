@@ -7,6 +7,8 @@
   "tabTrash": "Çöp kutusu",
   "tabSettings": "Ayarlar",
   "dbWriteError": "Son değişikliğin kaydedilemedi.",
+  "dbResetNotice": "KFM verileri bozulmuştu, bu yüzden KFM sıfırdan başladı. Fotoğraflarına ve dosyalarına dokunulmadı; oturumlar, etiketler ve ayarlar sıfırlandı. Bozuk kopya {name} olarak saklandı.",
+  "dbUnavailableNotice": "KFM şu anda verilerini açamıyor. Başka bir program kullanıyor olabilir. Onu kapatıp KFM'yi yeniden başlat. Dosyalarına dokunulmadı.",
   "dismiss": "Kapat",
   "retry": "Tekrar dene",
   "indexingCount": "{count, plural, =1{1 dosya dizine ekleniyor…} other{{count} dosya dizine ekleniyor…}}",

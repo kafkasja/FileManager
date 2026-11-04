@@ -7,6 +7,7 @@ import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/files/folder_listing.dart';
+import 'package:kfm/core/files/io_errors.dart';
 import 'package:kfm/core/utils/random_id.dart';
 
 /// The copy's bytes differ from the source's (TASK-U2). The copy was
@@ -81,10 +82,16 @@ class CrossPlaceOps {
     );
     try {
       String? sourceHash;
-      if (source is CopiesOut) {
-        sourceHash = await (source as CopiesOut).copyOut(f, part.path);
-      } else if (!await _copyByPath(f, part)) {
-        await _stream(source, f, part);
+      try {
+        if (source is CopiesOut) {
+          sourceHash = await (source as CopiesOut).copyOut(f, part.path);
+        } else if (!await _copyByPath(f, part)) {
+          await _stream(source, f, part);
+        }
+      } on FileSystemException catch (e) {
+        // Q4: a full disk is `noSpace` (jobs stop instead of failing every
+        // remaining file as an I/O error).
+        throw fileOpExceptionFromIo(e, part.path, fileId: f.id);
       }
       final size = await part.length();
       // The copy keeps the original's modified time (dart:io imports carry
@@ -168,7 +175,12 @@ class CrossPlaceOps {
       if (!await file.exists()) return false;
       await file.copy(part.path);
       return true;
-    } on FileSystemException {
+    } on FileSystemException catch (e) {
+      // A full disk fails the stream the same way: don't copy twice.
+      if (fileOpExceptionFromIo(e, part.path).failure ==
+          FileOpFailure.noSpace) {
+        rethrow;
+      }
       return false; // scoped storage: read through the source
     }
   }
@@ -178,9 +190,17 @@ class CrossPlaceOps {
     try {
       await sink.addStream(source.openRead(f));
       await sink.flush();
-    } finally {
-      await sink.close();
+    } on Object {
+      // Q4: closing after a failed write throws "File closed", which used
+      // to replace the real error (a full disk became a plain I/O error).
+      try {
+        await sink.close();
+      } on Object catch (e) {
+        developer.log('part not closed: $e', name: 'kfm.crossPlace');
+      }
+      rethrow;
     }
+    await sink.close();
   }
 
   static Future<void> _deleteQuietly(FileSource target, FileRef copy) async {

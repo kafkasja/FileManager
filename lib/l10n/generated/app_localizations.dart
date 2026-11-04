@@ -142,6 +142,18 @@ abstract class AppLocalizations {
   /// **'Couldn\'t save your last change.'**
   String get dbWriteError;
 
+  /// Startup banner after a corrupt database file was moved aside.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM\'s data was damaged, so KFM started fresh. Your photos and files were not touched; sessions, tags and settings are reset. The damaged copy was kept as {name}.'**
+  String dbResetNotice(String name);
+
+  /// No description provided for @dbUnavailableNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM can\'t open its data right now. Another program may be using it. Close it and restart KFM. Your files were not touched.'**
+  String get dbUnavailableNotice;
+
   /// No description provided for @dismiss.
   ///
   /// In en, this message translates to:

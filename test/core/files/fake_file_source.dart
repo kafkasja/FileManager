@@ -166,6 +166,14 @@ class FakeFileSource implements FileSource {
 
   @override
   Stream<List<int>> openRead(FileRef f, {int start = 0, int? end}) {
+    final fault = readFault;
+    if (fault != null) {
+      final bytes = _bytes[f.id] ?? const <int>[];
+      return _faulty(
+        bytes.sublist(0, fault.afterBytes.clamp(0, bytes.length)),
+        fault.error,
+      );
+    }
     final bytes = _bytes[f.id];
     if (bytes == null) {
       return Stream.error(
@@ -415,6 +423,15 @@ class FakeFileSource implements FileSource {
 
   @override
   Future<int?> freeBytes(String folderPath) async => freeBytesValue;
+
+  static Stream<List<int>> _faulty(List<int> head, Exception error) async* {
+    if (head.isNotEmpty) yield head;
+    throw error;
+  }
+
+  /// Q4: when set, [openRead] gives `afterBytes` bytes, then `error` (a
+  /// full disk or a failing read mid-copy).
+  ({int afterBytes, Exception error})? readFault;
 
   /// N9: when set, [importFile] throws it.
   FileOpException? importFailure;

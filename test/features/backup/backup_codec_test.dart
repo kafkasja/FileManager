@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
@@ -151,5 +152,62 @@ void main() {
       backupSettingsByName['theme.accent']!.canonical('no-such-colour'),
       isNull,
     );
+  });
+
+  test('Q6: every truncation and many byte flips are refused cleanly', () {
+    final text = BackupCodec.encode(_data);
+    var accepted = 0;
+    void check(String input) {
+      try {
+        BackupCodec.decode(input);
+        accepted++;
+      } on BackupFormatException {
+        // Clean refusal.
+      }
+      // Anything else (TypeError, RangeError...) fails the test.
+    }
+
+    for (var cut = 0; cut < text.length; cut++) {
+      check(text.substring(0, cut));
+    }
+    // Truncations are never accepted (the closing brace is missing).
+    expect(accepted, 0);
+    final rnd = Random(42);
+    const junk = ['"', '{', '}', '[', ']', ',', ':', '0', '-', 'e', 'x', ' '];
+    for (var i = 0; i < 3000; i++) {
+      final at = rnd.nextInt(text.length);
+      check(text.replaceRange(at, at + 1, junk[rnd.nextInt(junk.length)]));
+    }
+  });
+
+  test('Q6: hand-edited values are refused, never thrown', () {
+    final j = jsonDecode(BackupCodec.encode(_data)) as Map<String, Object?>;
+    final files = (j['files']! as List<Object?>).cast<Map<String, Object?>>();
+    for (final edit in <Map<String, Object?>>[
+      {'size': -1},
+      {'size': 1.5},
+      {'size': null},
+      {'name': ''},
+      {'name': 12},
+      {'tags': 'Holiday'},
+      {'tags': <Object?>[null]},
+      {'reviewed': <Object?>[<String, Object?>{}]},
+      {'takenAt': 'yesterday'},
+    ]) {
+      final bad = {
+        ...j,
+        'files': [
+          {...files.first, ...edit},
+        ],
+      };
+      try {
+        BackupCodec.decode(jsonEncode(bad));
+      } on BackupFormatException {
+        // Refused.
+      }
+    }
+    // Deep nesting doesn't overflow the stack.
+    final deep = '${'[' * 100000}${']' * 100000}';
+    expect(() => BackupCodec.decode(deep), _rejected(BackupProblem.notBackup));
   });
 }

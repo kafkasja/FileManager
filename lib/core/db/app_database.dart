@@ -97,7 +97,11 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
-    onUpgrade: (m, from, to) async {
+    // Q5: one transaction for the whole upgrade, its new version included.
+    // Without it a process killed mid-upgrade left half the DDL with the
+    // old user_version, and every later start failed ("index already
+    // exists").
+    onUpgrade: (m, from, to) => transaction(() async {
       // One block per schema-changing task. Never edit a shipped block.
       if (from < 2) {
         // TASK-F5
@@ -284,7 +288,8 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(ciStatus);
         await m.createIndex(ciOnCloudFile);
       }
-    },
+      await customStatement('PRAGMA user_version = $to');
+    }),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
       // FULL: every commit (each swipe's undo row) is on disk before the

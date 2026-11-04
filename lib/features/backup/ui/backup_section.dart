@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/features/backup/data/backup_providers.dart';
 import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
@@ -79,7 +80,10 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
       final uri = await docs.openDocument(const ['application/json', '*/*']);
       if (uri == null) return;
       tmp = await _tempFile('import.json');
-      await docs.readDocument(uri, tmp.path);
+      await docs.readDocument(uri, tmp.path, maxBytes: kMaxBackupFileBytes);
+      if (await tmp.length() > kMaxBackupFileBytes) {
+        throw const BackupFormatException(BackupProblem.notBackup, 'too big');
+      }
       data = await service.decode(await tmp.readAsString());
     } on BackupFormatException catch (e) {
       _snack(switch (e.problem) {
@@ -90,6 +94,14 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     } on FileSystemException {
       // Not UTF-8 text (readAsString) or unreadable: not a backup.
       _snack(l10n.backupNotKfm);
+      return;
+    } on FilesChannelException catch (e) {
+      // TOO_BIG: over kMaxBackupFileBytes, so not a backup.
+      _snack(
+        e.code == 'TOO_BIG'
+            ? l10n.backupNotKfm
+            : l10n.backupImportFailed(e.toString()),
+      );
       return;
     } on Object catch (e) {
       _snack(l10n.backupImportFailed(e.toString()));
