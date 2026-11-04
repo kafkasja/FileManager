@@ -11,6 +11,7 @@ add_executable(${BINARY_NAME} WIN32
   "drag_drop.cpp"
   "flutter_window.cpp"
   "main.cpp"
+  "startup_hints.cpp"
   "utils.cpp"
   "windows_channel.cpp"
   "win32_window.cpp"

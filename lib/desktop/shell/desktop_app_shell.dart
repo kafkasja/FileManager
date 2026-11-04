@@ -9,6 +9,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/drag_drop_channel.dart';
+import 'package:kfm/core/platform/windows/startup_hints.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart';
@@ -26,6 +27,7 @@ import 'package:kfm/features/search/ui/search_controller.dart';
 import 'package:kfm/features/share_in/ui/share_in_prompter.dart';
 import 'package:kfm/features/trash/ui/no_trash_prompter.dart';
 import 'package:kfm/features/updates/ui/update_banner.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// The desktop app's frame (TASK-PL3): left sidebar, a top bar with the
 /// search box, the section's screen, an optional details pane on the right
@@ -48,6 +50,9 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
   WindowsDragDrop? _native;
   WindowMemory? _memory;
 
+  /// Speed fix: bounds + background colour for the runner's next start.
+  StartupHintsFile? _hints;
+
   DesktopSection get _section =>
       DesktopSection.ofBranch(widget.shell.currentIndex);
 
@@ -64,8 +69,16 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
     }
     // PL3 polish: the window opens where the user left it.
     if (ref.read(desktopShellProvider) case final shell?) {
-      _memory = WindowMemory(shell, ref.read(settingsRepositoryProvider))
-        ..start().ignore();
+      final hints = _hints = isWindowsHost
+          ? StartupHintsFile(
+              () async => (await getApplicationSupportDirectory()).path,
+            )
+          : null;
+      _memory = WindowMemory(
+        shell,
+        ref.read(settingsRepositoryProvider),
+        hints: hints,
+      )..start().ignore();
     }
   }
 
@@ -144,6 +157,10 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
     final focused = ref.watch(desktopFocusedFileProvider(section));
     final colors = base.colorScheme;
     final l10n = context.l10n;
+    // The colour the runner paints before the next start's first frame.
+    if (_hints case final hints?) {
+      hints.update(background: colors.surface).ignore();
+    }
     final onMedia =
         section == DesktopSection.sort || section == DesktopSection.browse;
     final content = Column(

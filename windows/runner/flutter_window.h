@@ -5,6 +5,7 @@
 #include <flutter/flutter_view_controller.h>
 
 #include <memory>
+#include <optional>
 
 #include "drag_drop.h"
 #include "win32_window.h"
@@ -14,7 +15,10 @@
 class FlutterWindow : public Win32Window {
  public:
   // Creates a new FlutterWindow hosting a Flutter view running |project|.
-  explicit FlutterWindow(const flutter::DartProject& project);
+  // [background] fills the window until Flutter's first frame (the last
+  // run's colour; the system light/dark default without one).
+  FlutterWindow(const flutter::DartProject& project,
+                std::optional<COLORREF> background = std::nullopt);
   virtual ~FlutterWindow();
 
  protected:
@@ -27,6 +31,9 @@ class FlutterWindow : public Win32Window {
  private:
   // The project to run.
   flutter::DartProject project_;
+
+  // Painted until the Flutter view shows its first frame.
+  HBRUSH background_ = nullptr;
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;

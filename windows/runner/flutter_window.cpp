@@ -4,15 +4,45 @@
 
 #include "flutter/generated_plugin_registrant.h"
 
-FlutterWindow::FlutterWindow(const flutter::DartProject& project)
-    : project_(project) {}
+namespace {
 
-FlutterWindow::~FlutterWindow() {}
+// Windows' "app mode" (Settings > Personalization > Colors).
+bool SystemUsesLightTheme() {
+  DWORD light = 1;
+  DWORD size = sizeof(light);
+  ::RegGetValueW(
+      HKEY_CURRENT_USER,
+      L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+      L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &light, &size);
+  return light != 0;
+}
+
+}  // namespace
+
+FlutterWindow::FlutterWindow(const flutter::DartProject& project,
+                             std::optional<COLORREF> background)
+    : project_(project) {
+  // Material 3 surface colours of KFM's default (blue) theme.
+  COLORREF colour = background.value_or(
+      SystemUsesLightTheme() ? RGB(0xF9, 0xF9, 0xFF) : RGB(0x11, 0x13, 0x18));
+  background_ = ::CreateSolidBrush(colour);
+}
+
+FlutterWindow::~FlutterWindow() {
+  if (background_) ::DeleteObject(background_);
+}
 
 bool FlutterWindow::OnCreate() {
   if (!Win32Window::OnCreate()) {
     return false;
   }
+
+  // Speed: the engine takes ~1.2 s to start (the same for an empty Flutter
+  // app on this PC). Show the window now, painted in the app's background
+  // colour (WM_ERASEBKGND below); the Flutter view appears with its first
+  // frame.
+  this->Show();
+  ::UpdateWindow(GetHandle());
 
   RECT frame = GetClientArea();
 
@@ -27,13 +57,16 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   windows_channel_ = std::make_unique<WindowsChannel>(
       flutter_controller_->engine()->messenger(), GetHandle());
-  SetChildContent(flutter_controller_->view()->GetNativeWindow());
+  HWND view = flutter_controller_->view()->GetNativeWindow();
+  SetChildContent(view);
+  ::ShowWindow(view, SW_HIDE);
   drag_drop_ = std::make_unique<DragDropChannel>(
       flutter_controller_->engine()->messenger(), GetHandle(),
       flutter_controller_->view()->GetNativeWindow());
 
-  flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+  flutter_controller_->engine()->SetNextFrameCallback([view]() {
+    ::ShowWindow(view, SW_SHOW);
+    ::SetFocus(view);
   });
 
   // Flutter can complete the first frame before the "show window" callback is
@@ -79,6 +112,13 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     info->ptMinTrackSize.x = ::MulDiv(800, dpi, 96);
     info->ptMinTrackSize.y = ::MulDiv(600, dpi, 96);
     return 0;
+  }
+  // Until the first frame: the app's background colour, not a white flash.
+  if (message == WM_ERASEBKGND && background_) {
+    RECT rect;
+    ::GetClientRect(hwnd, &rect);
+    ::FillRect(reinterpret_cast<HDC>(wparam), &rect, background_);
+    return 1;
   }
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
