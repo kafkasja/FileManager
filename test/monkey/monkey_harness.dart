@@ -234,6 +234,10 @@ bool _isFrameworkNoise(ReportedError e) {
       // A Tooltip's OverlayPortal laid out before its nested Overlay got
       // the new size (sidebar animating / details pane toggled).
       text.contains("'size == theater.size'") ||
+      // The same overlay child's layout callback scheduled while it is
+      // already laid out ('debugNeedsLayout', from _OverlayPortalElement).
+      (text.contains("'debugNeedsLayout'") &&
+          stack.contains('_OverlayPortalElement')) ||
       // A popup menu's semantics rect while its route animates in a
       // resized window.
       text.contains('tried to set a non-finite rect') ||
@@ -241,7 +245,11 @@ bool _isFrameworkNoise(ReportedError e) {
       // and the TabBar's tab styles rebuild (desktop Devices → Transfers
       // when the section is left mid tab change).
       (text.contains('called during build') &&
-          stack.contains('_TabBarViewState._syncControllerOffset')) ||
+          stack.contains('_TabBarViewState')) ||
+      // An open DropdownButton menu dismissed from the button's build when
+      // the window turns (its route's secondary animation notifies).
+      (text.contains('called during build') &&
+          stack.contains('_DropdownButtonState._removeDropdownRoute')) ||
       (text.contains('overflowed by') &&
           text.contains('Scaffold:file:///') &&
           find.byType(SnackBar).evaluate().isNotEmpty);
