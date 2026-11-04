@@ -155,7 +155,13 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Thumbnail(file: widget.file, fit: BoxFit.contain),
+        // Fullscreen: black bars beside a portrait video in landscape (the
+        // placeholder's theme grey showed there).
+        Thumbnail(
+          file: widget.file,
+          fit: BoxFit.contain,
+          background: widget.fullscreen ? Colors.black : null,
+        ),
         if (handle != null)
           ValueListenableBuilder<VideoPlayerValue>(
             valueListenable: handle.state,
