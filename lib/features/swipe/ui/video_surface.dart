@@ -213,8 +213,10 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
           PositionedDirectional(
             start: widget.fullscreen ? 16 : 8,
             top: widget.fullscreen ? null : 8,
+            // Fullscreen viewers put their action row (ⓘ, Share, Delete…)
+            // at the bottom: the pill sits above it, never under it.
             bottom: widget.fullscreen
-                ? MediaQuery.paddingOf(context).bottom + 28
+                ? MediaQuery.paddingOf(context).bottom + kVideoPillAboveActions
                 : null,
             child: handle == null
                 ? _Pill(
@@ -223,18 +225,16 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
                       Duration(milliseconds: widget.file.durationMs ?? 0),
                     ),
                   )
-                // MediaStore sometimes reports 0 (seen on a device): prefer
-                // the player's duration once it is known.
                 : ValueListenableBuilder<VideoPlayerValue>(
                     valueListenable: handle.state,
                     builder: (context, value, _) => _Pill(
+                      key: const ValueKey('video-time-left'),
                       icon: muted ? Icons.volume_off : Icons.volume_up,
                       text: formatDuration(
-                        value.duration > Duration.zero
-                            ? value.duration
-                            : Duration(
-                                milliseconds: widget.file.durationMs ?? 0,
-                              ),
+                        videoTimeLeft(
+                          value,
+                          fallbackMs: widget.file.durationMs ?? 0,
+                        ),
                       ),
                     ),
                   ),
@@ -248,6 +248,21 @@ class _VideoSurfaceState extends ConsumerState<VideoSurface> {
       ],
     );
   }
+}
+
+/// Bottom offset of the phone video pill in fullscreen viewers: clear of
+/// their action row (16 padding + 48 buttons + 16 gap).
+const double kVideoPillAboveActions = 80;
+
+/// What the phone video pill shows: the time left, counting down while it
+/// plays (the whole length before it starts). MediaStore sometimes reports
+/// a 0 duration (seen on a device): the player's duration wins once known.
+Duration videoTimeLeft(VideoPlayerValue value, {required int fallbackMs}) {
+  final total = value.duration > Duration.zero
+      ? value.duration
+      : Duration(milliseconds: fallbackMs);
+  final left = total - value.position;
+  return left.isNegative ? Duration.zero : left;
 }
 
 /// PL3 Quick look's video bar: play/pause, position, a slider (click or
