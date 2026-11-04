@@ -10,6 +10,7 @@ import 'package:kfm/core/platform/windows/windows_clipboard.dart';
 import 'package:kfm/desktop/browse/desktop_breadcrumb.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_clipboard.dart';
+import 'package:kfm/desktop/browse/disk_folders.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
@@ -109,6 +110,21 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
 
   // --- actions -------------------------------------------------------------
 
+  /// New folder; it shows at once, though the index has no file in it.
+  Future<void> _newFolder(String folder) async {
+    await createFolderIn(context, ref, folder);
+    _refreshDisk();
+  }
+
+  /// Lists the open folder's subfolders again (an empty folder was made,
+  /// renamed or removed: no index change tells).
+  void _refreshDisk() {
+    if (!mounted) return;
+    if (ref.read(desktopBrowseControllerProvider).folder case final f?) {
+      ref.invalidate(desktopDiskFoldersProvider(f));
+    }
+  }
+
   Future<void> _open(BrowseEntry e) async {
     switch (e) {
       case FolderBrowseEntry(:final path, :final available):
@@ -141,6 +157,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
         ref,
         FolderEntry(f.path, f.fileCount ?? 0),
       );
+      _refreshDisk();
     }
   }
 
@@ -262,7 +279,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
               key: const ValueKey('menu-new-folder'),
               label: l10n.browseNewFolder,
               icon: Icons.create_new_folder_outlined,
-              onSelected: () => unawaited(createFolderIn(context, ref, folder)),
+              onSelected: () => unawaited(_newFolder(folder)),
             ),
           )
           ..add(
@@ -320,7 +337,9 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
             DesktopMenuEntry(
               label: m.label(context),
               icon: m.icon,
-              onSelected: () => unawaited(m.onSelected(context, ref, entry)),
+              onSelected: () => unawaited(
+                m.onSelected(context, ref, entry).whenComplete(_refreshDisk),
+              ),
             ),
           );
         }
@@ -440,20 +459,48 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
           FolderBrowseEntry(p.path, available: p.available),
       ];
     }
-    final folders = [
-      for (final f
-          in ref
-                  .watch(browseFoldersProvider(IndexQuery.all, parent: folder))
-                  .value ??
-              const <FolderEntry>[])
-        FolderBrowseEntry(f.path, fileCount: f.fileCount),
-    ];
+    final folders = _mergeFolders(
+      indexed:
+          ref
+              .watch(browseFoldersProvider(st.foldersScope, parent: folder))
+              .value ??
+          const <FolderEntry>[],
+      onDisk: ref.watch(desktopDiskFoldersProvider(folder)).value,
+      showHidden: st.showHidden,
+    );
     if (st.sortColumn == FileColumns.name && st.descending) {
       folders.setAll(0, folders.reversed.toList());
     }
     final query = st.filesQuery!;
     final files = ref.watch(filePagesProvider(query)).value?.items ?? const [];
     return [...folders, for (final f in files) FileBrowseEntry(f)];
+  }
+
+  /// The index's folders (with file counts) plus the folders on disk the
+  /// index doesn't know (empty ones, or only unindexed files inside),
+  /// like Explorer. A folder hidden on disk stays out unless [showHidden],
+  /// also when older index rows still list it.
+  static List<FolderBrowseEntry> _mergeFolders({
+    required List<FolderEntry> indexed,
+    required List<DiskFolder>? onDisk,
+    required bool showHidden,
+  }) {
+    String key(String path) => path.toLowerCase();
+    final hiddenOnDisk = {
+      for (final d in onDisk ?? const <DiskFolder>[])
+        if (d.hidden) key(d.path),
+    };
+    final byKey = <String, FolderBrowseEntry>{
+      for (final f in indexed)
+        if (showHidden || !hiddenOnDisk.contains(key(f.path)))
+          key(f.path): FolderBrowseEntry(f.path, fileCount: f.fileCount),
+    };
+    for (final d in onDisk ?? const <DiskFolder>[]) {
+      if (d.hidden && !showHidden) continue;
+      byKey.putIfAbsent(key(d.path), () => FolderBrowseEntry(d.path));
+    }
+    return byKey.values.toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   @override
@@ -517,6 +564,14 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                   icon: const Icon(Icons.swipe_outlined, size: 18),
                   label: Text(l10n.desktopBrowseSortThese),
                 ),
+              IconButton(
+                key: const ValueKey('browse-show-hidden'),
+                tooltip: l10n.browseShowHidden,
+                isSelected: st.showHidden,
+                icon: const Icon(Icons.visibility_off_outlined),
+                selectedIcon: const Icon(Icons.visibility_outlined),
+                onPressed: () => _nav.setShowHidden(show: !st.showHidden),
+              ),
               LayoutSwitch(layout: st.layout, onChanged: _nav.setLayout),
             ],
           ),

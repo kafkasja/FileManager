@@ -23,6 +23,7 @@ class DesktopBrowseState {
     this.descending = false,
     this.back = const [],
     this.forward = const [],
+    this.showHidden = false,
   });
 
   /// The open folder ('/'-separated); null = Places (the scanned folders).
@@ -37,6 +38,10 @@ class DesktopBrowseState {
   final List<String?> back;
   final List<String?> forward;
 
+  /// Hidden items (dot-files, the Windows hidden attribute) are shown.
+  /// For this run only, like the phone's Browse.
+  final bool showHidden;
+
   /// The index sort for the files of the folder.
   FileSort get fileSort => FileSort(switch (sortColumn) {
     FileColumns.date => FileSortField.date,
@@ -44,11 +49,21 @@ class DesktopBrowseState {
     _ => FileSortField.name,
   }, descending: descending);
 
-  /// The files of [folder] (not its subfolders), hidden files left out.
+  /// The files of [folder] (not its subfolders), hidden files left out
+  /// unless [showHidden].
   IndexQuery? get filesQuery => switch (folder) {
-    final f? => IndexQuery(folderPath: f, sort: fileSort),
+    final f? => IndexQuery(
+      folderPath: f,
+      sort: fileSort,
+      hidden: showHidden ? HiddenFilter.include : HiddenFilter.exclude,
+    ),
     null => null,
   };
+
+  /// The index scope for [folder]'s subfolders.
+  IndexQuery get foldersScope => showHidden
+      ? const IndexQuery(hidden: HiddenFilter.include)
+      : IndexQuery.all;
 
   DesktopBrowseState copyWith({
     String? Function()? folder,
@@ -57,6 +72,7 @@ class DesktopBrowseState {
     bool? descending,
     List<String?>? back,
     List<String?>? forward,
+    bool? showHidden,
   }) => DesktopBrowseState(
     folder: folder == null ? this.folder : folder(),
     layout: layout ?? this.layout,
@@ -64,6 +80,7 @@ class DesktopBrowseState {
     descending: descending ?? this.descending,
     back: back ?? this.back,
     forward: forward ?? this.forward,
+    showHidden: showHidden ?? this.showHidden,
   );
 }
 
@@ -113,6 +130,9 @@ class DesktopBrowseController extends _$DesktopBrowseController {
         )
         .fireAndForget();
   }
+
+  void setShowHidden({required bool show}) =>
+      state = state.copyWith(showHidden: show);
 
   /// Opens [folder] (null = Places), remembering where it came from.
   void open(String? folder) {
