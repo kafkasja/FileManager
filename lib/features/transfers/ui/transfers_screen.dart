@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/background_jobs/ui/jobs_indicator.dart';
 import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/cloud/ui/cloud_transfers_section.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
@@ -180,29 +181,39 @@ class TransfersScreen extends ConsumerWidget {
           ),
         ),
         body: SafeArea(
-          child: switch (jobs) {
-            AsyncError(:final error) => Center(child: Text(error.toString())),
-            _ when jobs.value == null => const SizedBox.shrink(),
-            _ => TabBarView(
-              children: [
-                _JobList(
-                  jobs: [
-                    for (final j in all)
-                      if (j.direction == TransferDirection.download) j,
-                  ],
-                  empty: l10n.transfersEmptyDownloads,
-                ),
-                _JobList(
-                  jobs: [
-                    for (final j in all)
-                      if (j.direction == TransferDirection.upload) j,
-                  ],
-                  empty: l10n.transfersEmptyUploads,
-                ),
-                for (final s in sections) Builder(builder: s.builder),
-              ],
-            ),
-          },
+          child: Column(
+            children: [
+              // X8: no notification → progress only shows in here.
+              const NotificationsOffNote(),
+              Expanded(
+                child: switch (jobs) {
+                  AsyncError(:final error) => Center(
+                    child: Text(error.toString()),
+                  ),
+                  _ when jobs.value == null => const SizedBox.shrink(),
+                  _ => TabBarView(
+                    children: [
+                      _JobList(
+                        jobs: [
+                          for (final j in all)
+                            if (j.direction == TransferDirection.download) j,
+                        ],
+                        empty: l10n.transfersEmptyDownloads,
+                      ),
+                      _JobList(
+                        jobs: [
+                          for (final j in all)
+                            if (j.direction == TransferDirection.upload) j,
+                        ],
+                        empty: l10n.transfersEmptyUploads,
+                      ),
+                      for (final s in sections) Builder(builder: s.builder),
+                    ],
+                  ),
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

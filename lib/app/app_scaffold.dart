@@ -6,6 +6,7 @@ import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/app/widgets/db_startup_banner.dart';
 import 'package:kfm/app/widgets/indexing_chip.dart';
 import 'package:kfm/core/platform/host_platform.dart';
+import 'package:kfm/features/background_jobs/ui/jobs_indicator.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
@@ -69,8 +70,9 @@ class AppScaffold extends StatelessWidget {
         ],
       ),
     );
+    final wide = MediaQuery.sizeOf(context).width >= wideBreakpoint;
 
-    if (MediaQuery.sizeOf(context).width >= wideBreakpoint) {
+    if (wide) {
       return Scaffold(
         body: Row(
           children: [
@@ -88,23 +90,38 @@ class AppScaffold extends StatelessWidget {
               ],
             ),
             const VerticalDivider(width: 1),
-            Expanded(child: body),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(child: body),
+                  // X8: transfers and copies on every tab.
+                  const JobsIndicator(),
+                ],
+              ),
+            ),
           ],
         ),
       );
     }
     return Scaffold(
       body: body,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: _select,
-        destinations: [
-          for (final (_, icon, selected, label) in tabs)
-            NavigationDestination(
-              icon: Icon(icon),
-              selectedIcon: Icon(selected),
-              label: label,
-            ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // X8: transfers and copies on every tab, above the tabs.
+          const JobsIndicator(),
+          NavigationBar(
+            selectedIndex: shell.currentIndex,
+            onDestinationSelected: _select,
+            destinations: [
+              for (final (_, icon, selected, label) in tabs)
+                NavigationDestination(
+                  icon: Icon(icon),
+                  selectedIcon: Icon(selected),
+                  label: label,
+                ),
+            ],
+          ),
         ],
       ),
     );
