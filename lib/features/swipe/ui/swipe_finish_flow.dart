@@ -6,6 +6,7 @@ import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/stats/data/stats_repository.dart';
@@ -29,7 +30,7 @@ Future<void> finishSwipeSession(
   // P3: an unapplied rename batch would be dropped: ask first.
   final renameCount = remote
       ? 0
-      : await ref.read(renameBatchCountProvider(deck.session.id).future);
+      : await ref.readFuture(renameBatchCountProvider(deck.session.id).future);
   if (!context.mounted) return;
   if (renameCount > 0) {
     final choice = await showDialog<RenameChoice>(
@@ -59,7 +60,7 @@ Future<void> finishSwipeSession(
       return;
     }
   }
-  final summary = await ref.read(
+  final summary = await ref.readFuture(
     pendingDeleteSummaryProvider(deck.session.id).future,
   );
   if (!context.mounted) return;

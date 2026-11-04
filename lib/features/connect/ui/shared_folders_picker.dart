@@ -7,6 +7,7 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
@@ -103,7 +104,9 @@ class _SharedFoldersPickerState extends ConsumerState<SharedFoldersPicker> {
   Future<void> _load() async {
     final l10n = context.l10n;
     try {
-      final access = await ref.read(storageAccessControllerProvider.future);
+      final access = await ref.readFuture(
+        storageAccessControllerProvider.future,
+      );
       final fs = ref.read(sharedFolderFsProvider);
       final guard = ref.read(pathGuardProvider);
       final quick = <({String path, String label})>[];

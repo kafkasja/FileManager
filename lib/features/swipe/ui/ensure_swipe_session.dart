@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/core/utils/read_future.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
@@ -15,7 +16,9 @@ Future<Session?> ensureSwipeSession(BuildContext context, WidgetRef ref) async {
   final active = await sessions.active();
   if (active != null) return active;
   ref.invalidate(needsDeleteModeChoiceProvider);
-  final needsChoice = await ref.read(needsDeleteModeChoiceProvider.future);
+  final needsChoice = await ref.readFuture(
+    needsDeleteModeChoiceProvider.future,
+  );
   if (!needsChoice) {
     await startSessionWith(ref, DeleteMode.trash);
     return await sessions.active();
