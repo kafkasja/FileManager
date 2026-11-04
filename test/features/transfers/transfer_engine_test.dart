@@ -21,6 +21,7 @@ import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/session/domain/session.dart';
 import 'package:kfm/features/session/domain/session_source.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
+import 'package:kfm/features/transfers/data/chunked_uploader.dart';
 import 'package:kfm/features/transfers/data/resumable_downloader.dart';
 import 'package:kfm/features/transfers/data/swipe_sends.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
@@ -142,13 +143,19 @@ class _Http implements RemoteHttp {
     Duration? timeout,
   }) => _json('GET', path, null, decode, query);
 
+  /// Timeouts the client passed to `postJson`, by path.
+  final Map<String, Duration?> postTimeouts = {};
+
   @override
   Future<T> postJson<T>(
     String path,
     Object? body, {
     required T Function(Map<String, Object?> json) decode,
     Duration? timeout,
-  }) => _json('POST', path, body, decode);
+  }) {
+    postTimeouts[path] = timeout;
+    return _json('POST', path, body, decode);
+  }
 
   @override
   Future<T> deleteJson<T>(
@@ -236,6 +243,11 @@ class _UploadServer {
   bool verify = false;
   int mismatches = 0;
 
+  /// Q8: the next completes fail like a dropped link (after publishing:
+  /// the answer is lost, a repeat gets the same file).
+  int lostCompleteAnswers = 0;
+  final Set<String> published = {};
+
   Map<String, Object?> handle(_Call c) {
     final parts = c.path.split('/');
     if (c.method == 'GET' && c.path == ApiRoutes.session) return const {};
@@ -276,6 +288,11 @@ class _UploadServer {
     }
     if (c.method == 'POST' && c.path.endsWith('/complete')) {
       completes.add(c.body! as Map<String, Object?>);
+      published.add(id);
+      if (lostCompleteAnswers > 0) {
+        lostCompleteAnswers--;
+        throw const RemoteUnavailableException(RemoteUnavailableReason.network);
+      }
       if (mismatches > 0) {
         mismatches--;
         uploads.remove(id);
@@ -323,6 +340,7 @@ void main() {
     TransferPreprocessor preprocessor = const IdentityPreprocessor(),
     int chunkBytes = 4,
     VerifiedMove? verifiedMove,
+    Future<String> Function(PreparedSource p) hash = hashPrepared,
   }) => TransferEngine(
     repo: repo,
     devices: devices,
@@ -344,6 +362,7 @@ void main() {
           removeFromIndex: (ids) async {},
         ),
     chunkBytes: chunkBytes,
+    hash: hash,
     liveInterval: const Duration(milliseconds: 20),
     persistInterval: Duration.zero,
     retryBase: const Duration(milliseconds: 2),
@@ -851,6 +870,39 @@ void main() {
     });
   });
 
+  test('Q8: the complete timeout grows with the file (the other device '
+      'hashes it twice and may copy it)', () {
+    expect(completeTimeoutFor(0), const Duration(minutes: 5));
+    expect(completeTimeoutFor(1000000000), const Duration(minutes: 5));
+    // 4.5 GB took ~4.8 min on the phone: well above that.
+    expect(
+      completeTimeoutFor(4500000000),
+      greaterThan(const Duration(minutes: 7)),
+    );
+  });
+
+  test('Q8: IdentityPreprocessor reads the real length and hashes from disk '
+      'for absolute Windows paths too', () async {
+    final dir = await Directory.systemTemp.createTemp('kfm_prep');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}${Platform.pathSeparator}a.bin')
+      ..writeAsBytesSync([1, 2, 3, 4]);
+    final path = file.absolute.path.replaceAll(r'\', '/');
+    final ref = FileRef(
+      id: 'path:$path',
+      uri: Uri.file(file.path).toString(),
+      name: 'a.bin',
+      kind: FileKind.other,
+      sizeBytes: 99, // stale: the length on disk wins
+      modifiedAt: DateTime.utc(2026),
+      folderPath: path.substring(0, path.lastIndexOf('/')),
+      origin: FileOrigin.local,
+    );
+    final p = await const IdentityPreprocessor().prepare(ref, local);
+    expect(p.sizeBytes, 4);
+    expect(p.path, path);
+  });
+
   group('uploads', () {
     late _UploadServer server;
 
@@ -934,6 +986,79 @@ void main() {
       expect(server.uploads[uploadId], bytes);
       expect(server.uploads, hasLength(1), reason: 'one upload, resumed');
     });
+
+    test('Q8: a lost complete answer: the retry asks for the status, keeps '
+        'the sender hash and completes again; no byte is sent twice', () async {
+      var hashes = 0;
+      await engine.dispose();
+      engine = newEngine(
+        hash: (p) {
+          hashes++;
+          return hashPrepared(p);
+        },
+      );
+      await engine.start();
+      engine.onConnection(_fp);
+      server.lostCompleteAnswers = 1;
+      final bytes = [1, 2, 3, 4, 5, 6];
+      final f = local.addFile('/storage/emulated/0/DCIM/a.jpg', bytes: bytes);
+      final id = await engine.enqueueUpload(
+        [f],
+        peerFingerprint: _fp,
+        peerName: 'PC',
+        rootId: 'cam',
+        path: '',
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.done);
+      final file = job.files.single;
+      expect(file.status, TransferFileStatus.done);
+      expect(puts().map((c) => c.query['offset']), ['0', '4']);
+      expect(server.completes, hasLength(2));
+      expect(server.uploads, hasLength(1), reason: 'never re-uploaded');
+      expect(hashes, 1, reason: 'the stored sender hash is reused');
+      final uploadId = file.uploadId!;
+      expect(
+        http.calls
+            .where(
+              (c) => c.method == 'GET' && c.path == ApiRoutes.upload(uploadId),
+            )
+            .length,
+        1,
+      );
+      expect(
+        http.postTimeouts[ApiRoutes.uploadComplete(uploadId)],
+        const Duration(minutes: 5),
+      );
+    });
+
+    test(
+      'Q8: a copy shows "verifying" while the other device checks it',
+      () async {
+        final hold = Completer<void>();
+        http.json = (c) async {
+          if (c.path.endsWith('/complete')) await hold.future;
+          return server.handle(c);
+        };
+        final f = local.addFile(
+          '/storage/emulated/0/DCIM/a.jpg',
+          bytes: [1, 2, 3],
+        );
+        final id = await engine.enqueueUpload(
+          [f],
+          peerFingerprint: _fp,
+          peerName: 'PC',
+          rootId: 'cam',
+          path: '',
+        );
+        final job = await until(
+          id,
+          (j) => j.files.single.status == TransferFileStatus.verifying,
+        );
+        expect(job.mode, TransferMode.copy);
+        hold.complete();
+        await until(id, (j) => j.status == TransferStatus.done);
+      },
+    );
 
     test('409: the client re-syncs to the server offset; no corrupted '
         'output', () async {

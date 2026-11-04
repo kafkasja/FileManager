@@ -4378,6 +4378,28 @@ class AppLocalizationsTr extends AppLocalizations {
       'Uygulamadan çıksan da paylaşım devam eder. Buradan ya da bildirimden durdur.';
 
   @override
+  String get transferChecking => 'Kontrol ediliyor…';
+
+  @override
+  String shareClientGone(String name) {
+    return 'Bağlantı kesildi: $name';
+  }
+
+  @override
+  String get shareKeepsRunningNoNotification =>
+      'Uygulamadan çıksan da paylaşım devam eder. KFM için bildirimler kapalı; durdurmak için buraya geri dön.';
+
+  @override
+  String get shareStopConfirmTitle => 'Paylaşım durdurulsun mu?';
+
+  @override
+  String get shareStopConfirmBody =>
+      'Hâlâ dosya gönderiliyor veya alınıyor. Şimdi durdurursan aktarımlar kesilir; tekrar paylaştığında devam ederler.';
+
+  @override
+  String get shareKeepSharing => 'Paylaşmaya devam et';
+
+  @override
   String get shareNotificationChannel => 'Cihaz paylaşımı';
 
   @override

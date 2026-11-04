@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
@@ -131,5 +132,49 @@ void main() {
     await pumpEventQueue();
     expect(seen.map((l) => l.length), [1, 0]);
     unawaited(sub.cancel());
+  });
+
+  test('Q8: no request for 20 s (3 missed heartbeats) → unresponsive and '
+      'the list emits again; a request brings it back; a running stream '
+      'keeps it responsive', () {
+    fakeAsync((async) {
+      final s = issue();
+      final emitted = <List<ClientSession>>[];
+      final sub = store.changes.listen(emitted.add);
+      expect(store.isResponsive(s.session), isTrue);
+      now = now.add(const Duration(seconds: 15));
+      async.elapse(const Duration(seconds: 5));
+      expect(store.isResponsive(s.session), isTrue);
+      expect(emitted, isEmpty);
+      now = now.add(const Duration(seconds: 10));
+      async.elapse(const Duration(seconds: 5));
+      expect(store.isResponsive(s.session), isFalse);
+      expect(emitted, hasLength(1), reason: 'shown as disconnected');
+      // The session itself is still valid (it may come back).
+      expect(store.sessions, hasLength(1));
+      expect(store.verify(s.token), isNotNull);
+      expect(store.isResponsive(s.session), isTrue);
+      async.flushMicrotasks();
+      expect(emitted, hasLength(2), reason: 'connected again');
+
+      // A long download: no heartbeat needed while its stream runs.
+      final c = StreamController<int>();
+      final unregister = store.registerStream(
+        s.session.sessionId,
+        c.stream.listen((_) {}),
+      );
+      now = now.add(const Duration(minutes: 1));
+      async.elapse(const Duration(seconds: 5));
+      expect(store.isResponsive(s.session), isTrue);
+      expect(store.hasActiveStreams, isTrue);
+      unregister();
+      expect(store.hasActiveStreams, isFalse);
+      async.elapse(const Duration(seconds: 5));
+      expect(store.isResponsive(s.session), isFalse);
+      unawaited(sub.cancel());
+      unawaited(c.close());
+      store.clear();
+      async.flushTimers();
+    });
   });
 }

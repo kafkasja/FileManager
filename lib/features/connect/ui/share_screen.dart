@@ -25,6 +25,10 @@ import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+/// A chunk stored this recently counts as a running upload (Q8: the
+/// client sends the next one right away).
+const Duration kShareActivityWindow = Duration(seconds: 15);
+
 /// "Share this device" (TASK-N1). Sharing starts in `initState` and stops
 /// in `dispose`; on Android it keeps running while KFM is in the background
 /// (N5b notification). The QR area is
@@ -273,19 +277,63 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     final l10n = context.l10n;
     final state = ref.watch(shareServerControllerProvider);
     final spacing = context.tokens.spacing;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.receive ? l10n.receiveFiles : l10n.shareTitle),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const RemoteRequestBanner(),
-            Expanded(child: _body(context, state, spacing)),
-          ],
+    return PopScope(
+      // Q8: leaving stops sharing; running transfers are asked about first.
+      canPop: state.status != ShareServerStatus.running,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_leave());
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.receive ? l10n.receiveFiles : l10n.shareTitle),
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              const RemoteRequestBanner(),
+              Expanded(child: _body(context, state, spacing)),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  /// Q8: a download or upload stream runs, a chunk came in moments ago, or
+  /// an N12 offer is pending / still receiving.
+  bool _transfersActive() =>
+      ref.read(clientSessionStoreProvider).hasActiveStreams ||
+      ref.read(uploadStoreProvider).activeWithin(kShareActivityWindow) ||
+      ref.read(offerServiceProvider).hasActiveOffers;
+
+  /// Back / Stop sharing while sharing runs: asks first when transfers
+  /// would be cut.
+  Future<void> _leave() async {
+    final navigator = Navigator.of(context);
+    if (_transfersActive()) {
+      final l10n = context.l10n;
+      final stop = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          key: const ValueKey('share-stop-confirm'),
+          title: Text(l10n.shareStopConfirmTitle),
+          content: Text(l10n.shareStopConfirmBody),
+          actions: [
+            TextButton(
+              autofocus: true,
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.shareKeepSharing),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.shareStop),
+            ),
+          ],
+        ),
+      );
+      if (stop != true || !mounted) return;
+    }
+    navigator.pop();
   }
 
   Widget _body(BuildContext context, ShareServerState state, double spacing) {
@@ -427,20 +475,7 @@ class _Running extends ConsumerWidget {
           ),
         ],
         SizedBox(height: spacing * 2),
-        Text(
-          switch (state.keepAlive) {
-            ShareKeepAlive.background =>
-              isWindowsHost
-                  ? l10n.shareKeepsRunningTray
-                  : l10n.shareKeepsRunning,
-            ShareKeepAlive.whileAppOpen => l10n.shareKeepOpen,
-            ShareKeepAlive.whileOnScreen => l10n.shareKeepOpenDesktop,
-          },
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
-        ),
+        _KeepAliveNote(keepAlive: state.keepAlive),
         if (kDebugMode) ...[
           SizedBox(height: spacing * 3),
           for (final a in state.addresses)
@@ -470,6 +505,68 @@ class _Running extends ConsumerWidget {
   }
 }
 
+/// What ends sharing besides Stop. Q8: the notification is only promised
+/// when notifications are allowed (Android 13+ may deny them); checked
+/// again when KFM comes back (the user may have changed it).
+class _KeepAliveNote extends ConsumerStatefulWidget {
+  const new({required this.keepAlive});
+
+  final ShareKeepAlive keepAlive;
+
+  @override
+  ConsumerState<_KeepAliveNote> createState() => _KeepAliveNoteState();
+}
+
+class _KeepAliveNoteState extends ConsumerState<_KeepAliveNote> {
+  bool _notifications = true;
+  AppLifecycleListener? _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _check);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle?.dispose();
+    super.dispose();
+  }
+
+  void _check() {
+    unawaited(
+      ref.read(shareBackgroundProvider).notificationsAllowed().then((allowed) {
+        if (mounted && allowed != _notifications) {
+          setState(() => _notifications = allowed);
+        }
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Text(
+      switch (widget.keepAlive) {
+        ShareKeepAlive.background when isWindowsHost =>
+          l10n.shareKeepsRunningTray,
+        ShareKeepAlive.background when !_notifications =>
+          l10n.shareKeepsRunningNoNotification,
+        ShareKeepAlive.background => l10n.shareKeepsRunning,
+        ShareKeepAlive.whileAppOpen => l10n.shareKeepOpen,
+        ShareKeepAlive.whileOnScreen => l10n.shareKeepOpenDesktop,
+      },
+      key: const ValueKey('share-keep-alive'),
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
 /// "Connected: `name`" + Disconnect per live session (TASK-N3).
 class ConnectedClientsList extends ConsumerWidget {
   const new({super.key});
@@ -480,6 +577,7 @@ class ConnectedClientsList extends ConsumerWidget {
     final spacing = context.tokens.spacing;
     final clients = ref.watch(connectedClientsProvider).value ?? const [];
     if (clients.isEmpty) return const SizedBox.shrink();
+    final store = ref.read(clientSessionStoreProvider);
     return Padding(
       padding: EdgeInsetsDirectional.only(bottom: spacing * 2),
       child: Column(
@@ -488,9 +586,17 @@ class ConnectedClientsList extends ConsumerWidget {
             Card(
               child: ListTile(
                 key: ValueKey('share-client-${c.sessionId}'),
-                leading: const Icon(Icons.devices_outlined),
+                // Q8: no heartbeat for a while: the client vanished (it may
+                // still come back).
+                leading: Icon(
+                  store.isResponsive(c)
+                      ? Icons.devices_outlined
+                      : Icons.portable_wifi_off_outlined,
+                ),
                 title: Text(
-                  c.sendOnly
+                  !store.isResponsive(c)
+                      ? l10n.shareClientGone(c.clientName)
+                      : c.sendOnly
                       ? l10n.shareSessionSending(c.clientName)
                       : l10n.shareConnectedTo(c.clientName),
                 ),

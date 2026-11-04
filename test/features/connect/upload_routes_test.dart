@@ -537,4 +537,268 @@ void main() {
       },
     );
   });
+
+  group('Q8 complete and space', () {
+    final good = sha256.convert([1, 2, 3, 4, 5]).toString();
+    late int partHashes;
+    late int copyHashes;
+    Completer<void>? gate;
+
+    Handler build({
+      UploadPublish publish = UploadPublish.copy,
+      Future<int?> Function()? stagingFree,
+    }) => buildSharePipeline(
+      served: [LocalAddress(InternetAddress('192.168.1.23'), 24, 'wlan0')],
+      authenticate: authenticate(sessions),
+      sizeLimitExempt: isUploadChunkRequest,
+      routes: uploadRoutes(
+        UploadRoutesEnv(
+          guard: AllowListGuard(
+            scopeOf: scopes.scopeOf,
+            source: () => files,
+            paths: fakeGuard(
+              existing: {_root, '$_root/DCIM', '$_root/Download'},
+            ),
+          ),
+          sessions: sessions,
+          uploads: uploads,
+          source: () => files,
+          addToIndex: (f) async => indexed.add(f),
+          stagingFreeBytes: stagingFree ?? () async => null,
+          hashPath: (path) async {
+            partHashes++;
+            await gate?.future;
+            return sha256.convert(await File(path).readAsBytes()).toString();
+          },
+          hashFile: (f, s) async {
+            copyHashes++;
+            return sha256.convert(files.bytesOf(f.id)!).toString();
+          },
+          publishMode: (_) async => publish,
+        ),
+      ),
+    );
+
+    setUp(() {
+      partHashes = 0;
+      copyHashes = 0;
+      gate = null;
+    });
+
+    Future<void> sendAll() async {
+      await call('POST', ApiRoutes.uploads, json: create());
+      await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk(_id)}?offset=0',
+        bytes: [1, 2, 3, 4, 5],
+      );
+    }
+
+    Future<void> until(bool Function() done) async {
+      for (var i = 0; i < 200 && !done(); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+    }
+
+    test('a repeated complete while the first still runs (the link dropped '
+        'during the hash) waits for it: one file, the same answer, and the '
+        'completion is remembered afterwards', () async {
+      handler = build();
+      await sendAll();
+      gate = Completer<void>();
+      final first = call(
+        'POST',
+        ApiRoutes.uploadComplete(_id),
+        json: CompleteUploadDto(sha256: good).toJson(),
+      );
+      await until(() => partHashes == 1);
+      // The client's view: status says every byte is there, so it asks
+      // to complete again.
+      var r = await call('GET', ApiRoutes.upload(_id));
+      expect(UploadStatusDto.fromJson(await body(r)).received, 5);
+      final second = call(
+        'POST',
+        ApiRoutes.uploadComplete(_id),
+        json: CompleteUploadDto(sha256: good).toJson(),
+      );
+      // Cancel (DELETE) can't pull the upload away mid-publish either.
+      r = await call('DELETE', ApiRoutes.upload(_id));
+      expect(await code(r), 'busy');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      gate!.complete();
+      final a = await first;
+      final b = await second;
+      expect(a.statusCode, 200);
+      expect(b.statusCode, 200);
+      final da = UploadCompletedDto.fromJson(await body(a));
+      final db = UploadCompletedDto.fromJson(await body(b));
+      expect(db.finalId, da.finalId);
+      expect(db.sha256, good);
+      expect(partHashes, 1, reason: 'published once');
+      expect(
+        files.files
+            .where((f) => f.folderPath.endsWith('DCIM'))
+            .map((f) => f.name),
+        ['a.jpg'],
+      );
+      // A third ask after both answers were lost: remembered, no 404.
+      r = await call('GET', ApiRoutes.upload(_id));
+      expect(r.statusCode, 200);
+      r = await call(
+        'POST',
+        ApiRoutes.uploadComplete(_id),
+        json: CompleteUploadDto(sha256: good).toJson(),
+      );
+      expect(UploadCompletedDto.fromJson(await body(r)).finalId, da.finalId);
+    });
+
+    test(
+      'a part that fails to read keeps the upload (asked again later)',
+      () async {
+        handler = buildSharePipeline(
+          served: [LocalAddress(InternetAddress('192.168.1.23'), 24, 'wlan0')],
+          authenticate: authenticate(sessions),
+          sizeLimitExempt: isUploadChunkRequest,
+          routes: uploadRoutes(
+            UploadRoutesEnv(
+              guard: AllowListGuard(
+                scopeOf: scopes.scopeOf,
+                source: () => files,
+                paths: fakeGuard(existing: {_root, '$_root/DCIM'}),
+              ),
+              sessions: sessions,
+              uploads: uploads,
+              source: () => files,
+              addToIndex: (f) async {},
+              stagingFreeBytes: () async => null,
+              hashPath: (_) async => throw const FileSystemException('busy'),
+            ),
+          ),
+        );
+        await sendAll();
+        final r = await call(
+          'POST',
+          ApiRoutes.uploadComplete(_id),
+          json: CompleteUploadDto(sha256: good).toJson(),
+        );
+        expect(r.statusCode, 500);
+        expect(part(_id).lengthSync(), 5);
+        final st = await call('GET', ApiRoutes.upload(_id));
+        expect(UploadStatusDto.fromJson(await body(st)).received, 5);
+      },
+    );
+
+    test(
+      'an atomic rename skips the read-back hash; a copy is hashed',
+      () async {
+        handler = build(publish: UploadPublish.rename);
+        await sendAll();
+        var r = await call(
+          'POST',
+          ApiRoutes.uploadComplete(_id),
+          json: CompleteUploadDto(sha256: good).toJson(),
+        );
+        expect(UploadCompletedDto.fromJson(await body(r)).sha256, good);
+        expect((partHashes, copyHashes), (1, 0));
+
+        final id2 = 'cd' * 16;
+        handler = build();
+        await call(
+          'POST',
+          ApiRoutes.uploads,
+          json: create(id: id2, name: 'b.jpg'),
+        );
+        await call(
+          'PUT',
+          '${ApiRoutes.uploadChunk(id2)}?offset=0',
+          bytes: [1, 2, 3, 4, 5],
+        );
+        r = await call(
+          'POST',
+          ApiRoutes.uploadComplete(id2),
+          json: CompleteUploadDto(sha256: good).toJson(),
+        );
+        expect(r.statusCode, 200);
+        expect((partHashes, copyHashes), (2, 1));
+      },
+    );
+
+    test('publishing by copy within the same free space needs the size twice '
+        '(507 before any byte is sent); a rename or another volume needs it '
+        'once', () async {
+      const mb = 1024 * 1024;
+      const size = 100 * mb;
+      // 200 MB free on the phone's storage: the 100 MB partial + 64 MB
+      // margin fits, the 100 MB publish copy on top does not.
+      files.freeBytesValue = 200 * mb;
+      Map<String, Object?> big(String id) =>
+          create(id: id, name: 'f$id.bin', size: size);
+
+      handler = build(stagingFree: () async => 200 * mb);
+      var r = await call('POST', ApiRoutes.uploads, json: big('a1' * 16));
+      expect(r.statusCode, 507);
+      expect(part('a1' * 16).existsSync(), isFalse);
+
+      handler = build(
+        publish: UploadPublish.rename,
+        stagingFree: () async => 200 * mb,
+      );
+      r = await call('POST', ApiRoutes.uploads, json: big('a2' * 16));
+      expect(r.statusCode, 201);
+
+      // Staging on another volume (e.g. an SD card target): each side once.
+      handler = build(stagingFree: () async => 5000 * mb);
+      r = await call('POST', ApiRoutes.uploads, json: big('a3' * 16));
+      expect(r.statusCode, 201);
+
+      // Checked per chunk too.
+      handler = build(stagingFree: () async => 200 * mb);
+      r = await call(
+        'PUT',
+        '${ApiRoutes.uploadChunk('a3' * 16)}?offset=0',
+        bytes: [1],
+      );
+      expect(r.statusCode, 507);
+    });
+
+    test('uploadPublishFor: Android copies; Windows renames on the same '
+        'drive', () {
+      expect(
+        uploadPublishFor(
+          '/storage/emulated/0/Android/data/com.kaf.kfm/files/transfers',
+          '/storage/emulated/0/Download',
+          isAndroid: true,
+          isWindows: false,
+        ),
+        UploadPublish.copy,
+      );
+      expect(
+        uploadPublishFor(
+          r'C:\Users\k\AppData\Roaming\Kaf\KFM\transfers',
+          'c:/Users/k/Pictures',
+          isAndroid: false,
+          isWindows: true,
+        ),
+        UploadPublish.rename,
+      );
+      expect(
+        uploadPublishFor(
+          r'C:\Users\k\AppData\Roaming\Kaf\KFM\transfers',
+          'E:/Photos',
+          isAndroid: false,
+          isWindows: true,
+        ),
+        UploadPublish.copyOtherVolume,
+      );
+      expect(
+        uploadPublishFor(
+          r'C:\x',
+          '//server/share',
+          isAndroid: false,
+          isWindows: true,
+        ),
+        UploadPublish.copy,
+      );
+    });
+  });
 }

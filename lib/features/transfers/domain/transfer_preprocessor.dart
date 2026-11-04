@@ -48,7 +48,9 @@ class IdentityPreprocessor implements TransferPreprocessor {
   final Future<int?> Function(FileRef f) diskLength;
 
   static Future<int?> _lengthOnDisk(FileRef f) async {
-    if (!f.path.startsWith('/')) return null;
+    // `/…` on Android, `C:/…` on Windows (Q8: Windows uploads were hashed
+    // through the stream instead of the file).
+    if (!f.path.startsWith('/') && !File(f.path).isAbsolute) return null;
     try {
       return await File(f.path).length();
     } on FileSystemException {

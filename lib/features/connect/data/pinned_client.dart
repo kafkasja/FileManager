@@ -78,6 +78,10 @@ const int kMaxJsonResponseBytes = 8 * 1024 * 1024;
 /// Default request timeout when the caller passes none.
 const Duration kDefaultRequestTimeout = Duration(seconds: 30);
 
+/// A chunk upload with no progress (no body bytes taken, no answer) for
+/// this long is aborted (Q7 follow-up).
+const Duration kPutStallTimeout = Duration(seconds: 30);
+
 /// HTTPS client that trusts exactly one certificate fingerprint (TASK-N1).
 ///
 /// With `withTrustedRoots: false` every certificate fails normal
@@ -122,6 +126,9 @@ final class PinnedClient implements FirstContactHttp {
 
   @override
   String? bearerToken;
+
+  /// [putStream]'s no-progress limit (tests shorten it).
+  Duration putStallTimeout = kPutStallTimeout;
 
   /// The first fingerprint a server presented to this client.
   @override
@@ -215,8 +222,33 @@ final class PinnedClient implements FirstContactHttp {
     final req = await _open('PUT', path, query);
     req.headers.contentType = ContentType.binary;
     req.contentLength = length;
-    await req.addStream(body);
-    return await _finish(await req.close(), decode);
+    // Q7/Q8: no fixed timeout (a chunk on slow Wi-Fi takes a while), but
+    // one that stops moving for [putStallTimeout] (a dead-but-open link)
+    // is aborted instead of waiting for the heartbeat's teardown.
+    Timer? stall;
+    void arm() {
+      stall?.cancel();
+      stall = Timer(
+        putStallTimeout,
+        () => req.abort(TimeoutException('chunk stalled', putStallTimeout)),
+      );
+    }
+
+    arm();
+    try {
+      await req.addStream(
+        body.map((b) {
+          arm();
+          return b;
+        }),
+      );
+      arm(); // now waiting for the answer
+      final res = await req.close();
+      arm();
+      return await _finish(res, decode);
+    } finally {
+      stall?.cancel();
+    }
   });
 
   @override

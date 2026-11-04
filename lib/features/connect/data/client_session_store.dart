@@ -12,6 +12,15 @@ import 'package:meta/meta.dart';
 /// keeps live clients active).
 const Duration kSessionIdleTimeout = Duration(minutes: 10);
 
+/// A client without a request for this long shows as disconnected on the
+/// share screen (Q8). N5's heartbeat runs every 5 s and the client gives up
+/// after 3 missed beats (~15–19 s); its token stays valid until
+/// [kSessionIdleTimeout], so a quick return still resumes.
+const Duration kSessionLiveWindow = Duration(seconds: 20);
+
+/// How often idle and unresponsive sessions are checked.
+const Duration _kSweepInterval = Duration(seconds: 5);
+
 /// What [ClientSessionStore.issue] returns: the raw token goes to the
 /// client once and is never stored.
 typedef IssuedSession = ({String token, ClientSession session});
@@ -35,6 +44,9 @@ class ClientSessionStore {
   final StreamController<List<ClientSession>> _changes =
       StreamController.broadcast();
   Timer? _sweep;
+
+  /// Session ids shown as unresponsive at the last check.
+  Set<String> _silent = const {};
 
   DateTime now() => _clock();
 
@@ -72,7 +84,7 @@ class ClientSessionStore {
       purpose: purpose,
     );
     _byHash[session.tokenHash] = session;
-    _sweep ??= Timer.periodic(const Duration(minutes: 1), (_) => _expireIdle());
+    _sweep ??= Timer.periodic(_kSweepInterval, (_) => _check());
     _emit();
     return (token: token, session: session);
   }
@@ -89,8 +101,26 @@ class ClientSessionStore {
       _emit();
       return null;
     }
-    return _byHash[hash] = s.touched(at);
+    final touched = _byHash[hash] = s.touched(at);
+    // Back after a gap: shown as connected again.
+    if (_silent.contains(s.sessionId)) {
+      _silent = _silentNow();
+      _emit();
+    }
+    return touched;
   }
+
+  /// Q8: [s] answered within [kSessionLiveWindow] or has a transfer
+  /// running. False = the client vanished (it may still come back with
+  /// its token until [kSessionIdleTimeout]).
+  bool isResponsive(ClientSession s) {
+    final live = _byHash[s.tokenHash] ?? s;
+    return _clock().difference(live.lastUsedAt) < kSessionLiveWindow ||
+        (_streams[s.sessionId]?.isNotEmpty ?? false);
+  }
+
+  /// Q8: a download or upload stream of any client is running right now.
+  bool get hasActiveStreams => _streams.values.any((l) => l.isNotEmpty);
 
   /// Ends one session (share-screen "Disconnect"); cancels its streams.
   bool revoke(String sessionId) =>
@@ -160,6 +190,22 @@ class ClientSessionStore {
   @visibleForTesting
   static String hashToken(String token) =>
       crypto.sha256.convert(utf8.encode(token)).toString();
+
+  /// The periodic check: idle sessions end; a session that turned
+  /// unresponsive emits the list again (the share screen shows it).
+  void _check() {
+    _expireIdle();
+    final silent = _silentNow();
+    if (silent.length != _silent.length || !silent.containsAll(_silent)) {
+      _silent = silent;
+      _emit();
+    }
+  }
+
+  Set<String> _silentNow() => {
+    for (final s in _byHash.values)
+      if (!isResponsive(s)) s.sessionId,
+  };
 
   void _expireIdle() {
     final at = _clock();

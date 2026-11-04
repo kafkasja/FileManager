@@ -22,6 +22,15 @@ import 'package:kfm/features/transfers/domain/verified_move.dart';
 /// failed try.
 const int kMaxOffsetResyncs = 3;
 
+/// How long `complete` may take for a file of [size] bytes (Q8): the other
+/// device hashes the part, may copy it and hashes the copy (~35 MB/s on a
+/// phone: 4.5 GB took ~4.8 min). One minute plus 10 MB/s, at least 5 min.
+Duration completeTimeoutFor(int size) {
+  final scaled = Duration(seconds: 60 + size ~/ (10 * 1024 * 1024));
+  const floor = Duration(minutes: 5);
+  return scaled > floor ? scaled : floor;
+}
+
 /// SHA-256 of what an upload sends, off the UI isolate.
 Future<String> hashPrepared(PreparedSource p) async {
   final path = p.path;
@@ -90,8 +99,12 @@ class ChunkedUploader {
         await _restart(run, http, uploadId, source);
         throw const TransferFailure(TransferErrors.sourceChanged);
       }
-      // Nothing sent yet: just remember the current version.
-      await _save(f.id, _versionRow(source));
+      // Nothing sent yet: just remember the current version (an old hash
+      // is no longer this file's).
+      await _save(
+        f.id,
+        _versionRow(source).copyWith(senderSha256: const Value(null)),
+      );
     }
     final prepared = await _preprocessor.prepare(source, _local);
     try {
@@ -138,6 +151,8 @@ class ChunkedUploader {
         received = st.received;
       }
       var at = received;
+      // Every byte was already there: a retry after a lost complete.
+      final allThere = at == size;
       run.confirm(at);
       var resyncs = 0;
       while (at < size) {
@@ -178,23 +193,33 @@ class ChunkedUploader {
       }
       if (run.stopped) throw const TransferStopped();
       final move = job.mode == TransferMode.move;
-      if (move) {
-        await _save(
-          f.id,
-          const TransferFilesCompanion(
-            status: Value(TransferFileStatus.verifying),
-          ),
-        );
+      // Q8: every byte is there; hashing on both sides can take minutes
+      // (the screen shows "Checking…" / a move's "Verifying…").
+      await _save(
+        f.id,
+        const TransferFilesCompanion(
+          status: Value(TransferFileStatus.verifying),
+        ),
+      );
+      // A retry after a lost complete answer (same source version, checked
+      // above; nothing sent in this run) reuses the stored hash instead of
+      // reading the whole file again. A wrong one only fails verification
+      // (that clears it).
+      final stored = allThere ? f.senderSha256 : null;
+      final sha = stored ?? await _hash(prepared);
+      if (sha != f.senderSha256) {
+        await _save(f.id, TransferFilesCompanion(senderSha256: Value(sha)));
       }
-      final sha = await _hash(prepared);
-      await _save(f.id, TransferFilesCompanion(senderSha256: Value(sha)));
       if (run.stopped) throw const TransferStopped();
+      // Q8: a timeout or a dropped link is retried by the engine: it asks
+      // `GET /v1/uploads/<id>` (all bytes there, or already published) and
+      // completes again; the other device answers a repeat with the running
+      // or remembered result, never a second copy.
       final done = await http.postJson(
         ApiRoutes.uploadComplete(id),
         CompleteUploadDto(sha256: sha).toJson(),
         decode: UploadCompletedDto.fromJson,
-        // Publishing a large file on the other device takes a while.
-        timeout: const Duration(minutes: 5),
+        timeout: completeTimeoutFor(size),
       );
       if (!move) return (finalId: done.finalId, receiverSha256: null);
       // The other device hashed the part and the published file; an older

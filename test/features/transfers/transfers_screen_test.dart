@@ -182,4 +182,62 @@ void main() {
     expect(find.text('Verification failed. Original kept.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 6));
   });
+
+  testWidgets('Q8: a copy whose bytes are all there shows "Checking…" '
+      '(a move "Verifying…")', (tester) async {
+    final app = await pumpApp(tester);
+    final repo = app.container.read(transfersRepositoryProvider);
+    await tester.runAsync(() async {
+      final d = await app.container
+          .read(knownDevicesRepositoryProvider)
+          .saveAfterPairing(
+            PairedPeer(
+              fingerprint: _fp,
+              peerDeviceId: 'p',
+              name: 'PC',
+              platform: 'windows',
+            ),
+            temporary: false,
+          );
+      for (final mode in TransferMode.values) {
+        final jobId = await repo.createJob(
+          deviceId: d.id,
+          direction: TransferDirection.upload,
+          targetRootId: 'cam',
+          targetPath: '',
+          mode: mode,
+          deleteMode: DeleteMode.trash,
+          files: [
+            (
+              sourceFileId: 'path:/x/${mode.name}.bin',
+              name: '${mode.name}.bin',
+              sizeBytes: 10,
+              sourceModifiedAtMs: 0,
+            ),
+          ],
+        );
+        final f = (await repo.dao.job(jobId))!.files.single;
+        await repo.setFile(
+          f.id,
+          jobId,
+          const TransferFilesCompanion(
+            status: Value(TransferFileStatus.verifying),
+            bytesDone: Value(10),
+          ),
+        );
+      }
+    });
+
+    app.container.read(routerProvider).go(AppRoutes.transfers);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Uploads'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('To PC'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Moving to PC'));
+    await tester.pumpAndSettle();
+    expect(find.text('Checking…'), findsWidgets);
+    expect(find.text('Verifying…'), findsWidgets);
+    await tester.pump(const Duration(seconds: 6));
+  });
 }

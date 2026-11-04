@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
+import 'package:kfm/features/connect/data/client_session_store.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
@@ -139,6 +140,11 @@ class _FakeBackground implements ShareBackground {
 
   @override
   Future<void> cancelOffer() async {}
+
+  bool notifications = true;
+
+  @override
+  Future<bool> notificationsAllowed() async => notifications;
 }
 
 void main() {
@@ -151,6 +157,7 @@ void main() {
     WidgetTester tester, {
     bool stopsInBackground = false,
     ShareBackground background = const NoShareBackground(),
+    ClientSessionStore? sessions,
   }) {
     awake = _FakeAwake();
     final identity = _FakeIdentity();
@@ -167,6 +174,8 @@ void main() {
         sharedFolderFsProvider.overrideWithValue(_FakeFolderFs()),
         lifecycleStopsSharingProvider.overrideWithValue(stopsInBackground),
         shareBackgroundProvider.overrideWithValue(background),
+        if (sessions != null)
+          clientSessionStoreProvider.overrideWithValue(sessions),
         pathGuardProvider.overrideWithValue(
           PathGuard(resolver: (p) async => p),
         ),
@@ -601,6 +610,90 @@ void main() {
     expect(bg.stops, 1);
     expect(sessions.sessions, isEmpty);
     expect(find.text('Sharing stopped'), findsOneWidget);
+  });
+
+  testWidgets('Q8: Back while a transfer runs asks first; Keep sharing '
+      'stays, Stop sharing stops', (tester) async {
+    final app = await pump(tester);
+    await openShare(tester);
+    final sessions = app.container.read(clientSessionStoreProvider);
+    final s = sessions.issue(
+      clientFingerprint: 'cd' * 32,
+      clientDeviceId: 'dev-b',
+      clientName: 'Phone B',
+    );
+    // A download stream of that client is running.
+    final body = StreamController<int>();
+    final unregister = sessions.registerStream(
+      s.session.sessionId,
+      body.stream.listen((_) {}),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Stop sharing?'), findsOneWidget);
+    await tester.tap(find.text('Keep sharing'));
+    await tester.pumpAndSettle();
+    expect(server.stops, 0);
+    expect(find.text('Sharing'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('share-stop-confirm')),
+        matching: find.text('Stop sharing'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(server.stops, 1);
+    expect(find.text('Sharing'), findsNothing);
+    unregister();
+    sessions.clear();
+    unawaited(body.close());
+  });
+
+  testWidgets('Q8: a client without a heartbeat for 20 s shows as '
+      'disconnected; a request shows it connected again', (tester) async {
+    var clock = DateTime(2026, 11, 4, 12);
+    final sessions = ClientSessionStore(clock: () => clock);
+    await pump(tester, sessions: sessions);
+    await openShare(tester);
+    final s = sessions.issue(
+      clientFingerprint: 'cd' * 32,
+      clientDeviceId: 'dev-b',
+      clientName: 'Phone B',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Connected: Phone B'), findsOneWidget);
+    clock = clock.add(const Duration(seconds: 25));
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+    expect(find.text('Disconnected: Phone B'), findsOneWidget);
+    expect(find.text('Connected: Phone B'), findsNothing);
+    sessions.verify(s.token);
+    await tester.pumpAndSettle();
+    expect(find.text('Connected: Phone B'), findsOneWidget);
+    sessions.clear();
+  });
+
+  testWidgets('Q8: with notifications denied the share screen does not '
+      'promise a notification', (tester) async {
+    final bg = _FakeBackground()..notifications = false;
+    await pump(tester, stopsInBackground: true, background: bg);
+    await openShare(tester);
+    final hint = find.text(
+      'Sharing keeps running when you leave the app. Notifications are off '
+      'for KFM, so come back here to stop it.',
+    );
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(hint, findsOneWidget);
+    expect(find.textContaining('from the notification'), findsNothing);
   });
 
   testWidgets('N5b: leaving the share screen stops the service', (

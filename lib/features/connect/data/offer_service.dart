@@ -243,6 +243,14 @@ class OfferService implements OfferGrants {
   /// Receiver events (auto-accepted, received).
   Stream<OfferEvent> get events => _events.stream;
 
+  /// Q8: an offer waits for a decision or is accepted with files still to
+  /// come (stopping sharing interrupts it).
+  bool get hasActiveOffers => _open.values.any(
+    (o) =>
+        o.status == OfferStatus.pending ||
+        (o.status == OfferStatus.accepted && !o.allFilesEnded),
+  );
+
   /// Incoming offers waiting for a decision, oldest first.
   List<OfferPrompt> get prompts => _currentPrompts;
   Stream<List<OfferPrompt>> get promptChanges => _prompts.stream;
