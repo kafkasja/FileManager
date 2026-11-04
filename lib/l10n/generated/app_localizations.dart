@@ -6225,6 +6225,42 @@ abstract class AppLocalizations {
   /// **'Sharing keeps running when you leave the app. Stop it here or from the notification.'**
   String get shareKeepsRunning;
 
+  /// No description provided for @transferChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get transferChecking;
+
+  /// No description provided for @shareClientGone.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected: {name}'**
+  String shareClientGone(String name);
+
+  /// No description provided for @shareKeepsRunningNoNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing keeps running when you leave the app. Notifications are off for KFM, so come back here to stop it.'**
+  String get shareKeepsRunningNoNotification;
+
+  /// No description provided for @shareStopConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing?'**
+  String get shareStopConfirmTitle;
+
+  /// No description provided for @shareStopConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Files are still being sent or received. Stopping now interrupts them; they continue the next time you share.'**
+  String get shareStopConfirmBody;
+
+  /// No description provided for @shareKeepSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep sharing'**
+  String get shareKeepSharing;
+
   /// No description provided for @shareNotificationChannel.
   ///
   /// In en, this message translates to:

@@ -4361,6 +4361,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sharing keeps running when you leave the app. Stop it here or from the notification.';
 
   @override
+  String get transferChecking => 'Checking…';
+
+  @override
+  String shareClientGone(String name) {
+    return 'Disconnected: $name';
+  }
+
+  @override
+  String get shareKeepsRunningNoNotification =>
+      'Sharing keeps running when you leave the app. Notifications are off for KFM, so come back here to stop it.';
+
+  @override
+  String get shareStopConfirmTitle => 'Stop sharing?';
+
+  @override
+  String get shareStopConfirmBody =>
+      'Files are still being sent or received. Stopping now interrupts them; they continue the next time you share.';
+
+  @override
+  String get shareKeepSharing => 'Keep sharing';
+
+  @override
   String get shareNotificationChannel => 'Device sharing';
 
   @override

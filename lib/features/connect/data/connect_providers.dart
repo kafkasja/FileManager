@@ -472,6 +472,12 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
             .read(fileSourceProvider)
             .freeBytes((await transferStagingDir()).path),
         grants: LazyOfferGrants(() => ref.read(offerServiceProvider)),
+        publishMode: (target) async => uploadPublishFor(
+          (await transferStagingDir()).path,
+          target,
+          isAndroid: Platform.isAndroid,
+          isWindows: isWindowsHost,
+        ),
       ),
     ),
     // N12: send-files offers (push).

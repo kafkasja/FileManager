@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
+import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 
 /// Partials untouched this long are deleted (TASK-N10).
@@ -50,6 +51,15 @@ class UploadState {
   /// Aborts [writing] (a newer chunk of the same owner takes over).
   void Function()? abortWrite;
 
+  /// The `complete` running for this upload (Q8): a repeated complete
+  /// (the client lost the link and asks again) waits for this one's
+  /// outcome instead of publishing a second time.
+  Future<CompleteOutcome>? completing;
+
+  /// Its owner was removed (or the store cleared) meanwhile: a running
+  /// complete's answer is not remembered.
+  bool forgotten = false;
+
   /// Same upload as a repeated create (idempotent `POST /v1/uploads`).
   bool sameAs({
     required String rootId,
@@ -72,6 +82,16 @@ class UploadState {
     'createdAtMs': createdAtMs,
     'updatedAtMs': nowMs,
   };
+}
+
+/// What one `complete` ended with (Q8): the published file, or the error
+/// every caller waiting for it gets.
+class CompleteOutcome {
+  const new({this.finalId, this.sha256, this.error});
+
+  final String? finalId;
+  final String? sha256;
+  final ApiErrorCode? error;
 }
 
 /// Completions remembered for a repeated `complete` (N11).
@@ -102,6 +122,19 @@ class UploadStore {
   final Map<String, UploadState> _uploads = {};
   final Map<String, CompletedUpload> _done = {};
   Future<void>? _loaded;
+
+  /// When a chunk was last stored (Q8: "transfers running" between chunks).
+  DateTime? _lastChunkAt;
+
+  /// Q8: a chunk or a complete runs right now, or a chunk was stored within
+  /// [window] (the client is between two chunks).
+  bool activeWithin(Duration window) {
+    final last = _lastChunkAt;
+    return _uploads.values.any(
+          (u) => u.writing != null || u.completing != null,
+        ) ||
+        (last != null && _clock().difference(last) < window);
+  }
 
   /// Loads the partials on disk once (and deletes broken or stale ones).
   Future<void> _ensureLoaded() => _loaded ??= _load();
@@ -157,6 +190,7 @@ class UploadStore {
   /// Rewrites [u]'s `.json` atomically (temp file, flush, rename). Call
   /// only after the bytes it claims are flushed.
   Future<void> saveMeta(UploadState u) async {
+    _lastChunkAt = _clock();
     final tmp = File('${u.meta.path}.tmp');
     await tmp.writeAsString(
       jsonEncode(u.toJson(_clock().millisecondsSinceEpoch)),
@@ -174,20 +208,21 @@ class UploadStore {
     await _delete(u.meta);
   }
 
-  /// Forgets the upload after a successful import (the partial was moved)
-  /// and remembers the answer (N11): the owner's repeated `complete` after
-  /// a lost answer gets the same result instead of a 404 (which would send
-  /// the file again). In memory only, the last [kRememberedCompletions].
+  /// Forgets the upload [u] after a successful import (the partial was
+  /// moved) and remembers the answer (N11): the owner's repeated `complete`
+  /// after a lost answer gets the same result instead of a 404 (which would
+  /// send the file again). Recorded from [u] itself, so it holds even when
+  /// the live entry went meanwhile (Q8), unless its owner was removed. In
+  /// memory only, the last [kRememberedCompletions].
   Future<void> completed(
-    String uploadId, {
-    String? finalId,
+    UploadState u, {
+    required String finalId,
     String? sha256,
   }) async {
-    final u = _uploads[uploadId];
-    if (u != null && finalId != null) {
+    if (!u.forgotten) {
       _done
-        ..remove(uploadId)
-        ..[uploadId] = CompletedUpload(
+        ..remove(u.uploadId)
+        ..[u.uploadId] = CompletedUpload(
           state: u,
           finalId: finalId,
           sha256: sha256,
@@ -196,7 +231,7 @@ class UploadStore {
         _done.remove(_done.keys.first);
       }
     }
-    await remove(uploadId);
+    if (identical(_uploads[u.uploadId], u)) await remove(u.uploadId);
   }
 
   /// [uploadId]'s remembered completion if [fingerprint] owns it.
@@ -210,7 +245,10 @@ class UploadStore {
     await _ensureLoaded();
     _done.removeWhere((_, d) => d.state.ownerFingerprint == fingerprint);
     for (final u in _uploads.values.toList()) {
-      if (u.ownerFingerprint == fingerprint) await remove(u.uploadId);
+      if (u.ownerFingerprint == fingerprint) {
+        u.forgotten = true;
+        await remove(u.uploadId);
+      }
     }
   }
 
@@ -227,8 +265,9 @@ class UploadStore {
   Future<void> clear() async {
     await _ensureLoaded();
     _done.clear();
-    for (final id in _uploads.keys.toList()) {
-      await remove(id);
+    for (final u in _uploads.values.toList()) {
+      u.forgotten = true;
+      await remove(u.uploadId);
     }
     await _sweep(keep: const {});
   }
@@ -242,7 +281,7 @@ class UploadStore {
   Future<void> _purgeStale() async {
     final now = _clock();
     for (final u in _uploads.values.toList()) {
-      if (u.writing != null) continue;
+      if (u.writing != null || u.completing != null) continue;
       DateTime touched;
       try {
         touched = await u.meta.lastModified();

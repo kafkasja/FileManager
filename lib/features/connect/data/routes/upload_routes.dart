@@ -33,9 +33,13 @@ class UploadRoutesEnv {
     this.hashPath = _hashPath,
     this.hashFile = hashFileRef,
     this.grants = const NoOfferGrants(),
+    this.publishMode = _mayCopy,
   });
 
   static Future<String> _hashPath(String path) => hashFileInIsolate(path);
+
+  static Future<UploadPublish> _mayCopy(String targetFolder) async =>
+      UploadPublish.copy;
 
   final AllowListGuard guard;
   final ClientSessionStore sessions;
@@ -56,6 +60,79 @@ class UploadRoutesEnv {
 
   /// N12: uploads into `offer:<id>` claim an offered file first.
   final OfferGrants grants;
+
+  /// Q8: how `importFile` will publish a finished partial into a folder
+  /// (see [uploadPublishFor]).
+  final Future<UploadPublish> Function(String targetFolder) publishMode;
+}
+
+/// How a finished partial reaches its target folder (Q8).
+enum UploadPublish {
+  /// An atomic rename on the same volume: no extra space, and the bytes
+  /// are the ones just hashed (the read-back hash is skipped).
+  rename,
+
+  /// Possibly a copy (another mount, MediaStore): while it runs the
+  /// partial still exists, so when the staging folder shares the target's
+  /// free space the target needs the file's size twice. The copy is
+  /// hashed.
+  copy,
+
+  /// A copy onto another volume than the staging folder (another drive):
+  /// each side needs the size once. The copy is hashed.
+  copyOtherVolume,
+}
+
+/// [UploadPublish] for a partial in [stagingPath] going to [targetFolder].
+/// Android: always [UploadPublish.copy] (the staging folder under
+/// `Android/data` is its own mount, so a rename across it fails; MediaStore
+/// imports copy). Windows: a rename on the same drive letter, else a copy
+/// to another drive. Elsewhere: [UploadPublish.copy] (unknown).
+UploadPublish uploadPublishFor(
+  String stagingPath,
+  String targetFolder, {
+  required bool isAndroid,
+  required bool isWindows,
+}) {
+  if (isAndroid || !isWindows) return UploadPublish.copy;
+  final from = _driveOf(stagingPath);
+  final to = _driveOf(targetFolder);
+  if (from == null || to == null) return UploadPublish.copy;
+  return from == to ? UploadPublish.rename : UploadPublish.copyOtherVolume;
+}
+
+final RegExp _drive = RegExp(r'^([A-Za-z]):[/\\]');
+
+String? _driveOf(String path) =>
+    _drive.firstMatch(path)?.group(1)!.toUpperCase();
+
+/// Two free-space answers this close come from the same volume (Q8: the
+/// staging folder and a shared folder on the phone's own storage).
+bool _sameSpace(int a, int b) => (a - b).abs() <= kTransferSpaceMarginBytes;
+
+/// Whether [left] more bytes of an upload of [size] fit: the partial in
+/// staging and the target each need them plus the margin; when publishing
+/// copies within the same free space, the target needs [size] once more
+/// for the copy (Q8: a 4.5 GB upload briefly needed 9 GB on the phone and
+/// failed only at the end).
+Future<bool> _fits(
+  UploadRoutesEnv env,
+  String targetFolder, {
+  required int size,
+  required int left,
+}) async {
+  final freeTarget = await env.source().freeBytes(targetFolder);
+  final freeStaging = await env.stagingFreeBytes();
+  final need = left + kTransferSpaceMarginBytes;
+  var needTarget = need;
+  if (freeTarget != null &&
+      freeStaging != null &&
+      _sameSpace(freeTarget, freeStaging) &&
+      await env.publishMode(targetFolder) == UploadPublish.copy) {
+    needTarget += size;
+  }
+  return (freeTarget == null || freeTarget >= needTarget) &&
+      (freeStaging == null || freeStaging >= need);
 }
 
 /// Whether [request] is a chunk upload (its own body limit instead of the
@@ -231,11 +308,12 @@ Future<Response> _create(UploadRoutesEnv env, Request r) async {
     }
     return apiError(ApiErrorCode.conflict);
   }
-  final need = body.size + kTransferSpaceMarginBytes;
-  final freeTarget = await env.source().freeBytes(target.canonicalPath);
-  final freeStaging = await env.stagingFreeBytes();
-  if ((freeTarget != null && freeTarget < need) ||
-      (freeStaging != null && freeStaging < need)) {
+  if (!await _fits(
+    env,
+    target.canonicalPath,
+    size: body.size,
+    left: body.size,
+  )) {
     return apiError(ApiErrorCode.insufficientStorage);
   }
   // N12: only offered files (name, size + slack, count) may land in an
@@ -288,11 +366,12 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
   if (offset != u.received) return apiError(ApiErrorCode.conflict);
   if (u.received + length > u.size) return apiError(ApiErrorCode.tooLarge);
   // Free space is checked per chunk (other files on this device grow too).
-  final left = u.size - u.received + kTransferSpaceMarginBytes;
-  final freeTarget = await env.source().freeBytes(target.canonicalPath);
-  final freeStaging = await env.stagingFreeBytes();
-  if ((freeTarget != null && freeTarget < left) ||
-      (freeStaging != null && freeStaging < left)) {
+  if (!await _fits(
+    env,
+    target.canonicalPath,
+    size: u.size,
+    left: u.size - u.received,
+  )) {
     return apiError(ApiErrorCode.insufficientStorage);
   }
   if (u.writing != null) return apiError(ApiErrorCode.busy);
@@ -410,45 +489,83 @@ Future<int> _receive(
 /// N9 complete; N11 verifies it when the client sends its `sha256`: the
 /// partial is hashed before anything is published (mismatch → partial
 /// deleted, 409 `verification_failed`), and the published file is read
-/// back and hashed again (mismatch → that copy is deleted, 409). The
-/// answer carries the final hash.
+/// back and hashed again (mismatch → that copy is deleted, 409; skipped
+/// after an atomic rename: the bytes are the ones just hashed). The answer
+/// carries the final hash.
+///
+/// Q8: one complete per upload at a time. A repeat (the link dropped while
+/// a large file was hashed and the client asked again) waits for the
+/// running one and gets its answer: it never publishes a second copy and
+/// never removes the upload the first one is publishing.
 Future<Response> _complete(UploadRoutesEnv env, Request r) async {
   final target = guardedTargetsOf(r).single;
-  final u = await _upload(env, r);
-  if (u == null) {
-    final done = _completedOf(env, r);
-    if (done == null) return apiError(ApiErrorCode.notFound);
-    return jsonOk(
-      UploadCompletedDto(finalId: done.finalId, sha256: done.sha256).toJson(),
-    );
-  }
-  if (u.writing != null) return apiError(ApiErrorCode.busy);
-  if (u.received != u.size) return apiError(ApiErrorCode.conflict);
   // The guard's extract checked it: empty, or an object with a string
   // sha256.
   final raw = await r.readAsString();
   final body = raw.isEmpty
       ? const CompleteUploadDto()
       : CompleteUploadDto.fromJson(jsonDecode(raw) as Map<String, Object?>);
-  final expected = body.sha256;
+  final u = await _upload(env, r);
+  if (u == null) {
+    final done = _completedOf(env, r);
+    if (done == null) return apiError(ApiErrorCode.notFound);
+    return _completeAnswer(
+      CompleteOutcome(finalId: done.finalId, sha256: done.sha256),
+    );
+  }
+  // Nothing is awaited between this check and `completing` being set.
+  final running = u.completing;
+  if (running != null) return _completeAnswer(await running);
+  if (u.writing != null) return apiError(ApiErrorCode.busy);
+  if (u.received != u.size) return apiError(ApiErrorCode.conflict);
+  final outcome = _publishUpload(env, u, target.canonicalPath, body.sha256);
+  u.completing = outcome;
+  try {
+    return _completeAnswer(await outcome);
+  } finally {
+    u.completing = null;
+  }
+}
+
+Response _completeAnswer(CompleteOutcome o) {
+  final error = o.error;
+  if (error != null) return apiError(error);
+  return jsonOk(
+    UploadCompletedDto(finalId: o.finalId!, sha256: o.sha256).toJson(),
+  );
+}
+
+/// Verifies [u] (when [expected] is given), publishes it and records the
+/// completion. Runs once per upload at a time (see [_complete]).
+Future<CompleteOutcome> _publishUpload(
+  UploadRoutesEnv env,
+  UploadState u,
+  String targetFolder,
+  String? expected,
+) async {
   if (expected != null) {
     final String partHash;
     try {
       partHash = await env.hashPath(u.part.path);
     } on Object {
-      await env.uploads.remove(u.uploadId);
-      return apiError(ApiErrorCode.internal);
+      // A read error keeps the partial (the client asks again); only a
+      // partial that is gone ends the upload.
+      if (!await u.part.exists()) await env.uploads.remove(u.uploadId);
+      return const CompleteOutcome(error: ApiErrorCode.internal);
     }
     if (partHash != expected) {
       await env.uploads.remove(u.uploadId);
-      return apiError(ApiErrorCode.verificationFailed);
+      return const CompleteOutcome(error: ApiErrorCode.verificationFailed);
     }
   }
+  final renames =
+      expected != null &&
+      await env.publishMode(targetFolder) == UploadPublish.rename;
   final FileRef out;
   try {
     out = await env.source().importFile(
       u.part,
-      targetFolder: target.canonicalPath,
+      targetFolder: targetFolder,
       name: u.name,
     );
   } on FileOpException catch (e) {
@@ -456,35 +573,40 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
     if (e.failure != FileOpFailure.noSpace) {
       await env.uploads.remove(u.uploadId);
     }
-    return apiError(switch (e.failure) {
-      FileOpFailure.noSpace => ApiErrorCode.insufficientStorage,
-      FileOpFailure.permissionDenied => ApiErrorCode.forbiddenPath,
-      FileOpFailure.invalidName => ApiErrorCode.invalidName,
-      _ => ApiErrorCode.internal,
-    });
+    return CompleteOutcome(
+      error: switch (e.failure) {
+        FileOpFailure.noSpace => ApiErrorCode.insufficientStorage,
+        FileOpFailure.permissionDenied => ApiErrorCode.forbiddenPath,
+        FileOpFailure.invalidName => ApiErrorCode.invalidName,
+        _ => ApiErrorCode.internal,
+      },
+    );
   }
   String? finalHash;
   if (expected != null) {
-    // Never trust the stream: read the published file back.
-    try {
-      finalHash = await env.hashFile(out, env.source());
-    } on Object {
-      finalHash = null;
+    if (renames) {
+      // Q8: the hashed file under its new name; its length must still fit.
+      finalHash = out.sizeBytes == u.size ? expected : null;
+    } else {
+      // Never trust a copy: read the published file back.
+      try {
+        finalHash = await env.hashFile(out, env.source());
+      } on Object {
+        finalHash = null;
+      }
     }
     if (finalHash != expected) {
       await env.uploads.remove(u.uploadId);
       await _deleteBadCopy(env, out);
-      return apiError(ApiErrorCode.verificationFailed);
+      return const CompleteOutcome(error: ApiErrorCode.verificationFailed);
     }
   }
   // N12: the offered file is done BEFORE its partial goes, so a parallel
   // claim never sees it as a dropped upload it could take again.
   if (isOfferRootId(u.rootId)) await env.grants.completed(u.uploadId, out.id);
-  await env.uploads.completed(u.uploadId, finalId: out.id, sha256: finalHash);
+  await env.uploads.completed(u, finalId: out.id, sha256: finalHash);
   unawaited(env.addToIndex([out]));
-  return jsonOk(
-    UploadCompletedDto(finalId: out.id, sha256: finalHash).toJson(),
-  );
+  return CompleteOutcome(finalId: out.id, sha256: finalHash);
 }
 
 /// A published copy that didn't verify (KFM created it): best effort.
@@ -499,6 +621,8 @@ Future<void> _deleteBadCopy(UploadRoutesEnv env, FileRef out) async {
 Future<Response> _delete(UploadRoutesEnv env, Request r) async {
   final u = await _upload(env, r);
   if (u == null) return apiError(ApiErrorCode.notFound);
+  // Q8: being published right now; its outcome decides.
+  if (u.completing != null) return apiError(ApiErrorCode.busy);
   await env.uploads.remove(u.uploadId);
   if (isOfferRootId(u.rootId)) await env.grants.released(u.uploadId);
   return Response(204);

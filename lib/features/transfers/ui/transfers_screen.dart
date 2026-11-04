@@ -62,6 +62,17 @@ final List<TransferSection> _always = [
   ),
 ];
 
+/// Q8: the job's active files all have every byte and are being checked.
+bool _onlyChecking(TransferJob job) {
+  final active = job.files.where(
+    (f) =>
+        f.status == TransferFileStatus.running ||
+        f.status == TransferFileStatus.verifying,
+  );
+  return active.isNotEmpty &&
+      active.every((f) => f.status == TransferFileStatus.verifying);
+}
+
 bool _isOfferError(String? code) => switch (code) {
   TransferErrors.offerDeclined ||
   TransferErrors.offerExpired ||
@@ -274,6 +285,9 @@ class _JobCard extends ConsumerWidget {
       TransferStatus.queued when job.files.any((f) => f.isRetrying) =>
         l10n.transferRetrying,
       TransferStatus.queued => l10n.transferStatusQueued,
+      // Q8: every byte sent, both sides are hashing (minutes for big files).
+      TransferStatus.running when _onlyChecking(job) =>
+        job.isMove ? l10n.transferVerifying : l10n.transferChecking,
       TransferStatus.running => l10n.transferStatusRunning,
       TransferStatus.done => l10n.transferStatusDone,
       TransferStatus.failed => l10n.transferStatusFailed(job.failedCount),
@@ -428,9 +442,10 @@ class _FileRow extends ConsumerWidget {
     final f = file;
     final subtitle = switch (f.status) {
       // N11: a move's whole copy waiting to be checked (the link dropped).
+      // Q8: a copy's too (both sides hash it; can take minutes).
       TransferFileStatus.queued
-          when job.isMove && f.sizeBytes > 0 && f.bytesDone >= f.sizeBytes =>
-        l10n.transferVerifying,
+          when f.sizeBytes > 0 && f.bytesDone >= f.sizeBytes =>
+        job.isMove ? l10n.transferVerifying : l10n.transferChecking,
       TransferFileStatus.queued when f.isRetrying => l10n.transferRetrying,
       TransferFileStatus.queued
           when f.error == TransferErrors.verificationFailed =>
@@ -440,7 +455,8 @@ class _FileRow extends ConsumerWidget {
         formatBytes(f.sizeBytes, locale: locale),
       ),
       TransferFileStatus.queued => l10n.transferStatusQueued,
-      TransferFileStatus.verifying => l10n.transferVerifying,
+      TransferFileStatus.verifying =>
+        job.isMove ? l10n.transferVerifying : l10n.transferChecking,
       TransferFileStatus.running => l10n.transferProgress(
         formatBytes(live.bytes[f.id] ?? f.bytesDone, locale: locale),
         formatBytes(f.sizeBytes, locale: locale),

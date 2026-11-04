@@ -87,6 +87,11 @@ abstract interface class ShareBackground {
 
   /// N12: removes that notification.
   Future<void> cancelOffer();
+
+  /// Whether the sharing notification (and its Stop) is visible: false on
+  /// Android 13+ when notifications are denied (Q8: the share screen then
+  /// doesn't promise one).
+  Future<bool> notificationsAllowed();
 }
 
 /// `kfm/share_service` (`ShareServiceChannel.kt`).
@@ -128,6 +133,16 @@ class AndroidShareBackground implements ShareBackground {
 
   @override
   Future<void> cancelOffer() => _channel.invokeMethod<void>('cancelOffer');
+
+  @override
+  Future<bool> notificationsAllowed() async {
+    try {
+      return await ph.Permission.notification.isGranted;
+    } on Object {
+      // Unknown: keep the usual text.
+      return true;
+    }
+  }
 }
 
 /// Desktop, iOS and tests.
@@ -151,6 +166,9 @@ class NoShareBackground implements ShareBackground {
 
   @override
   Future<void> cancelOffer() async {}
+
+  @override
+  Future<bool> notificationsAllowed() async => true;
 }
 
 /// PL1: on Windows sharing keeps running while the window is hidden, behind
@@ -188,4 +206,8 @@ class TrayShareBackground implements ShareBackground {
 
   @override
   Future<void> cancelOffer() async {}
+
+  /// The tray icon needs no permission.
+  @override
+  Future<bool> notificationsAllowed() async => true;
 }

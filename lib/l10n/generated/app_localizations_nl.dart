@@ -4394,6 +4394,28 @@ class AppLocalizationsNl extends AppLocalizations {
       'Delen gaat door als je de app verlaat. Stop het hier of via de melding.';
 
   @override
+  String get transferChecking => 'Nakijken…';
+
+  @override
+  String shareClientGone(String name) {
+    return 'Niet meer verbonden: $name';
+  }
+
+  @override
+  String get shareKeepsRunningNoNotification =>
+      'Delen gaat door als je de app verlaat. Meldingen staan uit voor KFM, dus kom hier terug om het te stoppen.';
+
+  @override
+  String get shareStopConfirmTitle => 'Stoppen met delen?';
+
+  @override
+  String get shareStopConfirmBody =>
+      'Er worden nog bestanden verstuurd of ontvangen. Als je nu stopt, worden ze onderbroken; ze gaan verder als je weer deelt.';
+
+  @override
+  String get shareKeepSharing => 'Blijven delen';
+
+  @override
   String get shareNotificationChannel => 'Apparaat delen';
 
   @override

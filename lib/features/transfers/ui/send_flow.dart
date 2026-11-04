@@ -395,7 +395,9 @@ class _SendDeviceSheet extends ConsumerWidget {
       for (final s
           in ref.watch(connectedClientsProvider).value ??
               const <ClientSession>[])
-        if (!s.sendOnly) s,
+        // Q8: not one that vanished.
+        if (!s.sendOnly && ref.read(clientSessionStoreProvider).isResponsive(s))
+          s,
     ];
     final online = {for (final n in nearby) ?n.fingerprintHint};
     final strangers = [
