@@ -228,6 +228,7 @@ class BackgroundPresence {
   NoticePresence? _shownPaused;
   Future<void> _chain = Future<void>.value();
   bool _renderQueued = false;
+  bool _force = false;
   bool _askedPermission = false;
   bool _disposed = false;
 
@@ -259,8 +260,9 @@ class BackgroundPresence {
 
   /// The language changed: everything shown is rendered again.
   void refresh() {
-    _shownOngoing = null;
-    _shownPaused = null;
+    // Shown again (same content, new language); what is shown is kept, so
+    // a notice that goes away later is still removed.
+    _force = true;
     _scheduleRender();
   }
 
@@ -379,6 +381,8 @@ class BackgroundPresence {
   Future<void> _render({bool rethrowSharing = false}) {
     final done = _enqueue(() async {
       _renderQueued = false;
+      final force = _force;
+      _force = false;
       final f = _format();
       final s = _snapshot;
       final timeout = _timedOut.isNotEmpty;
@@ -412,7 +416,7 @@ class BackgroundPresence {
           actions: [('stopSharing', sharing.stop)],
         );
       }
-      if (ongoing != _shownOngoing) {
+      if (ongoing != _shownOngoing || (force && ongoing != null)) {
         if (ongoing == null) {
           _shownOngoing = null;
           await _port.stopOngoing();
@@ -443,7 +447,7 @@ class BackgroundPresence {
               channel: _progressChannel(f),
               actions: _labels(paused.actions, f),
             );
-      if (pausedShown != _shownPaused) {
+      if (pausedShown != _shownPaused || (force && pausedShown != null)) {
         _shownPaused = pausedShown;
         if (pausedShown == null) {
           await _port.cancelNotice(NoticeSlot.paused);

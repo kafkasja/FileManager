@@ -252,6 +252,24 @@ void main() {
   });
 
   test(
+    'a refresh while paused still removes the paused notice later',
+    () async {
+      snaps.add(JobsSnapshot(jobs: [_job('t:1')]));
+      await settle();
+      snaps.add(JobsSnapshot(jobs: [_job('t:1', phase: JobPhase.paused)]));
+      await settle();
+      expect(port.notices[NoticeSlot.paused], isNotNull);
+      presence.refresh();
+      await settle();
+      expect(port.notices[NoticeSlot.paused], isNotNull);
+      snaps.add(JobsSnapshot(jobs: [_job('t:1')]));
+      await settle();
+      expect(port.notices[NoticeSlot.paused], isNull);
+      expect(port.ongoing, isNotNull);
+    },
+  );
+
+  test(
     'a language switch renders everything again in the new language',
     () async {
       await presence.setSharing(_share);
