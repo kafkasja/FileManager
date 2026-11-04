@@ -736,8 +736,6 @@ class DeleteQueue {
           .get();
 }
 
-/// Lists the trash at most once per run, and only when a trash-mode row's
-/// file is gone.
 /// [DeleteQueue._seesAllMedia], asked once per commit / recovery and only
 /// for local rows (a remote device answers for its own files).
 class _SeesAllMedia {
@@ -754,6 +752,8 @@ class _SeesAllMedia {
   }
 }
 
+/// Lists the trash at most once per run, and only when a trash-mode row's
+/// file is gone.
 class _TrashLookup {
   new(this._queue, [this._source]);
 
