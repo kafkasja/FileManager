@@ -120,6 +120,31 @@ class LocalJobRunner {
 
   bool _running = false;
   Future<void>? _loop;
+
+  /// X8: bytes of the file being copied, by job id (polled from its staging
+  /// part while it grows).
+  final Map<String, ({int position, int bytes})> _liveBytes = {};
+  final StreamController<Map<String, ({int position, int bytes})>> _live =
+      StreamController.broadcast();
+
+  /// X8: how often a copying file's part is measured.
+  @visibleForTesting
+  Duration livePollInterval = const Duration(milliseconds: 500);
+
+  /// X8: the copying file's bytes per job (position = its row).
+  Stream<Map<String, ({int position, int bytes})>> get live => _live.stream;
+  Map<String, ({int position, int bytes})> get currentLive =>
+      Map.unmodifiable(_liveBytes);
+
+  void _setLive(String jobId, ({int position, int bytes})? v) {
+    if (v == null) {
+      if (_liveBytes.remove(jobId) == null) return;
+    } else {
+      _liveBytes[jobId] = v;
+    }
+    if (_live.hasListener) _live.add(Map.unmodifiable(_liveBytes));
+  }
+
   final Map<String, LocalJobStatus> _stopRequests = {};
 
   /// Completes when the current run loop ends (tests).
@@ -516,6 +541,8 @@ class LocalJobRunner {
         sourceModifiedAtMs: Value(source.modifiedAt.millisecondsSinceEpoch),
       ),
     );
+    final partName = '${CrossPlaceOps.partPrefix}${job.id}-$pos.part';
+    final poll = await _pollPart(job.id, pos, partName);
     try {
       final done = await _crossPlace.copyVerified(
         source,
@@ -523,7 +550,7 @@ class LocalJobRunner {
         name: staged ? localJobTempName(job.id, pos) : row.targetName,
         // A neutral type, so the provider keeps the temp name as given.
         mimeType: staged ? 'application/octet-stream' : null,
-        partName: '${CrossPlaceOps.partPrefix}${job.id}-$pos.part',
+        partName: partName,
         onVerifying: () => _dao
             .setFile(
               job.id,
@@ -596,7 +623,39 @@ class LocalJobRunner {
       await fail(FileOpFailure.ioError.name);
       developer.log('copy failed: $e', name: 'kfm.localJobs');
       return false;
+    } finally {
+      poll?.cancel();
+      _setLive(job.id, null);
     }
+  }
+
+  /// X8: measures [partName] in the staging folder while it is copied.
+  Future<Timer?> _pollPart(String jobId, int pos, String partName) async {
+    final Directory dir;
+    try {
+      dir = await _staging();
+    } on Object {
+      return null;
+    }
+    final part = File('${dir.path}/$partName');
+    _setLive(jobId, (position: pos, bytes: 0));
+    var busy = false;
+    return Timer.periodic(livePollInterval, (_) async {
+      if (busy) return;
+      busy = true;
+      try {
+        if (await part.exists()) {
+          final n = await part.length();
+          if (_liveBytes.containsKey(jobId)) {
+            _setLive(jobId, (position: pos, bytes: n));
+          }
+        }
+      } on FileSystemException {
+        // Gone between the checks (imported or deleted).
+      } finally {
+        busy = false;
+      }
+    });
   }
 
   Future<bool> _unmountedNow(LocalJobRow job, LocalJobFileRow row) async =>

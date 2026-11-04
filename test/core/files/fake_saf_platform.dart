@@ -183,6 +183,9 @@ class FakeSafPlatform implements SafPlatform {
     String path,
   ) async {
     calls.add('importFile $name');
+    // Decided when the call starts: a test may clear the hook right after
+    // seeing this call (before the bytes below are read).
+    final hang = hangAfterImport?.call(name) ?? false;
     if (importFailure case final e?) throw e;
     final rel = _join(_rel(parent), name);
     if (_nodes.containsKey(rel)) {
@@ -194,7 +197,7 @@ class FakeSafPlatform implements SafPlatform {
       bytes = Uint8List.fromList([...bytes, 0]);
     }
     _nodes[rel] = _Node.file(bytes);
-    if (hangAfterImport?.call(name) ?? false) {
+    if (hang) {
       await Completer<void>().future;
     }
     return _row(rel);

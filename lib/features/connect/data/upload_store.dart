@@ -94,6 +94,29 @@ class CompleteOutcome {
   final ApiErrorCode? error;
 }
 
+/// X8: what happened to an upload on this device (receiving side), for the
+/// progress notification and the in-app indicator.
+enum UploadPhase { progressed, completed, removed }
+
+/// X8: one upload's state when [phase] happened.
+class UploadActivity {
+  const new({
+    required this.uploadId,
+    required this.ownerFingerprint,
+    required this.name,
+    required this.size,
+    required this.received,
+    required this.phase,
+  });
+
+  final String uploadId;
+  final String ownerFingerprint;
+  final String name;
+  final int size;
+  final int received;
+  final UploadPhase phase;
+}
+
 /// Completions remembered for a repeated `complete` (N11).
 const int kRememberedCompletions = 200;
 
@@ -122,6 +145,27 @@ class UploadStore {
   final Map<String, UploadState> _uploads = {};
   final Map<String, CompletedUpload> _done = {};
   Future<void>? _loaded;
+
+  final StreamController<UploadActivity> _activity = StreamController.broadcast(
+    sync: true,
+  );
+
+  /// X8: chunks stored, uploads completed or removed (no replay).
+  Stream<UploadActivity> get activity => _activity.stream;
+
+  void _emit(UploadState u, UploadPhase phase) {
+    if (!_activity.hasListener) return;
+    _activity.add(
+      UploadActivity(
+        uploadId: u.uploadId,
+        ownerFingerprint: u.ownerFingerprint,
+        name: u.name,
+        size: u.size,
+        received: phase == UploadPhase.completed ? u.size : u.received,
+        phase: phase,
+      ),
+    );
+  }
 
   /// When a chunk was last stored (Q8: "transfers running" between chunks).
   DateTime? _lastChunkAt;
@@ -197,12 +241,16 @@ class UploadStore {
       flush: true,
     );
     await tmp.rename(u.meta.path);
+    if (identical(_uploads[u.uploadId], u)) _emit(u, UploadPhase.progressed);
   }
 
   /// Forgets [uploadId] and deletes its partial and `.json`.
-  Future<void> remove(String uploadId) async {
+  Future<void> remove(String uploadId) => _remove(uploadId);
+
+  Future<void> _remove(String uploadId, {bool emit = true}) async {
     final u = _uploads.remove(uploadId);
     if (u == null) return;
+    if (emit) _emit(u, UploadPhase.removed);
     u.abortWrite?.call();
     await _delete(u.part);
     await _delete(u.meta);
@@ -231,7 +279,10 @@ class UploadStore {
         _done.remove(_done.keys.first);
       }
     }
-    if (identical(_uploads[u.uploadId], u)) await remove(u.uploadId);
+    if (identical(_uploads[u.uploadId], u)) {
+      _emit(u, UploadPhase.completed);
+      await _remove(u.uploadId, emit: false);
+    }
   }
 
   /// [uploadId]'s remembered completion if [fingerprint] owns it.

@@ -7450,4 +7450,229 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get opFolderIntoItself => 'A folder can\'t go into itself';
+
+  @override
+  String get jobsChannelProgress => 'Transfers in progress';
+
+  @override
+  String get jobsChannelProgressDescription =>
+      'Progress of copies and transfers while KFM is in the background';
+
+  @override
+  String get jobsChannelResults => 'Finished transfers';
+
+  @override
+  String get jobsChannelResultsDescription =>
+      'Shows when a copy or transfer ends';
+
+  @override
+  String jobsReceivingFrom(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Receiving $count files from $device',
+      one: 'Receiving 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsCombinedTitle(int count, String percent) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers · $percent',
+      one: '1 transfer · $percent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsProgressLine(String done, String total) {
+    return '$done of $total';
+  }
+
+  @override
+  String jobsSpeedLine(String speed) {
+    return '$speed/s';
+  }
+
+  @override
+  String jobsTimeLeft(String time) {
+    return '$time left';
+  }
+
+  @override
+  String jobsMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count min',
+      one: '1 min',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String jobsSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count s',
+      one: '1 s',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsPausedOne(String title) {
+    return 'Paused · $title';
+  }
+
+  @override
+  String jobsPausedMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers paused',
+      one: '1 transfer paused',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobsPausedOpenKfm => 'Paused, open KFM to continue';
+
+  @override
+  String get jobsWaiting => 'Waiting';
+
+  @override
+  String jobsEndSent(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sent $count files to $device',
+      one: 'Sent 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndReceived(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Received $count files from $device',
+      one: 'Received 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndMovedTo(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moved $count files to $device',
+      one: 'Moved 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndMovedFrom(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moved $count files from $device',
+      one: 'Moved 1 file from $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndCopied(int count, String place) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Copied $count files to $place',
+      one: 'Copied 1 file to $place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers finished',
+      one: '1 transfer finished',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files failed · Tap to see',
+      one: '1 file failed · Tap to see',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobsNotificationsOff =>
+      'Notifications are off: transfers keep running, but their progress only shows inside KFM.';
+
+  @override
+  String jobsIndicatorLabel(String title, String percent) {
+    return '$title, $percent. Open transfers';
+  }
+
+  @override
+  String get jobsQuitTitle => 'Quit KFM?';
+
+  @override
+  String jobsQuitBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count transfers are still running. Quitting stops them; you can continue them in Transfers next time.',
+      one: '1 transfer is still running. Quitting stops it; you can continue it in Transfers next time.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobsQuitAction => 'Quit';
+
+  @override
+  String get jobsQuitKeep => 'Keep running';
+
+  @override
+  String get trayNoticeTransfersTitle => 'KFM keeps transferring';
+
+  @override
+  String get trayNoticeTransfersBody =>
+      'Transfers continue in the background. Open KFM again from the tray icon.';
+
+  @override
+  String jobsEndFailedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers failed',
+      one: 'Transfer failed',
+    );
+    return '$_temp0';
+  }
 }

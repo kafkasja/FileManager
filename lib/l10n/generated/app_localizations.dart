@@ -10490,6 +10490,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A folder can\'t go into itself'**
   String get opFolderIntoItself;
+
+  /// X8: Android notification channel name of the ongoing progress notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers in progress'**
+  String get jobsChannelProgress;
+
+  /// X8: Android notification channel description (progress).
+  ///
+  /// In en, this message translates to:
+  /// **'Progress of copies and transfers while KFM is in the background'**
+  String get jobsChannelProgressDescription;
+
+  /// X8: Android notification channel name of the end notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished transfers'**
+  String get jobsChannelResults;
+
+  /// X8: Android notification channel description (results).
+  ///
+  /// In en, this message translates to:
+  /// **'Shows when a copy or transfer ends'**
+  String get jobsChannelResultsDescription;
+
+  /// X8: notification title while another device uploads into this one.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Receiving 1 file from {device}} other{Receiving {count} files from {device}}}'**
+  String jobsReceivingFrom(int count, String device);
+
+  /// X8: notification title when several jobs run; percent is preformatted (38%).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer · {percent}} other{{count} transfers · {percent}}}'**
+  String jobsCombinedTitle(int count, String percent);
+
+  /// X8: notification text: bytes done of total.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total}'**
+  String jobsProgressLine(String done, String total);
+
+  /// X8: notification text: speed.
+  ///
+  /// In en, this message translates to:
+  /// **'{speed}/s'**
+  String jobsSpeedLine(String speed);
+
+  /// X8: notification text: time left (preformatted duration).
+  ///
+  /// In en, this message translates to:
+  /// **'{time} left'**
+  String jobsTimeLeft(String time);
+
+  /// X8: time left in minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 min} other{{count} min}}'**
+  String jobsMinutes(int count);
+
+  /// X8: time left in hours and minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String jobsHoursMinutes(int hours, int minutes);
+
+  /// X8: time left under a minute.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 s} other{{count} s}}'**
+  String jobsSeconds(int count);
+
+  /// X8: notification title of one paused job.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused · {title}'**
+  String jobsPausedOne(String title);
+
+  /// X8: notification title of several paused jobs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer paused} other{{count} transfers paused}}'**
+  String jobsPausedMany(int count);
+
+  /// X8: Android 15 time limit reached: jobs paused until KFM is opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused, open KFM to continue'**
+  String get jobsPausedOpenKfm;
+
+  /// X8: notification text while a job waits (no bytes yet).
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get jobsWaiting;
+
+  /// X8: end notification of a send.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Sent 1 file to {device}} other{Sent {count} files to {device}}}'**
+  String jobsEndSent(int count, String device);
+
+  /// X8: end notification of a download or incoming upload.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Received 1 file from {device}} other{Received {count} files from {device}}}'**
+  String jobsEndReceived(int count, String device);
+
+  /// X8: end notification of a move to a device or place.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved 1 file to {device}} other{Moved {count} files to {device}}}'**
+  String jobsEndMovedTo(int count, String device);
+
+  /// X8: end notification of a move from a device.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved 1 file from {device}} other{Moved {count} files from {device}}}'**
+  String jobsEndMovedFrom(int count, String device);
+
+  /// X8: end notification of a local copy.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Copied 1 file to {place}} other{Copied {count} files to {place}}}'**
+  String jobsEndCopied(int count, String place);
+
+  /// X8: end notification when several jobs ended together.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer finished} other{{count} transfers finished}}'**
+  String jobsEndMany(int count);
+
+  /// X8: end notification text when files failed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file failed · Tap to see} other{{count} files failed · Tap to see}}'**
+  String jobsEndFailed(int count);
+
+  /// X8: Transfers screen hint on Android when notifications are denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off: transfers keep running, but their progress only shows inside KFM.'**
+  String get jobsNotificationsOff;
+
+  /// X8: screen reader label of the in-app progress indicator.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}, {percent}. Open transfers'**
+  String jobsIndicatorLabel(String title, String percent);
+
+  /// X8: Windows dialog before quitting while jobs run.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit KFM?'**
+  String get jobsQuitTitle;
+
+  /// X8: Windows quit dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer is still running. Quitting stops it; you can continue it in Transfers next time.} other{{count} transfers are still running. Quitting stops them; you can continue them in Transfers next time.}}'**
+  String jobsQuitBody(int count);
+
+  /// X8: Windows quit dialog confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit'**
+  String get jobsQuitAction;
+
+  /// X8: Windows quit dialog: don't quit.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep running'**
+  String get jobsQuitKeep;
+
+  /// X8: one-time dialog title before the window hides to the tray while jobs run.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM keeps transferring'**
+  String get trayNoticeTransfersTitle;
+
+  /// X8: one-time dialog body before the window hides to the tray while jobs run.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers continue in the background. Open KFM again from the tray icon.'**
+  String get trayNoticeTransfersBody;
+
+  /// X8: end notification title when every file failed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Transfer failed} other{{count} transfers failed}}'**
+  String jobsEndFailedTitle(int count);
 }
 
 class _AppLocalizationsDelegate

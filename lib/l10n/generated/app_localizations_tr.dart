@@ -7460,4 +7460,229 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get opFolderIntoItself => 'Bir klasör kendi içine taşınamaz';
+
+  @override
+  String get jobsChannelProgress => 'Süren aktarımlar';
+
+  @override
+  String get jobsChannelProgressDescription =>
+      'KFM arka plandayken kopyalama ve aktarımların ilerlemesi';
+
+  @override
+  String get jobsChannelResults => 'Biten aktarımlar';
+
+  @override
+  String get jobsChannelResultsDescription =>
+      'Bir kopyalama veya aktarım bittiğinde gösterilir';
+
+  @override
+  String jobsReceivingFrom(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$device cihazından $count dosya alınıyor',
+      one: '$device cihazından 1 dosya alınıyor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsCombinedTitle(int count, String percent) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count aktarım · $percent',
+      one: '1 aktarım · $percent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsProgressLine(String done, String total) {
+    return '$done / $total';
+  }
+
+  @override
+  String jobsSpeedLine(String speed) {
+    return '$speed/sn';
+  }
+
+  @override
+  String jobsTimeLeft(String time) {
+    return '$time kaldı';
+  }
+
+  @override
+  String jobsMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dk',
+      one: '1 dk',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsHoursMinutes(int hours, int minutes) {
+    return '$hours sa $minutes dk';
+  }
+
+  @override
+  String jobsSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sn',
+      one: '1 sn',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsPausedOne(String title) {
+    return 'Duraklatıldı · $title';
+  }
+
+  @override
+  String jobsPausedMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count aktarım duraklatıldı',
+      one: '1 aktarım duraklatıldı',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobsPausedOpenKfm => 'Duraklatıldı, devam etmek için KFM\'yi açın';
+
+  @override
+  String get jobsWaiting => 'Bekliyor';
+
+  @override
+  String jobsEndSent(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$device cihazına $count dosya gönderildi',
+      one: '$device cihazına 1 dosya gönderildi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndReceived(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$device cihazından $count dosya alındı',
+      one: '$device cihazından 1 dosya alındı',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndMovedTo(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$device cihazına $count dosya taşındı',
+      one: '$device cihazına 1 dosya taşındı',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndMovedFrom(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$device cihazından $count dosya taşındı',
+      one: '$device cihazından 1 dosya taşındı',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndCopied(int count, String place) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$place konumuna $count dosya kopyalandı',
+      one: '$place konumuna 1 dosya kopyalandı',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count aktarım bitti',
+      one: '1 aktarım bitti',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String jobsEndFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dosya başarısız · Görmek için dokunun',
+      one: '1 dosya başarısız · Görmek için dokunun',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobsNotificationsOff =>
+      'Bildirimler kapalı: aktarımlar devam eder ama ilerleme yalnızca KFM içinde görünür.';
+
+  @override
+  String jobsIndicatorLabel(String title, String percent) {
+    return '$title, $percent. Aktarımları aç';
+  }
+
+  @override
+  String get jobsQuitTitle => 'KFM\'den çıkılsın mı?';
+
+  @override
+  String jobsQuitBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count aktarım hâlâ sürüyor. Çıkmak onları durdurur; bir dahaki sefere Aktarımlar bölümünden devam edebilirsiniz.',
+      one: '1 aktarım hâlâ sürüyor. Çıkmak onu durdurur; bir dahaki sefere Aktarımlar bölümünden devam edebilirsiniz.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobsQuitAction => 'Çık';
+
+  @override
+  String get jobsQuitKeep => 'Çalışmaya devam et';
+
+  @override
+  String get trayNoticeTransfersTitle => 'KFM aktarmaya devam ediyor';
+
+  @override
+  String get trayNoticeTransfersBody =>
+      'Aktarımlar arka planda sürer. KFM\'yi sistem tepsisindeki simgeden yeniden açın.';
+
+  @override
+  String jobsEndFailedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count aktarım başarısız',
+      one: 'Aktarım başarısız',
+    );
+    return '$_temp0';
+  }
 }
