@@ -102,8 +102,8 @@ class _SwipeActionBarState extends ConsumerState<SwipeActionBar> {
       ],
     ];
     // L5: grows with big text (min 64), scrolls instead of overflowing.
-    // L4: the first action sits at the physical left (right-handed) or
-    // physical right (left-handed), whatever the text direction.
+    // L4/E2: the first action sits at the thumb (physical right for
+    // right-handed, left for left-handed), whatever the text direction.
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 64),
       child: SingleChildScrollView(
@@ -112,7 +112,7 @@ class _SwipeActionBarState extends ConsumerState<SwipeActionBar> {
         padding: EdgeInsetsDirectional.symmetric(horizontal: spacing * 2),
         child: Row(
           textDirection: TextDirection.ltr,
-          children: mirroredFor(handed, buttons),
+          children: thumbFirst(handed, buttons),
         ),
       ),
     );

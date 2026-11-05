@@ -5181,10 +5181,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get leftHandedTitle => 'Left-handed';
 
   @override
-  String get leftHandedSubtitle =>
-      'Moves Undo and bottom buttons to the other side. Swipe directions don\'t change.';
-
-  @override
   String get textSizeLabel => 'Text size';
 
   @override

@@ -7311,12 +7311,6 @@ abstract class AppLocalizations {
   /// **'Left-handed'**
   String get leftHandedTitle;
 
-  /// L4 switch subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Moves Undo and bottom buttons to the other side. Swipe directions don\'t change.'**
-  String get leftHandedSubtitle;
-
   /// L5 picker title.
   ///
   /// In en, this message translates to:

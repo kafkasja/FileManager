@@ -5197,10 +5197,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get leftHandedTitle => 'Solak';
 
   @override
-  String get leftHandedSubtitle =>
-      'Geri al ve alttaki düğmeleri diğer tarafa taşır. Kaydırma yönleri değişmez.';
-
-  @override
   String get textSizeLabel => 'Metin boyutu';
 
   @override

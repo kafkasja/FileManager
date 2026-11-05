@@ -6,6 +6,7 @@ import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/layout/segment_label.dart';
 import 'package:kfm/app/layout/text_scale.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -25,9 +26,37 @@ final textSizeEntry = SettingsEntry(
 final leftHandedEntry = SettingsEntry(
   id: 'a11y.leftHanded',
   titleBuilder: (c) => c.l10n.leftHandedTitle,
-  subtitleBuilder: (c) => c.l10n.leftHandedSubtitle,
+  subtitleBuilder: (c) => c.l10n.leftHandedThumbHelp,
   formFactors: const {FormFactor.mobile},
   builder: (_) => const LeftHandedRow(),
+);
+
+final reduceMotionEntry = SettingsEntry(
+  id: 'a11y.reduceMotion',
+  titleBuilder: (c) => c.l10n.reduceMotionTitle,
+  subtitleBuilder: (c) => c.l10n.reduceMotionHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsMotion,
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.motion_photos_off_outlined,
+    title: (l10n) => l10n.reduceMotionTitle,
+    subtitle: (l10n) => l10n.reduceMotionHelp,
+    provider: reduceMotionProvider,
+    setting: AppSettings.reduceMotion,
+  ),
+);
+
+final highContrastEntry = SettingsEntry(
+  id: 'a11y.highContrast',
+  titleBuilder: (c) => c.l10n.highContrastTitle,
+  subtitleBuilder: (c) => c.l10n.highContrastHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsContrast,
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.contrast,
+    title: (l10n) => l10n.highContrastTitle,
+    subtitle: (l10n) => l10n.highContrastHelp,
+    provider: highContrastProvider,
+    setting: AppSettings.highContrast,
+  ),
 );
 
 /// What TalkBack / Narrator read on file tiles (E2 §7).
@@ -50,7 +79,7 @@ class LeftHandedRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => SettingsSwitchTile(
     icon: Icons.back_hand_outlined,
     title: context.l10n.leftHandedTitle,
-    subtitle: context.l10n.leftHandedSubtitle,
+    subtitle: context.l10n.leftHandedThumbHelp,
     value: handednessOf(ref) == Handedness.left,
     onChanged: (v) => ref
         .read(settingsRepositoryProvider)

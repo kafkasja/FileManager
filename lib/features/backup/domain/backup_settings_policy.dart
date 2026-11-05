@@ -51,6 +51,8 @@ final List<BackupSetting> backupSettings = List.unmodifiable(<BackupSetting>[
   BackupSetting.of(AppSettings.themeAccent),
   BackupSetting.of(AppSettings.leftHanded),
   BackupSetting.of(AppSettings.textSize),
+  BackupSetting.of(AppSettings.reduceMotion),
+  BackupSetting.of(AppSettings.highContrast),
   BackupSetting.of(AppSettings.localeTag),
   BackupSetting.of(AppSettings.storageBigFileThresholdBytes),
   BackupSetting.of(AppSettings.pendingFolderRetentionDays),
@@ -127,6 +129,7 @@ const Set<String> excludedBackupSettings = {
   // PL1: folder paths of this PC; this PC's close/tray choices.
   'windows.indexRoots',
   'windows.indexScope',
+  'onboarding.languageAsked',
   'windows.stopSharingOnClose',
   'windows.trayNoticeShown',
   'windows.firewallExplained',

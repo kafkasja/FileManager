@@ -434,6 +434,27 @@ abstract final class AppSettings {
         encode: (v) => v,
       );
 
+  /// TASK-E2 §7. Fades instead of flights, no page slides; the system's
+  /// "remove animations" counts too.
+  static final SettingKey<bool> reduceMotion = SettingKey.boolean(
+    'a11y.reduceMotion',
+    defaultValue: false,
+  );
+
+  /// TASK-E2 §7. The high-contrast color scheme (the system's setting counts
+  /// too).
+  static final SettingKey<bool> highContrast = SettingKey.boolean(
+    'a11y.highContrast',
+    defaultValue: false,
+  );
+
+  /// TASK-E2. The first-launch language question was answered (or skipped
+  /// for an existing install). Device state: not backed up.
+  static final SettingKey<bool> onboardingLanguageAsked = SettingKey.boolean(
+    'onboarding.languageAsked',
+    defaultValue: false,
+  );
+
   /// TASK-E2 §6. What the Windows index covers: an `IndexScope` name, or ''
   /// (never chosen) = derived from [windowsIndexRoots] by
   /// `effectiveIndexScope` (custom roots → chosen folders, else everywhere).

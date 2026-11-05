@@ -3321,8 +3321,6 @@
   "@settingsAccessibility": {"description": "L4/L5 Settings section title."},
   "leftHandedTitle": "Left-handed",
   "@leftHandedTitle": {"description": "L4 switch: mirror the bottom controls for left-handed use."},
-  "leftHandedSubtitle": "Moves Undo and bottom buttons to the other side. Swipe directions don't change.",
-  "@leftHandedSubtitle": {"description": "L4 switch subtitle."},
   "textSizeLabel": "Text size",
   "@textSizeLabel": {"description": "L5 picker title."},
   "textSizeSystem": "System",

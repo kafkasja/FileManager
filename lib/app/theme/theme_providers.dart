@@ -23,6 +23,16 @@ Locale? localeFromTag(String tag) {
   );
 }
 
+/// E2 §7: Reduce motion (the app also honours the system setting).
+@Riverpod(keepAlive: true)
+Stream<bool> reduceMotion(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watch(AppSettings.reduceMotion);
+
+/// E2 §7: High contrast.
+@Riverpod(keepAlive: true)
+Stream<bool> highContrast(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watch(AppSettings.highContrast);
+
 @Riverpod(keepAlive: true)
 Stream<ThemeMode> themeMode(Ref ref) => ref
     .watch(settingsRepositoryProvider)

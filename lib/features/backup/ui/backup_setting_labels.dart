@@ -9,6 +9,8 @@ String? backupSettingLabelOrNull(AppLocalizations l10n, String name) {
     AppSettings.themeMode.name: l10n.backupSettingThemeMode,
     AppSettings.themeAccent.name: l10n.backupSettingThemeAccent,
     AppSettings.leftHanded.name: l10n.backupSettingLeftHanded,
+    AppSettings.reduceMotion.name: l10n.backupSettingReduceMotion,
+    AppSettings.highContrast.name: l10n.backupSettingHighContrast,
     AppSettings.textSize.name: l10n.backupSettingTextSize,
     AppSettings.localeTag.name: l10n.backupSettingLanguage,
     AppSettings.storageBigFileThresholdBytes.name:

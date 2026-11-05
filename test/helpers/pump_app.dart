@@ -42,6 +42,9 @@ Future<TestApp> pumpApp(
   // L3: the first-time tutorial would cover the swipe screen; only the
   // onboarding tests want it.
   bool tutorialDone = true,
+  // E2: the first-launch language question would cover the app; only the
+  // language step tests want it.
+  bool languageAsked = true,
   // Rows written before the app starts (e.g. Q6 garbage settings).
   Future<void> Function(AppDatabase db)? seedDb,
 }) async {
@@ -54,6 +57,16 @@ Future<TestApp> pumpApp(
           SettingRow(
             key: AppSettings.onboardingTutorialDone.name,
             value: AppSettings.onboardingTutorialDone.encodeToDb(true),
+          ),
+        );
+  }
+  if (languageAsked) {
+    await db
+        .into(db.settings)
+        .insert(
+          SettingRow(
+            key: AppSettings.onboardingLanguageAsked.name,
+            value: AppSettings.onboardingLanguageAsked.encodeToDb(true),
           ),
         );
   }

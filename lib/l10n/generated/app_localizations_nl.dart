@@ -5225,10 +5225,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get leftHandedTitle => 'Linkshandig';
 
   @override
-  String get leftHandedSubtitle =>
-      'Zet Ongedaan maken en de knoppen onderaan aan de andere kant. Swiperichtingen blijven hetzelfde.';
-
-  @override
   String get textSizeLabel => 'Tekstgrootte';
 
   @override

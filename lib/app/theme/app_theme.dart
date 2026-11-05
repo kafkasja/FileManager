@@ -28,9 +28,12 @@ ColorScheme accentScheme(
   Brightness brightness, {
   Color seed = kDefaultSeed,
   bool monochrome = false,
+  bool highContrast = false,
 }) => ColorScheme.fromSeed(
   seedColor: seed,
   brightness: brightness,
+  // E2 §7: High contrast.
+  contrastLevel: highContrast ? 1.0 : 0.0,
   dynamicSchemeVariant: monochrome
       ? DynamicSchemeVariant.monochrome
       : DynamicSchemeVariant.tonalSpot,
@@ -43,10 +46,25 @@ ThemeData buildTheme(
   Brightness brightness, {
   Color seed = kDefaultSeed,
   bool monochrome = false,
+  bool highContrast = false,
+  bool reduceMotion = false,
 }) {
-  final scheme = accentScheme(brightness, seed: seed, monochrome: monochrome);
+  final scheme = accentScheme(
+    brightness,
+    seed: seed,
+    monochrome: monochrome,
+    highContrast: highContrast,
+  );
   return ThemeData(
     colorScheme: scheme,
+    // E2 §7: Reduce motion → screens change without sliding.
+    pageTransitionsTheme: reduceMotion
+        ? PageTransitionsTheme(
+            builders: {
+              for (final p in TargetPlatform.values) p: const _NoTransitions(),
+            },
+          )
+        : null,
     extensions: [
       if (brightness == Brightness.light) AppTokens.light else AppTokens.dark,
     ],
@@ -58,4 +76,18 @@ ThemeData buildTheme(
       insetPadding: EdgeInsets.fromLTRB(16, 0, 16, 88),
     ),
   );
+}
+
+/// No page animation (Reduce motion).
+class _NoTransitions extends PageTransitionsBuilder {
+  const new();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

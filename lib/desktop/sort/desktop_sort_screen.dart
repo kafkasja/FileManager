@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
-import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
@@ -519,10 +518,8 @@ class _Toolbar extends ConsumerWidget {
     final theme = Theme.of(context);
     final tags = ref.watch(tagsByIdProvider).value ?? const {};
     final mode = deck.session.deleteMode;
-    // L4: left-handed users get the phone's mirrored order (Keep first).
-    final ordered = handednessOf(ref) == Handedness.left
-        ? entries.reversed.toList()
-        : entries;
+    // E2 §7: no thumb on desktop, so no left-handed mirroring.
+    final ordered = entries;
     return Padding(
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: 12,

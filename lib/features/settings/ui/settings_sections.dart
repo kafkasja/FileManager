@@ -128,6 +128,8 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       entries: [
         textSizeEntry,
         leftHandedEntry,
+        reduceMotionEntry,
+        highContrastEntry,
         hapticsEntry,
         screenReaderEntry,
       ],
