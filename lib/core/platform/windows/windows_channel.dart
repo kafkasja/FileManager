@@ -395,6 +395,12 @@ class WindowsChannel {
   /// The Windows "Open with" chooser for [path].
   Future<ShellOpenResult> openWith(String path) => _open('openWith', path);
 
+  /// E1/E3: Explorer at [path]'s folder with the file selected
+  /// (`SHOpenFolderAndSelectItems`). Throws [WindowsChannelException].
+  Future<void> revealInExplorer(String path) async {
+    await _open('revealInExplorer', path);
+  }
+
   Future<ShellOpenResult> _open(String method, String path) async {
     final raw =
         await _call<Map<Object?, Object?>>(method, {'path': toNative(path)}) ??

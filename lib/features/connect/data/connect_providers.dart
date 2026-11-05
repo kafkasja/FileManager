@@ -174,7 +174,7 @@ UploadStore uploadStore(Ref ref) {
 
 /// Path canonicalisation + exclusions (N4).
 @Riverpod(keepAlive: true)
-PathGuard pathGuard(Ref ref) => PathGuard();
+PathGuard pathGuard(Ref ref) => PathGuard(windows: isWindowsHost);
 
 /// The per-route allow-list wrapper every file route uses (N4; N7/N10/N11
 /// wrap their handlers with `guarded`).
@@ -196,14 +196,52 @@ OfferRepository offerRepository(Ref ref) => OfferRepository(
   ref.watch(dbWriteQueueProvider),
 );
 
-/// Where received files go by default: Android
-/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
-@Riverpod(keepAlive: true)
-String receiveDownloadsRoot(Ref ref) {
+/// The platform's downloads folder: Android `/storage/emulated/0/Download`,
+/// elsewhere `~/Downloads` (PL1).
+String platformDownloadsFolder() {
   if (Platform.isAndroid) return '/storage/emulated/0/Download';
   final home =
       Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'] ?? '';
   return '$home/Downloads'.replaceAll(r'\', '/');
+}
+
+/// E1: `Downloads/KFM`, where received files go unless the user picked
+/// another folder (Settings → receive folder).
+String defaultReceiveFolder() => '${platformDownloadsFolder()}/KFM';
+
+/// E1: the user's receive folder setting ('' = default). Loaded once;
+/// [set] writes it (only the settings row changes it; it is never part of
+/// a backup).
+@Riverpod(keepAlive: true)
+class ReceiveFolderSetting extends _$ReceiveFolderSetting {
+  @override
+  String build() {
+    unawaited(
+      ref.read(settingsRepositoryProvider).read(AppSettings.receiveFolder).then(
+        (v) {
+          if (ref.mounted && v != state) state = v;
+        },
+        onError: (Object _) {},
+      ),
+    );
+    return '';
+  }
+
+  /// Saves [folder] ('' = the default) for new receives.
+  Future<void> set(String folder) async {
+    state = folder;
+    await ref
+        .read(settingsRepositoryProvider)
+        .write(AppSettings.receiveFolder, folder);
+  }
+}
+
+/// Where received files go (both directions; one folder per sender below
+/// it): the receive folder setting, else [defaultReceiveFolder].
+@Riverpod(keepAlive: true)
+String receiveDownloadsRoot(Ref ref) {
+  final custom = ref.watch(receiveFolderSettingProvider);
+  return custom.isNotEmpty ? custom : defaultReceiveFolder();
 }
 
 /// The receiving side of send files (N12): offers, prompts, grants.
@@ -215,7 +253,9 @@ OfferService offerService(Ref ref) {
     sessions: () => ref.read(clientSessionStoreProvider),
     uploads: ref.watch(uploadStoreProvider),
     freeBytes: (path) => ref.read(fileSourceProvider).freeBytes(path),
-    downloadsRoot: ref.watch(receiveDownloadsRootProvider),
+    downloadsRoot: ref.read(receiveDownloadsRootProvider),
+    // E1: the receive folder setting can change while the service lives.
+    currentDownloadsRoot: () => ref.read(receiveDownloadsRootProvider),
     serverFingerprint: () async =>
         (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
             .fingerprint,

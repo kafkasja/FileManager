@@ -857,6 +857,24 @@ EncodableValue OpenFile(HWND window, const std::wstring& path) {
   return OpenResult(OpenErrorFor(error), HrMessage(HRESULT_FROM_WIN32(error)));
 }
 
+// E1/E3 "Show in folder": Explorer at the file's folder with the file
+// selected. COM is set up here when the worker thread has none yet.
+EncodableValue RevealInExplorer(const std::wstring& path) {
+  HRESULT co = ::CoInitializeEx(
+      nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+  HRESULT hr = E_FAIL;
+  PIDLIST_ABSOLUTE pidl = ::ILCreateFromPathW(path.c_str());
+  if (pidl) {
+    hr = ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+    ::ILFree(pidl);
+  } else {
+    hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+  }
+  if (SUCCEEDED(co)) ::CoUninitialize();
+  if (SUCCEEDED(hr)) return OpenResult("opened", "");
+  return OpenResult("failed", HrMessage(hr));
+}
+
 // Windows' "Open with" chooser (`SHOpenWithDialog`, launches the pick).
 EncodableValue OpenWith(HWND window, const std::wstring& path) {
   OPENASINFO info = {};
@@ -1342,6 +1360,9 @@ void WindowsChannel::HandleCall(
     auto path = StringArg(args, "path");
     HWND window = window_;
     Run(*quick_, result, [window, path] { return OpenFile(window, path); });
+  } else if (method == "revealInExplorer") {
+    auto path = StringArg(args, "path");
+    Run(*quick_, result, [path] { return RevealInExplorer(path); });
   } else if (method == "openWith") {
     auto path = StringArg(args, "path");
     HWND window = window_;

@@ -32,6 +32,12 @@ class FakeWindowsChannel implements WindowsChannel {
   /// X8: taskbar progress calls, in order.
   final List<(TaskbarProgress, int)> taskbar = [];
 
+  /// E1: paths "Show in folder" revealed.
+  final List<String> revealed = [];
+
+  @override
+  Future<void> revealInExplorer(String path) async => revealed.add(path);
+
   @override
   Future<void> setTaskbarProgress(
     TaskbarProgress state, [

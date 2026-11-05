@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/utils/read_future.dart';
@@ -33,7 +34,8 @@ Future<void> showSharedFoldersPicker(
 );
 
 /// A quick pick: label + candidate folders below the volume root (the first
-/// that exists is used; Samsung keeps screenshots in DCIM).
+/// that exists is used; Samsung keeps screenshots in DCIM). Windows (E1):
+/// below `%USERPROFILE%` (`Pictures/Camera Roll`, `Downloads`).
 typedef _Quick = ({
   String Function(AppLocalizations l10n) label,
   List<String> relative,
@@ -41,14 +43,22 @@ typedef _Quick = ({
 });
 
 final List<_Quick> _quickPicks = [
-  (label: (l) => l.sharedFolderCamera, relative: ['DCIM'], media: true),
+  (
+    label: (l) => l.sharedFolderCamera,
+    relative: ['DCIM', 'Pictures/Camera Roll'],
+    media: true,
+  ),
   (label: (l) => l.sharedFolderPictures, relative: ['Pictures'], media: true),
   (
     label: (l) => l.sharedFolderScreenshots,
     relative: ['Pictures/Screenshots', 'DCIM/Screenshots'],
     media: true,
   ),
-  (label: (l) => l.sharedFolderDownloads, relative: ['Download'], media: false),
+  (
+    label: (l) => l.sharedFolderDownloads,
+    relative: ['Download', 'Downloads'],
+    media: false,
+  ),
   (
     label: (l) => l.sharedFolderDocuments,
     relative: ['Documents'],
@@ -159,7 +169,9 @@ class _SharedFoldersPickerState extends ConsumerState<SharedFoldersPicker> {
       _picks.putIfAbsent(
         path,
         () => _Pick(
-          whole ? l10n.sharedFolderAllStorage : p.posix.basename(path),
+          whole && !isWindowsHost
+              ? l10n.sharedFolderAllStorage
+              : p.posix.basename(path),
           readOnly: true,
         ),
       );

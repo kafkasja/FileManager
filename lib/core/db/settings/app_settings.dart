@@ -61,6 +61,14 @@ abstract final class AppSettings {
     '',
   );
 
+  /// E1. Where received files go (both directions); '' = the default
+  /// `Downloads/KFM` (+ `/<device>` per sender). Device-specific: never
+  /// backed up. Changing it only affects new receives.
+  static final SettingKey<String> receiveFolder = SettingKey.string(
+    'connect.receiveFolder',
+    '',
+  );
+
   /// N1. Name other devices see when this device shares; '' = the device
   /// model (resolved at runtime).
   static final SettingKey<String> connectDisplayName = SettingKey.string(

@@ -96,6 +96,8 @@ const Set<String> excludedBackupSettings = {
   'indexLastFullScanAt',
   'indexLastIncrementalAt',
   'sharePort',
+  // E1: a folder path of this device.
+  'connect.receiveFolder',
   'desktop.window.bounds',
   // PL3: column widths fit this PC's screen.
   'desktop.columnWidths',

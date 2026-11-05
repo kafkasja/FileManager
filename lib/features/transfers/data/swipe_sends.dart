@@ -13,6 +13,7 @@ import 'package:kfm/features/transfers/domain/transfer_job.dart';
 SwipeSendQueue swipeSendQueue(
   TransfersDao dao, {
   required String downloadsRoot,
+  String Function()? currentDownloadsRoot,
   DateTime Function()? clock,
 }) => (session, file, action) async {
   final deviceId =
@@ -31,7 +32,10 @@ SwipeSendQueue swipeSendQueue(
     return await dao.appendToSessionJob(
       deviceId: deviceId,
       direction: TransferDirection.download,
-      targetPath: defaultDownloadFolder(downloadsRoot, name),
+      targetPath: defaultDownloadFolder(
+        currentDownloadsRoot?.call() ?? downloadsRoot,
+        name,
+      ),
       swipeSessionId: session.id,
       f: f,
       now: now,

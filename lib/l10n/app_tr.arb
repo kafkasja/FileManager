@@ -1762,5 +1762,11 @@
   "jobsQuitKeep": "Çalışmaya devam et",
   "trayNoticeTransfersTitle": "KFM aktarmaya devam ediyor",
   "trayNoticeTransfersBody": "Aktarımlar arka planda sürer. KFM'yi sistem tepsisindeki simgeden yeniden açın.",
-  "jobsEndFailedTitle": "{count, plural, =1{Aktarım başarısız} other{{count} aktarım başarısız}}"
+  "jobsEndFailedTitle": "{count, plural, =1{Aktarım başarısız} other{{count} aktarım başarısız}}",
+  "shareInfoTooltip": "Paylaşım hakkında",
+  "receivedSavedOne": "{name}, {folder} konumuna kaydedildi",
+  "receivedSavedMany": "{count, plural, =1{1 dosya {folder} konumuna kaydedildi} other{{count} dosya {folder} konumuna kaydedildi}}",
+  "showInFolder": "Klasörde göster",
+  "receiveFolderTitle": "Alınan dosyaların gideceği yer",
+  "receiveFolderReset": "Varsayılan klasörü kullan"
 }

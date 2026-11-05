@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/safe_nav.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/rename/data/rename_planner.dart';
 import 'package:kfm/features/rename/data/rename_providers.dart';
@@ -83,11 +84,11 @@ class _RenameBatchScreenState extends ConsumerState<RenameBatchScreen> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    // showDialog uses the root navigator; the screen lives in the tab's.
-    final dialogs = Navigator.of(context, rootNavigator: true);
+    // The dialog is on the root navigator; the screen lives in the tab's.
+    final progress = DialogHandle<void>();
     unawaited(
-      showDialog<void>(
-        context: context,
+      progress.show(
+        context,
         barrierDismissible: false,
         builder: (context) => PopScope(
           canPop: false,
@@ -106,7 +107,7 @@ class _RenameBatchScreenState extends ConsumerState<RenameBatchScreen> {
     final result = await ref
         .read(renameRunnerProvider)
         .apply(sessionId, batchId, _pattern, preview.newNames);
-    dialogs.pop(); // progress dialog
+    progress.close();
     final text = result.declined
         ? l10n.renameDeclined
         : result.skipped > 0

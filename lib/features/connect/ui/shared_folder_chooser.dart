@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:path/path.dart' as p;
 
@@ -41,7 +42,10 @@ class _SharedFolderChooserState extends ConsumerState<SharedFolderChooser> {
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
     final theme = Theme.of(context);
-    final shown = _atRoot
+    // Windows (E1): the root is the user's folder, not "All storage".
+    final shown = isWindowsHost
+        ? _path
+        : _atRoot
         ? l10n.sharedFolderAllStorage
         : _path.substring(_fs.primaryRoot.length + 1);
     return PopScope(

@@ -7741,4 +7741,32 @@ class AppLocalizationsNl extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shareInfoTooltip => 'Over delen';
+
+  @override
+  String receivedSavedOne(String name, String folder) {
+    return '$name opgeslagen in $folder';
+  }
+
+  @override
+  String receivedSavedMany(int count, String folder) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden opgeslagen in $folder',
+      one: '1 bestand opgeslagen in $folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get showInFolder => 'Toon in map';
+
+  @override
+  String get receiveFolderTitle => 'Ontvangen bestanden gaan naar';
+
+  @override
+  String get receiveFolderReset => 'Standaardmap gebruiken';
 }

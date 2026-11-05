@@ -1762,5 +1762,11 @@
   "jobsQuitKeep": "Laten doorlopen",
   "trayNoticeTransfersTitle": "KFM gaat door met overdragen",
   "trayNoticeTransfersBody": "Overdrachten gaan op de achtergrond door. Open KFM weer via het pictogram in het systeemvak.",
-  "jobsEndFailedTitle": "{count, plural, =1{Overdracht mislukt} other{{count} overdrachten mislukt}}"
+  "jobsEndFailedTitle": "{count, plural, =1{Overdracht mislukt} other{{count} overdrachten mislukt}}",
+  "shareInfoTooltip": "Over delen",
+  "receivedSavedOne": "{name} opgeslagen in {folder}",
+  "receivedSavedMany": "{count, plural, =1{1 bestand opgeslagen in {folder}} other{{count} bestanden opgeslagen in {folder}}}",
+  "showInFolder": "Toon in map",
+  "receiveFolderTitle": "Ontvangen bestanden gaan naar",
+  "receiveFolderReset": "Standaardmap gebruiken"
 }

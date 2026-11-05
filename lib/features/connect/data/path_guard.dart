@@ -29,7 +29,12 @@ class GuardRejection implements Exception {
 /// there.
 typedef SymlinkResolver = Future<String?> Function(String path);
 
-Future<String?> _resolveOnDisk(String path) async {
+final RegExp _driveOnly = RegExp(r'^[A-Za-z]:$');
+final RegExp _driveAbsolute = RegExp(r'^[A-Za-z]:(/|$)');
+
+Future<String?> _resolveOnDisk(String kfmPath) async {
+  // `C:` alone is "the current folder on C:" to Windows; `C:/` the root.
+  final path = _driveOnly.hasMatch(kfmPath) ? '$kfmPath/' : kfmPath;
   if (await FileSystemEntity.type(path, followLinks: false) ==
       FileSystemEntityType.notFound) {
     return null;
@@ -53,14 +58,24 @@ class GuardedFile {
 
 /// Path canonicalisation, file-id resolution, exclusion rules and root ids
 /// of the folder allow-list (TASK-N4). Paths are always '/'-separated.
-/// Android only for now; Windows drive letters/case come with PL1.
+/// With [windows] (TASK-E1), KFM's Windows form `C:/Users/x` (drive root
+/// `C:`) counts as absolute too; Android paths start with '/'.
 class PathGuard {
-  new({SymlinkResolver? resolver, Map<String, String>? aliases})
-    : _resolve = resolver ?? _resolveOnDisk,
-      _aliases = aliases ?? kAndroidPathAliases;
+  new({
+    SymlinkResolver? resolver,
+    Map<String, String>? aliases,
+    this.windows = false,
+  }) : _resolve = resolver ?? _resolveOnDisk,
+       _aliases = aliases ?? kAndroidPathAliases;
 
   final SymlinkResolver _resolve;
   final Map<String, String> _aliases;
+
+  /// Accepts drive-letter paths (`C:/…`).
+  final bool windows;
+
+  bool _isAbsolute(String path) =>
+      path.startsWith('/') || (windows && _driveAbsolute.hasMatch(path));
 
   /// Other spellings of the primary volume that `resolveSymbolicLinks` may
   /// return; mapped back to the `/storage/emulated/0` form F3 uses.
@@ -83,14 +98,18 @@ class PathGuard {
     if (path.contains(r'\')) {
       throw const GuardRejection(ApiErrorCode.forbiddenPath, 'backslash');
     }
-    if (!path.startsWith('/')) {
+    if (!_isAbsolute(path)) {
       throw const GuardRejection(ApiErrorCode.forbiddenPath, 'relative');
     }
     final normalised = p.posix.normalize(path);
+    // `C:/..` normalises to '.': it left the drive.
+    if (!_isAbsolute(normalised)) {
+      throw const GuardRejection(ApiErrorCode.forbiddenPath, 'relative');
+    }
     final resolved = _unalias(
       p.posix.normalize(await _resolveExisting(normalised)),
     );
-    if (!resolved.startsWith('/') || resolved.contains(r'\')) {
+    if (!_isAbsolute(resolved) || resolved.contains(r'\')) {
       throw const GuardRejection(ApiErrorCode.forbiddenPath, 'resolved');
     }
     return resolved;
@@ -100,7 +119,7 @@ class PathGuard {
     final r = await _resolve(path);
     if (r != null) return r.replaceAll(r'\', '/');
     final parent = p.posix.dirname(path);
-    if (parent == path) return path;
+    if (parent == path || !_isAbsolute(parent)) return path;
     return p.posix.join(await _resolveExisting(parent), p.posix.basename(path));
   }
 
@@ -149,7 +168,7 @@ class PathGuard {
       final raw = id.substring('path:'.length);
       if (raw.contains('\u0000') ||
           raw.contains(r'\') ||
-          !raw.startsWith('/') ||
+          !_isAbsolute(raw) ||
           p.posix.normalize(raw) != raw) {
         throw const GuardRejection(ApiErrorCode.forbiddenPath, 'not canonical');
       }
@@ -179,11 +198,14 @@ class PathGuard {
   /// whole storage shared: any segment starting with '.' (`.KFMTrash`,
   /// `.thumbnails`, partial-upload folders, dot-files) and `Android/data`,
   /// `Android/obb` (case-insensitive: Android's shared storage is).
+  /// Windows (E1): also `AppData`, `$Recycle.Bin` and
+  /// `System Volume Information`.
   static bool isExcluded(String canonicalPath) {
     final segments = canonicalPath.split('/');
     for (var i = 0; i < segments.length; i++) {
       final s = segments[i];
       if (s.startsWith('.')) return true;
+      if (_windowsExcluded.contains(s.toLowerCase())) return true;
       if (s.toLowerCase() == 'android' && i + 1 < segments.length) {
         final next = segments[i + 1].toLowerCase();
         if (next == 'data' || next == 'obb') return true;
@@ -191,6 +213,12 @@ class PathGuard {
     }
     return false;
   }
+
+  static const Set<String> _windowsExcluded = {
+    'appdata',
+    r'$recycle.bin',
+    'system volume information',
+  };
 
   /// Whether [path] is [folder] or below it (prefix-collision safe).
   /// Case-insensitive: Android's shared storage (and Windows) is, so

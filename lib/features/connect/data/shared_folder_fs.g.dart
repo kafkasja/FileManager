@@ -48,4 +48,4 @@ final class SharedFolderFsProvider
   }
 }
 
-String _$sharedFolderFsHash() => r'043854e617035fbf3eef8c5331c6b04983ebd8ec';
+String _$sharedFolderFsHash() => r'97fa3e95603a20ce7178150bb1a0c97d50d6e6ab';

@@ -8,6 +8,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/connect/ui/receive_folder_tile.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 
@@ -56,6 +57,8 @@ class ConnectSettingsSection extends ConsumerWidget {
           ),
           onTap: () => context.push(AppRoutes.transfers),
         ),
+        // E1: where received files go (E2 moves it into its section).
+        const ReceiveFolderTile(),
         ListTile(
           key: const ValueKey('settings-remembered-devices'),
           leading: const Icon(Icons.devices_other_outlined),

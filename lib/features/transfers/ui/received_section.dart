@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/file_reveal.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/utils/format.dart';
@@ -101,13 +102,30 @@ class _OfferCard extends ConsumerWidget {
                     ),
                     child: Text(l10n.transferOfferStop),
                   ),
-                if (incoming && folder != null && done > 0)
+                if (incoming && folder != null && done > 0) ...[
                   TextButton(
                     key: ValueKey('offer-open-${o.id}'),
                     onPressed: () =>
                         unawaited(openReceivedFolder(context, ref, folder)),
                     child: Text(l10n.transferOfferOpenFolder),
                   ),
+                  // E1: Show in folder / Open / Copy path (one file: that
+                  // file; several: the folder).
+                  ReceivedFileMenu(
+                    key: ValueKey('offer-menu-${o.id}'),
+                    folder: folder,
+                    path: () => done == 1
+                        ? localPathOfReceived(
+                            ref,
+                            o.files
+                                .firstWhere(
+                                  (f) => f.status == OfferFileStatus.done,
+                                )
+                                .localFileId,
+                          )
+                        : Future.value(),
+                  ),
+                ],
               ],
             ),
           ],

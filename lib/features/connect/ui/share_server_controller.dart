@@ -150,6 +150,10 @@ class ShareServerController extends _$ShareServerController {
   }
 
   Future<void> startSharing() async {
+    // E1: Share right after Stop (the old screen's dispose stops): wait
+    // for that stop, or this start would see "running" and do nothing,
+    // and the stop would then show "Sharing stopped".
+    if (_stopping case final stopping?) await stopping;
     if (state.status == ShareServerStatus.running ||
         state.status == ShareServerStatus.starting) {
       return;
@@ -239,7 +243,15 @@ class ShareServerController extends _$ShareServerController {
 
   /// Safe to call from a widget's `dispose`: the state changes only after
   /// the first await (Riverpod forbids changes while the tree finalizes).
+  /// The stop in progress, if any.
+  Future<void>? _stopping;
+
   Future<void> stopSharing() async {
+    final stopping = _stopping ??= _stop().whenComplete(() => _stopping = null);
+    await stopping;
+  }
+
+  Future<void> _stop() async {
     _stopWatchingLifecycle();
     _generation++;
     final background = _stopBackground();

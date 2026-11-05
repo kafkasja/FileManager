@@ -47,15 +47,10 @@ TransferPreprocessor transferPreprocessor(Ref ref) =>
 @Riverpod(keepAlive: true)
 Future<Directory> Function() transferStaging(Ref ref) => transferStagingDir;
 
-/// The folder downloads go under by default: Android
-/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+/// The folder downloads go under by default (E1: the receive folder
+/// setting, else `Downloads/KFM`).
 @Riverpod(keepAlive: true)
-String downloadsRoot(Ref ref) {
-  if (Platform.isAndroid) return '/storage/emulated/0/Download';
-  final home =
-      Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'] ?? '';
-  return '$home/Downloads'.replaceAll(r'\', '/');
-}
+String downloadsRoot(Ref ref) => ref.watch(receiveDownloadsRootProvider);
 
 /// Deletes the originals of verified moves on this device (TASK-N11; U2
 /// and X3 reuse it): under the history lock, deleted files leave the

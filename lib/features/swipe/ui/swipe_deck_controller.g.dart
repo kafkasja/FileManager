@@ -275,7 +275,7 @@ final class SwipeActionDispatcherProvider
 }
 
 String _$swipeActionDispatcherHash() =>
-    r'92edb955946b53c88c9c9fdf542dc25db316f157';
+    r'65ef44b7204911d4a2da70f4b575ebd86ff84058';
 
 /// D1: no active session and the setting is "delete permanently" → the
 /// user confirms once before the session starts (resumed sessions never ask).

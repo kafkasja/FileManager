@@ -5,14 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/file_reveal.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/app/safe_nav.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/core/utils/read_future.dart';
-import 'package:kfm/features/browse/domain/browse_source_chip.dart';
-import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/share_background.dart';
@@ -21,13 +22,16 @@ import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
+import 'package:kfm/features/connect/domain/share_offer.dart';
 import 'package:kfm/features/connect/ui/offer_dialog.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
+import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/folder_picker_sheet.dart';
 import 'package:kfm/features/transfers/data/offer_client.dart';
 import 'package:kfm/features/transfers/data/transfer_engine.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
+import 'package:path/path.dart' as p;
 
 /// N12b: the remote file a client downloads for an offered [f] (null
 /// without the server's file id).
@@ -50,19 +54,58 @@ FileRef? offeredRemoteFile(String peerFingerprint, OfferFileDto f) {
   );
 }
 
-/// Opens [folder] in Browse's folder layout (N12 "Received … · Open").
+/// Opens [folder] in Browse's folder layout (N12 "Received … · Open");
+/// E1: on desktop its Explorer-like Browse (the phone route was used).
 Future<void> openReceivedFolder(
   BuildContext context,
   WidgetRef ref,
   String folder,
 ) async {
-  context.go(AppRoutes.browse);
-  // The Browse tab may only now be built: set its folder after this frame.
-  await WidgetsBinding.instance.endOfFrame;
+  openFolderInBrowse(context, folder);
+}
+
+/// E1: the dart:io path of a received file's local id (`path:` directly,
+/// `ms:` through the file source); null when unknown.
+Future<String?> localPathOfReceived(WidgetRef ref, String? fileId) async {
+  if (fileId == null) return null;
+  if (fileId.startsWith('path:')) return fileId.substring('path:'.length);
+  try {
+    return (await ref.read(fileSourceProvider).stat(fileId))?.path;
+  } on Object {
+    return null;
+  }
+}
+
+/// E1: "cat.mp4 saved to Downloads › KFM › Phone" + Show in folder, Open,
+/// Copy path after a receive (either direction).
+Future<void> showReceivedSnackBar(
+  BuildContext context,
+  WidgetRef ref, {
+  required String folder,
+  required List<({String name, String? fileId})> files,
+}) async {
+  if (files.isEmpty) return;
+  final path = files.length == 1
+      ? await localPathOfReceived(ref, files.single.fileId)
+      : null;
   if (!context.mounted) return;
-  ref.read(browseViewControllerProvider.notifier)
-    ..setLayout(BrowseLayout.folders)
-    ..openFolder(folder);
+  final l10n = context.l10n;
+  final where = prettyFolder(
+    path == null ? folder : p.posix.dirname(path),
+    downloads: platformDownloadsFolder(),
+  );
+  showSavedSnackBar(
+    context,
+    ref,
+    text: files.length == 1
+        ? l10n.receivedSavedOne(
+            path == null ? files.single.name : p.posix.basename(path),
+            where,
+          )
+        : l10n.receivedSavedMany(files.length, where),
+    folder: folder,
+    path: path,
+  );
 }
 
 /// TASK-N12, mounted once in the app shell. Draws nothing:
@@ -87,16 +130,21 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
 
   /// The offer whose dialog is open.
   String? _dialogFor;
+  final DialogHandle<OfferAnswer> _dialog = DialogHandle();
 
   /// N12b: the inbox offer (from the device we're connected to) whose
   /// dialog is open; inbox offers already answered or auto-accepted.
   String? _inboxDialogFor;
+  final DialogHandle<OfferAnswer> _inboxDialog = DialogHandle();
   final Set<String> _handledInbox = {};
   ProviderSubscription<List<OfferDto>>? _inboxSub;
   final Set<String> _notified = {};
 
   /// Send jobs last seen waiting for an answer.
   final Set<String> _awaiting = {};
+
+  /// E1: download jobs last seen unfinished ("… saved to …" when done).
+  final Set<String> _downloading = {};
 
   @override
   void initState() {
@@ -155,7 +203,7 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     if (open != null && !prompts.any((p) => p.offer.id == open)) {
       // Ended elsewhere (expired, cancelled, stop sharing).
       _dialogFor = null;
-      Navigator.of(context, rootNavigator: true).pop();
+      _dialog.close();
     }
     _notified.removeWhere((id) => !prompts.any((p) => p.offer.id == id));
     if (prompts.isEmpty) {
@@ -198,8 +246,8 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     unawaited(
       SystemSound.play(SystemSoundType.alert).catchError((Object _) {}),
     );
-    final answer = await showDialog<OfferAnswer>(
-      context: context,
+    final answer = await _dialog.show(
+      context,
       barrierDismissible: false,
       builder: (_) => OfferDialog(
         data: OfferDialogData(
@@ -253,9 +301,10 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     if (!mounted) return;
     final open = _inboxDialogFor;
     if (open != null && !offers.any((o) => o.id == open)) {
-      // Taken back or expired over there.
+      // Taken back or expired over there. Closes nothing while the prompt
+      // is still being prepared (E1 H3: that pop emptied the navigator).
       _inboxDialogFor = null;
-      Navigator.of(context, rootNavigator: true).pop();
+      _inboxDialog.close();
     }
     final c = ref.read(remoteConnectionControllerProvider);
     if (c is! RemoteConnected || !_foreground) return;
@@ -295,6 +344,11 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     final name = known?.name ?? c.peerName;
     final folder = defaultDownloadFolder(ref.read(downloadsRootProvider), name);
     if (!mounted) return;
+    if (_inboxDialogFor != o.id) {
+      // Taken back (or the connection ended) while we looked it up.
+      _next();
+      return;
+    }
     OfferAnswer? answer;
     if (known != null && !known.isTemporary && known.autoAcceptFiles) {
       // Trusted: no prompt.
@@ -308,8 +362,13 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
       unawaited(HapticFeedback.mediumImpact().catchError((Object _) {}));
       final me = await ref.readFuture(deviceIdentityProvider.future);
       if (!mounted) return;
-      answer = await showDialog<OfferAnswer>(
-        context: context,
+      if (_inboxDialogFor != o.id) {
+        // Taken back while we looked it up.
+        _next();
+        return;
+      }
+      answer = await _inboxDialog.show(
+        context,
         barrierDismissible: false,
         builder: (_) => OfferDialog(
           data: OfferDialogData(
@@ -382,15 +441,22 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
         _snack(l10n.offerReceiving(offer.fileCount, offer.peerName));
       case OfferReceived(:final offer):
         final folder = offer.folder;
-        _snack(
-          l10n.offerReceived(offer.fileCount, offer.peerName),
-          action: folder == null
-              ? null
-              : SnackBarAction(
-                  label: l10n.offerOpenFolder,
-                  onPressed: () =>
-                      unawaited(openReceivedFolder(context, ref, folder)),
-                ),
+        if (folder == null) {
+          _snack(l10n.offerReceived(offer.fileCount, offer.peerName));
+          return;
+        }
+        // E1: where it landed, with Show in folder / Open / Copy path.
+        unawaited(
+          showReceivedSnackBar(
+            context,
+            ref,
+            folder: folder,
+            files: [
+              for (final f in offer.files)
+                if (f.status == OfferFileStatus.done)
+                  (name: f.name, fileId: f.localFileId),
+            ],
+          ),
         );
     }
   }
@@ -399,6 +465,7 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
     if (!mounted) return;
     final l10n = context.l10n;
     for (final j in jobs) {
+      _onDownload(j);
       if (!j.isOffer) continue;
       if (j.awaitingAccept) {
         _awaiting.add(j.id);
@@ -419,6 +486,25 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
       };
       if (text != null) _snack(text, showTransfers: true);
     }
+  }
+
+  /// E1: a download (from the connected device) finished: where it landed.
+  void _onDownload(TransferJob j) {
+    if (j.direction != TransferDirection.download) return;
+    if (!j.isFinished) {
+      _downloading.add(j.id);
+      return;
+    }
+    if (!_downloading.remove(j.id)) return;
+    final done = [
+      for (final f in j.files)
+        if (f.status == TransferFileStatus.done)
+          (name: f.name, fileId: f.targetFileId),
+    ];
+    if (done.isEmpty) return;
+    unawaited(
+      showReceivedSnackBar(context, ref, folder: j.targetPath, files: done),
+    );
   }
 
   void _snack(

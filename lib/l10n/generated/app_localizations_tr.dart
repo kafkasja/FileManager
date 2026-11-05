@@ -7685,4 +7685,32 @@ class AppLocalizationsTr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shareInfoTooltip => 'Paylaşım hakkında';
+
+  @override
+  String receivedSavedOne(String name, String folder) {
+    return '$name, $folder konumuna kaydedildi';
+  }
+
+  @override
+  String receivedSavedMany(int count, String folder) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dosya $folder konumuna kaydedildi',
+      one: '1 dosya $folder konumuna kaydedildi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get showInFolder => 'Klasörde göster';
+
+  @override
+  String get receiveFolderTitle => 'Alınan dosyaların gideceği yer';
+
+  @override
+  String get receiveFolderReset => 'Varsayılan klasörü kullan';
 }
