@@ -19,6 +19,7 @@ import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/shell/desktop_side_pane.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
 import 'package:kfm/desktop/shell/quick_access.dart';
@@ -592,6 +593,20 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
     return [...folders, for (final f in merged) FileBrowseEntry(f)];
   }
 
+  /// More files than the disk listing shows.
+  bool _capped(DesktopBrowseState st) => switch (st.folder) {
+    final f? when _location is! SearchLocation =>
+      ref.watch(desktopDiskFilesProvider(f)).value?.capped ?? false,
+    _ => false,
+  };
+
+  /// The open folder is gone from disk (deleted, drive ejected).
+  bool _gone(DesktopBrowseState st) => switch (st.folder) {
+    final f? when _location is! SearchLocation =>
+      ref.watch(desktopFolderPresentProvider(f)).value == false,
+    _ => false,
+  };
+
   static int Function(FileRef, FileRef) _fileOrder(DesktopBrowseState st) {
     int base(FileRef a, FileRef b) => switch (st.sortColumn) {
       FileColumns.date => a.sortDate.compareTo(b.sortDate),
@@ -762,15 +777,24 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
         label: l10n.desktopCmdView,
         icon: Icons.view_agenda_outlined,
         menu: [
-          for (final (layout, label) in [
-            (ExplorerLayout.largeIcons, l10n.desktopLayoutLargeIcons),
-            (ExplorerLayout.grid, l10n.desktopLayoutGrid),
-            (ExplorerLayout.details, l10n.desktopLayoutDetails),
+          for (final (layout, label, key) in [
+            (
+              ExplorerLayout.largeIcons,
+              l10n.desktopLayoutLargeIcons,
+              keys(DesktopKeys.largeIconsView),
+            ),
+            (ExplorerLayout.grid, l10n.desktopLayoutGrid, null),
+            (
+              ExplorerLayout.details,
+              l10n.desktopLayoutDetails,
+              keys(DesktopKeys.detailsView),
+            ),
           ])
             DesktopCommand(
               id: 'view-${layout.name}',
               label: label,
               icon: Icons.view_list,
+              shortcut: key,
               selected: st.layout == layout,
               onPressed: () => _nav.setLayout(layout),
             ),
@@ -783,12 +807,28 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                 ref.read(desktopNavPaneShownProvider.notifier).toggle(),
           ),
           DesktopCommand(
+            id: 'view-preview-pane',
+            label: l10n.desktopViewPreviewPane,
+            icon: Icons.preview_outlined,
+            shortcut: keys(DesktopKeys.previewPane),
+            selected:
+                ref.read(desktopSidePaneModeProvider) ==
+                DesktopSidePane.preview,
+            onPressed: () => ref
+                .read(desktopSidePaneModeProvider.notifier)
+                .toggle(DesktopSidePane.preview),
+          ),
+          DesktopCommand(
             id: 'view-details-pane',
             label: l10n.desktopViewDetailsPane,
             icon: Icons.vertical_split_outlined,
-            selected: ref.read(desktopDetailsPaneProvider),
-            onPressed: () =>
-                ref.read(desktopDetailsPaneProvider.notifier).toggle(),
+            shortcut: keys(DesktopKeys.detailsPane),
+            selected:
+                ref.read(desktopSidePaneModeProvider) ==
+                DesktopSidePane.details,
+            onPressed: () => ref
+                .read(desktopSidePaneModeProvider.notifier)
+                .toggle(DesktopSidePane.details),
           ),
           DesktopCommand(
             id: 'view-hidden',
@@ -814,10 +854,41 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
           id: 'undo',
           label: l10n.undo,
           icon: Icons.undo,
-          shortcut: 'Ctrl+Z',
+          shortcut: keys(DesktopKeys.undo),
           keepLabel: true,
           onPressed: () => unawaited(_undo()),
         ),
+      DesktopCommand(
+        id: 'more',
+        label: l10n.desktopCmdMore,
+        icon: Icons.more_horiz,
+        menu: [
+          DesktopCommand(
+            id: 'select-all',
+            label: l10n.desktopSelectAll,
+            icon: Icons.select_all,
+            shortcut: keys(DesktopKeys.selectAll),
+            onPressed: () => _explorer.currentState?.selectAll(),
+          ),
+          DesktopCommand(
+            id: 'quick-look',
+            label: l10n.desktopQuickLook,
+            icon: Icons.visibility_outlined,
+            shortcut: keys(DesktopKeys.quickLook),
+            onPressed: files.isEmpty ? null : () => unawaited(_quickLook()),
+          ),
+          DesktopCommand(
+            id: 'properties',
+            label: l10n.desktopProperties,
+            icon: Icons.info_outline,
+            shortcut: keys(DesktopKeys.properties),
+            onPressed: files.length == 1
+                ? () =>
+                      unawaited(showFileProperties(context, ref, files.single))
+                : null,
+          ),
+        ],
+      ),
       if (any)
         DesktopCommand(
           id: 'copy-path',
@@ -884,8 +955,20 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
         : null;
     return Column(
       children: [
+        if (_capped(st))
+          MaterialBanner(
+            key: const ValueKey('browse-disk-capped'),
+            content: Text(l10n.desktopDiskCapped(diskFilesCap)),
+            leading: const Icon(Icons.info_outline),
+            actions: const [SizedBox.shrink()],
+          ),
         Expanded(
-          child: entries.isEmpty
+          child: entries.isEmpty && _gone(st)
+              ? _FolderGone(
+                  onUp: () => _nav.up(),
+                  onHome: () => _nav.open(null),
+                )
+              : entries.isEmpty
               ? Center(
                   child: Text(
                     search != null
@@ -946,6 +1029,18 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                     onKey: _onKey,
                     onContextMenu: (item, at) =>
                         unawaited(_contextMenu(item, at)),
+                    onMiddleClick: (e) {
+                      if (e
+                          case FolderBrowseEntry(:final path, :final available)
+                          when available) {
+                        ref
+                            .read(desktopTabsControllerProvider.notifier)
+                            .openInNewTab(
+                              FolderLocation(path),
+                              activate: false,
+                            );
+                      }
+                    },
                     itemHoverHold: (e) {
                       if (e case FolderBrowseEntry(:final available)
                           when available) {
@@ -1060,6 +1155,52 @@ class _FolderTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A tab's folder that no longer exists: Go up / Home.
+class _FolderGone extends StatelessWidget {
+  const new({required this.onUp, required this.onHome});
+
+  final VoidCallback onUp;
+  final VoidCallback onHome;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Center(
+      key: const ValueKey('browse-folder-gone'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.folder_off_outlined,
+            size: 48,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.desktopFolderGone, style: theme.textTheme.titleSmall),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onUp,
+                icon: const Icon(Icons.arrow_upward, size: 18),
+                label: Text(l10n.desktopBrowseUp),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonalIcon(
+                onPressed: onHome,
+                icon: const Icon(Icons.home_outlined, size: 18),
+                label: Text(l10n.desktopHome),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

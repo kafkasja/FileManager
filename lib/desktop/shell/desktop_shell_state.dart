@@ -22,15 +22,6 @@ enum DesktopSection {
       values.firstWhere((s) => s.branch == branch, orElse: () => sort);
 }
 
-/// Right details pane shown (Ctrl+I). Off by default (rule 5).
-@Riverpod(keepAlive: true)
-class DesktopDetailsPane extends _$DesktopDetailsPane {
-  @override
-  bool build() => false;
-
-  void toggle() => state = !state;
-}
-
 /// The focused file of a desktop screen (the details pane shows it).
 @Riverpod(keepAlive: true)
 class DesktopFocusedFile extends _$DesktopFocusedFile {

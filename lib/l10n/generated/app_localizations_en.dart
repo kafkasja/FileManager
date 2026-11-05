@@ -8295,6 +8295,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'How files and folders look in the lists: Windows\' own icons or KFM\'s.';
 
   @override
+  String desktopDiskCapped(int count) {
+    return 'Showing the first $count files of this folder.';
+  }
+
+  @override
+  String get desktopPreviewNothing => 'Select a file to preview it';
+
+  @override
+  String get desktopCmdMore => 'More';
+
+  @override
+  String get desktopSelectAll => 'Select all';
+
+  @override
   String folderLabel(String folder, String place) {
     return '$folder · $place';
   }

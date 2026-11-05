@@ -11,6 +11,7 @@ import 'package:kfm/core/files/windows/win_attributes.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
+import 'package:kfm/desktop/tabs/desktop_tabs_controller.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -88,6 +89,13 @@ DiskFiles _listSync(String folder, {required bool isWindows}) {
 
 @Riverpod(keepAlive: true)
 DiskFileLister diskFileLister(Ref ref) => listDiskFiles;
+
+/// [folder] exists on disk (re-checked when the index or drives change).
+@riverpod
+Future<bool> desktopFolderPresent(Ref ref, String folder) async {
+  ref.watch(mediaIndexChangesProvider);
+  return await ref.watch(desktopFolderExistsProvider)(folder);
+}
 
 /// The index covers [folder]: under an index root, and the first full scan
 /// is done. Else Browse lists its files from disk too.

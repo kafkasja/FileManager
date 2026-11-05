@@ -8305,6 +8305,20 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dosya ve klasörlerin listelerde nasıl görüneceği: Windows\'un kendi simgeleri veya KFM\'ninkiler.';
 
   @override
+  String desktopDiskCapped(int count) {
+    return 'Bu klasördeki ilk $count dosya gösteriliyor.';
+  }
+
+  @override
+  String get desktopPreviewNothing => 'Önizlemek için bir dosya seçin';
+
+  @override
+  String get desktopCmdMore => 'Daha fazla';
+
+  @override
+  String get desktopSelectAll => 'Tümünü seç';
+
+  @override
   String folderLabel(String folder, String place) {
     return '$folder · $place';
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
-import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/shell/desktop_side_pane.dart';
 
 /// The desktop shell's column widths, computed from the window instead of
 /// measured with a LayoutBuilder (tooltips inside a LayoutBuilder hit the

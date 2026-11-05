@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/app/widgets/db_startup_banner.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -17,6 +16,7 @@ import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/shell/desktop_side_pane.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
 import 'package:kfm/desktop/shell/desktop_tab_router.dart';
 import 'package:kfm/desktop/shell/window_memory.dart';
@@ -26,7 +26,6 @@ import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
-import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
 import 'package:kfm/features/share_in/ui/share_in_prompter.dart';
 import 'package:kfm/features/trash/ui/no_trash_prompter.dart';
@@ -160,7 +159,6 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
     final navShown = ref.watch(desktopNavPaneShownProvider);
     final focused = ref.watch(desktopFocusedFileProvider(section));
     final colors = base.colorScheme;
-    final l10n = context.l10n;
     // The colour the runner paints before the next start's first frame.
     if (_hints case final hints?) {
       hints.update(background: colors.surface).ignore();
@@ -191,23 +189,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
                           (navShown ? ref.watch(desktopNavWidthProvider) : 0) -
                           1,
                     ),
-                    child: focused == null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.all(24),
-                              child: Text(
-                                l10n.desktopDetailsNothing,
-                                textAlign: TextAlign.center,
-                                style: base.textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          )
-                        : FileDetailsView(
-                            key: ValueKey(focused.id),
-                            file: focused,
-                          ),
+                    child: DesktopSidePaneView(file: focused),
                   ),
                 ],
               ],
@@ -227,8 +209,12 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
         shell: widget.shell,
         child: CallbackShortcuts(
           bindings: {
-            DesktopKeys.detailsPane: () =>
-                ref.read(desktopDetailsPaneProvider.notifier).toggle(),
+            DesktopKeys.previewPane: () => ref
+                .read(desktopSidePaneModeProvider.notifier)
+                .toggle(DesktopSidePane.preview),
+            DesktopKeys.detailsPane: () => ref
+                .read(desktopSidePaneModeProvider.notifier)
+                .toggle(DesktopSidePane.details),
             DesktopKeys.find: _searchFocus.requestFocus,
             DesktopKeys.searchE: _searchFocus.requestFocus,
             DesktopKeys.searchF3: _searchFocus.requestFocus,

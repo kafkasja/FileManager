@@ -8365,6 +8365,21 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM.';
 
   @override
+  String desktopDiskCapped(int count) {
+    return 'De eerste $count bestanden van deze map worden getoond.';
+  }
+
+  @override
+  String get desktopPreviewNothing =>
+      'Selecteer een bestand om het te bekijken';
+
+  @override
+  String get desktopCmdMore => 'Meer';
+
+  @override
+  String get desktopSelectAll => 'Alles selecteren';
+
+  @override
   String folderLabel(String folder, String place) {
     return '$folder · $place';
   }

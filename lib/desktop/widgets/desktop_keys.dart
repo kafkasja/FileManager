@@ -6,10 +6,6 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 /// Desktop keyboard shortcuts (TASK-PL3). Every one also has a visible
 /// button or menu entry (round 7: never keyboard-only).
 abstract final class DesktopKeys {
-  static const details = SingleActivator(
-    LogicalKeyboardKey.keyI,
-    control: true,
-  );
   static const find = SingleActivator(LogicalKeyboardKey.keyF, control: true);
   static const undo = SingleActivator(LogicalKeyboardKey.keyZ, control: true);
   static const selectAll = SingleActivator(
@@ -104,6 +100,23 @@ abstract final class DesktopKeys {
     control: true,
     shift: true,
   );
+
+  /// Second keys for an action whose button shows the first one
+  /// (Explorer has several): alternate name → the shown key's name. The
+  /// rule test (`desktop_keys_rule_test.dart`) checks every other key is
+  /// shown on a button, tooltip or menu entry.
+  static const alternates = {
+    'closeTabF4': 'closeTab',
+    'nextTab': 'newTab',
+    'previousTab': 'newTab',
+    'addressBarL': 'addressBar',
+    'addressBarF4': 'addressBar',
+    'searchE': 'find',
+    'searchF3': 'find',
+  };
+
+  /// Keys shown through a variable (Sort's action entries carry theirs).
+  static const shownDynamically = {'keep'};
 
   /// "Ctrl+Z", "Shift+Del", "F2"… (key names as Windows prints them; the
   /// same in every language KFM ships).

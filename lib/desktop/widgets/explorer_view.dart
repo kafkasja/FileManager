@@ -78,6 +78,7 @@ class ExplorerView<T> extends StatefulWidget {
     this.dragDataOf,
     this.itemDropOffer,
     this.itemHoverHold,
+    this.onMiddleClick,
     this.columnWidths = const {},
     this.onColumnWidthsChanged,
     super.key,
@@ -134,6 +135,9 @@ class ExplorerView<T> extends StatefulWidget {
   /// E3: a drag rested 1 s on an item (a drop target): spring-loaded
   /// folders open.
   final void Function(T item)? itemHoverHold;
+
+  /// E3: a middle-click on an item.
+  final ValueChanged<T>? onMiddleClick;
 
   /// Details column widths the user dragged before (unscaled; by column
   /// id), e.g. remembered in the settings.
@@ -391,6 +395,9 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
 
   void requestFocus() => _focus.requestFocus();
 
+  /// Ctrl+A from a menu (E3: More ▾ → Select all).
+  void selectAll() => _select(_s.selectAll(_order));
+
   // --- pointer -------------------------------------------------------------
 
   void _onItemDown(PointerDownEvent e, T item) {
@@ -400,6 +407,11 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     if (e.buttons & kSecondaryMouseButton != 0) {
       _select(_s.secondaryClick(id));
       widget.onContextMenu?.call(item, e.position);
+      return;
+    }
+    // E3: middle-click (a folder opens in a new tab).
+    if (e.buttons & kMiddleMouseButton != 0) {
+      widget.onMiddleClick?.call(item);
       return;
     }
     if (e.buttons & kPrimaryMouseButton == 0) return;

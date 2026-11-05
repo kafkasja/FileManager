@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -22,7 +23,23 @@ class DesktopCommand {
     this.selected,
     this.divider = false,
     this.keepLabel = false,
+    this.dropOffer,
+    this.color,
+    this.badge = false,
+    this.key,
   });
+
+  /// Files dragged onto the button (Sort's actions take a Sort drag).
+  final DropOfferBuilder? dropOffer;
+
+  /// The icon's colour (Sort: trash red, keep green…).
+  final Color? color;
+
+  /// A small dot on the icon (a filter is on, the preset was changed).
+  final bool badge;
+
+  /// The widget key; default `cmd-<id>`.
+  final Key? key;
 
   final String id;
   final String label;
@@ -51,7 +68,8 @@ class DesktopCommand {
   /// What the bar draws (closures left out): a new list with the same
   /// signature doesn't rebuild the bar.
   String get signature =>
-      '$id|$label|$enabled|$selected|$divider|'
+      '$id|$label|$enabled|$selected|$divider|$badge|$color|'
+      '${dropOffer != null}|'
       '${menu?.map((m) => m.signature).join(',')}';
 }
 
@@ -106,9 +124,17 @@ class DesktopCommandBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final commands = ref.watch(desktopCommandsProvider(section));
     if (commands.isEmpty) return const SizedBox.shrink();
-    final narrow =
-        MediaQuery.sizeOf(context).width <
-        MediaQuery.textScalerOf(context).scale(1100);
+    // Labels go (icons with tooltips stay) when the row would not fit:
+    // a rough width per labelled button (icon + padding + ~7.5 px per
+    // character at the text scale).
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    double width(DesktopCommand c, {required bool label}) =>
+        (c.divider ? 12 : 0) +
+        (label
+            ? 44 + c.label.length * 7.5 * scale + (c.menu != null ? 18 : 0)
+            : 40 + (c.menu != null ? 18 : 0));
+    final full = commands.fold<double>(0, (a, c) => a + width(c, label: true));
+    final narrow = full > MediaQuery.sizeOf(context).width - 24;
     final ctl = ref.read(desktopCommandsProvider(section).notifier);
     return Container(
       height: scaledExtent(context, 40),
@@ -154,16 +180,26 @@ class _CommandButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final button = _button(context);
+    final offer = command.dropOffer;
+    return offer == null
+        ? button
+        : DesktopDropTarget(offer: offer, child: button);
+  }
+
+  Widget _button(BuildContext context) {
     final c = command;
-    final key = ValueKey('cmd-${c.id}');
-    final icon = Icon(c.icon, size: 18);
+    final key = c.key ?? ValueKey('cmd-${c.id}');
+    final Widget icon = c.badge
+        ? Badge(smallSize: 8, child: Icon(c.icon, size: 18, color: c.color))
+        : Icon(c.icon, size: 18, color: c.color);
     if (c.menu case final menu?) {
       return MenuAnchor(
         menuChildren: [
           for (final m in menu)
             if (m.selected case final sel?)
               KeyedSubtree(
-                key: ValueKey('cmd-${m.id}'),
+                key: m.key ?? ValueKey('cmd-${m.id}'),
                 child: CheckboxMenuButton(
                   value: sel,
                   onChanged: m.onPressed == null ? null : (_) => _run(m),
@@ -172,7 +208,7 @@ class _CommandButton extends StatelessWidget {
               )
             else
               MenuItemButton(
-                key: ValueKey('cmd-${m.id}'),
+                key: m.key ?? ValueKey('cmd-${m.id}'),
                 leadingIcon: Icon(m.icon, size: 18),
                 trailingIcon: m.shortcut == null
                     ? null
