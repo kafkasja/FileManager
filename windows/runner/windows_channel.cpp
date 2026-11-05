@@ -43,10 +43,16 @@ namespace {
 // ---- errors ----
 
 // Thrown by worker code; replied as PlatformException(code, message).
+// Holds its own copies: the reply reads [code] and [message], never
+// runtime_error::what() (that pointer arrived dangling in the reply, so
+// every error reply failed to decode in Dart).
 struct ChannelError : std::runtime_error {
-  ChannelError(std::string code, const std::string& message)
-      : std::runtime_error(message), code(std::move(code)) {}
+  ChannelError(std::string error_code, std::string error_message)
+      : std::runtime_error(error_message),
+        code(std::move(error_code)),
+        message(std::move(error_message)) {}
   std::string code;
+  std::string message;
 };
 
 // ---- strings ----
@@ -1395,14 +1401,22 @@ void WindowsChannel::Run(WorkerPool& pool, Result result,
         if (alive.lock()) result->Success(value);
       };
     } catch (const ChannelError& e) {
-      std::string code = e.code, message = e.what();
-      reply = [alive, result, code, message]() {
-        if (alive.lock()) result->Error(code, message);
+      auto err = std::make_shared<std::pair<std::string, std::string>>(
+          e.code, e.message);
+      reply = [alive, result, err]() {
+        if (!alive.lock()) return;
+        const std::string code = err->first;
+        const std::string message = err->second;
+        result->Error(code, message);
       };
     } catch (const std::exception& e) {
-      std::string message = e.what();
-      reply = [alive, result, message]() {
-        if (alive.lock()) result->Error("NATIVE", message);
+      auto err = std::make_shared<std::pair<std::string, std::string>>(
+          "NATIVE", e.what());
+      reply = [alive, result, err]() {
+        if (!alive.lock()) return;
+        const std::string code = err->first;
+        const std::string message = err->second;
+        result->Error(code, message);
       };
     }
     auto* posted = new std::function<void()>(std::move(reply));
