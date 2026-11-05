@@ -6,6 +6,7 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/desktop/browse/where_i_am.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
 import 'package:meta/meta.dart';
@@ -89,6 +90,12 @@ class DesktopBrowseState {
 class DesktopBrowseController extends _$DesktopBrowseController {
   @override
   DesktopBrowseState build() {
+    // E2 §6: the open folder is what "Look everywhere: off" indexes.
+    listenSelf((prev, next) {
+      if (prev?.folder != next.folder) {
+        syncWhereIAm(ref, [?next.folder]);
+      }
+    });
     unawaited(_restore());
     return const DesktopBrowseState();
   }

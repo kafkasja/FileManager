@@ -434,6 +434,14 @@ abstract final class AppSettings {
         encode: (v) => v,
       );
 
+  /// TASK-E2 §6. What the Windows index covers: an `IndexScope` name, or ''
+  /// (never chosen) = derived from [windowsIndexRoots] by
+  /// `effectiveIndexScope` (custom roots → chosen folders, else everywhere).
+  static final SettingKey<String> windowsIndexScope = SettingKey.string(
+    'windows.indexScope',
+    '',
+  );
+
   /// PL1. Closing the window while sharing stops sharing and quits,
   /// instead of hiding KFM to the tray.
   static final SettingKey<bool> windowsStopSharingOnClose = SettingKey.boolean(

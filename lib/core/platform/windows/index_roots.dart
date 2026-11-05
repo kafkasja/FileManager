@@ -27,8 +27,33 @@ Map<KnownFolder, String> fallbackKnownFolders(Map<String, String> env) {
   };
 }
 
-/// What the Windows index scans (TASK-PL1 → Indexed locations):
-/// [AppSettings.windowsIndexRoots], or the known folders while it's empty.
+/// What the Windows index covers (TASK-E2 §6, replaces "Folders KFM
+/// scans").
+enum IndexScope {
+  /// The user profile and every other fixed drive (system folders skipped).
+  everywhere,
+
+  /// Only the folders open in desktop Browse; no background full scan.
+  whereIAm,
+
+  /// [AppSettings.windowsIndexRoots] (or the known folders while empty).
+  chosenFolders,
+}
+
+/// The scope from the stored [AppSettings.windowsIndexScope] value: '' (never
+/// chosen) → [IndexScope.chosenFolders] when the user had custom [roots],
+/// else [IndexScope.everywhere]; an unknown name → everywhere. No startup
+/// write, so no migration order can go wrong.
+IndexScope effectiveIndexScope(String stored, List<String> roots) {
+  if (stored.isEmpty) {
+    return roots.isEmpty ? IndexScope.everywhere : IndexScope.chosenFolders;
+  }
+  return IndexScope.values.asNameMap()[stored] ?? IndexScope.everywhere;
+}
+
+/// What the Windows index scans (TASK-PL1 → Indexed locations, E2 §6): by
+/// [IndexScope], everywhere ([everywhere]), the folders open in Browse
+/// ([setOpenFolders]) or the chosen folders ([chosen]).
 class WindowsIndexRoots {
   new({
     required this._settings,
@@ -39,6 +64,75 @@ class WindowsIndexRoots {
   final SettingsRepository _settings;
   final WindowsChannel _channel;
   final Map<String, String> _environment;
+
+  List<String> _open = const [];
+  final StreamController<void> _openChanges =
+      StreamController<void>.broadcast();
+
+  /// [IndexScope.whereIAm]: the folders open in desktop Browse now.
+  List<String> get openFolders => _open;
+
+  /// Desktop Browse tells which folders are open (E3: one per tab).
+  void setOpenFolders(List<String> folders) {
+    final next = outermostRoots([
+      for (final f in folders) normalizeWindowsPath(f),
+    ]);
+    if (_sameList(next, _open)) return;
+    _open = List.unmodifiable(next);
+    _openChanges.add(null);
+  }
+
+  Future<IndexScope> scope() async => effectiveIndexScope(
+    await _settings.read(AppSettings.windowsIndexScope),
+    await _settings.read(AppSettings.windowsIndexRoots),
+  );
+
+  Stream<IndexScope> watchScope() => _changes().asyncMap((_) => scope());
+
+  Future<void> setScope(IndexScope scope) =>
+      _settings.write(AppSettings.windowsIndexScope, scope.name);
+
+  /// The user profile and every other fixed, mounted drive root (not the
+  /// system drive's root: only the profile on it).
+  Future<List<String>> everywhere() async {
+    final home = _environment['USERPROFILE'];
+    var drives = const <WindowsDrive>[];
+    try {
+      drives = await _channel.listDrives();
+    } on WindowsChannelException {
+      // Only the profile.
+    }
+    return outermostRoots([
+      if (home != null && home.isNotEmpty) normalizeWindowsPath(home),
+      for (final d in drives)
+        if (!d.isSystem && !d.isRemovable && d.isMounted && d.type == 'fixed')
+          normalizeWindowsPath(d.path),
+    ]);
+  }
+
+  /// [AppSettings.windowsIndexRoots] cleaned up, or the known folders.
+  Future<List<String>> chosen() async =>
+      await effective(await _settings.read(AppSettings.windowsIndexRoots));
+
+  Stream<List<String>> watchChosen() =>
+      _settings.watch(AppSettings.windowsIndexRoots).asyncMap(effective);
+
+  /// Any change of the scope, the chosen roots or the open folders.
+  Stream<void> _changes() {
+    late final StreamController<void> c;
+    final subs = <StreamSubscription<Object?>>[];
+    c = StreamController<void>(
+      onListen: () {
+        void ping(Object? _) => c.add(null);
+        subs
+          ..add(_settings.watch(AppSettings.windowsIndexScope).listen(ping))
+          ..add(_settings.watch(AppSettings.windowsIndexRoots).listen(ping))
+          ..add(_openChanges.stream.listen(ping));
+      },
+      onCancel: () => Future.wait([for (final s in subs) s.cancel()]),
+    );
+    return c.stream;
+  }
 
   Future<Map<KnownFolder, String>>? _known;
 
@@ -58,21 +152,33 @@ class WindowsIndexRoots {
     return [for (final k in KnownFolder.values) ?known[k]];
   }
 
-  Future<List<String>> current() async =>
-      await effective(await _settings.read(AppSettings.windowsIndexRoots));
+  /// What a full scan walks now.
+  Future<List<String>> current() async => switch (await scope()) {
+    IndexScope.everywhere => await everywhere(),
+    IndexScope.chosenFolders => await chosen(),
+    IndexScope.whereIAm => _open,
+  };
 
-  Stream<List<String>> watch() =>
-      _settings.watch(AppSettings.windowsIndexRoots).asyncMap(effective);
+  /// [current] on every change (repeats dropped).
+  Stream<List<String>> watch() {
+    List<String>? last;
+    return _changes().asyncMap((_) => current()).where((roots) {
+      if (last != null && _sameList(last!, roots)) return false;
+      last = roots;
+      return true;
+    });
+  }
 
   /// [stored] cleaned up (normalized, nested roots dropped), or the
   /// defaults when empty.
   Future<List<String>> effective(List<String> stored) async =>
       outermostRoots(stored.isEmpty ? await defaults() : stored);
 
-  /// Adds [folder]; the first change turns the defaults into an explicit
-  /// list. No-op if it's already scanned (also as part of another root).
+  /// Adds [folder] to the chosen folders; the first change turns the
+  /// defaults into an explicit list. No-op if it's already chosen (also as
+  /// part of another root).
   Future<void> add(String folder) async {
-    final roots = await current();
+    final roots = await chosen();
     final path = normalizeWindowsPath(folder);
     if (isUnderAnyRoot(path, roots)) return;
     await _settings.write(AppSettings.windowsIndexRoots, [...roots, path]);
@@ -81,7 +187,7 @@ class WindowsIndexRoots {
   /// Removes [folder]. The last root can't be removed (an empty list means
   /// "the defaults").
   Future<void> remove(String folder) async {
-    final roots = await current();
+    final roots = await chosen();
     final left = [
       for (final r in roots)
         if (!sameWindowsPath(r, folder)) r,
@@ -266,17 +372,40 @@ WindowsIndexRoots windowsIndexRoots(Ref ref) => WindowsIndexRoots(
   channel: ref.watch(windowsChannelProvider),
 );
 
-/// The roots for the "Folders KFM scans" section, with availability.
+bool _sameList(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (!sameWindowsPath(a[i], b[i])) return false;
+  }
+  return true;
+}
+
+/// The scope, live (Settings → Privacy & access → Look everywhere).
 @riverpod
-Stream<List<IndexRootStatus>> windowsIndexRootStatus(Ref ref) => ref
-    .watch(windowsIndexRootsProvider)
-    .watch()
-    .map(
-      (roots) => [
-        for (final r in roots)
-          IndexRootStatus(
-            r,
-            available: Directory(windowsIoPath(r)).existsSync(),
-          ),
-      ],
-    );
+Stream<IndexScope> windowsIndexScope(Ref ref) =>
+    ref.watch(windowsIndexRootsProvider).watchScope();
+
+/// The chosen folders with availability ("Choose folders instead…").
+@riverpod
+Stream<List<IndexRootStatus>> windowsChosenRootStatus(Ref ref) =>
+    ref.watch(windowsIndexRootsProvider).watchChosen().map(_withStatus);
+
+List<IndexRootStatus> _withStatus(List<String> roots) => [
+  for (final r in roots)
+    IndexRootStatus(r, available: Directory(windowsIoPath(r)).existsSync()),
+];
+
+/// The scanned roots with availability (desktop Places). While only open
+/// folders are indexed, the known folders stand in, so Places still has
+/// somewhere to start.
+@riverpod
+Stream<List<IndexRootStatus>> windowsIndexRootStatus(Ref ref) {
+  final roots = ref.watch(windowsIndexRootsProvider);
+  return roots.watch().asyncMap(
+    (current) async => _withStatus(
+      await roots.scope() == IndexScope.whereIAm
+          ? outermostRoots(await roots.defaults())
+          : current,
+    ),
+  );
+}

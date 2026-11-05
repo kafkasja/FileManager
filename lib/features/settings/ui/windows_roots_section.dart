@@ -4,22 +4,117 @@ import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/windows/windows_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/folder_picker.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/features/settings/ui/settings_section.dart';
 
-/// Where the Windows index looks (TASK-PL1; Privacy & access in E2).
-final windowsRootsEntry = SettingsEntry(
+/// Settings → Privacy & access → Where KFM looks (TASK-E2 §6): on Windows
+/// the "Look everywhere" switch (replaces "Folders KFM scans"), on the
+/// phone a plain explanation of Android's index.
+final whereKfmLooksEntry = SettingsEntry(
   id: 'privacy.whereKfmLooks',
-  titleBuilder: (c) => c.l10n.windowsRootsTitle,
-  subtitleBuilder: (c) => c.l10n.windowsRootsHint,
-  formFactors: const {FormFactor.desktop},
-  builder: (_) => const WindowsRootsSection(),
+  titleBuilder: (c) => c.l10n.whereKfmLooksTitle,
+  subtitleBuilder: (c) => c.l10n.whereKfmLooksHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsIndex,
+  // Desktop: Windows only (macOS/Linux have no index scope yet).
+  visible: (ref) => !ref.watch(formFactorProvider).isDesktop || isWindowsHost,
+  builder: (_) => Consumer(
+    builder: (c, ref, _) => ref.watch(formFactorProvider).isDesktop
+        ? const LookEverywhereRows()
+        : ListTile(
+            leading: const Icon(Icons.travel_explore_outlined),
+            title: Text(c.l10n.whereKfmLooksTitle),
+            subtitle: Text(c.l10n.whereKfmLooksPhoneBody),
+          ),
+  ),
 );
 
-/// Settings → "Folders KFM scans" (TASK-PL1, Windows only, order 450): the
-/// index roots, with Add, Remove and "Reset to defaults". Every change
-/// starts a full scan, which also drops the files of a removed folder.
+/// "Look everywhere" (on by default) with what it does and doesn't, and
+/// "Choose folders instead…" under it.
+class LookEverywhereRows extends ConsumerWidget {
+  const new({super.key, this.onScopeChanged});
+
+  /// Tests replace the rescan; null = `MediaIndexer.fullScan`.
+  final void Function(WidgetRef ref)? onScopeChanged;
+
+  Future<void> _set(WidgetRef ref, IndexScope scope) async {
+    await ref.read(windowsIndexRootsProvider).setScope(scope);
+    if (onScopeChanged case final cb?) {
+      cb(ref);
+    } else {
+      ref.read(mediaIndexerProvider).fullScan().ignore();
+    }
+  }
+
+  Future<void> _turnOff(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(l10n.lookEverywhereOffConfirmTitle),
+        content: Text(l10n.lookEverywhereOffConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            key: const ValueKey('look-everywhere-off-confirm'),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(l10n.lookEverywhereOffConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await _set(ref, IndexScope.whereIAm);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final scope = ref.watch(windowsIndexScopeProvider).value;
+    if (scope == null) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          key: const ValueKey('look-everywhere'),
+          secondary: const Icon(Icons.travel_explore_outlined),
+          title: Text(l10n.lookEverywhereTitle),
+          subtitle: Text(switch (scope) {
+            IndexScope.everywhere => l10n.lookEverywhereOnHelp,
+            IndexScope.whereIAm => l10n.lookEverywhereOffHelp,
+            IndexScope.chosenFolders => l10n.lookEverywhereChosenHelp,
+          }),
+          isThreeLine: true,
+          value: scope == IndexScope.everywhere,
+          onChanged: (on) =>
+              on ? _set(ref, IndexScope.everywhere) : _turnOff(context, ref),
+        ),
+        if (scope == IndexScope.chosenFolders)
+          WindowsRootsSection(onRootsChanged: onScopeChanged)
+        else
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 56),
+              child: TextButton(
+                key: const ValueKey('look-choose-folders'),
+                onPressed: () => _set(ref, IndexScope.chosenFolders),
+                child: Text(l10n.lookEverywhereChoose),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The chosen folders (TASK-PL1; E2: shown under Look everywhere when
+/// "Choose folders instead…" is on), with Add, Remove and "Reset to
+/// defaults". Every change starts a full scan, which also drops the files
+/// of a removed folder.
 class WindowsRootsSection extends ConsumerWidget {
   const new({super.key, this.onRootsChanged});
 
@@ -37,7 +132,7 @@ class WindowsRootsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final roots = ref.watch(windowsIndexRootStatusProvider).value ?? const [];
+    final roots = ref.watch(windowsChosenRootStatusProvider).value ?? const [];
     final store = ref.watch(windowsIndexRootsProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

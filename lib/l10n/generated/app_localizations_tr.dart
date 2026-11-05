@@ -6926,9 +6926,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get windowsRootsTitle => 'KFM\'nin taradığı klasörler';
-
-  @override
   String get windowsRootsHint =>
       'KFM bu klasörlerdeki fotoğrafları, videoları ve dosyaları gösterir.';
 
@@ -7992,4 +7989,119 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get aiModelsHowItWorks => 'Nasıl çalışır';
+
+  @override
+  String get whereKfmLooksTitle => 'KFM\'nin baktığı yerler';
+
+  @override
+  String get whereKfmLooksHelp =>
+      'Arama, Sıralama ve Depolama\'nın kullandığı, dosyalarının özel listesi. Bu cihazdan asla çıkmaz.';
+
+  @override
+  String get whereKfmLooksPhoneBody =>
+      'KFM, Android\'in ona gösterdiği fotoğrafların, videoların ve dosyaların özel bir listesini tutar; böylece Arama, Kaydırma ve Depolama tüm telefonunu kapsar. Liste bu telefonda kalır ve asla yüklenmez. KFM bakarak hiçbir şeyi değiştirmez veya taşımaz.';
+
+  @override
+  String get lookEverywhereTitle => 'Her yere bak';
+
+  @override
+  String get lookEverywhereOnHelp =>
+      'KFM bu bilgisayardaki fotoğraflarının, videolarının ve dosyalarının özel bir listesini tutar; böylece Arama, Sıralama, Depolama ve Benzer fotoğraflar her şeyi kapsar. Liste bu bilgisayarda kalır. KFM bakarak hiçbir şeyi yüklemez, değiştirmez veya taşımaz; Windows ve program klasörlerini atlar.';
+
+  @override
+  String get lookEverywhereOffHelp =>
+      'KFM yalnızca açık olan klasöre bakar. Arama ve Sıralama o klasörü kapsar.';
+
+  @override
+  String get lookEverywhereChosenHelp =>
+      'KFM yalnızca aşağıdaki klasörlere bakar. Tüm dosyalarını kapsamak için bunu aç.';
+
+  @override
+  String get lookEverywhereChoose => 'Bunun yerine klasör seç…';
+
+  @override
+  String get lookEverywhereOffConfirmTitle =>
+      'Yalnızca bulunduğun yere mi bakılsın?';
+
+  @override
+  String get lookEverywhereOffConfirmBody =>
+      'Arama ve Sıralama yalnızca açtığın klasörleri kapsar. Etiketler, favoriler ve incelendi işaretleri korunur.';
+
+  @override
+  String get lookEverywhereOffConfirm => 'Yalnızca açık klasörler';
+
+  @override
+  String get settingsKeywordsIndex => 'dizin,tara,klasörler,her yere bak,ara';
+
+  @override
+  String get languageStepTitle => 'Dilini seç';
+
+  @override
+  String get languageStepBody =>
+      'Bunu daha sonra Ayarlar → Genel\'den değiştirebilirsin.';
+
+  @override
+  String languageSystemNamed(String language) {
+    return 'Sistem ($language)';
+  }
+
+  @override
+  String get languageStepContinue => 'Devam';
+
+  @override
+  String get leftHandedThumbHelp =>
+      'Geri al\'ı, ana düğmeleri ve seçim çubuğunu başparmağının olduğu sola koyar. Kaydırma yönleri değişmez.';
+
+  @override
+  String get reduceMotionTitle => 'Hareketi azalt';
+
+  @override
+  String get reduceMotionHelp =>
+      'Kaydırılan kartlar uçup gitmek yerine kaybolur, ekranlar kaymadan değişir. Sistem ayarını da izler.';
+
+  @override
+  String get highContrastTitle => 'Yüksek karşıtlık';
+
+  @override
+  String get highContrastHelp =>
+      'Metin, düğme ve kenarlıklar için daha güçlü renkler. Sistem ayarını da izler.';
+
+  @override
+  String get backupSettingReduceMotion => 'Hareketi azalt';
+
+  @override
+  String get backupSettingHighContrast => 'Yüksek karşıtlık';
+
+  @override
+  String get settingsKeywordsMotion => 'animasyon,hareket,solma';
+
+  @override
+  String get settingsKeywordsContrast => 'karşıtlık,kontrast,renkler,az gören';
+
+  @override
+  String a11yFileLabel(String name, String kind, String size, String date) {
+    return '$name, $kind, $size, $date';
+  }
+
+  @override
+  String get a11yKindAudio => 'Ses';
+
+  @override
+  String get a11yKindDocument => 'Belge';
+
+  @override
+  String a11yKindDocumentExt(String ext) {
+    return '$ext belgesi';
+  }
+
+  @override
+  String get a11yKindArchive => 'Arşiv';
+
+  @override
+  String get a11yKindFile => 'Dosya';
+
+  @override
+  String a11yKindFileExt(String ext) {
+    return '$ext dosyası';
+  }
 }

@@ -6904,9 +6904,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get windowsRootsTitle => 'Folders KFM scans';
-
-  @override
   String get windowsRootsHint =>
       'KFM shows the photos, videos and files in these folders.';
 
@@ -7983,4 +7980,119 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelsHowItWorks => 'How it works';
+
+  @override
+  String get whereKfmLooksTitle => 'Where KFM looks';
+
+  @override
+  String get whereKfmLooksHelp =>
+      'The private list of your files that Search, Sort and Storage use. It never leaves this device.';
+
+  @override
+  String get whereKfmLooksPhoneBody =>
+      'KFM keeps a private list of the photos, videos and files Android shows it, so Search, Swipe and Storage cover your whole phone. The list stays on this phone and is never uploaded. KFM never changes or moves anything by looking.';
+
+  @override
+  String get lookEverywhereTitle => 'Look everywhere';
+
+  @override
+  String get lookEverywhereOnHelp =>
+      'KFM keeps a private list of your photos, videos and files on this PC so Search, Sort, Storage and Similar photos cover everything. The list stays on this PC. KFM never uploads, changes or moves anything by looking, and skips Windows and program folders.';
+
+  @override
+  String get lookEverywhereOffHelp =>
+      'KFM only looks in the folder you have open. Search and Sort cover that folder.';
+
+  @override
+  String get lookEverywhereChosenHelp =>
+      'KFM only looks in the folders below. Turn this on to cover all your files.';
+
+  @override
+  String get lookEverywhereChoose => 'Choose folders instead…';
+
+  @override
+  String get lookEverywhereOffConfirmTitle => 'Only look where you are?';
+
+  @override
+  String get lookEverywhereOffConfirmBody =>
+      'Search and Sort will only cover folders you open. Tags, favorites and reviewed marks are kept.';
+
+  @override
+  String get lookEverywhereOffConfirm => 'Only open folders';
+
+  @override
+  String get settingsKeywordsIndex =>
+      'index,scan,folders,look everywhere,search';
+
+  @override
+  String get languageStepTitle => 'Choose your language';
+
+  @override
+  String get languageStepBody =>
+      'You can change it later in Settings → General.';
+
+  @override
+  String languageSystemNamed(String language) {
+    return 'System ($language)';
+  }
+
+  @override
+  String get languageStepContinue => 'Continue';
+
+  @override
+  String get leftHandedThumbHelp =>
+      'Puts Undo, the main buttons and the selection bar on the left, where your thumb is. Swipe directions don\'t change.';
+
+  @override
+  String get reduceMotionTitle => 'Reduce motion';
+
+  @override
+  String get reduceMotionHelp =>
+      'Swiped cards fade instead of flying away, and screens change without sliding. Also follows the system setting.';
+
+  @override
+  String get highContrastTitle => 'High contrast';
+
+  @override
+  String get highContrastHelp =>
+      'Stronger colors for text, buttons and outlines. Also follows the system setting.';
+
+  @override
+  String get backupSettingReduceMotion => 'Reduce motion';
+
+  @override
+  String get backupSettingHighContrast => 'High contrast';
+
+  @override
+  String get settingsKeywordsMotion => 'animation,motion,vestibular,fade';
+
+  @override
+  String get settingsKeywordsContrast => 'contrast,colors,low vision';
+
+  @override
+  String a11yFileLabel(String name, String kind, String size, String date) {
+    return '$name, $kind, $size, $date';
+  }
+
+  @override
+  String get a11yKindAudio => 'Audio';
+
+  @override
+  String get a11yKindDocument => 'Document';
+
+  @override
+  String a11yKindDocumentExt(String ext) {
+    return '$ext document';
+  }
+
+  @override
+  String get a11yKindArchive => 'Archive';
+
+  @override
+  String get a11yKindFile => 'File';
+
+  @override
+  String a11yKindFileExt(String ext) {
+    return '$ext file';
+  }
 }

@@ -9711,12 +9711,6 @@ abstract class AppLocalizations {
   /// **'This drive has no Recycle Bin. Delete {count, plural, =1{this file} other{these {count} files}} permanently?'**
   String deleteNoRecycleBin(int count);
 
-  /// PL1: Windows settings section listing the index roots.
-  ///
-  /// In en, this message translates to:
-  /// **'Folders KFM scans'**
-  String get windowsRootsTitle;
-
   /// PL1: explanation under the Windows index roots title.
   ///
   /// In en, this message translates to:
@@ -11084,6 +11078,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'How it works'**
   String get aiModelsHowItWorks;
+
+  /// E2: Privacy & access entry about the file index.
+  ///
+  /// In en, this message translates to:
+  /// **'Where KFM looks'**
+  String get whereKfmLooksTitle;
+
+  /// E2: description of Where KFM looks (search).
+  ///
+  /// In en, this message translates to:
+  /// **'The private list of your files that Search, Sort and Storage use. It never leaves this device.'**
+  String get whereKfmLooksHelp;
+
+  /// E2: phone explanation of the index (read-only row).
+  ///
+  /// In en, this message translates to:
+  /// **'KFM keeps a private list of the photos, videos and files Android shows it, so Search, Swipe and Storage cover your whole phone. The list stays on this phone and is never uploaded. KFM never changes or moves anything by looking.'**
+  String get whereKfmLooksPhoneBody;
+
+  /// E2: Windows switch that replaces 'Folders KFM scans' (on by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Look everywhere'**
+  String get lookEverywhereTitle;
+
+  /// E2: Look everywhere on.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM keeps a private list of your photos, videos and files on this PC so Search, Sort, Storage and Similar photos cover everything. The list stays on this PC. KFM never uploads, changes or moves anything by looking, and skips Windows and program folders.'**
+  String get lookEverywhereOnHelp;
+
+  /// E2: Look everywhere off.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM only looks in the folder you have open. Search and Sort cover that folder.'**
+  String get lookEverywhereOffHelp;
+
+  /// E2: Look everywhere off with chosen folders.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM only looks in the folders below. Turn this on to cover all your files.'**
+  String get lookEverywhereChosenHelp;
+
+  /// E2: link under Look everywhere to the chosen-folders list.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose folders instead…'**
+  String get lookEverywhereChoose;
+
+  /// E2: confirm before turning Look everywhere off.
+  ///
+  /// In en, this message translates to:
+  /// **'Only look where you are?'**
+  String get lookEverywhereOffConfirmTitle;
+
+  /// E2: confirm body.
+  ///
+  /// In en, this message translates to:
+  /// **'Search and Sort will only cover folders you open. Tags, favorites and reviewed marks are kept.'**
+  String get lookEverywhereOffConfirmBody;
+
+  /// E2: confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Only open folders'**
+  String get lookEverywhereOffConfirm;
+
+  /// E2 settings search words for Where KFM looks.
+  ///
+  /// In en, this message translates to:
+  /// **'index,scan,folders,look everywhere,search'**
+  String get settingsKeywordsIndex;
+
+  /// E2: first-launch language step title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get languageStepTitle;
+
+  /// E2: first-launch language step body.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change it later in Settings → General.'**
+  String get languageStepBody;
+
+  /// E2: the System choice with the language it resolves to.
+  ///
+  /// In en, this message translates to:
+  /// **'System ({language})'**
+  String languageSystemNamed(String language);
+
+  /// E2: first-launch language step button.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get languageStepContinue;
+
+  /// E2 §7: Left-handed switch description (thumb side).
+  ///
+  /// In en, this message translates to:
+  /// **'Puts Undo, the main buttons and the selection bar on the left, where your thumb is. Swipe directions don\'t change.'**
+  String get leftHandedThumbHelp;
+
+  /// E2: Accessibility switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get reduceMotionTitle;
+
+  /// E2: Reduce motion description.
+  ///
+  /// In en, this message translates to:
+  /// **'Swiped cards fade instead of flying away, and screens change without sliding. Also follows the system setting.'**
+  String get reduceMotionHelp;
+
+  /// E2: Accessibility switch.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get highContrastTitle;
+
+  /// E2: High contrast description.
+  ///
+  /// In en, this message translates to:
+  /// **'Stronger colors for text, buttons and outlines. Also follows the system setting.'**
+  String get highContrastHelp;
+
+  /// X6/E2: backup preview name of the Reduce motion setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get backupSettingReduceMotion;
+
+  /// X6/E2: backup preview name of the High contrast setting.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get backupSettingHighContrast;
+
+  /// E2 settings search words for Reduce motion.
+  ///
+  /// In en, this message translates to:
+  /// **'animation,motion,vestibular,fade'**
+  String get settingsKeywordsMotion;
+
+  /// E2 settings search words for High contrast.
+  ///
+  /// In en, this message translates to:
+  /// **'contrast,colors,low vision'**
+  String get settingsKeywordsContrast;
+
+  /// E2 §7: what screen readers say for a file tile/row.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {kind}, {size}, {date}'**
+  String a11yFileLabel(String name, String kind, String size, String date);
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get a11yKindAudio;
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get a11yKindDocument;
+
+  /// E2: spoken file kind with its extension (PDF document).
+  ///
+  /// In en, this message translates to:
+  /// **'{ext} document'**
+  String a11yKindDocumentExt(String ext);
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get a11yKindArchive;
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get a11yKindFile;
+
+  /// E2: spoken file kind with its extension.
+  ///
+  /// In en, this message translates to:
+  /// **'{ext} file'**
+  String a11yKindFileExt(String ext);
 }
 
 class _AppLocalizationsDelegate

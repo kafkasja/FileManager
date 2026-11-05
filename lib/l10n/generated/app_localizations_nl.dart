@@ -6967,9 +6967,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get windowsRootsTitle => 'Mappen die KFM doorzoekt';
-
-  @override
   String get windowsRootsHint =>
       'KFM toont de foto\'s, video\'s en bestanden in deze mappen.';
 
@@ -8051,4 +8048,119 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get aiModelsHowItWorks => 'Hoe het werkt';
+
+  @override
+  String get whereKfmLooksTitle => 'Waar KFM kijkt';
+
+  @override
+  String get whereKfmLooksHelp =>
+      'De privélijst van je bestanden die Zoeken, Sorteren en Opslag gebruiken. Die verlaat dit apparaat nooit.';
+
+  @override
+  String get whereKfmLooksPhoneBody =>
+      'KFM houdt een privélijst bij van de foto\'s, video\'s en bestanden die Android laat zien, zodat Zoeken, Swipen en Opslag je hele telefoon dekken. De lijst blijft op deze telefoon en wordt nooit geüpload. KFM wijzigt of verplaatst niets door te kijken.';
+
+  @override
+  String get lookEverywhereTitle => 'Overal kijken';
+
+  @override
+  String get lookEverywhereOnHelp =>
+      'KFM houdt een privélijst bij van je foto\'s, video\'s en bestanden op deze pc, zodat Zoeken, Sorteren, Opslag en Vergelijkbare foto\'s alles dekken. De lijst blijft op deze pc. KFM uploadt, wijzigt of verplaatst niets door te kijken en slaat Windows- en programmamappen over.';
+
+  @override
+  String get lookEverywhereOffHelp =>
+      'KFM kijkt alleen in de map die je open hebt. Zoeken en Sorteren dekken die map.';
+
+  @override
+  String get lookEverywhereChosenHelp =>
+      'KFM kijkt alleen in de mappen hieronder. Zet dit aan om al je bestanden te dekken.';
+
+  @override
+  String get lookEverywhereChoose => 'Liever mappen kiezen…';
+
+  @override
+  String get lookEverywhereOffConfirmTitle => 'Alleen kijken waar je bent?';
+
+  @override
+  String get lookEverywhereOffConfirmBody =>
+      'Zoeken en Sorteren dekken dan alleen mappen die je opent. Tags, favorieten en bekeken-markeringen blijven bewaard.';
+
+  @override
+  String get lookEverywhereOffConfirm => 'Alleen open mappen';
+
+  @override
+  String get settingsKeywordsIndex =>
+      'index,scannen,mappen,overal kijken,zoeken';
+
+  @override
+  String get languageStepTitle => 'Kies je taal';
+
+  @override
+  String get languageStepBody =>
+      'Je kunt dit later wijzigen in Instellingen → Algemeen.';
+
+  @override
+  String languageSystemNamed(String language) {
+    return 'Systeem ($language)';
+  }
+
+  @override
+  String get languageStepContinue => 'Doorgaan';
+
+  @override
+  String get leftHandedThumbHelp =>
+      'Zet Ongedaan maken, de hoofdknoppen en de selectiebalk links, waar je duim is. Swipe-richtingen veranderen niet.';
+
+  @override
+  String get reduceMotionTitle => 'Minder beweging';
+
+  @override
+  String get reduceMotionHelp =>
+      'Geswipete kaarten vervagen in plaats van weg te vliegen en schermen wisselen zonder te schuiven. Volgt ook de systeeminstelling.';
+
+  @override
+  String get highContrastTitle => 'Hoog contrast';
+
+  @override
+  String get highContrastHelp =>
+      'Sterkere kleuren voor tekst, knoppen en randen. Volgt ook de systeeminstelling.';
+
+  @override
+  String get backupSettingReduceMotion => 'Minder beweging';
+
+  @override
+  String get backupSettingHighContrast => 'Hoog contrast';
+
+  @override
+  String get settingsKeywordsMotion => 'animatie,beweging,vervagen';
+
+  @override
+  String get settingsKeywordsContrast => 'contrast,kleuren,slechtziend';
+
+  @override
+  String a11yFileLabel(String name, String kind, String size, String date) {
+    return '$name, $kind, $size, $date';
+  }
+
+  @override
+  String get a11yKindAudio => 'Audio';
+
+  @override
+  String get a11yKindDocument => 'Document';
+
+  @override
+  String a11yKindDocumentExt(String ext) {
+    return '$ext-document';
+  }
+
+  @override
+  String get a11yKindArchive => 'Archief';
+
+  @override
+  String get a11yKindFile => 'Bestand';
+
+  @override
+  String a11yKindFileExt(String ext) {
+    return '$ext-bestand';
+  }
 }

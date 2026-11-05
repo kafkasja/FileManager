@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
-import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/backup/ui/backup_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
@@ -114,8 +113,8 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       id: 'privacy',
       titleBuilder: (c) => c.l10n.settingsPrivacyAccess,
       entries: [
-        // PL1: what the Windows index scans (Android scans the whole storage).
-        if (isWindowsHost) windowsRootsEntry,
+        // E2 §6: Look everywhere (Windows) / Android's index explained.
+        whereKfmLooksEntry,
         permissionsEntry,
         stripLocationEntry,
         privacyDevicesEntry,

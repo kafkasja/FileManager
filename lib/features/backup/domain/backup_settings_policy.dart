@@ -126,6 +126,7 @@ const Set<String> excludedBackupSettings = {
   'onboarding.existingChecked',
   // PL1: folder paths of this PC; this PC's close/tray choices.
   'windows.indexRoots',
+  'windows.indexScope',
   'windows.stopSharingOnClose',
   'windows.trayNoticeShown',
   'windows.firewallExplained',

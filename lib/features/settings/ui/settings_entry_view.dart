@@ -147,7 +147,10 @@ class _FlashState extends State<_Flash> with SingleTickerProviderStateMixin {
         // A Material (not a DecoratedBox): ListTiles paint their ink on it.
         return a == 0
             ? Material(type: MaterialType.transparency, child: child)
-            : Material(color: color.withValues(alpha: a * 0.7), child: child);
+            : Material(
+                color: color.withValues(alpha: a * 0.7),
+                child: child,
+              );
       },
       child: widget.child,
     );
