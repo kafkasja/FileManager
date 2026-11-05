@@ -87,12 +87,23 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
     super.dispose();
   }
 
+  /// E4: the file flashed once after "Open folder" scrolled to it.
+  String? _flashId;
+
   @override
   Widget build(BuildContext context) {
     if (widget.scrollToTopTab case final tab?) {
       ref.listen(scrollToTopProvider, (_, next) {
         if (next?.$1 == tab) scrollResultsToTop(_scroll);
       });
+      if (tab == AppTab.browse && widget.showFiles) {
+        final highlight = ref.watch(browseHighlightProvider);
+        if (highlight != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => unawaited(_highlight(highlight)),
+          );
+        }
+      }
     }
     Widget view = CustomScrollView(
       // One scroll position per view; kept while the tab is switched away.
@@ -156,6 +167,34 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
       default:
         return null;
     }
+  }
+
+  /// Loads pages until [id] is there (at most a few), scrolls to it and
+  /// flashes it once.
+  Future<void> _highlight(String id) async {
+    final notifier = ref.read(browseHighlightProvider.notifier);
+    if (ref.read(browseHighlightProvider) != id) return;
+    final pages = ref.read(filePagesProvider(query).notifier);
+    FileRef? file;
+    for (var i = 0; i < 6 && mounted; i++) {
+      final data = await ref.read(filePagesProvider(query).future);
+      if (!mounted) return;
+      final index = data.indexOfId(id);
+      if (index != null) {
+        file = data.items[index];
+        break;
+      }
+      if (!data.hasMore) break;
+      await pages.loadMore();
+    }
+    if (!mounted) return;
+    notifier.show(null);
+    if (file == null) return;
+    final found = file;
+    setState(() => _flashId = found.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _reveal(found);
+    });
   }
 
   Future<void> _preview(int index) async {
@@ -354,7 +393,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                 maybeLoadMore(i);
                 if (i >= loaded) return const ResultsPlaceholder();
                 final f = data.items[i];
-                return SelectableFile(
+                final tile = SelectableFile(
                   key: ValueKey(f.id),
                   index: i,
                   items: data.items,
@@ -373,6 +412,9 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                         : null,
                   ),
                 );
+                return f.id == _flashId
+                    ? _Flash(key: ValueKey('flash:${f.id}'), child: tile)
+                    : tile;
               },
             ),
           );
@@ -444,6 +486,53 @@ void scrollResultsToTop(ScrollController controller) {
         curve: Curves.easeOut,
       )
       .ignore();
+}
+
+/// One fading outline over a tile (E4: the file "Open folder" came for).
+class _Flash extends StatefulWidget {
+  const new({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  State<_Flash> createState() => _FlashState();
+}
+
+class _FlashState extends State<_Flash> with SingleTickerProviderStateMixin {
+  late final AnimationController _fade = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..forward();
+
+  @override
+  void dispose() {
+    _fade.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        widget.child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: FadeTransition(
+              opacity: ReverseAnimation(_fade),
+              child: DecoratedBox(
+                key: const ValueKey('results-flash'),
+                decoration: BoxDecoration(
+                  border: Border.all(color: color, width: 4),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ErrorBox extends StatelessWidget {

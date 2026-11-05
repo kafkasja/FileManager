@@ -1762,5 +1762,13 @@
   "jobsQuitKeep": "Çalışmaya devam et",
   "trayNoticeTransfersTitle": "KFM aktarmaya devam ediyor",
   "trayNoticeTransfersBody": "Aktarımlar arka planda sürer. KFM'yi sistem tepsisindeki simgeden yeniden açın.",
-  "jobsEndFailedTitle": "{count, plural, =1{Aktarım başarısız} other{{count} aktarım başarısız}}"
+  "jobsEndFailedTitle": "{count, plural, =1{Aktarım başarısız} other{{count} aktarım başarısız}}",
+  "folderLabel": "{folder} · {place}",
+  "swipeFolderSemantics": "Klasör: {folder}",
+  "swipeFolderDetails": "Ayrıntılar",
+  "settingsSwipeShowFolder": "Dosyanın klasörünü göster",
+  "settingsSwipeShowFolderHelp": "Kartın üstünde tek satır. Yolu kopyalamak veya klasörü açmak için dokunun.",
+  "backupSettingSwipeShowFolder": "Dosyanın klasörünü göster",
+  "browseRefreshFailed": "Yenilenemedi. Tekrar deneyin.",
+  "sameTimeChangeWindow": "Aralığı değiştir"
 }

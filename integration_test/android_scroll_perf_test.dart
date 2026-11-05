@@ -95,6 +95,21 @@ void main() {
           ..setKind(FileKind.image);
     }
     await _settle(3000);
+    if (_mode == 'sametime') {
+      // The groups are computed over the whole library first.
+      final clock = Stopwatch()..start();
+      await _waitFor(
+        () => find
+            .descendant(
+              of: find.byType(SameTimeView),
+              matching: find.byType(Thumbnail),
+            )
+            .evaluate()
+            .isNotEmpty,
+        timeout: const Duration(minutes: 3),
+      );
+      results['groupsShownMs'] = clock.elapsedMilliseconds;
+    }
     final query = c.read(browseViewControllerProvider).query;
     final dao = c.read(mediaIndexDaoProvider);
     final count = await dao.count(query);
@@ -147,7 +162,9 @@ void main() {
     final warmIds = {for (final f in warmFiles) f.id};
     var atEnd = false;
     void watchEnd() {
-      final hasMore = c.read(filePagesProvider(query)).value?.hasMore ?? false;
+      final pages = c.read(filePagesProvider(query)).value;
+      // The real end of the result is not a dead stop.
+      final hasMore = (pages?.hasMore ?? false) && pages!.items.length < count;
       final hit =
           hasMore &&
           position.pixels >= position.maxScrollExtent - 0.5 &&

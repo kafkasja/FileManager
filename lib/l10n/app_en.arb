@@ -4374,5 +4374,21 @@
   "trayNoticeTransfersBody": "Transfers continue in the background. Open KFM again from the tray icon.",
   "@trayNoticeTransfersBody": {"description": "X8: one-time dialog body before the window hides to the tray while jobs run."},
   "jobsEndFailedTitle": "{count, plural, =1{Transfer failed} other{{count} transfers failed}}",
-  "@jobsEndFailedTitle": {"description": "X8: end notification title when every file failed.", "placeholders": {"count": {"type": "int"}}}
+  "@jobsEndFailedTitle": {"description": "X8: end notification title when every file failed.", "placeholders": {"count": {"type": "int"}}},
+  "folderLabel": "{folder} · {place}",
+  "@folderLabel": {"description": "E4: a folder with its place, e.g. 'Camera · Internal storage' (swipe folder line, viewer).", "placeholders": {"folder": {"type": "String"}, "place": {"type": "String"}}},
+  "swipeFolderSemantics": "Folder: {folder}",
+  "@swipeFolderSemantics": {"description": "E4: screen reader label of the folder line on the swipe screen.", "placeholders": {"folder": {"type": "String"}}},
+  "swipeFolderDetails": "Details",
+  "@swipeFolderDetails": {"description": "E4: folder sheet on the swipe screen, opens the file's details."},
+  "settingsSwipeShowFolder": "Show the file's folder",
+  "@settingsSwipeShowFolder": {"description": "E4: swipe setting; one line with the current file's folder."},
+  "settingsSwipeShowFolderHelp": "One line above the card. Tap it to copy the path or open the folder.",
+  "@settingsSwipeShowFolderHelp": {"description": "E4: help text of the 'Show the file's folder' setting."},
+  "backupSettingSwipeShowFolder": "Show the file's folder",
+  "@backupSettingSwipeShowFolder": {"description": "E4: backup settings list label."},
+  "browseRefreshFailed": "Couldn't refresh. Try again.",
+  "@browseRefreshFailed": {"description": "E4: pull to refresh in Browse failed."},
+  "sameTimeChangeWindow": "Change window",
+  "@sameTimeChangeWindow": {"description": "E4: button on Same time's empty state; opens Settings where the time window is set."}
 }

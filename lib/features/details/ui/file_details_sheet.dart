@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/app/scroll_to_top.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -448,7 +449,11 @@ class _Where extends ConsumerWidget {
                   label: Text(l10n.detailsOpenFolder),
                   onPressed: gone
                       ? null
-                      : () => openFolderInBrowse(context, file.folderPath),
+                      : () => openFolderInBrowse(
+                          context,
+                          file.folderPath,
+                          highlightId: file.id,
+                        ),
                 ),
             ],
           ),
@@ -468,8 +473,13 @@ class _Where extends ConsumerWidget {
 }
 
 /// Closes the sheet (and a viewer under it), switches to Browse and opens
-/// [folder] in folder mode (B1).
-void openFolderInBrowse(BuildContext context, String folder) {
+/// [folder] in folder mode (B1). E4: [highlightId] = scroll to that file
+/// and flash it once.
+void openFolderInBrowse(
+  BuildContext context,
+  String folder, {
+  String? highlightId,
+}) {
   final container = ProviderScope.containerOf(context, listen: false);
   final router = GoRouter.of(context);
   Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
@@ -484,6 +494,7 @@ void openFolderInBrowse(BuildContext context, String folder) {
     container.read(browseViewControllerProvider.notifier)
       ..setLayout(BrowseLayout.folders)
       ..openFolder(folder);
+    container.read(browseHighlightProvider.notifier).show(highlightId);
   });
 }
 

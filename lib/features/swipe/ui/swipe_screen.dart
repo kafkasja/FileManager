@@ -41,6 +41,7 @@ import 'package:kfm/features/swipe/ui/swipe_card.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 import 'package:kfm/features/swipe/ui/swipe_feedback.dart';
 import 'package:kfm/features/swipe/ui/swipe_finish_flow.dart';
+import 'package:kfm/features/swipe/ui/swipe_folder_line.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/swipe/ui/swipe_setup_strip.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_bar.dart';
@@ -520,6 +521,12 @@ class _DeckState extends ConsumerState<_Deck> {
               ),
             ),
             if (peer == null) _RenamePill(sessionId: deck.session.id),
+            // E4: where the current file is; tap = copy path / open
+            // folder. In the progress row, so the card keeps its height.
+            if (current != null)
+              Flexible(
+                child: SwipeFolderLine(file: current, remote: peer != null),
+              ),
           ],
         ),
       ),

@@ -204,7 +204,7 @@ final class FilePagesProvider
   }
 }
 
-String _$filePagesHash() => r'78039a7ebaa126ae98817ffcdb6d3c2bed143179';
+String _$filePagesHash() => r'a00e782c8ca67432cf3724e9009625a81636ab57';
 
 /// Keyset-paged results for any [IndexQuery] (Browse, B8 search, B9
 /// collections). Contract for B7's paged viewer: `items`, `hasMore`,

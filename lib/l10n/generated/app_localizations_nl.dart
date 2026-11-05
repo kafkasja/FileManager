@@ -7741,4 +7741,34 @@ class AppLocalizationsNl extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String folderLabel(String folder, String place) {
+    return '$folder · $place';
+  }
+
+  @override
+  String swipeFolderSemantics(String folder) {
+    return 'Map: $folder';
+  }
+
+  @override
+  String get swipeFolderDetails => 'Details';
+
+  @override
+  String get settingsSwipeShowFolder => 'Map van het bestand tonen';
+
+  @override
+  String get settingsSwipeShowFolderHelp =>
+      'Eén regel boven de kaart. Tik erop om het pad te kopiëren of de map te openen.';
+
+  @override
+  String get backupSettingSwipeShowFolder => 'Map van het bestand tonen';
+
+  @override
+  String get browseRefreshFailed =>
+      'Vernieuwen lukte niet. Probeer het opnieuw.';
+
+  @override
+  String get sameTimeChangeWindow => 'Venster wijzigen';
 }

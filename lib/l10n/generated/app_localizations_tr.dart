@@ -7685,4 +7685,33 @@ class AppLocalizationsTr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String folderLabel(String folder, String place) {
+    return '$folder · $place';
+  }
+
+  @override
+  String swipeFolderSemantics(String folder) {
+    return 'Klasör: $folder';
+  }
+
+  @override
+  String get swipeFolderDetails => 'Ayrıntılar';
+
+  @override
+  String get settingsSwipeShowFolder => 'Dosyanın klasörünü göster';
+
+  @override
+  String get settingsSwipeShowFolderHelp =>
+      'Kartın üstünde tek satır. Yolu kopyalamak veya klasörü açmak için dokunun.';
+
+  @override
+  String get backupSettingSwipeShowFolder => 'Dosyanın klasörünü göster';
+
+  @override
+  String get browseRefreshFailed => 'Yenilenemedi. Tekrar deneyin.';
+
+  @override
+  String get sameTimeChangeWindow => 'Aralığı değiştir';
 }

@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/cloud/ui/cloud_badge.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
@@ -884,6 +885,14 @@ class _InfoBar extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
               style: text,
             ),
+            // E4: where the file is ("Camera · Internal storage").
+            if (file.origin != FileOrigin.remote)
+              Text(
+                folderLabel(l10n, file.folderPath),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text,
+              ),
             for (final label in labels)
               Text(
                 l10n.reviewedInfoLine(

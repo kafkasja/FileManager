@@ -28,6 +28,7 @@ String? backupSettingLabelOrNull(AppLocalizations l10n, String name) {
     AppSettings.swipeLayoutCurrent.name: l10n.backupSettingSwipeLayout,
     AppSettings.deleteMode.name: l10n.backupSettingDeleteMode,
     AppSettings.hapticsEnabled.name: l10n.backupSettingHaptics,
+    AppSettings.swipeShowFolder.name: l10n.backupSettingSwipeShowFolder,
     AppSettings.swipeButtonsMode.name: l10n.backupSettingSwipeButtons,
     AppSettings.statsShowSessionSummary.name: l10n.backupSettingSessionSummary,
     AppSettings.basicIncludeReviewed.name:

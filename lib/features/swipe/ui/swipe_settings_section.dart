@@ -10,6 +10,7 @@ import 'package:kfm/features/onboarding/ui/onboarding_controller.dart';
 import 'package:kfm/features/reviewed/ui/reset_reviewed_dialog.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
+import 'package:kfm/features/swipe/ui/swipe_folder_line.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'swipe_settings_section.g.dart';
@@ -81,6 +82,17 @@ class SwipeSettingsSection extends ConsumerWidget {
           onChanged: (v) => ref
               .read(settingsRepositoryProvider)
               .write(AppSettings.hapticsEnabled, v)
+              .fireAndForget(),
+        ),
+        // E4: provisional place; E2 moves it into its Swiping section.
+        SwitchListTile(
+          secondary: const Icon(Icons.folder_outlined),
+          title: Text(l10n.settingsSwipeShowFolder),
+          subtitle: Text(l10n.settingsSwipeShowFolderHelp),
+          value: ref.watch(swipeShowFolderProvider).value ?? true,
+          onChanged: (v) => ref
+              .read(settingsRepositoryProvider)
+              .write(AppSettings.swipeShowFolder, v)
               .fireAndForget(),
         ),
         SwitchListTile(
