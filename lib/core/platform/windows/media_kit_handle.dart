@@ -58,6 +58,8 @@ class MediaKitHandle implements VideoHandle {
           'no media proxy',
         ));
     final proxy = await mediaProxy();
+    // E1: the owner may want to be asked before a video streams.
+    await proxy.prepare(_file);
     return proxy.urlFor(_file).toString();
   }
 

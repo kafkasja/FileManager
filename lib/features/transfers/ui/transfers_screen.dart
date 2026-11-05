@@ -110,6 +110,8 @@ String transferErrorText(AppLocalizations l10n, String? code, TransferJob job) {
     TransferErrors.alreadyMoved => l10n.transferAlreadyMoved,
     TransferErrors.locationNotRemoved => l10n.privacyTransferNotRemoved,
     TransferErrors.offerDeclined => l10n.sendDeclined(device),
+    TransferErrors.takeDeclined => l10n.transferErrorTakeDeclined(device),
+    TransferErrors.takeNoAnswer => l10n.transferErrorTakeNoAnswer(device),
     TransferErrors.offerExpired => l10n.sendNoAnswer(device),
     TransferErrors.offerNoSpace => l10n.sendNoSpace(device),
     TransferErrors.offerCancelled => l10n.sendStopped(device),

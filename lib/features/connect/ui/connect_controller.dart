@@ -400,11 +400,25 @@ class ConnectController extends _$ConnectController {
       );
       if (reconnectFingerprint == null && _remember) {
         // N6: a failed save shows through the write queue's error stream.
+        // E1: the waiting screen's choice is stored on the new row.
+        final perms = _perms;
+        final link = _purpose == SessionPurpose.connect;
+        final repo = ref.read(knownDevicesRepositoryProvider);
         unawaited(
           ref
               .read(knownDeviceConnectorProvider)
               .rememberServer(result)
-              .then<void>((_) {}, onError: (Object _) {}),
+              .then<void>((d) {
+                if (!link) return;
+                repo
+                    .setLinkPerms(
+                      d.fingerprint,
+                      see: perms.see,
+                      takeFreely: perms.takeFreely,
+                    )
+                    .then<void>((_) {}, onError: (Object _) {})
+                    .ignore();
+              }, onError: (Object _) {}),
         );
       }
     } on PairingException catch (e) {

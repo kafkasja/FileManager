@@ -250,8 +250,16 @@ class RemoteImageProvider extends ImageProvider<RemoteImageProvider> {
   }
 
   Future<Uint8List> _content(RemoteHttp http) async {
-    final res = await http.getStream(ApiRoutes.fileContent(serverId));
-    return await readCappedBytes(res, kMaxRemoteOriginalBytes);
+    try {
+      final res = await http.getStream(ApiRoutes.fileContent(serverId));
+      return await readCappedBytes(res, kMaxRemoteOriginalBytes);
+    } on RemoteApiException catch (e) {
+      // E1: its owner asks before files are taken; viewing never asks,
+      // so show the thumbnail instead of nothing.
+      if (e.code != ApiErrorCode.takeNeedsApproval) rethrow;
+      final res = await http.getStream(ApiRoutes.fileThumb(serverId));
+      return await readCappedBytes(res, kMaxRemotePreviewBytes);
+    }
   }
 
   /// Never decodes beyond [maxPx] on the long side.

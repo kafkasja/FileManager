@@ -192,6 +192,13 @@ final class LinkResponseDto {
   };
 }
 
+/// Max ids in one `POST /v1/take` (the server refuses more).
+const int kMaxTakeIdsPerCall = 500;
+
+/// How long a client waits for `POST /v1/take`: the owner's prompt may
+/// queue behind a few others (100 s each).
+const Duration kTakeClientWait = Duration(minutes: 6);
+
 /// `POST /v1/take` (TASK-E1): the file ids a job is about to read in full
 /// ([move]: N11 download-move, the originals are trashed afterwards).
 @immutable

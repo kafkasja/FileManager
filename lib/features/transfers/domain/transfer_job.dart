@@ -47,6 +47,12 @@ abstract final class TransferErrors {
   /// N12: the receiver declined the offer.
   static const offerDeclined = 'offer_declined';
 
+  /// E1: the other device declined the take prompt for this download.
+  static const takeDeclined = 'take_declined';
+
+  /// E1: nobody answered the take prompt on the other device.
+  static const takeNoAnswer = 'take_no_answer';
+
   /// N12: the receiver has no room for the offer (declined at once).
   static const offerNoSpace = 'offer_no_space';
 
