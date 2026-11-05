@@ -1917,5 +1917,13 @@
   "desktopDiskCapped": "Bu klasördeki ilk {count} dosya gösteriliyor.",
   "desktopPreviewNothing": "Önizlemek için bir dosya seçin",
   "desktopCmdMore": "Daha fazla",
-  "desktopSelectAll": "Tümünü seç"
+  "desktopSelectAll": "Tümünü seç",
+  "folderLabel": "{folder} · {place}",
+  "swipeFolderSemantics": "Klasör: {folder}",
+  "swipeFolderDetails": "Ayrıntılar",
+  "settingsSwipeShowFolder": "Dosyanın klasörünü göster",
+  "settingsSwipeShowFolderHelp": "Kartın üstünde tek satır. Yolu kopyalamak veya klasörü açmak için dokunun.",
+  "backupSettingSwipeShowFolder": "Dosyanın klasörünü göster",
+  "browseRefreshFailed": "Yenilenemedi. Tekrar deneyin.",
+  "sameTimeChangeWindow": "Aralığı değiştir"
 }

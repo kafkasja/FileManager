@@ -8307,4 +8307,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopSelectAll => 'Select all';
+
+  @override
+  String folderLabel(String folder, String place) {
+    return '$folder · $place';
+  }
+
+  @override
+  String swipeFolderSemantics(String folder) {
+    return 'Folder: $folder';
+  }
+
+  @override
+  String get swipeFolderDetails => 'Details';
+
+  @override
+  String get settingsSwipeShowFolder => 'Show the file\'s folder';
+
+  @override
+  String get settingsSwipeShowFolderHelp =>
+      'One line above the card. Tap it to copy the path or open the folder.';
+
+  @override
+  String get backupSettingSwipeShowFolder => 'Show the file\'s folder';
+
+  @override
+  String get browseRefreshFailed => 'Couldn\'t refresh. Try again.';
+
+  @override
+  String get sameTimeChangeWindow => 'Change window';
 }

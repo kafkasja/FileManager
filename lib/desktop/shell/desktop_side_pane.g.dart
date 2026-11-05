@@ -173,7 +173,7 @@ final class DesktopTextPreviewProvider
 }
 
 String _$desktopTextPreviewHash() =>
-    r'248afbcd68d5ac15b66c4416fccb266045abe219';
+    r'c86fd3a2a1f29a32a9f872b371f4cb8626979e1d';
 
 /// The first 64 KB of a text file, for the Preview pane.
 

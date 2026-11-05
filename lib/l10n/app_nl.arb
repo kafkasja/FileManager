@@ -1917,5 +1917,13 @@
   "desktopDiskCapped": "De eerste {count} bestanden van deze map worden getoond.",
   "desktopPreviewNothing": "Selecteer een bestand om het te bekijken",
   "desktopCmdMore": "Meer",
-  "desktopSelectAll": "Alles selecteren"
+  "desktopSelectAll": "Alles selecteren",
+  "folderLabel": "{folder} · {place}",
+  "swipeFolderSemantics": "Map: {folder}",
+  "swipeFolderDetails": "Details",
+  "settingsSwipeShowFolder": "Map van het bestand tonen",
+  "settingsSwipeShowFolderHelp": "Eén regel boven de kaart. Tik erop om het pad te kopiëren of de map te openen.",
+  "backupSettingSwipeShowFolder": "Map van het bestand tonen",
+  "browseRefreshFailed": "Vernieuwen lukte niet. Probeer het opnieuw.",
+  "sameTimeChangeWindow": "Venster wijzigen"
 }

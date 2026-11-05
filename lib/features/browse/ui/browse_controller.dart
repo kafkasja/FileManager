@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
+
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -97,6 +99,14 @@ class FilePagesState {
 
   bool get hasMore => next != null;
 
+  /// E4 (H3): where the file with [id] sits in [items] (null = not loaded).
+  /// The map is built once per items list, so a tile keeps its element
+  /// when a reload shifts the indexes.
+  int? indexOfId(String id) =>
+      (_indexes[items] ??= {for (final (i, f) in items.indexed) f.id: i})[id];
+
+  static final _indexes = Expando<Map<String, int>>('indexOfId');
+
   FilePagesState copyWith({
     List<FileRef>? items,
     IndexCursor? Function()? next,
@@ -117,7 +127,12 @@ class FilePagesState {
 /// rows as were loaded so the scroll position holds.
 @riverpod
 class FilePages extends _$FilePages {
+  /// The first page: enough for the first screens, quick to show.
   static const pageSize = 200;
+
+  /// Later pages (E4): bigger, so a fast fling rarely outruns the loaded
+  /// rows (one keyset query per 1,000 rows).
+  static const morePageSize = 1000;
 
   int _generation = 0;
   IndexQuery? _visible;
@@ -161,7 +176,7 @@ class FilePages extends _$FilePages {
     try {
       final page = await ref
           .read(mediaIndexDaoProvider)
-          .page(visible, after: current.next);
+          .page(visible, after: current.next, limit: morePageSize);
       if (_stale(generation)) return;
       final latest = state.value!;
       state = AsyncData(
@@ -189,11 +204,23 @@ class FilePages extends _$FilePages {
       final items = <FileRef>[];
       IndexCursor? next;
       do {
-        final page = await dao.page(visible, after: next);
+        final page = await dao.page(
+          visible,
+          after: next,
+          limit: next == null ? pageSize : morePageSize,
+        );
         if (_stale(generation)) return;
         items.addAll(page.items);
         next = page.next;
       } while (next != null && items.length < current.items.length);
+      // E4 (H3): nothing changed = the same list instance, so the views
+      // rebuild nothing.
+      final latest = state.value;
+      if (latest != null &&
+          next == latest.next &&
+          listEquals(items, latest.items)) {
+        return;
+      }
       state = AsyncData(
         FilePagesState(items: List.unmodifiable(items), next: next),
       );

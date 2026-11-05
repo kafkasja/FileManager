@@ -9,7 +9,8 @@ import 'package:kfm/core/thumbs/thumbnail_cache.dart';
 import 'package:kfm/features/connect/ui/remote_image_provider.dart';
 
 /// A file's thumbnail: neutral placeholder (no spinner, no layout shift),
-/// fades in over 120 ms, cancels its request when disposed. Files of a
+/// fades in over 120 ms (a memory-cache hit shows at once, E4), cancels its
+/// request when disposed. Files of a
 /// connected device (N7) load over its pinned client into N5's memory LRU,
 /// never the disk cache.
 class Thumbnail extends ConsumerStatefulWidget {
@@ -37,10 +38,28 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
   /// No thumbnail could be made (damaged or unsupported file).
   bool _failed = false;
 
+  /// E4 (H2): the bytes were in the memory cache when the tile was built:
+  /// shown in its first frame, no fade (every tile scrolling back into
+  /// view used to flash).
+  bool _instant = false;
+
   @override
   void initState() {
     super.initState();
-    unawaited(_load());
+    if (!_peek()) unawaited(_load());
+  }
+
+  /// A synchronous memory-cache hit; true = [_bytes] is set.
+  bool _peek() {
+    final file = widget.file;
+    if (file.origin == FileOrigin.remote) return false;
+    if (!DiskThumbnailCache.hasThumbnail(file)) return false;
+    final cache = _cache ??= ref.read(thumbnailCacheProvider).value;
+    final bytes = cache?.peek(file);
+    if (bytes == null) return false;
+    _bytes = bytes;
+    _instant = true;
+    return true;
   }
 
   @override
@@ -51,7 +70,8 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
       _cache?.cancel(old.file.id);
       _bytes = null;
       _failed = false;
-      unawaited(_load());
+      _instant = false;
+      if (!_peek()) unawaited(_load());
     }
   }
 
@@ -119,7 +139,9 @@ class _ThumbnailState extends ConsumerState<Thumbnail> {
           else
             AnimatedOpacity(
               opacity: bytes == null ? 0 : 1,
-              duration: const Duration(milliseconds: 120),
+              duration: _instant
+                  ? Duration.zero
+                  : const Duration(milliseconds: 120),
               child: bytes == null
                   ? const SizedBox.shrink()
                   : Image.memory(

@@ -25,6 +25,15 @@ String nameOfFolder(AppLocalizations l10n, String path) {
   return l10n.browseExternalVolume(root.substring(root.lastIndexOf('/') + 1));
 }
 
+/// E4: a folder with its place, "Camera · Internal storage"; a volume's
+/// root is just the place.
+String folderLabel(AppLocalizations l10n, String folderPath) {
+  final root = volumeRootOf(folderPath);
+  final place = nameOfFolder(l10n, root);
+  if (folderPath == root) return place;
+  return l10n.folderLabel(nameOfFolder(l10n, folderPath), place);
+}
+
 /// "Grant access to see documents, downloads and hidden files".
 class AccessBanner extends ConsumerWidget {
   const new({super.key});

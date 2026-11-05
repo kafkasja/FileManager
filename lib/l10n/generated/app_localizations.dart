@@ -11612,6 +11612,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select all'**
   String get desktopSelectAll;
+
+  /// E4: a folder with its place, e.g. 'Camera · Internal storage' (swipe folder line, viewer).
+  ///
+  /// In en, this message translates to:
+  /// **'{folder} · {place}'**
+  String folderLabel(String folder, String place);
+
+  /// E4: screen reader label of the folder line on the swipe screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder: {folder}'**
+  String swipeFolderSemantics(String folder);
+
+  /// E4: folder sheet on the swipe screen, opens the file's details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get swipeFolderDetails;
+
+  /// E4: swipe setting; one line with the current file's folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the file\'s folder'**
+  String get settingsSwipeShowFolder;
+
+  /// E4: help text of the 'Show the file's folder' setting.
+  ///
+  /// In en, this message translates to:
+  /// **'One line above the card. Tap it to copy the path or open the folder.'**
+  String get settingsSwipeShowFolderHelp;
+
+  /// E4: backup settings list label.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the file\'s folder'**
+  String get backupSettingSwipeShowFolder;
+
+  /// E4: pull to refresh in Browse failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh. Try again.'**
+  String get browseRefreshFailed;
+
+  /// E4: button on Same time's empty state; opens Settings where the time window is set.
+  ///
+  /// In en, this message translates to:
+  /// **'Change window'**
+  String get sameTimeChangeWindow;
 }
 
 class _AppLocalizationsDelegate
