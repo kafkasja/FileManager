@@ -369,10 +369,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteModeTrash => 'Çöp kutusuna taşı (önerilen)';
 
   @override
-  String get deleteModeTrashHelp =>
-      'Kaydırılan dosyalar telefonun çöp kutusuna gider ve geri yüklenebilir.';
-
-  @override
   String get deleteModePermanent => 'Kalıcı olarak sil';
 
   @override
@@ -3051,10 +3047,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get similarStartTitle => 'Benzer ve bulanık fotoğrafları bul';
 
   @override
-  String get similarStartBody =>
-      'KFM bu telefondaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey telefondan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.';
-
-  @override
   String get similarStart => 'Başlat';
 
   @override
@@ -3293,9 +3285,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiLabelsTitle => 'Fotoğraf otomatik etiketleri (yapay zekâ)';
 
   @override
-  String get aiLabelsEnable => 'Fotoğrafları bu telefonda otomatik etiketle';
-
-  @override
   String get aiLabelsEnableHint =>
       'Fotoğrafları içeriklerine göre bul: kedi, plaj veya yemek gibi';
 
@@ -3359,16 +3348,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiLabelsResetAction => 'Sıfırla';
 
   @override
-  String get aiLabelsHelp =>
-      'Yalnızca bu telefonda çalışır. Hiçbir fotoğraf veya sonuç telefondan çıkmaz.';
-
-  @override
   String get aiLabelsJobError =>
       'Yapay zekâ modelleri eksik veya değişmiş, bu yüzden otomatik etiketleme durdu. Modelleri yeniden indir.';
-
-  @override
-  String get aiLabelsWorkerError =>
-      'Otomatik etiketleme bu telefonda başlatılamadı.';
 
   @override
   String get aiLabelsCrashError =>
@@ -3383,10 +3364,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get aiLabelsCardTitle =>
       'Fotoğrafları içeriklerine göre bul (kedi, plaj, yemek…)';
-
-  @override
-  String get aiLabelsCardBody =>
-      'KFM fotoğraflarını bu telefonda otomatik etiketleyebilir. Hiçbir şey yüklenmez.';
 
   @override
   String get aiLabelsCardTurnOn => 'Aç';
@@ -3538,15 +3515,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelsHowTitle => 'Nasıl çalışır';
 
   @override
-  String get aiModelsHowBody =>
-      'Her fotoğrafın küçük resmi bu telefonda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.';
-
-  @override
   String get aiModelsPrivacyTitle => 'Gizlilik';
-
-  @override
-  String get aiModelsPrivacyBody =>
-      'Tamamen bu cihazda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç telefondan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.';
 
   @override
   String get aiModelsBatteryBody =>
@@ -3789,9 +3758,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get detailsModified => 'Değiştirilme';
-
-  @override
-  String get detailsAdded => 'Telefona eklenme';
 
   @override
   String get detailsTaken => 'Çekilme';
@@ -5179,17 +5145,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorLogShare => 'Hata kaydını paylaş';
 
   @override
-  String errorLogShareSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count hata',
-      one: '1 hata',
-    );
-    return '$_temp0. Sen paylaşana kadar bu telefonda kalır. Klasör ve dosya adları gizlenir.';
-  }
-
-  @override
   String get errorLogEmpty => 'Kaydedilmiş hata yok';
 
   @override
@@ -5610,9 +5565,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get externalSwipeFolderEmpty => 'Bu klasörde fotoğraf veya video yok';
-
-  @override
-  String get transfersLocalSection => 'Bu telefonda';
 
   @override
   String get externalNoJobs =>
@@ -6918,10 +6870,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cloudShowBadge => 'Bulut simgesini göster';
 
   @override
-  String get cloudBadgeHelp =>
-      'Bulut simgesi, KFM\'nin bu dosyayı bulut uygulamana verdiği anlamına gelir. Bu bilgi bu telefonda saklanır, bu yüzden çevrimdışıyken de görünür. Anlık bir kontrol değildir: KFM yüklemenin bitip bitmediğini veya kopyanın sonradan silinip silinmediğini göremez. Dosya yüklendikten sonra değişirse simge de değişir. Yalnızca KFM ile yüklenen dosyalar işaretlenir.';
-
-  @override
   String cloudInfoUploaded(String destination, String date) {
     return 'KFM tarafından yüklendi: $destination · $date';
   }
@@ -7905,4 +7853,143 @@ class AppLocalizationsTr extends AppLocalizations {
   String sameTimeWindowLine(String time) {
     return 'Birbirinden en fazla $time arayla çekilen fotoğraf ve videolar gruplanır';
   }
+
+  @override
+  String get deleteModeTrashHelpDevice =>
+      'Silinen dosyalar çöp kutusuna gider ve geri yüklenebilir.';
+
+  @override
+  String similarStartBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM bu telefondaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey telefondan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.',
+      'pc': 'KFM bu bilgisayardaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey bilgisayardan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.',
+      'other': 'KFM bu cihazdaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey cihazdan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsEnableOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Fotoğrafları bu telefonda otomatik etiketle',
+      'pc': 'Fotoğrafları bu bilgisayarda otomatik etiketle',
+      'other': 'Fotoğrafları bu cihazda otomatik etiketle',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsHelpOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Yalnızca bu telefonda çalışır. Hiçbir fotoğraf veya sonuç telefondan çıkmaz.',
+      'pc': 'Yalnızca bu bilgisayarda çalışır. Hiçbir fotoğraf veya sonuç bilgisayardan çıkmaz.',
+      'other': 'Yalnızca bu cihazda çalışır. Hiçbir fotoğraf veya sonuç cihazdan çıkmaz.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsWorkerErrorOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Otomatik etiketleme bu telefonda başlatılamadı.',
+      'pc': 'Otomatik etiketleme bu bilgisayarda başlatılamadı.',
+      'other': 'Otomatik etiketleme bu cihazda başlatılamadı.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsCardBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM fotoğraflarını bu telefonda otomatik etiketleyebilir. Hiçbir şey yüklenmez.',
+      'pc': 'KFM fotoğraflarını bu bilgisayarda otomatik etiketleyebilir. Hiçbir şey yüklenmez.',
+      'other': 'KFM fotoğraflarını bu cihazda otomatik etiketleyebilir. Hiçbir şey yüklenmez.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsHowBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Her fotoğrafın küçük resmi bu telefonda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.',
+      'pc': 'Her fotoğrafın küçük resmi bu bilgisayarda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.',
+      'other': 'Her fotoğrafın küçük resmi bu cihazda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsPrivacyBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Tamamen bu telefonda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç telefondan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.',
+      'pc': 'Tamamen bu bilgisayarda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç bilgisayardan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.',
+      'other': 'Tamamen bu cihazda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç cihazdan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String detailsAddedOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Telefona eklenme',
+      'pc': 'Bilgisayara eklenme',
+      'other': 'Cihaza eklenme',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String errorLogShareSubtitleOn(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hata',
+      one: '1 hata',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hata',
+      one: '1 hata',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hata',
+      one: '1 hata',
+    );
+    String _temp3 = intl.Intl.selectLogic(device, {
+      'phone':
+          '$_temp0. Sen paylaşana kadar bu telefonda kalır. Klasör ve dosya adları gizlenir.',
+      'pc':
+          '$_temp1. Sen paylaşana kadar bu bilgisayarda kalır. Klasör ve dosya adları gizlenir.',
+      'other':
+          '$_temp2. Sen paylaşana kadar bu cihazda kalır. Klasör ve dosya adları gizlenir.',
+    });
+    return '$_temp3';
+  }
+
+  @override
+  String transfersLocalSectionOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Bu telefonda',
+      'pc': 'Bu bilgisayarda',
+      'other': 'Bu cihazda',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudBadgeHelpDevice =>
+      'Bulut simgesi, KFM\'nin bu dosyayı bulut uygulamana verdiği anlamına gelir. KFM bunu burada hatırlar, bu yüzden çevrimdışıyken de görünür. Anlık bir kontrol değildir: KFM yüklemenin bitip bitmediğini veya kopyanın sonradan silinip silinmediğini göremez. Dosya yüklemeden sonra değişirse simge de değişir. Yalnızca KFM ile yüklenen dosyalar işaretlenir.';
+
+  @override
+  String get aiLabelsUnsupportedWindows =>
+      'Windows\'ta henüz kullanılamıyor. Android\'de KFM fotoğrafları içlerindekilere göre bulabilir.';
+
+  @override
+  String get aiModelsDownloadInline => 'İndir';
+
+  @override
+  String get aiModelsHowItWorks => 'Nasıl çalışır';
 }

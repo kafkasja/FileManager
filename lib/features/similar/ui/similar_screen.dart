@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
@@ -144,7 +145,10 @@ class _StartCard extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: spacing),
-            Text(l10n.similarStartBody, textAlign: TextAlign.center),
+            Text(
+              l10n.similarStartBodyOn(deviceKind(context)),
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: spacing * 3),
             FilledButton(
               onPressed: () => unawaited(startSimilarScan(ref)),

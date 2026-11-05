@@ -29,7 +29,7 @@ final cloudDestinationsEntry = SettingsEntry(
 final cloudBadgeEntry = SettingsEntry(
   id: 'files.cloudBadge',
   titleBuilder: (c) => c.l10n.cloudShowBadge,
-  subtitleBuilder: (c) => c.l10n.cloudBadgeHelp,
+  subtitleBuilder: (c) => c.l10n.cloudBadgeHelpDevice,
   visible: (ref) => ref.watch(cloudHasUploadsProvider).value ?? false,
   builder: (_) => const CloudBadgeRows(),
 );
@@ -69,7 +69,7 @@ class CloudBadgeRows extends ConsumerWidget {
           key: const ValueKey('settings-cloud-show-badge'),
           secondary: const Icon(Icons.cloud_done_outlined),
           title: Text(l10n.cloudShowBadge),
-          subtitle: Text(l10n.cloudBadgeHelp),
+          subtitle: Text(l10n.cloudBadgeHelpDevice),
           isThreeLine: true,
           value: show,
           onChanged: (v) => ref

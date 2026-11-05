@@ -370,10 +370,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteModeTrash => 'Naar de prullenbak (aanbevolen)';
 
   @override
-  String get deleteModeTrashHelp =>
-      'Geswipete bestanden gaan naar de prullenbak van de telefoon en kunnen worden hersteld.';
-
-  @override
   String get deleteModePermanent => 'Definitief verwijderen';
 
   @override
@@ -3068,10 +3064,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get similarStartTitle => 'Vergelijkbare en wazige foto\'s zoeken';
 
   @override
-  String get similarStartBody =>
-      'KFM controleert je foto\'s op deze telefoon, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets de telefoon en er wordt niets verwijderd tenzij jij dat kiest.';
-
-  @override
   String get similarStart => 'Starten';
 
   @override
@@ -3310,9 +3302,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiLabelsTitle => 'Fotolabels (AI)';
 
   @override
-  String get aiLabelsEnable => 'Foto\'s labelen op deze telefoon';
-
-  @override
   String get aiLabelsEnableHint =>
       'Vind foto\'s op wat erop staat, zoals kat, strand of eten';
 
@@ -3375,16 +3364,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiLabelsResetAction => 'Resetten';
 
   @override
-  String get aiLabelsHelp =>
-      'Werkt alleen op deze telefoon. Geen enkele foto of uitkomst verlaat het apparaat.';
-
-  @override
   String get aiLabelsJobError =>
       'De AI-modellen ontbreken of zijn gewijzigd, dus het labelen is gestopt. Download ze opnieuw.';
-
-  @override
-  String get aiLabelsWorkerError =>
-      'Labelen kan niet starten op deze telefoon.';
 
   @override
   String get aiLabelsCrashError =>
@@ -3399,10 +3380,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get aiLabelsCardTitle =>
       'Vind foto\'s op wat erop staat (kat, strand, eten…)';
-
-  @override
-  String get aiLabelsCardBody =>
-      'KFM kan je foto\'s labelen op deze telefoon. Er wordt niets geüpload.';
 
   @override
   String get aiLabelsCardTurnOn => 'Aanzetten';
@@ -3553,15 +3530,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiModelsHowTitle => 'Hoe het werkt';
 
   @override
-  String get aiModelsHowBody =>
-      'De kleine miniatuur van elke foto wordt één keer op deze telefoon geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.';
-
-  @override
   String get aiModelsPrivacyTitle => 'Privacy';
-
-  @override
-  String get aiModelsPrivacyBody =>
-      'Werkt volledig op dit apparaat. Geen enkele foto, miniatuur of uitkomst verlaat de telefoon. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.';
 
   @override
   String get aiModelsBatteryBody =>
@@ -3804,9 +3773,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get detailsModified => 'Gewijzigd';
-
-  @override
-  String get detailsAdded => 'Toegevoegd aan telefoon';
 
   @override
   String get detailsTaken => 'Gemaakt';
@@ -5207,17 +5173,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get errorLogShare => 'Foutenlogboek delen';
 
   @override
-  String errorLogShareSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fouten',
-      one: '1 fout',
-    );
-    return '$_temp0. Blijft op deze telefoon tot je het deelt. Map- en bestandsnamen worden verborgen.';
-  }
-
-  @override
   String get errorLogEmpty => 'Geen fouten gelogd';
 
   @override
@@ -5642,9 +5597,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get externalSwipeFolderEmpty => 'Geen foto\'s of video\'s in deze map';
-
-  @override
-  String get transfersLocalSection => 'Op deze telefoon';
 
   @override
   String get externalNoJobs =>
@@ -6959,10 +6911,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get cloudShowBadge => 'Cloudpictogram tonen';
 
   @override
-  String get cloudBadgeHelp =>
-      'Het cloudpictogram betekent dat KFM dit bestand aan je cloud-app heeft gegeven. Dit wordt op deze telefoon bewaard, dus het is ook offline zichtbaar. Het is geen live controle: KFM kan niet zien of het uploaden klaar is of dat de kopie later is verwijderd. Verandert het bestand na het uploaden, dan verandert het pictogram ook. Alleen bestanden die met KFM zijn geüpload, krijgen een markering.';
-
-  @override
   String cloudInfoUploaded(String destination, String date) {
     return 'Door KFM geüpload naar $destination · $date';
   }
@@ -7964,4 +7912,143 @@ class AppLocalizationsNl extends AppLocalizations {
   String sameTimeWindowLine(String time) {
     return 'Foto\'s en video\'s die binnen $time na elkaar zijn gemaakt, worden gegroepeerd';
   }
+
+  @override
+  String get deleteModeTrashHelpDevice =>
+      'Verwijderde bestanden gaan naar de prullenbak en kunnen worden hersteld.';
+
+  @override
+  String similarStartBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM controleert je foto\'s op deze telefoon, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets de telefoon en er wordt niets verwijderd tenzij jij dat kiest.',
+      'pc': 'KFM controleert je foto\'s op deze pc, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets de pc en er wordt niets verwijderd tenzij jij dat kiest.',
+      'other': 'KFM controleert je foto\'s op dit apparaat, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets het apparaat en er wordt niets verwijderd tenzij jij dat kiest.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsEnableOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Foto\'s labelen op deze telefoon',
+      'pc': 'Foto\'s labelen op deze pc',
+      'other': 'Foto\'s labelen op dit apparaat',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsHelpOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Werkt alleen op deze telefoon. Geen enkele foto of uitkomst verlaat het apparaat.',
+      'pc': 'Werkt alleen op deze pc. Geen enkele foto of uitkomst verlaat het apparaat.',
+      'other': 'Werkt alleen op dit apparaat. Geen enkele foto of uitkomst verlaat het.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsWorkerErrorOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Labelen kan niet starten op deze telefoon.',
+      'pc': 'Labelen kan niet starten op deze pc.',
+      'other': 'Labelen kan niet starten op dit apparaat.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsCardBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM kan je foto\'s labelen op deze telefoon. Er wordt niets geüpload.',
+      'pc': 'KFM kan je foto\'s labelen op deze pc. Er wordt niets geüpload.',
+      'other': 'KFM kan je foto\'s labelen op dit apparaat. Er wordt niets geüpload.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsHowBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'De kleine miniatuur van elke foto wordt één keer op deze telefoon geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.',
+      'pc': 'De kleine miniatuur van elke foto wordt één keer op deze pc geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.',
+      'other': 'De kleine miniatuur van elke foto wordt één keer op dit apparaat geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsPrivacyBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Werkt volledig op deze telefoon. Geen enkele foto, miniatuur of uitkomst verlaat hem. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.',
+      'pc': 'Werkt volledig op deze pc. Geen enkele foto, miniatuur of uitkomst verlaat hem. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.',
+      'other': 'Werkt volledig op dit apparaat. Geen enkele foto, miniatuur of uitkomst verlaat het. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String detailsAddedOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Toegevoegd aan telefoon',
+      'pc': 'Toegevoegd aan pc',
+      'other': 'Toegevoegd aan apparaat',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String errorLogShareSubtitleOn(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fouten',
+      one: '1 fout',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fouten',
+      one: '1 fout',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fouten',
+      one: '1 fout',
+    );
+    String _temp3 = intl.Intl.selectLogic(device, {
+      'phone':
+          '$_temp0. Blijft op deze telefoon tot je het deelt. Map- en bestandsnamen worden verborgen.',
+      'pc':
+          '$_temp1. Blijft op deze pc tot je het deelt. Map- en bestandsnamen worden verborgen.',
+      'other':
+          '$_temp2. Blijft op dit apparaat tot je het deelt. Map- en bestandsnamen worden verborgen.',
+    });
+    return '$_temp3';
+  }
+
+  @override
+  String transfersLocalSectionOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Op deze telefoon',
+      'pc': 'Op deze pc',
+      'other': 'Op dit apparaat',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudBadgeHelpDevice =>
+      'Het cloudpictogram betekent dat KFM dit bestand aan je cloud-app heeft gegeven. KFM onthoudt dat hier, dus het is ook offline zichtbaar. Het is geen live controle: KFM kan niet zien of het uploaden klaar is of dat de kopie later is verwijderd. Verandert het bestand na het uploaden, dan verandert het pictogram ook. Alleen bestanden die met KFM zijn geüpload worden gemarkeerd.';
+
+  @override
+  String get aiLabelsUnsupportedWindows =>
+      'Nog niet beschikbaar op Windows. Op Android kan KFM foto\'s vinden op wat erop staat.';
+
+  @override
+  String get aiModelsDownloadInline => 'Downloaden';
+
+  @override
+  String get aiModelsHowItWorks => 'Hoe het werkt';
 }

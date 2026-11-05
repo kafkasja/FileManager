@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app_info.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/utils/read_future.dart';
@@ -67,7 +68,9 @@ class ErrorLogRows extends ConsumerWidget {
           leading: const Icon(Icons.bug_report_outlined),
           title: Text(l10n.errorLogShare),
           subtitle: Text(
-            count == 0 ? l10n.errorLogEmpty : l10n.errorLogShareSubtitle(count),
+            count == 0
+                ? l10n.errorLogEmpty
+                : l10n.errorLogShareSubtitleOn(count, deviceKind(context)),
           ),
           enabled: count > 0,
           onTap: () => _share(context, ref),

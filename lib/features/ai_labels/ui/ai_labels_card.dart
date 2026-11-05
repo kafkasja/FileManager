@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -51,7 +52,10 @@ class AiLabelsCard extends ConsumerWidget {
               ],
             ),
             SizedBox(height: space),
-            Text(l10n.aiLabelsCardBody, style: theme.textTheme.bodySmall),
+            Text(
+              l10n.aiLabelsCardBodyOn(deviceKind(context)),
+              style: theme.textTheme.bodySmall,
+            ),
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: Wrap(
@@ -87,7 +91,8 @@ Future<void> turnOnAiLabels(BuildContext context, WidgetRef ref) async {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(context.l10n.aiLabelsTurnedOn)));
     case TurnOnResult.needsDownload:
-      unawaited(context.push(AppRoutes.aiModels));
+      // E2 §5: the download lives in Settings → Smart features.
+      context.go(AppRoutes.settingsEntry('smart.aiLabels'));
     case TurnOnResult.unsupported:
       break;
   }

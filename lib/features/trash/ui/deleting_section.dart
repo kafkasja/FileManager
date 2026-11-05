@@ -60,7 +60,7 @@ class DeleteModeRows extends ConsumerWidget {
           RadioListTile<DeleteMode>(
             value: DeleteMode.trash,
             title: Text(l10n.deleteModeTrash),
-            subtitle: Text(l10n.deleteModeTrashHelp),
+            subtitle: Text(l10n.deleteModeTrashHelpDevice),
           ),
           RadioListTile<DeleteMode>(
             value: DeleteMode.permanent,

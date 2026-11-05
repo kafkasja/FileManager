@@ -574,12 +574,6 @@ abstract class AppLocalizations {
   /// **'Move to trash (recommended)'**
   String get deleteModeTrash;
 
-  /// No description provided for @deleteModeTrashHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Swiped files go to the phone\'s trash and can be restored.'**
-  String get deleteModeTrashHelp;
-
   /// No description provided for @deleteModePermanent.
   ///
   /// In en, this message translates to:
@@ -4359,12 +4353,6 @@ abstract class AppLocalizations {
   /// **'Find similar and blurry photos'**
   String get similarStartTitle;
 
-  /// No description provided for @similarStartBody.
-  ///
-  /// In en, this message translates to:
-  /// **'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.'**
-  String get similarStartBody;
-
   /// No description provided for @similarStart.
   ///
   /// In en, this message translates to:
@@ -4695,12 +4683,6 @@ abstract class AppLocalizations {
   /// **'Photo labels (AI)'**
   String get aiLabelsTitle;
 
-  /// No description provided for @aiLabelsEnable.
-  ///
-  /// In en, this message translates to:
-  /// **'Label photos on this phone'**
-  String get aiLabelsEnable;
-
   /// No description provided for @aiLabelsEnableHint.
   ///
   /// In en, this message translates to:
@@ -4767,23 +4749,11 @@ abstract class AppLocalizations {
   /// **'Reset'**
   String get aiLabelsResetAction;
 
-  /// No description provided for @aiLabelsHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs on this phone only. No photo or result ever leaves it.'**
-  String get aiLabelsHelp;
-
   /// No description provided for @aiLabelsJobError.
   ///
   /// In en, this message translates to:
   /// **'The AI models are missing or changed, so labeling stopped. Download them again.'**
   String get aiLabelsJobError;
-
-  /// No description provided for @aiLabelsWorkerError.
-  ///
-  /// In en, this message translates to:
-  /// **'Labeling couldn\'t start on this phone.'**
-  String get aiLabelsWorkerError;
 
   /// No description provided for @aiLabelsCrashError.
   ///
@@ -4808,12 +4778,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Find photos by what\'s in them (cat, beach, food…)'**
   String get aiLabelsCardTitle;
-
-  /// No description provided for @aiLabelsCardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'KFM can label your photos on this phone. Nothing is uploaded.'**
-  String get aiLabelsCardBody;
 
   /// No description provided for @aiLabelsCardTurnOn.
   ///
@@ -5001,23 +4965,11 @@ abstract class AppLocalizations {
   /// **'How it works'**
   String get aiModelsHowTitle;
 
-  /// No description provided for @aiModelsHowBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.'**
-  String get aiModelsHowBody;
-
   /// No description provided for @aiModelsPrivacyTitle.
   ///
   /// In en, this message translates to:
   /// **'Privacy'**
   String get aiModelsPrivacyTitle;
-
-  /// No description provided for @aiModelsPrivacyBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.'**
-  String get aiModelsPrivacyBody;
 
   /// No description provided for @aiModelsBatteryBody.
   ///
@@ -5354,12 +5306,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Modified'**
   String get detailsModified;
-
-  /// No description provided for @detailsAdded.
-  ///
-  /// In en, this message translates to:
-  /// **'Added to phone'**
-  String get detailsAdded;
 
   /// No description provided for @detailsTaken.
   ///
@@ -7263,12 +7209,6 @@ abstract class AppLocalizations {
   /// **'Share error log'**
   String get errorLogShare;
 
-  /// Settings → About (H5). Tag and preset names may still appear.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 error} other{{count} errors}}. Stays on this phone until you share it. Folder and file names are hidden.'**
-  String errorLogShareSubtitle(int count);
-
   /// No description provided for @errorLogEmpty.
   ///
   /// In en, this message translates to:
@@ -7880,12 +7820,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No photos or videos in this folder'**
   String get externalSwipeFolderEmpty;
-
-  /// U2 Transfers tab: copies and moves between places on this device.
-  ///
-  /// In en, this message translates to:
-  /// **'On this phone'**
-  String get transfersLocalSection;
 
   /// U2 empty On this phone tab.
   ///
@@ -9699,12 +9633,6 @@ abstract class AppLocalizations {
   /// **'Show cloud icon'**
   String get cloudShowBadge;
 
-  /// X4 help text under the Show cloud icon switch.
-  ///
-  /// In en, this message translates to:
-  /// **'The cloud icon means KFM handed this file to your cloud app. It\'s saved on this phone, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.'**
-  String get cloudBadgeHelp;
-
   /// X4 viewer info line, one per cloud folder the file was uploaded to.
   ///
   /// In en, this message translates to:
@@ -11066,6 +10994,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Photos and videos taken within {time} of each other are grouped'**
   String sameTimeWindowLine(String time);
+
+  /// D1/E2: trash delete mode help (no device noun).
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted files go to the trash and can be restored.'**
+  String get deleteModeTrashHelpDevice;
+
+  /// C2/E2: Similar photos start screen body. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.} pc{KFM checks your photos on this PC, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the PC and nothing is removed unless you choose it.} other{KFM checks your photos on this device, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the device and nothing is removed unless you choose it.}}'**
+  String similarStartBodyOn(String device);
+
+  /// C3/E2: AI labels switch. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Label photos on this phone} pc{Label photos on this PC} other{Label photos on this device}}'**
+  String aiLabelsEnableOn(String device);
+
+  /// C3/E2: AI labels privacy line in Settings. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Runs on this phone only. No photo or result ever leaves it.} pc{Runs on this PC only. No photo or result ever leaves it.} other{Runs on this device only. No photo or result ever leaves it.}}'**
+  String aiLabelsHelpOn(String device);
+
+  /// C3/E2: labeling worker failed. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Labeling couldn\'t start on this phone.} pc{Labeling couldn\'t start on this PC.} other{Labeling couldn\'t start on this device.}}'**
+  String aiLabelsWorkerErrorOn(String device);
+
+  /// C3/E2: Browse/Search card body. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{KFM can label your photos on this phone. Nothing is uploaded.} pc{KFM can label your photos on this PC. Nothing is uploaded.} other{KFM can label your photos on this device. Nothing is uploaded.}}'**
+  String aiLabelsCardBodyOn(String device);
+
+  /// C3/E2: AI models screen, how it works. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.} pc{Each photo\'s small thumbnail is analysed on this PC, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.} other{Each photo\'s small thumbnail is analysed on this device, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.}}'**
+  String aiModelsHowBodyOn(String device);
+
+  /// C3/E2: AI models screen, privacy. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Runs fully on this phone. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.} pc{Runs fully on this PC. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.} other{Runs fully on this device. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.}}'**
+  String aiModelsPrivacyBodyOn(String device);
+
+  /// B10/E2: file details fact label. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Added to phone} pc{Added to PC} other{Added to device}}'**
+  String detailsAddedOn(String device);
+
+  /// H5/E2: error log row subtitle. Tag and preset names may still appear. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{{count, plural, =1{1 error} other{{count} errors}}. Stays on this phone until you share it. Folder and file names are hidden.} pc{{count, plural, =1{1 error} other{{count} errors}}. Stays on this PC until you share it. Folder and file names are hidden.} other{{count, plural, =1{1 error} other{{count} errors}}. Stays on this device until you share it. Folder and file names are hidden.}}'**
+  String errorLogShareSubtitleOn(int count, String device);
+
+  /// U2/E2: Transfers section of local jobs. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{On this phone} pc{On this PC} other{On this device}}'**
+  String transfersLocalSectionOn(String device);
+
+  /// X4/E2: help text under the Show cloud icon switch (no device noun).
+  ///
+  /// In en, this message translates to:
+  /// **'The cloud icon means KFM handed this file to your cloud app. KFM remembers that here, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.'**
+  String get cloudBadgeHelpDevice;
+
+  /// E2: Photo labels row on Windows (never hidden).
+  ///
+  /// In en, this message translates to:
+  /// **'Not available on Windows yet. On Android, KFM can find photos by what\'s in them.'**
+  String get aiLabelsUnsupportedWindows;
+
+  /// E2: inline button in Settings → Smart features → Photo labels; the size is in the row text.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get aiModelsDownloadInline;
+
+  /// E2: Photo labels row link to the models details screen.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get aiModelsHowItWorks;
 }
 
 class _AppLocalizationsDelegate

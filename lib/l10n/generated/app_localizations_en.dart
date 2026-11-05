@@ -369,10 +369,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteModeTrash => 'Move to trash (recommended)';
 
   @override
-  String get deleteModeTrashHelp =>
-      'Swiped files go to the phone\'s trash and can be restored.';
-
-  @override
   String get deleteModePermanent => 'Delete permanently';
 
   @override
@@ -3042,10 +3038,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get similarStartTitle => 'Find similar and blurry photos';
 
   @override
-  String get similarStartBody =>
-      'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.';
-
-  @override
   String get similarStart => 'Start';
 
   @override
@@ -3283,9 +3275,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLabelsTitle => 'Photo labels (AI)';
 
   @override
-  String get aiLabelsEnable => 'Label photos on this phone';
-
-  @override
   String get aiLabelsEnableHint =>
       'Find photos by what\'s in them, like cat, beach or food';
 
@@ -3348,15 +3337,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLabelsResetAction => 'Reset';
 
   @override
-  String get aiLabelsHelp =>
-      'Runs on this phone only. No photo or result ever leaves it.';
-
-  @override
   String get aiLabelsJobError =>
       'The AI models are missing or changed, so labeling stopped. Download them again.';
-
-  @override
-  String get aiLabelsWorkerError => 'Labeling couldn\'t start on this phone.';
 
   @override
   String get aiLabelsCrashError =>
@@ -3371,10 +3353,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiLabelsCardTitle =>
       'Find photos by what\'s in them (cat, beach, food…)';
-
-  @override
-  String get aiLabelsCardBody =>
-      'KFM can label your photos on this phone. Nothing is uploaded.';
 
   @override
   String get aiLabelsCardTurnOn => 'Turn on';
@@ -3523,15 +3501,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiModelsHowTitle => 'How it works';
 
   @override
-  String get aiModelsHowBody =>
-      'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.';
-
-  @override
   String get aiModelsPrivacyTitle => 'Privacy';
-
-  @override
-  String get aiModelsPrivacyBody =>
-      'Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.';
 
   @override
   String get aiModelsBatteryBody =>
@@ -3772,9 +3742,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailsModified => 'Modified';
-
-  @override
-  String get detailsAdded => 'Added to phone';
 
   @override
   String get detailsTaken => 'Taken';
@@ -5162,17 +5129,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLogShare => 'Share error log';
 
   @override
-  String errorLogShareSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count errors',
-      one: '1 error',
-    );
-    return '$_temp0. Stays on this phone until you share it. Folder and file names are hidden.';
-  }
-
-  @override
   String get errorLogEmpty => 'No errors logged';
 
   @override
@@ -5594,9 +5550,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalSwipeFolderEmpty => 'No photos or videos in this folder';
-
-  @override
-  String get transfersLocalSection => 'On this phone';
 
   @override
   String get externalNoJobs =>
@@ -6895,10 +6848,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cloudShowBadge => 'Show cloud icon';
 
   @override
-  String get cloudBadgeHelp =>
-      'The cloud icon means KFM handed this file to your cloud app. It\'s saved on this phone, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.';
-
-  @override
   String cloudInfoUploaded(String destination, String date) {
     return 'Uploaded by KFM to $destination · $date';
   }
@@ -7895,4 +7844,143 @@ class AppLocalizationsEn extends AppLocalizations {
   String sameTimeWindowLine(String time) {
     return 'Photos and videos taken within $time of each other are grouped';
   }
+
+  @override
+  String get deleteModeTrashHelpDevice =>
+      'Deleted files go to the trash and can be restored.';
+
+  @override
+  String similarStartBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.',
+      'pc': 'KFM checks your photos on this PC, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the PC and nothing is removed unless you choose it.',
+      'other': 'KFM checks your photos on this device, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the device and nothing is removed unless you choose it.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsEnableOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Label photos on this phone',
+      'pc': 'Label photos on this PC',
+      'other': 'Label photos on this device',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsHelpOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Runs on this phone only. No photo or result ever leaves it.',
+      'pc': 'Runs on this PC only. No photo or result ever leaves it.',
+      'other': 'Runs on this device only. No photo or result ever leaves it.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsWorkerErrorOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Labeling couldn\'t start on this phone.',
+      'pc': 'Labeling couldn\'t start on this PC.',
+      'other': 'Labeling couldn\'t start on this device.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsCardBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM can label your photos on this phone. Nothing is uploaded.',
+      'pc': 'KFM can label your photos on this PC. Nothing is uploaded.',
+      'other': 'KFM can label your photos on this device. Nothing is uploaded.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsHowBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.',
+      'pc': 'Each photo\'s small thumbnail is analysed on this PC, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.',
+      'other': 'Each photo\'s small thumbnail is analysed on this device, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsPrivacyBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Runs fully on this phone. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.',
+      'pc': 'Runs fully on this PC. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.',
+      'other': 'Runs fully on this device. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String detailsAddedOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Added to phone',
+      'pc': 'Added to PC',
+      'other': 'Added to device',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String errorLogShareSubtitleOn(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    String _temp3 = intl.Intl.selectLogic(device, {
+      'phone':
+          '$_temp0. Stays on this phone until you share it. Folder and file names are hidden.',
+      'pc':
+          '$_temp1. Stays on this PC until you share it. Folder and file names are hidden.',
+      'other':
+          '$_temp2. Stays on this device until you share it. Folder and file names are hidden.',
+    });
+    return '$_temp3';
+  }
+
+  @override
+  String transfersLocalSectionOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'On this phone',
+      'pc': 'On this PC',
+      'other': 'On this device',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudBadgeHelpDevice =>
+      'The cloud icon means KFM handed this file to your cloud app. KFM remembers that here, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.';
+
+  @override
+  String get aiLabelsUnsupportedWindows =>
+      'Not available on Windows yet. On Android, KFM can find photos by what\'s in them.';
+
+  @override
+  String get aiModelsDownloadInline => 'Download';
+
+  @override
+  String get aiModelsHowItWorks => 'How it works';
 }

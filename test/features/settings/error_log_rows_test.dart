@@ -78,7 +78,10 @@ void main() {
     await log.record(_entry('b'));
     final shares = _Shares();
     await _pump(tester, log, shares);
-    expect(find.text(_l10n.errorLogShareSubtitle(2)), findsOneWidget);
+    expect(
+      find.text(_l10n.errorLogShareSubtitleOn(2, 'phone')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text(_l10n.errorLogShare));
     await tester.pumpAndSettle();

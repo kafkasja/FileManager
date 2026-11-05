@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
@@ -525,7 +526,11 @@ class _FileFacts extends StatelessWidget {
         ),
         if (file.modifiedAt.millisecondsSinceEpoch > 0)
           _Fact(label: l10n.detailsModified, value: date(file.modifiedAt)),
-        if (added != null) _Fact(label: l10n.detailsAdded, value: date(added)),
+        if (added != null)
+          _Fact(
+            label: l10n.detailsAddedOn(deviceKind(context)),
+            value: date(added),
+          ),
         if (taken != null && taken.millisecondsSinceEpoch > 0)
           _Fact(label: l10n.detailsTaken, value: date(taken)),
         if (w != null && h != null && w > 0 && h > 0)
