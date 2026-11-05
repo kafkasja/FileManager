@@ -7,8 +7,12 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/utils/format.dart';
-import 'package:kfm/desktop/shell/desktop_layout.dart';
+import 'package:kfm/desktop/shell/desktop_address_bar.dart';
+import 'package:kfm/desktop/shell/desktop_command_bar.dart';
+import 'package:kfm/desktop/shell/desktop_location.dart' show FolderLocation;
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/tabs/desktop_tabs_controller.dart';
+import 'package:kfm/desktop/trash/trash_properties_dialog.dart';
 import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
@@ -20,14 +24,13 @@ import 'package:kfm/features/trash/ui/trash_controller.dart';
 import 'package:kfm/features/trash/ui/widgets/expiry_badge.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
-/// Which part of the trash the list shows.
-enum DesktopTrashGroup { all, system, pending }
-
-/// Desktop Trash (TASK-PL3 step 5): one Details list of the system trash
-/// (Recycle Bin on Windows) and the pending-delete folder (name, original
-/// location, deleted, size, days left, where), grouped by a filter row;
-/// Explorer selection; Restore / Delete forever buttons, keys and menu.
-/// Same [TrashController] as the phone's Trash tab.
+/// Desktop Trash (TASK-PL3 step 5, E3 Recycle Bin): one Details list of
+/// the system trash (Recycle Bin on Windows) and the pending-delete folder
+/// (name, original location, deleted, size, days left, where); Explorer
+/// selection; double-click / Enter / Alt+Enter = Properties with Restore /
+/// Delete forever; Space = preview; Restore, Delete forever, Empty trash
+/// and Properties in the command bar. Same [TrashController] as the
+/// phone's Trash tab.
 class DesktopTrashScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -37,7 +40,6 @@ class DesktopTrashScreen extends ConsumerStatefulWidget {
 
 class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
   ExplorerSelection _sel = ExplorerSelection.empty;
-  DesktopTrashGroup _group = DesktopTrashGroup.all;
   List<TrashedItem> _items = const [];
 
   TrashController get _trash => ref.read(trashControllerProvider.notifier);
@@ -69,6 +71,9 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
               items: _items.length,
               selected: count,
               selectedBytes: bytes,
+              totalBytes: count == 0
+                  ? _items.fold<int>(0, (a, i) => a + i.original.sizeBytes)
+                  : null,
             ),
           );
     });
@@ -81,8 +86,8 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
     if (mounted) _showResult(result);
   }
 
-  Future<void> _deleteForever() async {
-    final items = _selected;
+  Future<void> _deleteForever([List<TrashedItem>? list]) async {
+    final items = list ?? _selected;
     if (items.isEmpty) return;
     final l10n = context.l10n;
     final ok = await showDialog<bool>(
@@ -120,6 +125,110 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
       ..showSnackBar(SnackBar(content: Text(text)));
   }
 
+  /// E3: Recycle Bin's Properties (double-click, Enter, Alt+Enter).
+  Future<void> _properties([TrashedItem? item]) async {
+    final items = switch (item) {
+      final i? when !_sel.contains(i.trashId) => [i],
+      _ => _selected,
+    };
+    if (items.isEmpty) return;
+    final action = await showTrashProperties(
+      context,
+      items,
+      systemLabel: _systemLabel(context.l10n),
+    );
+    if (!mounted) return;
+    switch (action) {
+      case TrashPropertiesAction.restore:
+        await _restore(items);
+      case TrashPropertiesAction.deleteForever:
+        await _deleteForever(items);
+      case TrashPropertiesAction.openLocation:
+        ref
+            .read(desktopTabsControllerProvider.notifier)
+            .openInNewTab(FolderLocation(items.first.original.folderPath));
+      case null:
+    }
+  }
+
+  /// Empty trash: everything, pending items too (with a confirm).
+  Future<void> _emptyTrash() async {
+    final items = _items;
+    if (items.isEmpty) return;
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final size = formatBytes(
+      items.fold(0, (a, i) => a + i.original.sizeBytes),
+      locale: locale,
+    );
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.trashEmptyTitle(items.length)),
+        content: Text(l10n.trashEmptyBody(size)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            key: const ValueKey('trash-empty-confirm'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.trashEmpty),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final result = await _trash.deleteForever(items);
+    if (mounted && result.cancelled) _showResult(result);
+  }
+
+  void _publishCommands({required bool hasSelection, required bool busy}) {
+    final l10n = context.l10n;
+    final commands = [
+      DesktopCommand(
+        id: 'trash-restore',
+        label: l10n.trashRestore,
+        icon: Icons.restore,
+        shortcut: DesktopKeys.label(DesktopKeys.restore),
+        keepLabel: true,
+        onPressed: hasSelection && !busy ? () => unawaited(_restore()) : null,
+      ),
+      DesktopCommand(
+        id: 'trash-delete-forever',
+        label: l10n.trashDeleteForever,
+        icon: Icons.delete_forever_outlined,
+        shortcut: DesktopKeys.label(DesktopKeys.delete),
+        onPressed: hasSelection && !busy
+            ? () => unawaited(_deleteForever())
+            : null,
+      ),
+      DesktopCommand(
+        id: 'trash-empty',
+        label: l10n.trashEmpty,
+        icon: Icons.delete_sweep_outlined,
+        onPressed: _items.isNotEmpty && !busy
+            ? () => unawaited(_emptyTrash())
+            : null,
+      ),
+      DesktopCommand(
+        id: 'trash-properties',
+        label: l10n.desktopProperties,
+        icon: Icons.info_outline,
+        shortcut: DesktopKeys.label(DesktopKeys.properties),
+        divider: true,
+        onPressed: hasSelection ? () => unawaited(_properties()) : null,
+      ),
+    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(desktopCommandsProvider(DesktopSection.trash).notifier)
+          .set(commands);
+    });
+  }
+
   /// The phone's preview with a Restore button (H3).
   Future<void> _preview(TrashedItem item) => openViewer(
     context,
@@ -152,6 +261,19 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
       unawaited(_restore());
       return KeyEventResult.handled;
     }
+    if (key == LogicalKeyboardKey.enter &&
+        HardwareKeyboard.instance.isAltPressed) {
+      unawaited(_properties());
+      return KeyEventResult.handled;
+    }
+    // Space: the preview (Quick look), like the rest of the desktop app.
+    if (key == LogicalKeyboardKey.space) {
+      final focus = _sel.focus;
+      for (final i in _items) {
+        if (i.trashId == focus) unawaited(_preview(i));
+      }
+      return KeyEventResult.handled;
+    }
     return KeyEventResult.ignored;
   }
 
@@ -176,10 +298,18 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
         DesktopMenuEntry(
           label: l10n.desktopQuickLook,
           icon: Icons.visibility_outlined,
-          shortcut: 'Enter',
+          shortcut: 'Space',
           divider: true,
           onSelected: () => unawaited(_preview(item)),
         ),
+      DesktopMenuEntry(
+        key: const ValueKey('trash-menu-properties'),
+        label: l10n.desktopProperties,
+        icon: Icons.info_outline,
+        shortcut: DesktopKeys.label(DesktopKeys.properties),
+        divider: _sel.count != 1,
+        onSelected: () => unawaited(_properties(item)),
+      ),
     ]);
   }
 
@@ -191,138 +321,19 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
     final value = trash.value;
     final system = value?.system ?? const <TrashedItem>[];
     final pending = value?.pending ?? const <TrashedItem>[];
-    final items = _items = switch (_group) {
-      DesktopTrashGroup.all => [...system, ...pending],
-      DesktopTrashGroup.system => system,
-      DesktopTrashGroup.pending => pending,
-    };
+    final items = _items = [...system, ...pending];
     _report();
     final busy = value?.busy ?? false;
     final hasSelection = _sel.ids.any(
       (id) => items.any((i) => i.trashId == id),
     );
     final locale = Localizations.localeOf(context).toLanguageTag();
-    String summary(List<TrashedItem> list) => l10n.trashSectionSummary(
-      list.length,
-      formatBytes(
-        list.fold(0, (a, i) => a + i.original.sizeBytes),
-        locale: locale,
-      ),
-    );
+    ref.listen(desktopRefreshTickProvider, (_, _) {
+      ref.invalidate(trashControllerProvider);
+    });
+    _publishCommands(hasSelection: hasSelection, busy: busy);
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-          // Narrow (800 px window with the details pane): Restore and
-          // Delete forever become icons with tooltips.
-          child: Builder(
-            builder: (context) {
-              final compact = DesktopLayout.compact(context, ref, 680);
-              return Row(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final g in DesktopTrashGroup.values) ...[
-                            ChoiceChip(
-                              key: ValueKey('trash-group-${g.name}'),
-                              selected: _group == g,
-                              onSelected: (_) => setState(() {
-                                _group = g;
-                                _sel = ExplorerSelection.empty;
-                              }),
-                              label: Text(switch (g) {
-                                DesktopTrashGroup.all => l10n.desktopTrashAll(
-                                  system.length + pending.length,
-                                ),
-                                DesktopTrashGroup.system =>
-                                  l10n.desktopTrashGroup(
-                                    _systemLabel(l10n),
-                                    summary(system),
-                                  ),
-                                DesktopTrashGroup.pending =>
-                                  l10n.desktopTrashGroup(
-                                    l10n.trashPending,
-                                    summary(pending),
-                                  ),
-                              }),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: shortcutHint(
-                      l10n,
-                      l10n.trashRestore,
-                      DesktopKeys.label(DesktopKeys.restore),
-                    ),
-                    child: compact
-                        ? IconButton.filled(
-                            key: const ValueKey('trash-restore'),
-                            onPressed: hasSelection && !busy
-                                ? () => unawaited(_restore())
-                                : null,
-                            icon: const Icon(Icons.restore, size: 18),
-                          )
-                        : FilledButton.icon(
-                            key: const ValueKey('trash-restore'),
-                            onPressed: hasSelection && !busy
-                                ? () => unawaited(_restore())
-                                : null,
-                            icon: const Icon(Icons.restore, size: 18),
-                            label: Text(l10n.trashRestore),
-                          ),
-                  ),
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: shortcutHint(
-                      l10n,
-                      l10n.trashDeleteForever,
-                      DesktopKeys.label(DesktopKeys.delete),
-                    ),
-                    child: compact
-                        ? IconButton.outlined(
-                            key: const ValueKey('trash-delete-forever'),
-                            onPressed: hasSelection && !busy
-                                ? () => unawaited(_deleteForever())
-                                : null,
-                            icon: const Icon(
-                              Icons.delete_forever_outlined,
-                              size: 18,
-                            ),
-                          )
-                        : OutlinedButton.icon(
-                            key: const ValueKey('trash-delete-forever'),
-                            onPressed: hasSelection && !busy
-                                ? () => unawaited(_deleteForever())
-                                : null,
-                            icon: const Icon(
-                              Icons.delete_forever_outlined,
-                              size: 18,
-                            ),
-                            label: Text(l10n.trashDeleteForever),
-                          ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.desktopRefresh,
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () => ref.invalidate(trashControllerProvider),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        const Divider(height: 1),
         Expanded(
           child: switch (trash) {
             AsyncError() => Center(
@@ -367,7 +378,7 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
               layout: ExplorerLayout.details,
               selection: _sel,
               onSelectionChanged: _setSelection,
-              onOpen: (i) => unawaited(_preview(i)),
+              onOpen: (i) => unawaited(_properties(i)),
               onKey: _onKey,
               onContextMenu: (item, at) => unawaited(_contextMenu(item, at)),
               tileBuilder: (context, i, {required extent}) =>
