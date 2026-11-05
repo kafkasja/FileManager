@@ -105,7 +105,7 @@ final class DesktopFolderPresentProvider
 }
 
 String _$desktopFolderPresentHash() =>
-    r'90c1402970ea95ff999bf1fd3953d0f1b7b55bab';
+    r'a8c2af7abcb20eee7c284eea84cab01411d4945c';
 
 /// [folder] exists on disk (re-checked when the index or drives change).
 

@@ -19,6 +19,7 @@ import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/shell/desktop_side_pane.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
 import 'package:kfm/desktop/shell/quick_access.dart';
@@ -776,15 +777,24 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
         label: l10n.desktopCmdView,
         icon: Icons.view_agenda_outlined,
         menu: [
-          for (final (layout, label) in [
-            (ExplorerLayout.largeIcons, l10n.desktopLayoutLargeIcons),
-            (ExplorerLayout.grid, l10n.desktopLayoutGrid),
-            (ExplorerLayout.details, l10n.desktopLayoutDetails),
+          for (final (layout, label, key) in [
+            (
+              ExplorerLayout.largeIcons,
+              l10n.desktopLayoutLargeIcons,
+              keys(DesktopKeys.largeIconsView),
+            ),
+            (ExplorerLayout.grid, l10n.desktopLayoutGrid, null),
+            (
+              ExplorerLayout.details,
+              l10n.desktopLayoutDetails,
+              keys(DesktopKeys.detailsView),
+            ),
           ])
             DesktopCommand(
               id: 'view-${layout.name}',
               label: label,
               icon: Icons.view_list,
+              shortcut: key,
               selected: st.layout == layout,
               onPressed: () => _nav.setLayout(layout),
             ),
@@ -797,12 +807,28 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                 ref.read(desktopNavPaneShownProvider.notifier).toggle(),
           ),
           DesktopCommand(
+            id: 'view-preview-pane',
+            label: l10n.desktopViewPreviewPane,
+            icon: Icons.preview_outlined,
+            shortcut: keys(DesktopKeys.previewPane),
+            selected:
+                ref.read(desktopSidePaneModeProvider) ==
+                DesktopSidePane.preview,
+            onPressed: () => ref
+                .read(desktopSidePaneModeProvider.notifier)
+                .toggle(DesktopSidePane.preview),
+          ),
+          DesktopCommand(
             id: 'view-details-pane',
             label: l10n.desktopViewDetailsPane,
             icon: Icons.vertical_split_outlined,
-            selected: ref.read(desktopDetailsPaneProvider),
-            onPressed: () =>
-                ref.read(desktopDetailsPaneProvider.notifier).toggle(),
+            shortcut: keys(DesktopKeys.detailsPane),
+            selected:
+                ref.read(desktopSidePaneModeProvider) ==
+                DesktopSidePane.details,
+            onPressed: () => ref
+                .read(desktopSidePaneModeProvider.notifier)
+                .toggle(DesktopSidePane.details),
           ),
           DesktopCommand(
             id: 'view-hidden',
@@ -828,10 +854,41 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
           id: 'undo',
           label: l10n.undo,
           icon: Icons.undo,
-          shortcut: 'Ctrl+Z',
+          shortcut: keys(DesktopKeys.undo),
           keepLabel: true,
           onPressed: () => unawaited(_undo()),
         ),
+      DesktopCommand(
+        id: 'more',
+        label: l10n.desktopCmdMore,
+        icon: Icons.more_horiz,
+        menu: [
+          DesktopCommand(
+            id: 'select-all',
+            label: l10n.desktopSelectAll,
+            icon: Icons.select_all,
+            shortcut: keys(DesktopKeys.selectAll),
+            onPressed: () => _explorer.currentState?.selectAll(),
+          ),
+          DesktopCommand(
+            id: 'quick-look',
+            label: l10n.desktopQuickLook,
+            icon: Icons.visibility_outlined,
+            shortcut: keys(DesktopKeys.quickLook),
+            onPressed: files.isEmpty ? null : () => unawaited(_quickLook()),
+          ),
+          DesktopCommand(
+            id: 'properties',
+            label: l10n.desktopProperties,
+            icon: Icons.info_outline,
+            shortcut: keys(DesktopKeys.properties),
+            onPressed: files.length == 1
+                ? () =>
+                      unawaited(showFileProperties(context, ref, files.single))
+                : null,
+          ),
+        ],
+      ),
       if (any)
         DesktopCommand(
           id: 'copy-path',

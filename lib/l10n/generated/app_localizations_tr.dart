@@ -8308,4 +8308,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String desktopDiskCapped(int count) {
     return 'Bu klasördeki ilk $count dosya gösteriliyor.';
   }
+
+  @override
+  String get desktopPreviewNothing => 'Önizlemek için bir dosya seçin';
+
+  @override
+  String get desktopCmdMore => 'Daha fazla';
+
+  @override
+  String get desktopSelectAll => 'Tümünü seç';
 }

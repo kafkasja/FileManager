@@ -8368,4 +8368,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String desktopDiskCapped(int count) {
     return 'De eerste $count bestanden van deze map worden getoond.';
   }
+
+  @override
+  String get desktopPreviewNothing =>
+      'Selecteer een bestand om het te bekijken';
+
+  @override
+  String get desktopCmdMore => 'Meer';
+
+  @override
+  String get desktopSelectAll => 'Alles selecteren';
 }

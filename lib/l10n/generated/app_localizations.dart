@@ -11594,6 +11594,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Showing the first {count} files of this folder.'**
   String desktopDiskCapped(int count);
+
+  /// E3: Preview pane with nothing selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a file to preview it'**
+  String get desktopPreviewNothing;
+
+  /// E3: command bar: more actions menu.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get desktopCmdMore;
+
+  /// E3: More menu: select every item (Ctrl+A).
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get desktopSelectAll;
 }
 
 class _AppLocalizationsDelegate

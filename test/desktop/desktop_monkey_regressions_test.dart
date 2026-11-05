@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
-import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/shell/desktop_side_pane.dart';
 
 import 'desktop_helpers.dart';
 
@@ -28,7 +28,9 @@ void main() {
     ) async {
       final app = await pumpDesktopApp(tester, files: desktopLibrary(3));
       tester.view.physicalSize = const Size(800, 600);
-      app.container.read(desktopDetailsPaneProvider.notifier).toggle();
+      app.container
+          .read(desktopSidePaneModeProvider.notifier)
+          .toggle(DesktopSidePane.details);
       await tester.pumpAndSettle();
       if (section != 'sort') {
         await tester.tap(find.byKey(ValueKey('desktop-nav-$section')).first);

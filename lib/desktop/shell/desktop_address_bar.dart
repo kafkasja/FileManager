@@ -310,21 +310,29 @@ class DesktopAddressBarState extends ConsumerState<DesktopAddressBar> {
               ),
             ],
           )
-        : Semantics(
-            button: true,
-            label: l10n.desktopAddressLabel,
-            child: GestureDetector(
-              key: const ValueKey('desktop-address-crumbs'),
-              behavior: HitTestBehavior.opaque,
-              onTap: edit,
-              child: Container(
-                height: scaledExtent(context, 32),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(6),
+        : Tooltip(
+            message: shortcutHint(
+              l10n,
+              l10n.desktopAddressLabel,
+              DesktopKeys.label(DesktopKeys.addressBar),
+            ),
+            waitDuration: const Duration(milliseconds: 800),
+            child: Semantics(
+              button: true,
+              label: l10n.desktopAddressLabel,
+              child: GestureDetector(
+                key: const ValueKey('desktop-address-crumbs'),
+                behavior: HitTestBehavior.opaque,
+                onTap: edit,
+                child: Container(
+                  height: scaledExtent(context, 32),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  alignment: AlignmentDirectional.centerStart,
+                  child: crumbs,
                 ),
-                alignment: AlignmentDirectional.centerStart,
-                child: crumbs,
               ),
             ),
           );
@@ -386,18 +394,26 @@ class DesktopAddressBarState extends ConsumerState<DesktopAddressBar> {
             SizedBox(
               width: 260,
               height: scaledExtent(context, 32),
-              child: TextField(
-                key: const ValueKey('desktop-search'),
-                controller: _search,
-                focusNode: widget.searchFocus,
-                textInputAction: TextInputAction.search,
-                onSubmitted: _searchSubmit,
-                style: theme.textTheme.bodyMedium,
-                decoration: field.copyWith(
-                  hintText: scopeName == null
-                      ? l10n.searchHint
-                      : l10n.desktopSearchIn(scopeName),
-                  prefixIcon: const Icon(Icons.search, size: 18),
+              child: Tooltip(
+                message: shortcutHint(
+                  l10n,
+                  l10n.searchHint,
+                  DesktopKeys.label(DesktopKeys.find),
+                ),
+                waitDuration: const Duration(milliseconds: 800),
+                child: TextField(
+                  key: const ValueKey('desktop-search'),
+                  controller: _search,
+                  focusNode: widget.searchFocus,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: _searchSubmit,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: field.copyWith(
+                    hintText: scopeName == null
+                        ? l10n.searchHint
+                        : l10n.desktopSearchIn(scopeName),
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                  ),
                 ),
               ),
             ),

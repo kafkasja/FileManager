@@ -176,9 +176,8 @@ void main() {
           ),
       ], capped: true),
       overrides: [
-        desktopFolderIndexedProvider(
-          '/s/Other',
-        ).overrideWith((ref) async => false),
+        desktopFolderIndexedProvider('/s/Other')
+            .overrideWith((ref) async => false),
       ],
     );
     app.container
@@ -188,6 +187,34 @@ void main() {
     expect(find.text('d0.txt'), findsOneWidget);
     expect(find.text('o.jpg'), findsOneWidget);
     expect(find.byKey(const ValueKey('browse-disk-capped')), findsOneWidget);
+  });
+
+  testWidgets('Alt+P shows the Preview pane of the focused file', (
+    tester,
+  ) async {
+    final app = await pumpDesktopApp(tester, files: _library());
+    app.container
+        .read(desktopTabsControllerProvider.notifier)
+        .navigate(const FolderLocation('/s/DCIM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('a.jpg'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.pumpAndSettle();
+    final pane = find.byKey(const ValueKey('desktop-preview-pane'));
+    expect(pane, findsOneWidget);
+    expect(
+      find.descendant(of: pane, matching: find.text('a.jpg')),
+      findsOneWidget,
+    );
+    // Alt+P again hides it.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.pumpAndSettle();
+    expect(pane, findsNothing);
   });
 
   group('address bar', () {

@@ -8298,4 +8298,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopDiskCapped(int count) {
     return 'Showing the first $count files of this folder.';
   }
+
+  @override
+  String get desktopPreviewNothing => 'Select a file to preview it';
+
+  @override
+  String get desktopCmdMore => 'More';
+
+  @override
+  String get desktopSelectAll => 'Select all';
 }

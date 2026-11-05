@@ -239,9 +239,15 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
         onSelected: () => _favorite(deck),
       ),
       DesktopMenuEntry(
+        label: l10n.desktopQuickLook,
+        icon: Icons.visibility_outlined,
+        shortcut: DesktopKeys.label(DesktopKeys.quickLook),
+        divider: true,
+        onSelected: () => unawaited(_quickLook(deck, entries)),
+      ),
+      DesktopMenuEntry(
         label: l10n.desktopBrowseOpen,
         icon: Icons.open_in_new,
-        divider: true,
         onSelected: () => unawaited(openOrExplain(context, ref, files.first)),
       ),
       ...fileLocationMenuEntries(context, ref, files),
@@ -708,7 +714,11 @@ class _Toolbar extends ConsumerWidget {
               if (compact)
                 IconButton.filledTonal(
                   key: const ValueKey('sort-undo'),
-                  tooltip: l10n.undo,
+                  tooltip: shortcutHint(
+                    l10n,
+                    l10n.undo,
+                    DesktopKeys.label(DesktopKeys.undo),
+                  ),
                   onPressed: undoable > 0 && !undoing ? onUndo : null,
                   icon: undoing
                       ? const SizedBox.square(

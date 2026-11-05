@@ -395,6 +395,9 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
 
   void requestFocus() => _focus.requestFocus();
 
+  /// Ctrl+A from a menu (E3: More ▾ → Select all).
+  void selectAll() => _select(_s.selectAll(_order));
+
   // --- pointer -------------------------------------------------------------
 
   void _onItemDown(PointerDownEvent e, T item) {
