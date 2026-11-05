@@ -53,6 +53,40 @@ class _FakeRoots implements WindowsIndexRoots {
 
   @override
   Future<Map<KnownFolder, String>> knownFolders() async => const {};
+
+  // E2 §6: the section lists the chosen folders.
+  @override
+  Future<List<String>> chosen() async => _roots;
+
+  @override
+  Stream<List<String>> watchChosen() => watch();
+
+  @override
+  Future<IndexScope> scope() async => currentScope;
+
+  IndexScope currentScope = IndexScope.chosenFolders;
+  final _scopes = StreamController<IndexScope>.broadcast();
+
+  @override
+  Stream<IndexScope> watchScope() async* {
+    yield currentScope;
+    yield* _scopes.stream;
+  }
+
+  @override
+  Future<void> setScope(IndexScope scope) async {
+    currentScope = scope;
+    _scopes.add(scope);
+  }
+
+  @override
+  Future<List<String>> everywhere() async => const [];
+
+  @override
+  List<String> get openFolders => const [];
+
+  @override
+  void setOpenFolders(List<String> folders) {}
 }
 
 void main() {
@@ -73,7 +107,7 @@ void main() {
   });
   tearDown(() => dir.deleteSync(recursive: true));
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {bool look = false}) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -86,7 +120,11 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
-            body: WindowsRootsSection(onRootsChanged: (_) => rescans++),
+            body: look
+                ? SingleChildScrollView(
+                    child: LookEverywhereRows(onScopeChanged: (_) => rescans++),
+                  )
+                : WindowsRootsSection(onRootsChanged: (_) => rescans++),
           ),
         ),
       ),
@@ -135,5 +173,48 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(shown(normalizeWindowsPath(extra.path))), findsOneWidget);
     expect(rescans, 1);
+  });
+
+  group('Look everywhere (E2 §6)', () {
+    testWidgets('on: explains itself; off asks first, then only open folders', (
+      tester,
+    ) async {
+      roots.currentScope = IndexScope.everywhere;
+      await pump(tester, look: true);
+      final sw = find.byKey(const ValueKey('look-everywhere'));
+      expect(tester.widget<SwitchListTile>(sw).value, isTrue);
+      expect(
+        find.textContaining('never uploads, changes or moves'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('look-choose-folders')), findsOneWidget);
+
+      await tester.tap(sw);
+      await tester.pumpAndSettle();
+      expect(find.text('Only look where you are?'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('look-everywhere-off-confirm')),
+      );
+      await tester.pumpAndSettle();
+      expect(roots.currentScope, IndexScope.whereIAm);
+      expect(tester.widget<SwitchListTile>(sw).value, isFalse);
+      expect(
+        find.textContaining('only looks in the folder you have open'),
+        findsOneWidget,
+      );
+      expect(rescans, 1);
+    });
+
+    testWidgets('Choose folders instead… shows the chosen list', (
+      tester,
+    ) async {
+      roots.currentScope = IndexScope.everywhere;
+      await pump(tester, look: true);
+      await tester.tap(find.byKey(const ValueKey('look-choose-folders')));
+      await tester.pumpAndSettle();
+      expect(roots.currentScope, IndexScope.chosenFolders);
+      expect(find.text(shown(pics)), findsOneWidget);
+      expect(find.text('Add folder'), findsOneWidget);
+    });
   });
 }

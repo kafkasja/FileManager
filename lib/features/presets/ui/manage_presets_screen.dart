@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
+import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
@@ -29,6 +30,10 @@ class ManagePresetsScreen extends ConsumerWidget {
     final presets = ref.watch(presetsProvider);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsPresets)),
+      floatingActionButtonLocation: thumbFabLocation(
+        handednessOf(ref),
+        Directionality.of(context),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: Text(l10n.presetNew),

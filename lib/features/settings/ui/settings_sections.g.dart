@@ -8,14 +8,20 @@ part of 'settings_sections.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Every Settings section, sorted by [SettingsSection.order]. Add one line
-/// per feature.
+/// The 9 Settings sections (TASK-E2 §2), sorted by [SettingsSection.order].
+/// Features own their [SettingsEntry]s; add an entry to its section here.
+/// Rules (`settings_structure_test.dart`, per form factor): ≥ 2 entries per
+/// shown section, unique ids, a description unless self-explanatory, no
+/// phone-only rows on desktop.
 
 @ProviderFor(settingsSections)
 final settingsSectionsProvider = SettingsSectionsProvider._();
 
-/// Every Settings section, sorted by [SettingsSection.order]. Add one line
-/// per feature.
+/// The 9 Settings sections (TASK-E2 §2), sorted by [SettingsSection.order].
+/// Features own their [SettingsEntry]s; add an entry to its section here.
+/// Rules (`settings_structure_test.dart`, per form factor): ≥ 2 entries per
+/// shown section, unique ids, a description unless self-explanatory, no
+/// phone-only rows on desktop.
 
 final class SettingsSectionsProvider
     extends
@@ -25,8 +31,11 @@ final class SettingsSectionsProvider
           List<SettingsSection>
         >
     with $Provider<List<SettingsSection>> {
-  /// Every Settings section, sorted by [SettingsSection.order]. Add one line
-  /// per feature.
+  /// The 9 Settings sections (TASK-E2 §2), sorted by [SettingsSection.order].
+  /// Features own their [SettingsEntry]s; add an entry to its section here.
+  /// Rules (`settings_structure_test.dart`, per form factor): ≥ 2 entries per
+  /// shown section, unique ids, a description unless self-explanatory, no
+  /// phone-only rows on desktop.
   SettingsSectionsProvider._()
     : super(
         from: null,
@@ -61,4 +70,4 @@ final class SettingsSectionsProvider
   }
 }
 
-String _$settingsSectionsHash() => r'0143f6a6ecc98e7356bff25aaf4097d5511b1d41';
+String _$settingsSectionsHash() => r'76bc00bd25fbf0d4ba6aaa6a31dee8dafa7b6ba4';

@@ -121,12 +121,29 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('desktop-nav-settings')));
     await tester.pumpAndSettle();
     expect(find.byType(DesktopSettingsScreen), findsOneWidget);
-    // Appearance (100) is open first; Permissions (400) is phone-only.
-    expect(find.byKey(const ValueKey('settings-pane-100')), findsOneWidget);
-    expect(find.byKey(const ValueKey('settings-cat-400')), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('settings-cat-300')));
+    // General is open first, Swiping is called Sorting, and phone-only rows
+    // (vibration, swipe directions, permissions) are hidden.
+    expect(find.byKey(const ValueKey('settings-pane-general')), findsOneWidget);
+    expect(find.text('Sorting'), findsOneWidget);
+    expect(find.text('Swiping'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-cat-a11y')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('settings-pane-300')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-pane-a11y')), findsOneWidget);
+    expect(find.byKey(const ValueKey('setting-a11y.textSize')), findsOneWidget);
+    expect(find.byKey(const ValueKey('setting-a11y.haptics')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-cat-swipe')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('setting-swipe.presets')), findsOneWidget);
+    expect(find.byKey(const ValueKey('setting-swipe.customize')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-cat-privacy')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('setting-privacy.permissions')),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const ValueKey('settings-cat-about')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('setting-about.backup')), findsNothing);
   });
 
   testWidgets('Devices: start choices, remembered devices and transfers', (

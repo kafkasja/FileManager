@@ -22,8 +22,9 @@ Widget desktopBrowseScreen() => const DesktopBrowseScreen();
 /// Trash: Details list of the system trash and the pending folder.
 Widget desktopTrashScreen() => const DesktopTrashScreen();
 
-/// Settings: categories left, content right.
-Widget desktopSettingsScreen() => const DesktopSettingsScreen();
+/// Settings: categories left, content right; [entry] = deep link (E2).
+Widget desktopSettingsScreen({String? entry}) =>
+    DesktopSettingsScreen(entry: entry);
 
 /// Devices: share / receive / type a code, devices, transfers (branch 4).
 StatefulShellBranch desktopDevicesBranch() => StatefulShellBranch(

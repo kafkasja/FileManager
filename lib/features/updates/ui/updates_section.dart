@@ -6,12 +6,27 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/updates/data/update_checker.dart';
 import 'package:kfm/features/updates/domain/update_status.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
-/// Settings → Updates (TASK-X7): the opt-in daily check, "Check now" (works
-/// with the switch off) and the installed version.
+/// Settings → General (TASK-X7, E2): the opt-in daily check and "Check
+/// now" (works with the switch off) with the installed version.
+final updatesEntry = SettingsEntry(
+  id: 'general.updates',
+  titleBuilder: (c) => c.l10n.updatesCheckSetting,
+  subtitleBuilder: (c) => c.l10n.updatesCheckSettingHelp,
+  builder: (_) => const UpdatesSettingsSection(),
+);
+
+final updatesNowEntry = SettingsEntry(
+  id: 'general.updatesNow',
+  titleBuilder: (c) => c.l10n.updatesCheckNow,
+  selfExplanatory: true,
+  builder: (_) => const UpdatesCheckNowRow(),
+);
+
 class UpdatesSettingsSection extends ConsumerWidget {
   const new({super.key});
 
@@ -19,32 +34,38 @@ class UpdatesSettingsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final enabled = ref.watch(updateCheckEnabledProvider).value ?? false;
+    return SwitchListTile(
+      key: const ValueKey('updates-check-enabled'),
+      secondary: const Icon(Icons.system_update_outlined),
+      title: Text(l10n.updatesCheckSetting),
+      subtitle: Text(l10n.updatesCheckSettingHelp),
+      value: enabled,
+      onChanged: (v) => ref
+          .read(settingsRepositoryProvider)
+          .write(AppSettings.updateCheckEnabled, v)
+          .fireAndForget(),
+    );
+  }
+}
+
+/// "Check now" with the last result or the installed version.
+class UpdatesCheckNowRow extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final status = ref.watch(updateCheckerProvider);
     final current = ref.watch(currentAppVersionProvider);
-    return Column(
-      children: [
-        SwitchListTile(
-          key: const ValueKey('updates-check-enabled'),
-          secondary: const Icon(Icons.system_update_outlined),
-          title: Text(l10n.updatesCheckSetting),
-          subtitle: Text(l10n.updatesCheckSettingHelp),
-          value: enabled,
-          onChanged: (v) => ref
-              .read(settingsRepositoryProvider)
-              .write(AppSettings.updateCheckEnabled, v)
-              .fireAndForget(),
-        ),
-        ListTile(
-          key: const ValueKey('updates-check-now'),
-          leading: const Icon(Icons.refresh),
-          title: Text(l10n.updatesCheckNow),
-          subtitle: Text(
-            _statusLine(l10n, status) ?? l10n.updatesCurrentVersion('$current'),
-          ),
-          enabled: status is! UpdateChecking,
-          onTap: () => unawaited(_checkNow(context, ref)),
-        ),
-      ],
+    return ListTile(
+      key: const ValueKey('updates-check-now'),
+      leading: const Icon(Icons.refresh),
+      title: Text(l10n.updatesCheckNow),
+      subtitle: Text(
+        _statusLine(l10n, status) ?? l10n.updatesCurrentVersion('$current'),
+      ),
+      enabled: status is! UpdateChecking,
+      onTap: () => unawaited(_checkNow(context, ref)),
     );
   }
 

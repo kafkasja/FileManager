@@ -369,10 +369,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteModeTrash => 'Move to trash (recommended)';
 
   @override
-  String get deleteModeTrashHelp =>
-      'Swiped files go to the phone\'s trash and can be restored.';
-
-  @override
   String get deleteModePermanent => 'Delete permanently';
 
   @override
@@ -2036,10 +2032,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHighlightBig => 'Highlight big files';
 
   @override
-  String get settingsHighlightBigHelp =>
-      'Files of 100 MB or more get a red size label';
-
-  @override
   String selectionCount(int count, String size) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2236,21 +2228,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSameTimeWindow => 'Same time window';
-
-  @override
-  String get settingsSameTimeWindowHelp =>
-      'Browse → Same time groups photos and videos taken within this many seconds';
-
-  @override
-  String seconds(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count seconds',
-      one: '1 second',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get fileMenuTooltip => 'File actions';
@@ -3061,10 +3038,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get similarStartTitle => 'Find similar and blurry photos';
 
   @override
-  String get similarStartBody =>
-      'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.';
-
-  @override
   String get similarStart => 'Start';
 
   @override
@@ -3302,9 +3275,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLabelsTitle => 'Photo labels (AI)';
 
   @override
-  String get aiLabelsEnable => 'Label photos on this phone';
-
-  @override
   String get aiLabelsEnableHint =>
       'Find photos by what\'s in them, like cat, beach or food';
 
@@ -3367,15 +3337,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLabelsResetAction => 'Reset';
 
   @override
-  String get aiLabelsHelp =>
-      'Runs on this phone only. No photo or result ever leaves it.';
-
-  @override
   String get aiLabelsJobError =>
       'The AI models are missing or changed, so labeling stopped. Download them again.';
-
-  @override
-  String get aiLabelsWorkerError => 'Labeling couldn\'t start on this phone.';
 
   @override
   String get aiLabelsCrashError =>
@@ -3390,10 +3353,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiLabelsCardTitle =>
       'Find photos by what\'s in them (cat, beach, food…)';
-
-  @override
-  String get aiLabelsCardBody =>
-      'KFM can label your photos on this phone. Nothing is uploaded.';
 
   @override
   String get aiLabelsCardTurnOn => 'Turn on';
@@ -3542,15 +3501,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiModelsHowTitle => 'How it works';
 
   @override
-  String get aiModelsHowBody =>
-      'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.';
-
-  @override
   String get aiModelsPrivacyTitle => 'Privacy';
-
-  @override
-  String get aiModelsPrivacyBody =>
-      'Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.';
 
   @override
   String get aiModelsBatteryBody =>
@@ -3791,9 +3742,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailsModified => 'Modified';
-
-  @override
-  String get detailsAdded => 'Added to phone';
 
   @override
   String get detailsTaken => 'Taken';
@@ -5181,17 +5129,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLogShare => 'Share error log';
 
   @override
-  String errorLogShareSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count errors',
-      one: '1 error',
-    );
-    return '$_temp0. Stays on this phone until you share it. Folder and file names are hidden.';
-  }
-
-  @override
   String get errorLogEmpty => 'No errors logged';
 
   @override
@@ -5242,10 +5179,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get leftHandedTitle => 'Left-handed';
-
-  @override
-  String get leftHandedSubtitle =>
-      'Moves Undo and bottom buttons to the other side. Swipe directions don\'t change.';
 
   @override
   String get textSizeLabel => 'Text size';
@@ -5441,10 +5374,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location couldn\'t be removed, so it wasn\'t sent';
 
   @override
-  String get privacyTransferNote =>
-      'Location info is removed (Settings → Privacy)';
-
-  @override
   String get privacyMoveWarningTitle => 'Move without location?';
 
   @override
@@ -5617,9 +5546,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalSwipeFolderEmpty => 'No photos or videos in this folder';
-
-  @override
-  String get transfersLocalSection => 'On this phone';
 
   @override
   String get externalNoJobs =>
@@ -6918,10 +6844,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cloudShowBadge => 'Show cloud icon';
 
   @override
-  String get cloudBadgeHelp =>
-      'The cloud icon means KFM handed this file to your cloud app. It\'s saved on this phone, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.';
-
-  @override
   String cloudInfoUploaded(String destination, String date) {
     return 'Uploaded by KFM to $destination · $date';
   }
@@ -6976,9 +6898,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return 'This drive has no Recycle Bin. Delete $_temp0 permanently?';
   }
-
-  @override
-  String get windowsRootsTitle => 'Folders KFM scans';
 
   @override
   String get windowsRootsHint =>
@@ -7873,4 +7792,505 @@ class AppLocalizationsEn extends AppLocalizations {
   String trashEmptyBody(String size) {
     return '$size will be deleted, including files still waiting in KFM. This can\'t be undone.';
   }
+
+  @override
+  String get settingsGeneral => 'General';
+
+  @override
+  String get settingsSorting => 'Sorting';
+
+  @override
+  String get settingsFilesDisplay => 'Files & display';
+
+  @override
+  String get settingsSmart => 'Smart features';
+
+  @override
+  String get settingsStorageCleanup => 'Storage & cleanup';
+
+  @override
+  String get settingsConnectSharing => 'Connect & sharing';
+
+  @override
+  String get settingsPrivacyAccess => 'Privacy & access';
+
+  @override
+  String get settingsAboutAdvanced => 'About & advanced';
+
+  @override
+  String get thumbCacheHelp =>
+      'Small previews KFM saves so folders open fast. Clear frees the space; your files aren\'t touched and the previews come back when needed.';
+
+  @override
+  String get errorLogHelp =>
+      'Errors KFM ran into, without file names or paths. Share it to report a problem.';
+
+  @override
+  String get devSettingsHelp =>
+      'Index tools for checking KFM on a device (debug builds only).';
+
+  @override
+  String get settingsShowSessionSummaryHelp =>
+      'After Done, a short overview of what you kept, deleted and moved.';
+
+  @override
+  String get reviewedResetHelp =>
+      'Files you already sorted show up as new again. Nothing is deleted.';
+
+  @override
+  String get settingsFreshStartHelp =>
+      'Choose what to clear: the current session, history, tags or everything.';
+
+  @override
+  String get tutorialShowAgainHelp =>
+      'The short swipe tutorial and the one-time tips once more.';
+
+  @override
+  String get settingsDropActionHelp =>
+      'What happens when you drag files onto a folder.';
+
+  @override
+  String get storageBigFileThresholdHelp =>
+      'Used by the big-file highlight and Storage → Big files.';
+
+  @override
+  String get settingsDeleteMode => 'When you delete';
+
+  @override
+  String get settingsDeleteModeHelp =>
+      'Move deleted files to the trash, or delete them for good.';
+
+  @override
+  String get settingsPermissionsHelp =>
+      'What KFM may read on this phone, and a button to change it.';
+
+  @override
+  String get backupRestoreTitle => 'Backup & restore';
+
+  @override
+  String get backupRestoreHelp =>
+      'Moves your tags, favorites, presets and settings to another device. Files are not copied.';
+
+  @override
+  String get cloudDestinationsHelp =>
+      'Cloud apps on this device that KFM can send files to.';
+
+  @override
+  String get connectADevice => 'Connect a device';
+
+  @override
+  String get connectADeviceHelp =>
+      'See and send files between your phone and PC over Wi-Fi.';
+
+  @override
+  String get transfersSettingHelp =>
+      'Every Wi-Fi transfer, running and finished.';
+
+  @override
+  String get privacyDevicesTitle => 'Devices that can see your files';
+
+  @override
+  String get privacyDevicesHelp =>
+      'Remembered devices and what they may do. Forget one to block it.';
+
+  @override
+  String get privacyNeverTitle => 'What KFM never does';
+
+  @override
+  String get privacyNeverBody =>
+      'No ads, no account, no tracking. KFM never uploads your files: only devices you connect and cloud apps you choose get them.';
+
+  @override
+  String get a11yScreenReaderTitle => 'Screen readers';
+
+  @override
+  String get a11yScreenReaderBody =>
+      'File tiles read their name, type, size and date. Swipe cards offer their actions in the actions menu.';
+
+  @override
+  String get settingsKeywordsTheme => 'dark,light,night,mode,appearance';
+
+  @override
+  String get settingsKeywordsAccent => 'colour,color,accent';
+
+  @override
+  String get settingsKeywordsTextSize => 'font,big text,zoom,larger';
+
+  @override
+  String get settingsKeywordsThumbCache => 'cache,previews,space,free up';
+
+  @override
+  String get settingsKeywordsVersion => 'version,about,app';
+
+  @override
+  String get settingsKeywordsPermissions => 'permission,access,allow,storage';
+
+  @override
+  String get settingsKeywordsSimilar => 'duplicates,blurry,similar';
+
+  @override
+  String get settingsKeywordsAiLabels =>
+      'ai,labels,recognition,models,download';
+
+  @override
+  String get settingsKeywordsLocation => 'location,gps,place,exif';
+
+  @override
+  String get settingsKeywordsBackup => 'export,import,restore,backup';
+
+  @override
+  String get settingsKeywordsCloud => 'cloud,drive,onedrive,upload';
+
+  @override
+  String get settingsKeywordsConnect => 'share,wifi,pc,phone,qr,send';
+
+  @override
+  String get settingsKeywordsPrivacy => 'privacy,tracking,ads,upload';
+
+  @override
+  String get settingsKeywordsScreenReader =>
+      'talkback,narrator,blind,screen reader';
+
+  @override
+  String get settingsKeywordsBigFiles => 'big,large,size,threshold';
+
+  @override
+  String get settingsSearchHint => 'Search settings';
+
+  @override
+  String get settingsSearchClear => 'Clear search';
+
+  @override
+  String get settingsSearchEmpty => 'No setting matches. Try another word.';
+
+  @override
+  String get privacyTransferNote =>
+      'Location info is removed (Settings → Privacy & access)';
+
+  @override
+  String durationShortSeconds(int count) {
+    return '$count s';
+  }
+
+  @override
+  String durationShortMinutes(int count) {
+    return '$count min';
+  }
+
+  @override
+  String durationShortMinutesSeconds(int minutes, int seconds) {
+    return '$minutes min $seconds s';
+  }
+
+  @override
+  String durationShortHours(int count) {
+    return '$count h';
+  }
+
+  @override
+  String durationShortHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String get unitSecondsShort => 's';
+
+  @override
+  String get unitMinutesShort => 'min';
+
+  @override
+  String get unitHoursShort => 'h';
+
+  @override
+  String get unitMegabytesShort => 'MB';
+
+  @override
+  String get unitGigabytesShort => 'GB';
+
+  @override
+  String get unitInputAmount => 'Amount';
+
+  @override
+  String unitInputRange(String min, String max) {
+    return 'Enter a value from $min to $max';
+  }
+
+  @override
+  String get unitInputSave => 'Save';
+
+  @override
+  String bigFileThresholdLine(String size) {
+    return 'Files of $size or more count as big';
+  }
+
+  @override
+  String get settingsHighlightBigLine =>
+      'Big files get a red size label, even with sizes off';
+
+  @override
+  String get settingsSameTimeWindowAbout =>
+      'Browse → Same time groups photos and videos taken this close together';
+
+  @override
+  String sameTimeWindowLine(String time) {
+    return 'Photos and videos taken within $time of each other are grouped';
+  }
+
+  @override
+  String get deleteModeTrashHelpDevice =>
+      'Deleted files go to the trash and can be restored.';
+
+  @override
+  String similarStartBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.',
+      'pc': 'KFM checks your photos on this PC, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the PC and nothing is removed unless you choose it.',
+      'other': 'KFM checks your photos on this device, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the device and nothing is removed unless you choose it.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsEnableOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Label photos on this phone',
+      'pc': 'Label photos on this PC',
+      'other': 'Label photos on this device',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsHelpOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Runs on this phone only. No photo or result ever leaves it.',
+      'pc': 'Runs on this PC only. No photo or result ever leaves it.',
+      'other': 'Runs on this device only. No photo or result ever leaves it.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsWorkerErrorOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Labeling couldn\'t start on this phone.',
+      'pc': 'Labeling couldn\'t start on this PC.',
+      'other': 'Labeling couldn\'t start on this device.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsCardBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM can label your photos on this phone. Nothing is uploaded.',
+      'pc': 'KFM can label your photos on this PC. Nothing is uploaded.',
+      'other': 'KFM can label your photos on this device. Nothing is uploaded.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsHowBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.',
+      'pc': 'Each photo\'s small thumbnail is analysed on this PC, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.',
+      'other': 'Each photo\'s small thumbnail is analysed on this device, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsPrivacyBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Runs fully on this phone. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.',
+      'pc': 'Runs fully on this PC. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.',
+      'other': 'Runs fully on this device. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String detailsAddedOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Added to phone',
+      'pc': 'Added to PC',
+      'other': 'Added to device',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String errorLogShareSubtitleOn(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    String _temp3 = intl.Intl.selectLogic(device, {
+      'phone':
+          '$_temp0. Stays on this phone until you share it. Folder and file names are hidden.',
+      'pc':
+          '$_temp1. Stays on this PC until you share it. Folder and file names are hidden.',
+      'other':
+          '$_temp2. Stays on this device until you share it. Folder and file names are hidden.',
+    });
+    return '$_temp3';
+  }
+
+  @override
+  String transfersLocalSectionOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'On this phone',
+      'pc': 'On this PC',
+      'other': 'On this device',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudBadgeHelpDevice =>
+      'The cloud icon means KFM handed this file to your cloud app. KFM remembers that here, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.';
+
+  @override
+  String get aiLabelsUnsupportedWindows =>
+      'Not available on Windows yet. On Android, KFM can find photos by what\'s in them.';
+
+  @override
+  String get aiModelsDownloadInline => 'Download';
+
+  @override
+  String get aiModelsHowItWorks => 'How it works';
+
+  @override
+  String get whereKfmLooksTitle => 'Where KFM looks';
+
+  @override
+  String get whereKfmLooksHelp =>
+      'The private list of your files that Search, Sort and Storage use. It never leaves this device.';
+
+  @override
+  String get whereKfmLooksPhoneBody =>
+      'KFM keeps a private list of the photos, videos and files Android shows it, so Search, Swipe and Storage cover your whole phone. The list stays on this phone and is never uploaded. KFM never changes or moves anything by looking.';
+
+  @override
+  String get lookEverywhereTitle => 'Look everywhere';
+
+  @override
+  String get lookEverywhereOnHelp =>
+      'KFM keeps a private list of your photos, videos and files on this PC so Search, Sort, Storage and Similar photos cover everything. The list stays on this PC. KFM never uploads, changes or moves anything by looking, and skips Windows and program folders.';
+
+  @override
+  String get lookEverywhereOffHelp =>
+      'KFM only looks in the folder you have open. Search and Sort cover that folder.';
+
+  @override
+  String get lookEverywhereChosenHelp =>
+      'KFM only looks in the folders below. Turn this on to cover all your files.';
+
+  @override
+  String get lookEverywhereChoose => 'Choose folders instead…';
+
+  @override
+  String get lookEverywhereOffConfirmTitle => 'Only look where you are?';
+
+  @override
+  String get lookEverywhereOffConfirmBody =>
+      'Search and Sort will only cover folders you open. Tags, favorites and reviewed marks are kept.';
+
+  @override
+  String get lookEverywhereOffConfirm => 'Only open folders';
+
+  @override
+  String get settingsKeywordsIndex =>
+      'index,scan,folders,look everywhere,search';
+
+  @override
+  String get languageStepTitle => 'Choose your language';
+
+  @override
+  String get languageStepBody =>
+      'You can change it later in Settings → General.';
+
+  @override
+  String languageSystemNamed(String language) {
+    return 'System ($language)';
+  }
+
+  @override
+  String get languageStepContinue => 'Continue';
+
+  @override
+  String get leftHandedThumbHelp =>
+      'Puts Undo, the main buttons and the selection bar on the left, where your thumb is. Swipe directions don\'t change.';
+
+  @override
+  String get reduceMotionTitle => 'Reduce motion';
+
+  @override
+  String get reduceMotionHelp =>
+      'Swiped cards fade instead of flying away, and screens change without sliding. Also follows the system setting.';
+
+  @override
+  String get highContrastTitle => 'High contrast';
+
+  @override
+  String get highContrastHelp =>
+      'Stronger colors for text, buttons and outlines. Also follows the system setting.';
+
+  @override
+  String get backupSettingReduceMotion => 'Reduce motion';
+
+  @override
+  String get backupSettingHighContrast => 'High contrast';
+
+  @override
+  String get settingsKeywordsMotion => 'animation,motion,vestibular,fade';
+
+  @override
+  String get settingsKeywordsContrast => 'contrast,colors,low vision';
+
+  @override
+  String a11yFileLabel(String name, String kind, String size, String date) {
+    return '$name, $kind, $size, $date';
+  }
+
+  @override
+  String get a11yKindAudio => 'Audio';
+
+  @override
+  String get a11yKindDocument => 'Document';
+
+  @override
+  String a11yKindDocumentExt(String ext) {
+    return '$ext document';
+  }
+
+  @override
+  String get a11yKindArchive => 'Archive';
+
+  @override
+  String get a11yKindFile => 'File';
+
+  @override
+  String a11yKindFileExt(String ext) {
+    return '$ext file';
+  }
+
+  @override
+  String get desktopFileIconsHint =>
+      'How files and folders look in the lists: Windows\' own icons or KFM\'s.';
 }

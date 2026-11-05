@@ -7,7 +7,18 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/privacy/data/privacy_providers.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/smart_groups/data/smart_groups_providers.dart';
+
+/// Settings → Privacy & access (TASK-X2, E2): location removal plus, while
+/// KFM can't read photo locations, the access row (also used by Groups).
+final stripLocationEntry = SettingsEntry(
+  id: 'privacy.location',
+  titleBuilder: (c) => c.l10n.privacyStripLocation,
+  subtitleBuilder: (c) => c.l10n.privacyStripLocationHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsLocation,
+  builder: (_) => const PrivacySettingsSection(),
+);
 
 /// Settings → Privacy (TASK-X2): "Remove location when sharing" (off by
 /// default), and while KFM can't read photo locations a note plus the row

@@ -43,7 +43,7 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
   });
 
-  testWidgets('left-handed: the Sort action buttons are mirrored', (
+  testWidgets('E2: desktop has no thumb, left-handed changes nothing', (
     tester,
   ) async {
     final app = await pumpDesktopApp(tester, files: desktopLibrary(2));
@@ -54,7 +54,7 @@ void main() {
         .write(AppSettings.leftHanded, true);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
-    expect(x('sort-action-keep'), lessThan(x('sort-action-trash')));
+    expect(x('sort-action-trash'), lessThan(x('sort-action-keep')));
   });
 
   testWidgets('Browse remembers its layout and sort', (tester) async {

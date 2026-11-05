@@ -2,18 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/desktop/widgets/file_type_icon.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 
-/// E2 hook: completes true once earlier first-run questions (E2's language
-/// dialog, `onboarding.languageAsked`) are done, so the icon question comes
-/// after them. Until E2 lands it's ready at once.
-final desktopIconChoiceReadyProvider = FutureProvider<bool>(
-  (ref) async => true,
+
+/// Settings → General → File icons (TASK-E3; desktop with the Windows
+/// shell only).
+final fileIconsEntry = SettingsEntry(
+  id: 'general.fileIcons',
+  titleBuilder: (c) => c.l10n.desktopFileIcons,
+  subtitleBuilder: (c) => c.l10n.desktopFileIconsHint,
+  formFactors: const {FormFactor.desktop},
+  visible: (ref) => ref.watch(shellIconCacheProvider) != null,
+  builder: (_) => const DesktopFileIconsRow(),
 );
 
 /// Settings → General: "File icons: Windows / KFM" (TASK-E3,
@@ -32,6 +39,7 @@ class DesktopFileIconsRow extends ConsumerWidget {
     return AdaptiveListTile(
       key: const ValueKey('general.fileIcons'),
       title: Text(l10n.desktopFileIcons),
+      subtitle: Text(l10n.desktopFileIconsHint),
       trailing: DropdownButton<DesktopIconStyle>(
         value: style,
         onChanged: (s) {
@@ -83,7 +91,12 @@ class _DesktopIconChoicePrompterState
     if (ref.read(shellIconCacheProvider) == null) return;
     final settings = ref.read(settingsRepositoryProvider);
     if (await settings.read(AppSettings.desktopIconsAsked)) return;
-    if (!await ref.read(desktopIconChoiceReadyProvider.future)) return;
+    // After E2's first-launch language dialog (`onboarding.languageAsked`).
+    if (!await settings.read(AppSettings.onboardingLanguageAsked)) {
+      await settings
+          .watch(AppSettings.onboardingLanguageAsked)
+          .firstWhere((asked) => asked);
+    }
     if (!mounted) return;
     final current = DesktopIconStyle.parse(
       await settings.read(AppSettings.desktopIconStyle),

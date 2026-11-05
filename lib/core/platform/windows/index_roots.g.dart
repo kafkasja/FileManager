@@ -143,12 +143,106 @@ final class WindowsIndexRootsProvider
 
 String _$windowsIndexRootsHash() => r'9bdd1b295ed87f388d3b214bf1b9eddbaddb1afb';
 
-/// The roots for the "Folders KFM scans" section, with availability.
+/// The scope, live (Settings → Privacy & access → Look everywhere).
+
+@ProviderFor(windowsIndexScope)
+final windowsIndexScopeProvider = WindowsIndexScopeProvider._();
+
+/// The scope, live (Settings → Privacy & access → Look everywhere).
+
+final class WindowsIndexScopeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<IndexScope>,
+          IndexScope,
+          Stream<IndexScope>
+        >
+    with $FutureModifier<IndexScope>, $StreamProvider<IndexScope> {
+  /// The scope, live (Settings → Privacy & access → Look everywhere).
+  WindowsIndexScopeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'windowsIndexScopeProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$windowsIndexScopeHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<IndexScope> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<IndexScope> create(Ref ref) {
+    return windowsIndexScope(ref);
+  }
+}
+
+String _$windowsIndexScopeHash() => r'bccc62e04a82224e0b0887a1904da80b9239d669';
+
+/// The chosen folders with availability ("Choose folders instead…").
+
+@ProviderFor(windowsChosenRootStatus)
+final windowsChosenRootStatusProvider = WindowsChosenRootStatusProvider._();
+
+/// The chosen folders with availability ("Choose folders instead…").
+
+final class WindowsChosenRootStatusProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<IndexRootStatus>>,
+          List<IndexRootStatus>,
+          Stream<List<IndexRootStatus>>
+        >
+    with
+        $FutureModifier<List<IndexRootStatus>>,
+        $StreamProvider<List<IndexRootStatus>> {
+  /// The chosen folders with availability ("Choose folders instead…").
+  WindowsChosenRootStatusProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'windowsChosenRootStatusProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$windowsChosenRootStatusHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<IndexRootStatus>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<IndexRootStatus>> create(Ref ref) {
+    return windowsChosenRootStatus(ref);
+  }
+}
+
+String _$windowsChosenRootStatusHash() =>
+    r'52d4078c1a059a033913e6372d8099a424f1f0a7';
+
+/// The scanned roots with availability (desktop Places). While only open
+/// folders are indexed, the known folders stand in, so Places still has
+/// somewhere to start.
 
 @ProviderFor(windowsIndexRootStatus)
 final windowsIndexRootStatusProvider = WindowsIndexRootStatusProvider._();
 
-/// The roots for the "Folders KFM scans" section, with availability.
+/// The scanned roots with availability (desktop Places). While only open
+/// folders are indexed, the known folders stand in, so Places still has
+/// somewhere to start.
 
 final class WindowsIndexRootStatusProvider
     extends
@@ -160,7 +254,9 @@ final class WindowsIndexRootStatusProvider
     with
         $FutureModifier<List<IndexRootStatus>>,
         $StreamProvider<List<IndexRootStatus>> {
-  /// The roots for the "Folders KFM scans" section, with availability.
+  /// The scanned roots with availability (desktop Places). While only open
+  /// folders are indexed, the known folders stand in, so Places still has
+  /// somewhere to start.
   WindowsIndexRootStatusProvider._()
     : super(
         from: null,
@@ -188,4 +284,4 @@ final class WindowsIndexRootStatusProvider
 }
 
 String _$windowsIndexRootStatusHash() =>
-    r'8e074295bcf66efea8e2558667e31d3ef5b8275f';
+    r'b89b2896be4708adca05e1feacb57749d15eb5df';

@@ -29,7 +29,8 @@ FakeFileSource _photos(int n) {
 
 String _id(int i) => 'path:$_camera/p$i.jpg';
 
-Finder _tile(String name) => find.bySemanticsLabel(name);
+Finder _tile(String name) =>
+    find.bySemanticsLabel(RegExp('^${RegExp.escape(name)}, '));
 
 Finder _tagRow(String name) => find.descendant(
   of: find.byType(CollectionsScreen),

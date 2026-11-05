@@ -367,9 +367,9 @@ void main() {
     final app = await _pump(tester);
     await tester.tap(find.text('Browse'));
     await tester.pumpAndSettle();
-    await tester.longPress(find.bySemanticsLabel('p3.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^p3\.jpg, ')));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('p8.jpg'));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^p8\.jpg, ')));
     await tester.pumpAndSettle();
 
     await _tap(tester, find.byTooltip('More'));

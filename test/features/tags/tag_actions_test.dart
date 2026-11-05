@@ -30,7 +30,8 @@ FakeFileSource _photos(int n) {
 String _name(int i) => 'p${i.toString().padLeft(2, '0')}.jpg';
 String _id(int i) => 'path:$_camera/${_name(i)}';
 
-Finder _tile(String name) => find.bySemanticsLabel(name);
+Finder _tile(String name) =>
+    find.bySemanticsLabel(RegExp('^${RegExp.escape(name)}, '));
 
 Finder _menuOf(String name) => find.descendant(
   of: find.byWidgetPredicate((w) => w is FileGridTile && w.file.name == name),

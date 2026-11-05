@@ -289,17 +289,17 @@ abstract class _$DesktopStatusLine extends $Notifier<DesktopStatus> {
 }
 
 /// E3: the status bar's last action ("Path copied", "Trashed 3"). The
-/// bar shows it for a few seconds ([seq] tells repeats apart).
+/// bar shows it for a few seconds (the number tells repeats apart).
 
 @ProviderFor(DesktopStatusMessage)
 final desktopStatusMessageProvider = DesktopStatusMessageProvider._();
 
 /// E3: the status bar's last action ("Path copied", "Trashed 3"). The
-/// bar shows it for a few seconds ([seq] tells repeats apart).
+/// bar shows it for a few seconds (the number tells repeats apart).
 final class DesktopStatusMessageProvider
     extends $NotifierProvider<DesktopStatusMessage, (String, int)?> {
   /// E3: the status bar's last action ("Path copied", "Trashed 3"). The
-  /// bar shows it for a few seconds ([seq] tells repeats apart).
+  /// bar shows it for a few seconds (the number tells repeats apart).
   DesktopStatusMessageProvider._()
     : super(
         from: null,
@@ -331,7 +331,7 @@ String _$desktopStatusMessageHash() =>
     r'7603eade73040ad0ab21aa3d5313dbaef84b39f0';
 
 /// E3: the status bar's last action ("Path copied", "Trashed 3"). The
-/// bar shows it for a few seconds ([seq] tells repeats apart).
+/// bar shows it for a few seconds (the number tells repeats apart).
 
 abstract class _$DesktopStatusMessage extends $Notifier<(String, int)?> {
   (String, int)? build();

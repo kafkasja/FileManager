@@ -50,7 +50,8 @@ FakeFileSource _photos(int n) {
 String _name(int i) => 'p${i.toString().padLeft(2, '0')}.jpg';
 String _id(String name) => 'path:$_camera/$name';
 
-Finder _tile(String name) => find.bySemanticsLabel(name);
+Finder _tile(String name) =>
+    find.bySemanticsLabel(RegExp('^${RegExp.escape(name)}, '));
 
 /// The ⤢ button of the tile for [path] (tiles are keyed by file id).
 Finder _expand(String path) => find.descendant(
@@ -291,6 +292,10 @@ void main() {
     await tester.tap(find.text('Swipe'));
     await tester.pumpAndSettle();
     expect(calls().last, 'play');
-    expect(calls().reversed.skip(1).first, 'volume 1.0', reason: 'sound on by default');
+    expect(
+      calls().reversed.skip(1).first,
+      'volume 1.0',
+      reason: 'sound on by default',
+    );
   });
 }
