@@ -7,6 +7,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/segment_label.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/app/widgets/hiding_header.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
@@ -224,66 +225,78 @@ class BrowseScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: _HeaderAndBody(
-                header: [
-                  Padding(
-                    padding: EdgeInsetsDirectional.symmetric(
-                      horizontal: spacing * 2,
-                      vertical: spacing / 2,
-                    ),
-                    child: SegmentedButton<BrowseLayout>(
-                      showSelectedIcon: false,
-                      segments: [
-                        ButtonSegment(
-                          value: BrowseLayout.all,
-                          label: SegmentLabel(l10n.browseModeAll),
-                          icon: compact ? null : const Icon(Icons.grid_view),
+              child: _Body(
+                view: view,
+                canSeeAll: canSeeAll,
+                // E4: the bar rule (hides on scroll down, back on any small
+                // scroll up, always at the top), on every phone height.
+                header: HidingHeaderSliver(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: EdgeInsetsDirectional.symmetric(
+                          horizontal: spacing * 2,
+                          vertical: spacing / 2,
                         ),
-                        ButtonSegment(
-                          value: BrowseLayout.folders,
-                          label: SegmentLabel(l10n.browseModeFolders),
-                          icon: compact
-                              ? null
-                              : const Icon(Icons.folder_outlined),
+                        child: SegmentedButton<BrowseLayout>(
+                          showSelectedIcon: false,
+                          segments: [
+                            ButtonSegment(
+                              value: BrowseLayout.all,
+                              label: SegmentLabel(l10n.browseModeAll),
+                              icon: compact
+                                  ? null
+                                  : const Icon(Icons.grid_view),
+                            ),
+                            ButtonSegment(
+                              value: BrowseLayout.folders,
+                              label: SegmentLabel(l10n.browseModeFolders),
+                              icon: compact
+                                  ? null
+                                  : const Icon(Icons.folder_outlined),
+                            ),
+                            ButtonSegment(
+                              value: BrowseLayout.sameTime,
+                              label: SegmentLabel(l10n.browseModeSameTime),
+                              icon: compact
+                                  ? null
+                                  : const Icon(Icons.burst_mode_outlined),
+                            ),
+                          ],
+                          selected: {view.layout},
+                          onSelectionChanged: (s) =>
+                              controller.setLayout(s.first),
                         ),
-                        ButtonSegment(
-                          value: BrowseLayout.sameTime,
-                          label: SegmentLabel(l10n.browseModeSameTime),
-                          icon: compact
-                              ? null
-                              : const Icon(Icons.burst_mode_outlined),
+                      ),
+                      KindChipsRow(
+                        scope: view.query.copyWith(kinds: const {}),
+                        selected: view.kinds,
+                        onSelect: controller.setKind,
+                      ),
+                      Padding(
+                        padding: EdgeInsetsDirectional.symmetric(
+                          horizontal: spacing * 2,
                         ),
-                      ],
-                      selected: {view.layout},
-                      onSelectionChanged: (s) => controller.setLayout(s.first),
-                    ),
+                        child: Text(
+                          // Same time always goes by date (B3).
+                          view.layout == BrowseLayout.sameTime
+                              ? sortLabel(
+                                  l10n,
+                                  FileSort(
+                                    FileSortField.date,
+                                    descending: newestFirst,
+                                  ),
+                                )
+                              : sortLabel(l10n, view.sort),
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      ),
+                      const SelectionHint(),
+                    ],
                   ),
-                  KindChipsRow(
-                    scope: view.query.copyWith(kinds: const {}),
-                    selected: view.kinds,
-                    onSelect: controller.setKind,
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.symmetric(
-                      horizontal: spacing * 2,
-                    ),
-                    child: Text(
-                      // Same time always goes by date (B3).
-                      view.layout == BrowseLayout.sameTime
-                          ? sortLabel(
-                              l10n,
-                              FileSort(
-                                FileSortField.date,
-                                descending: newestFirst,
-                              ),
-                            )
-                          : sortLabel(l10n, view.sort),
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ),
-                  const SelectionHint(),
-                ],
-                body: _Body(view: view, canSeeAll: canSeeAll),
+                ),
               ),
             ),
             const SelectionBar(),
@@ -330,10 +343,17 @@ enum _MenuAction {
 }
 
 class _Body extends ConsumerWidget {
-  const new({required this.view, required this.canSeeAll});
+  const new({
+    required this.view,
+    required this.canSeeAll,
+    required this.header,
+  });
 
   final BrowseView view;
   final bool canSeeAll;
+
+  /// The mode/kind/sort header: the first sliver of every layout.
+  final Widget header;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -342,6 +362,7 @@ class _Body extends ConsumerWidget {
         (view.query.visible(canSeeAllFiles: false) == null ||
             view.kinds.any((k) => !mediaKinds.contains(k)));
     final banner = [
+      header,
       if (needsAccess) const SliverToBoxAdapter(child: AccessBanner()),
       // C3: offer content labels at the top of the image view.
       if (view.kinds.contains(FileKind.image))
@@ -353,12 +374,14 @@ class _Body extends ConsumerWidget {
         newestFirst:
             view.sort.field != FileSortField.date || view.sort.descending,
         leading: banner,
+        scrollToTopTab: AppTab.browse,
       );
     }
     if (view.folderMode) {
       return FileResultsView(
         query: view.query,
         showFiles: view.folder != null,
+        scrollToTopTab: AppTab.browse,
         leading: [
           ...banner,
           SliverToBoxAdapter(child: _Breadcrumb(folder: view.folder)),
@@ -370,6 +393,7 @@ class _Body extends ConsumerWidget {
     // request 2026-10-29); they scroll away with the grid.
     return FileResultsView(
       query: view.query,
+      scrollToTopTab: AppTab.browse,
       leading: [
         ...banner,
         // U1: SD cards, USB drives and cameras (hidden without them).
@@ -498,43 +522,4 @@ class _FolderList extends ConsumerWidget {
       _ => const SliverToBoxAdapter(child: LinearProgressIndicator()),
     };
   }
-}
-
-/// The mode/kind/sort header above the results. On a short screen (a phone
-/// in landscape, big text) the header scrolls away with the results instead
-/// of squeezing them to nothing (it overflowed by up to 104 px).
-class _HeaderAndBody extends StatelessWidget {
-  const new({required this.header, required this.body});
-
-  final List<Widget> header;
-  final Widget body;
-
-  /// Below this height the header scrolls.
-  static const shortHeight = 420.0;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, box) {
-      if (box.maxHeight >= shortHeight) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ...header,
-            Expanded(child: body),
-          ],
-        );
-      }
-      return NestedScrollView(
-        headerSliverBuilder: (context, _) => [
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: header,
-            ),
-          ),
-        ],
-        body: body,
-      );
-    },
-  );
 }

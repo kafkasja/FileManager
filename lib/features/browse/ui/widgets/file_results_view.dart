@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
+import 'package:kfm/app/scroll_to_top.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -34,6 +36,8 @@ class FileResultsView extends ConsumerStatefulWidget {
     this.highlight = const [],
     this.empty,
     this.asList,
+    this.scrollToTopTab,
+    this.onRefresh,
     super.key,
   });
 
@@ -49,6 +53,12 @@ class FileResultsView extends ConsumerStatefulWidget {
 
   /// List rows instead of the grid; null = list only for non-visual kinds.
   final bool? asList;
+
+  /// E4: tapping this tab again scrolls to the top (Browse's own view).
+  final AppTab? scrollToTopTab;
+
+  /// E4 (A5): pull to refresh (phone Browse); null = none.
+  final Future<void> Function()? onRefresh;
 
   @override
   ConsumerState<FileResultsView> createState() => _FileResultsViewState();
@@ -67,17 +77,41 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
   /// The item count of the last build (E4: count changes relayout).
   int? _lastTotal;
 
+  /// Drives the scrollbar and the scroll to the top.
+  final ScrollController _scroll = ScrollController();
+
   @override
-  Widget build(BuildContext context) =>
-      NotificationListener<ScrollUpdateNotification>(
-        onNotification: _onScroll,
-        child: CustomScrollView(
-          // One scroll position per view; kept while the tab is switched
-          // away.
-          key: PageStorageKey<IndexQuery>(query),
-          slivers: [...widget.leading, if (widget.showFiles) _results(context)],
-        ),
-      );
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.scrollToTopTab case final tab?) {
+      ref.listen(scrollToTopProvider, (_, next) {
+        if (next?.$1 == tab) scrollResultsToTop(_scroll);
+      });
+    }
+    Widget view = CustomScrollView(
+      // One scroll position per view; kept while the tab is switched away.
+      key: PageStorageKey<IndexQuery>(query),
+      controller: _scroll,
+      slivers: [...widget.leading, if (widget.showFiles) _results(context)],
+    );
+    // E4 (H7): the extent is stable, so the thumb can be dragged through
+    // thousands of files (placeholders fill in as pages load).
+    if (widget.showFiles) {
+      view = Scrollbar(controller: _scroll, interactive: true, child: view);
+    }
+    if (widget.onRefresh case final refresh?) {
+      view = RefreshIndicator(onRefresh: refresh, child: view);
+    }
+    return NotificationListener<ScrollUpdateNotification>(
+      onNotification: _onScroll,
+      child: view,
+    );
+  }
 
   /// E4 (H1): loads the next page by pixels, not by built tiles: once the
   /// loaded rows end less than [prefetchViewports] screens ahead, so a
@@ -385,6 +419,23 @@ class ResultsPlaceholder extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Animates [controller]'s view to the top (a jump first when far away,
+/// so it never animates through thousands of rows).
+void scrollResultsToTop(ScrollController controller) {
+  if (!controller.hasClients) return;
+  final position = controller.position;
+  if (position.pixels > position.viewportDimension * 3) {
+    position.jumpTo(position.viewportDimension * 3);
+  }
+  position
+      .animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      )
+      .ignore();
 }
 
 class _ErrorBox extends StatelessWidget {

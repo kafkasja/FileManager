@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/app/scroll_to_top.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -14,17 +15,19 @@ import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/features/browse/domain/time_clusters.dart';
 import 'package:kfm/features/browse/ui/browse_preview.dart';
 import 'package:kfm/features/browse/ui/same_time_controller.dart';
+import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/swipe/domain/swipe_source.dart';
 import 'package:kfm/features/swipe/ui/swipe_these.dart';
 
 /// B3: photos/videos taken within the window of each other, as cards under
 /// day headers. [leading] slivers scroll with it (access banner).
-class SameTimeView extends ConsumerWidget {
+class SameTimeView extends ConsumerStatefulWidget {
   const new({
     required this.query,
     required this.newestFirst,
     this.leading = const [],
+    this.scrollToTopTab,
     super.key,
   });
 
@@ -33,8 +36,32 @@ class SameTimeView extends ConsumerWidget {
   final bool newestFirst;
   final List<Widget> leading;
 
+  /// E4: tapping this tab again scrolls to the top.
+  final AppTab? scrollToTopTab;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SameTimeView> createState() => _SameTimeViewState();
+}
+
+class _SameTimeViewState extends ConsumerState<SameTimeView> {
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = widget.query;
+    final newestFirst = widget.newestFirst;
+    final leading = widget.leading;
+    if (widget.scrollToTopTab case final tab?) {
+      ref.listen(scrollToTopProvider, (_, next) {
+        if (next?.$1 == tab) scrollResultsToTop(_scroll);
+      });
+    }
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
     final window = ref.watch(sameTimeWindowProvider).value;
@@ -96,9 +123,14 @@ class SameTimeView extends ConsumerWidget {
         ],
       );
     }
-    return CustomScrollView(
-      key: PageStorageKey<String>('sameTime:$key'),
-      slivers: [...leading, body],
+    return Scrollbar(
+      controller: _scroll,
+      interactive: true,
+      child: CustomScrollView(
+        key: PageStorageKey<String>('sameTime:$key'),
+        controller: _scroll,
+        slivers: [...leading, body],
+      ),
     );
   }
 }
