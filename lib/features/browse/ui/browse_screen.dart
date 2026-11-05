@@ -272,6 +272,11 @@ class BrowseScreen extends ConsumerWidget {
                               controller.setLayout(s.first),
                         ),
                       ),
+                      // The folder path lives in the header so it comes
+                      // back with it: after "Open folder" jumps down to a
+                      // file, the user still sees which folder this is.
+                      if (view.folderMode)
+                        _Breadcrumb(folder: view.folder),
                       KindChipsRow(
                         scope: view.query.copyWith(kinds: const {}),
                         selected: view.kinds,
@@ -387,7 +392,6 @@ class _Body extends ConsumerWidget {
         onRefresh: () => _refresh(context, ref),
         leading: [
           ...banner,
-          SliverToBoxAdapter(child: _Breadcrumb(folder: view.folder)),
           _FolderList(scope: view.query, parent: view.folder),
         ],
       );
