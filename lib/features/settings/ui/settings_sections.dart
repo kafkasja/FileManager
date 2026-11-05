@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/desktop/settings/desktop_icon_choice_dialog.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/backup/ui/backup_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
@@ -42,8 +43,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       entries: [
         themeEntry,
         accentEntry,
-        // TODO(E3): `general.fileIcons` ("File icons: Windows / KFM", desktop
-        // only) goes here; E3 owns the key, the dialog and the entry.
+        fileIconsEntry,
         languageEntry,
         searchLanguageEntry,
         updatesEntry,

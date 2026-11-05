@@ -7661,6 +7661,206 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get desktopFileIcons => 'Bestandspictogrammen';
+
+  @override
+  String get desktopFileIconsWindows => 'Windows';
+
+  @override
+  String get desktopFileIconsKfm => 'KFM';
+
+  @override
+  String get desktopIconChoiceTitle => 'Welke bestandspictogrammen?';
+
+  @override
+  String get desktopIconChoiceBody =>
+      'Kies hoe bestanden en mappen eruitzien. Je kunt dit later wijzigen in Instellingen.';
+
+  @override
+  String get desktopIconChoiceWindowsHint =>
+      'Dezelfde pictogrammen als Verkenner';
+
+  @override
+  String get desktopIconChoiceKfmHint =>
+      'De eigen eenvoudige pictogrammen van KFM';
+
+  @override
+  String get desktopIconChoiceDone => 'Klaar';
+
+  @override
+  String get backupSettingFileIcons => 'Bestandspictogrammen (desktop)';
+
+  @override
+  String get desktopHome => 'Start';
+
+  @override
+  String desktopTabSearch(String query) {
+    return 'Zoeken: $query';
+  }
+
+  @override
+  String get desktopTabNew => 'Nieuw tabblad';
+
+  @override
+  String get desktopTabDuplicate => 'Tabblad dupliceren';
+
+  @override
+  String get desktopTabClose => 'Tabblad sluiten';
+
+  @override
+  String get desktopTabCloseOthers => 'Andere tabbladen sluiten';
+
+  @override
+  String get desktopTabCloseRight => 'Tabbladen rechts sluiten';
+
+  @override
+  String get desktopTabReopen => 'Gesloten tabblad heropenen';
+
+  @override
+  String desktopAddressNotFound(String path) {
+    return 'KFM kan \'$path\' niet vinden. Controleer de spelling en probeer het opnieuw.';
+  }
+
+  @override
+  String get desktopAddressLabel => 'Adres';
+
+  @override
+  String desktopSearchIn(String name) {
+    return 'Zoeken in $name';
+  }
+
+  @override
+  String desktopSearchNone(String query) {
+    return 'Geen bestanden gevonden voor \'$query\'.';
+  }
+
+  @override
+  String get desktopColumnFolder => 'Map';
+
+  @override
+  String get desktopQuickAccess => 'Snelle toegang';
+
+  @override
+  String get desktopPinToQuickAccess => 'Vastmaken aan Snelle toegang';
+
+  @override
+  String get desktopUnpinFromQuickAccess => 'Losmaken van Snelle toegang';
+
+  @override
+  String get desktopThisPc => 'Deze pc';
+
+  @override
+  String get desktopConnectDevice => 'Apparaat verbinden';
+
+  @override
+  String get desktopOpenInNewTab => 'Openen in nieuw tabblad';
+
+  @override
+  String get desktopCmdNew => 'Nieuw';
+
+  @override
+  String get desktopCmdView => 'Weergave';
+
+  @override
+  String get desktopCmdSortBy => 'Sorteren';
+
+  @override
+  String get desktopViewNavPane => 'Navigatiedeelvenster';
+
+  @override
+  String get desktopViewHidden => 'Verborgen items';
+
+  @override
+  String get desktopViewPreviewPane => 'Voorbeeldvenster';
+
+  @override
+  String get desktopViewDetailsPane => 'Detailvenster';
+
+  @override
+  String get desktopSortAscending => 'Oplopend';
+
+  @override
+  String get desktopSortDescending => 'Aflopend';
+
+  @override
+  String get desktopCopyAsPath => 'Kopiëren als pad';
+
+  @override
+  String desktopPathCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count paden gekopieerd',
+      one: 'Pad gekopieerd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopOpenFileLocation => 'Bestandslocatie openen';
+
+  @override
+  String get desktopShowInExplorer => 'Weergeven in Windows Verkenner';
+
+  @override
+  String get desktopProperties => 'Eigenschappen';
+
+  @override
+  String get desktopOpenInKfm => 'Openen in KFM-viewer';
+
+  @override
+  String desktopStatusLeft(int count) {
+    return 'nog $count';
+  }
+
+  @override
+  String desktopStatusDriveFree(String drive, String free, String total) {
+    return '$drive $free vrij van $total';
+  }
+
+  @override
+  String get desktopFolderGone => 'Deze map bestaat niet meer.';
+
+  @override
+  String get trashPropsOriginalLocation => 'Oorspronkelijke locatie';
+
+  @override
+  String get trashPropsDeleted => 'Verwijderd';
+
+  @override
+  String get trashPropsWaiting => 'Wacht, nog niet in de Prullenbak';
+
+  @override
+  String trashPropsSummary(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get trashEmpty => 'Prullenbak legen';
+
+  @override
+  String trashEmptyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0 definitief verwijderen?';
+  }
+
+  @override
+  String trashEmptyBody(String size) {
+    return '$size wordt verwijderd, ook bestanden die nog in KFM wachten. Dit kan niet ongedaan worden gemaakt.';
+  }
+
+  @override
   String get settingsGeneral => 'Algemeen';
 
   @override
@@ -8159,4 +8359,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String a11yKindFileExt(String ext) {
     return '$ext-bestand';
   }
+
+  @override
+  String get desktopFileIconsHint =>
+      'Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM.';
 }

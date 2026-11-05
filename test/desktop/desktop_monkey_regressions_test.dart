@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 
 import 'desktop_helpers.dart';
 
 /// Bugs the monkey test (test/monkey) found on the desktop shell.
 void main() {
-  testWidgets('expanding the sidebar never squeezes its rows', (tester) async {
+  testWidgets('hiding and showing the navigation pane never squeezes rows', (
+    tester,
+  ) async {
     final app = await pumpDesktopApp(tester, files: desktopLibrary(3));
-    final notifier = app.container.read(
-      desktopSidebarCollapsedProvider.notifier,
-    )..toggle();
+    final notifier = app.container.read(desktopNavPaneShownProvider.notifier)
+      ..toggle();
     await tester.pumpAndSettle();
     notifier.toggle();
-    // Every frame of the 120 ms animation.
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 16));
       expect(tester.takeException(), isNull);

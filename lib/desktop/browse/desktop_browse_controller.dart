@@ -7,6 +7,8 @@ import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/desktop/browse/where_i_am.dart';
+import 'package:kfm/desktop/shell/desktop_location.dart';
+import 'package:kfm/desktop/tabs/desktop_tabs_controller.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
 import 'package:meta/meta.dart';
@@ -14,7 +16,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'desktop_browse_controller.g.dart';
 
-/// Where desktop Browse is and how it shows it (TASK-PL3 step 3).
+/// Where desktop Browse is and how it shows it (TASK-PL3 step 3). E3: the
+/// folder follows the active tab (`DesktopTabsController`), which also
+/// owns Back / Forward.
 @immutable
 class DesktopBrowseState {
   const new({
@@ -22,22 +26,16 @@ class DesktopBrowseState {
     this.layout = ExplorerLayout.details,
     this.sortColumn = FileColumns.name,
     this.descending = false,
-    this.back = const [],
-    this.forward = const [],
     this.showHidden = false,
   });
 
-  /// The open folder ('/'-separated); null = Places (the scanned folders).
+  /// The open folder ('/'-separated); null = Home.
   final String? folder;
   final ExplorerLayout layout;
 
   /// A [FileColumns] id: name, date or size.
   final String sortColumn;
   final bool descending;
-
-  /// Back / Forward history (Alt+← / Alt+→).
-  final List<String?> back;
-  final List<String?> forward;
 
   /// Hidden items (dot-files, the Windows hidden attribute) are shown.
   /// For this run only, like the phone's Browse.
@@ -71,16 +69,12 @@ class DesktopBrowseState {
     ExplorerLayout? layout,
     String? sortColumn,
     bool? descending,
-    List<String?>? back,
-    List<String?>? forward,
     bool? showHidden,
   }) => DesktopBrowseState(
     folder: folder == null ? this.folder : folder(),
     layout: layout ?? this.layout,
     sortColumn: sortColumn ?? this.sortColumn,
     descending: descending ?? this.descending,
-    back: back ?? this.back,
-    forward: forward ?? this.forward,
     showHidden: showHidden ?? this.showHidden,
   );
 }
@@ -97,8 +91,24 @@ class DesktopBrowseController extends _$DesktopBrowseController {
       }
     });
     unawaited(_restore());
-    return const DesktopBrowseState();
+    ref.listen(desktopTabsControllerProvider, (_, next) {
+      final loc = next.current.location;
+      if (loc is FolderLocation || loc is HomeLocation) {
+        final folder = folderOfLocation(loc);
+        if (folder != state.folder) {
+          state = state.copyWith(folder: () => folder);
+        }
+      }
+    });
+    return DesktopBrowseState(
+      folder: folderOfLocation(
+        ref.read(desktopTabsControllerProvider).current.location,
+      ),
+    );
   }
+
+  DesktopTabsController get _tabs =>
+      ref.read(desktopTabsControllerProvider.notifier);
 
   /// The last layout and sort (PL3 polish: remembered between runs).
   Future<void> _restore() async {
@@ -141,43 +151,17 @@ class DesktopBrowseController extends _$DesktopBrowseController {
   void setShowHidden({required bool show}) =>
       state = state.copyWith(showHidden: show);
 
-  /// Opens [folder] (null = Places), remembering where it came from.
-  void open(String? folder) {
-    if (folder == state.folder) return;
-    state = state.copyWith(
-      folder: () => folder,
-      back: [...state.back, state.folder],
-      forward: const [],
-    );
-  }
+  /// Opens [folder] (null = Home) in the active tab (Back returns).
+  void open(String? folder) => _tabs.navigate(
+    folder == null ? const HomeLocation() : FolderLocation(folder),
+  );
 
-  /// The parent folder; from a top folder back to Places.
-  void up({Set<String> roots = const {}}) {
-    final f = state.folder;
-    if (f == null) return;
-    final slash = f.lastIndexOf('/');
-    open(roots.contains(f) || slash <= 0 ? null : f.substring(0, slash));
-  }
+  /// The parent folder; a drive root goes to Home.
+  void up() => _tabs.up();
 
-  void goBack() {
-    if (state.back.isEmpty) return;
-    final to = state.back.last;
-    state = state.copyWith(
-      folder: () => to,
-      back: state.back.sublist(0, state.back.length - 1),
-      forward: [state.folder, ...state.forward],
-    );
-  }
+  void goBack() => _tabs.back();
 
-  void goForward() {
-    if (state.forward.isEmpty) return;
-    final to = state.forward.first;
-    state = state.copyWith(
-      folder: () => to,
-      back: [...state.back, state.folder],
-      forward: state.forward.sublist(1),
-    );
-  }
+  void goForward() => _tabs.forward();
 
   void setLayout(ExplorerLayout layout) {
     state = state.copyWith(layout: layout);
@@ -198,6 +182,10 @@ class DesktopBrowseController extends _$DesktopBrowseController {
   }
 }
 
+/// The folder a Browse location shows (null = Home / not a folder).
+String? folderOfLocation(DesktopLocation loc) =>
+    loc is FolderLocation ? loc.path : null;
+
 /// One row of desktop Browse: a folder or a file.
 @immutable
 sealed class BrowseEntry {
@@ -208,17 +196,25 @@ sealed class BrowseEntry {
 }
 
 final class FolderBrowseEntry extends BrowseEntry {
-  const new(this.path, {this.fileCount, this.available = true});
+  const new(this.path, {this.fileCount, this.available = true, this.label});
 
   final String path;
   final int? fileCount;
   final bool available;
+
+  /// E3: shown instead of the folder name (Home's drives: "Local disk
+  /// (C:)").
+  final String? label;
+
+  /// A drive root (`C:`).
+  bool get isDrive => path.length == 2 && path.endsWith(':');
 
   @override
   String get id => 'dir:$path';
 
   @override
   String get name {
+    if (label case final l?) return l;
     final i = path.lastIndexOf('/');
     return i < 0 ? path : path.substring(i + 1);
   }

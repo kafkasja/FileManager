@@ -45,7 +45,7 @@ final class DesktopBrowseControllerProvider
 }
 
 String _$desktopBrowseControllerHash() =>
-    r'a1788519b0025b32e0a874b06144c08396b0e6ad';
+    r'404566c352365c6de3cbae6143cae432d3b0a275';
 
 /// Desktop Browse's folder, layout and sort. Kept while the app runs.
 

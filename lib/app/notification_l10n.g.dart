@@ -79,12 +79,12 @@ abstract class _$NotificationLocale extends $Notifier<Locale> {
   }
 }
 
-/// [notificationLocale]'s strings.
+/// The strings of [NotificationLocale]'s language.
 
 @ProviderFor(notificationL10n)
 final notificationL10nProvider = NotificationL10nProvider._();
 
-/// [notificationLocale]'s strings.
+/// The strings of [NotificationLocale]'s language.
 
 final class NotificationL10nProvider
     extends
@@ -94,7 +94,7 @@ final class NotificationL10nProvider
           AppLocalizations
         >
     with $Provider<AppLocalizations> {
-  /// [notificationLocale]'s strings.
+  /// The strings of [NotificationLocale]'s language.
   NotificationL10nProvider._()
     : super(
         from: null,

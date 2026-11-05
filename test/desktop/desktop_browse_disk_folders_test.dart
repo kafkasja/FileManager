@@ -43,12 +43,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(_rows(tester), ['Fotos', 'Videos']);
 
-    await tester.tap(find.byKey(const ValueKey('browse-show-hidden')));
+    // E3: View ▾ → Hidden items.
+    await tester.tap(find.byKey(const ValueKey('cmd-view')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('cmd-view-hidden')));
     await tester.pumpAndSettle();
     expect(_rows(tester), ['Fotos', 'System Volume Information', 'Videos']);
 
     // The empty folder opens (empty).
-    await tester.tap(find.byKey(const ValueKey('browse-show-hidden')));
+    // E3: View ▾ → Hidden items.
+    await tester.tap(find.byKey(const ValueKey('cmd-view')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('cmd-view-hidden')));
     await tester.pumpAndSettle();
     app.container
         .read(desktopBrowseControllerProvider.notifier)

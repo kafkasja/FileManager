@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/form_factor.dart';
+import 'package:kfm/desktop/browse/desktop_disk_files.dart';
 import 'package:kfm/desktop/browse/disk_folders.dart';
 import 'package:kfm/features/folders/data/folder_tree_transfer.dart';
 
@@ -31,6 +32,7 @@ Future<TestApp> pumpDesktopApp(
   FakeFileSource? files,
   FakeVideoFactory? videos,
   DiskFolderLister? diskFolders,
+  DiskFileLister? diskFiles,
   List<Override> overrides = const [],
 }) async {
   tester.view
@@ -49,6 +51,10 @@ Future<TestApp> pumpDesktopApp(
       // …nor folders on disk for Browse (only the index's).
       diskFolderListerProvider.overrideWithValue(
         diskFolders ?? (_) async => const [],
+      ),
+      // E3: nor files outside the index.
+      diskFileListerProvider.overrideWithValue(
+        diskFiles ?? (_) async => DiskFiles.empty,
       ),
       ...overrides,
     ],

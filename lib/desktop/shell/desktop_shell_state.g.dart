@@ -67,65 +67,6 @@ abstract class _$DesktopDetailsPane extends $Notifier<bool> {
   }
 }
 
-/// Sidebar collapsed to icons.
-
-@ProviderFor(DesktopSidebarCollapsed)
-final desktopSidebarCollapsedProvider = DesktopSidebarCollapsedProvider._();
-
-/// Sidebar collapsed to icons.
-final class DesktopSidebarCollapsedProvider
-    extends $NotifierProvider<DesktopSidebarCollapsed, bool> {
-  /// Sidebar collapsed to icons.
-  DesktopSidebarCollapsedProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'desktopSidebarCollapsedProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$desktopSidebarCollapsedHash();
-
-  @$internal
-  @override
-  DesktopSidebarCollapsed create() => DesktopSidebarCollapsed();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
-  }
-}
-
-String _$desktopSidebarCollapsedHash() =>
-    r'58c218d249e89586caa0d66aa6d5f868f88812da';
-
-/// Sidebar collapsed to icons.
-
-abstract class _$DesktopSidebarCollapsed extends $Notifier<bool> {
-  bool build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
 /// The focused file of a desktop screen (the details pane shows it).
 
 @ProviderFor(DesktopFocusedFile)
@@ -347,54 +288,65 @@ abstract class _$DesktopStatusLine extends $Notifier<DesktopStatus> {
   }
 }
 
-/// Places in the sidebar: on Windows the folders KFM scans (PL1 index
-/// roots: Pictures, Videos, Downloads, Documents by default), elsewhere the
-/// index's top folders. Drives and devices come later (TASK-PL3 step 5).
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds (the number tells repeats apart).
 
-@ProviderFor(desktopPlaces)
-final desktopPlacesProvider = DesktopPlacesProvider._();
+@ProviderFor(DesktopStatusMessage)
+final desktopStatusMessageProvider = DesktopStatusMessageProvider._();
 
-/// Places in the sidebar: on Windows the folders KFM scans (PL1 index
-/// roots: Pictures, Videos, Downloads, Documents by default), elsewhere the
-/// index's top folders. Drives and devices come later (TASK-PL3 step 5).
-
-final class DesktopPlacesProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<DesktopPlace>>,
-          List<DesktopPlace>,
-          FutureOr<List<DesktopPlace>>
-        >
-    with
-        $FutureModifier<List<DesktopPlace>>,
-        $FutureProvider<List<DesktopPlace>> {
-  /// Places in the sidebar: on Windows the folders KFM scans (PL1 index
-  /// roots: Pictures, Videos, Downloads, Documents by default), elsewhere the
-  /// index's top folders. Drives and devices come later (TASK-PL3 step 5).
-  DesktopPlacesProvider._()
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds (the number tells repeats apart).
+final class DesktopStatusMessageProvider
+    extends $NotifierProvider<DesktopStatusMessage, (String, int)?> {
+  /// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+  /// bar shows it for a few seconds (the number tells repeats apart).
+  DesktopStatusMessageProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'desktopPlacesProvider',
-        isAutoDispose: true,
+        name: r'desktopStatusMessageProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$desktopPlacesHash();
+  String debugGetCreateSourceHash() => _$desktopStatusMessageHash();
 
   @$internal
   @override
-  $FutureProviderElement<List<DesktopPlace>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  DesktopStatusMessage create() => DesktopStatusMessage();
 
-  @override
-  FutureOr<List<DesktopPlace>> create(Ref ref) {
-    return desktopPlaces(ref);
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue((String, int)? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<(String, int)?>(value),
+    );
   }
 }
 
-String _$desktopPlacesHash() => r'4eab5f211e50137e78112782ab2f905082401f2c';
+String _$desktopStatusMessageHash() =>
+    r'7603eade73040ad0ab21aa3d5313dbaef84b39f0';
+
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds (the number tells repeats apart).
+
+abstract class _$DesktopStatusMessage extends $Notifier<(String, int)?> {
+  (String, int)? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<(String, int)?, (String, int)?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<(String, int)?, (String, int)?>,
+              (String, int)?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

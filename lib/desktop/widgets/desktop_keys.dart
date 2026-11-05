@@ -32,6 +32,79 @@ abstract final class DesktopKeys {
     control: true,
   );
 
+  // --- E3: File Explorer's keys ---------------------------------------------
+  static const newTab = SingleActivator(LogicalKeyboardKey.keyT, control: true);
+  static const closeTab = SingleActivator(
+    LogicalKeyboardKey.keyW,
+    control: true,
+  );
+  static const closeTabF4 = SingleActivator(
+    LogicalKeyboardKey.f4,
+    control: true,
+  );
+  static const nextTab = SingleActivator(LogicalKeyboardKey.tab, control: true);
+  static const previousTab = SingleActivator(
+    LogicalKeyboardKey.tab,
+    control: true,
+    shift: true,
+  );
+  static const reopenTab = SingleActivator(
+    LogicalKeyboardKey.keyT,
+    control: true,
+    shift: true,
+  );
+  static const addressBar = SingleActivator(LogicalKeyboardKey.keyD, alt: true);
+  static const addressBarL = SingleActivator(
+    LogicalKeyboardKey.keyL,
+    control: true,
+  );
+  static const addressBarF4 = SingleActivator(LogicalKeyboardKey.f4);
+  static const searchE = SingleActivator(
+    LogicalKeyboardKey.keyE,
+    control: true,
+  );
+  static const searchF3 = SingleActivator(LogicalKeyboardKey.f3);
+  static const refresh = SingleActivator(LogicalKeyboardKey.f5);
+  static const back = SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true);
+  static const forward = SingleActivator(
+    LogicalKeyboardKey.arrowRight,
+    alt: true,
+  );
+  static const up = SingleActivator(LogicalKeyboardKey.arrowUp, alt: true);
+  static const newFolder = SingleActivator(
+    LogicalKeyboardKey.keyN,
+    control: true,
+    shift: true,
+  );
+  static const copyAsPath = SingleActivator(
+    LogicalKeyboardKey.keyC,
+    control: true,
+    shift: true,
+  );
+  static const properties = SingleActivator(
+    LogicalKeyboardKey.enter,
+    alt: true,
+  );
+  static const previewPane = SingleActivator(
+    LogicalKeyboardKey.keyP,
+    alt: true,
+  );
+  static const detailsPane = SingleActivator(
+    LogicalKeyboardKey.keyP,
+    alt: true,
+    shift: true,
+  );
+  static const largeIconsView = SingleActivator(
+    LogicalKeyboardKey.digit2,
+    control: true,
+    shift: true,
+  );
+  static const detailsView = SingleActivator(
+    LogicalKeyboardKey.digit6,
+    control: true,
+    shift: true,
+  );
+
   /// "Ctrl+Z", "Shift+Del", "F2"… (key names as Windows prints them; the
   /// same in every language KFM ships).
   static String label(SingleActivator a) {
@@ -42,6 +115,8 @@ abstract final class DesktopKeys {
       LogicalKeyboardKey.escape => 'Esc',
       LogicalKeyboardKey.arrowLeft => '←',
       LogicalKeyboardKey.arrowRight => '→',
+      LogicalKeyboardKey.arrowUp => '↑',
+      LogicalKeyboardKey.tab => 'Tab',
       final k => k.keyLabel.toUpperCase(),
     };
     return [

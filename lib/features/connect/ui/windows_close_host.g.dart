@@ -58,7 +58,7 @@ final class WindowsCloseFlowProvider
   }
 }
 
-String _$windowsCloseFlowHash() => r'0adfe97ce20fdb060372571eb2dfcf9f9fb356ea';
+String _$windowsCloseFlowHash() => r'4bba015a1ffbc399ad8376708307ba1b24950e4e';
 
 /// PL1: sleep stops sharing and flushes; wake-up rescans (started by
 /// `App`; null off Windows).

@@ -57,6 +57,9 @@ class WindowsChannel {
   std::unique_ptr<WorkerPool> ops_;
   // Thumbnails and quick queries, a few in parallel.
   std::unique_ptr<WorkerPool> quick_;
+  // E3: shell icons and type names (a slow network path can't stall the
+  // quick pool's open/thumbnail calls).
+  std::unique_ptr<WorkerPool> icons_;
   // Reset in the destructor: posted replies check it before answering.
   std::shared_ptr<bool> alive_;
 };

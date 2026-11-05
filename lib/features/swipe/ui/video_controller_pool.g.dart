@@ -105,17 +105,20 @@ final class VideoControllerPoolProvider
 String _$videoControllerPoolHash() =>
     r'2809e5072d740d753fb093fa28f41e90c7e0c5d6';
 
-/// Sound is per session, not per video: once on, following videos play
-/// with sound until it's turned off (S5).
+/// Sound is per session, not per video. On by default: the phone's own
+/// volume decides (user, 2026-11-04); the pill's speaker icon mutes until
+/// it is tapped again.
 
 @ProviderFor(VideoMuted)
 final videoMutedProvider = VideoMutedProvider._();
 
-/// Sound is per session, not per video: once on, following videos play
-/// with sound until it's turned off (S5).
+/// Sound is per session, not per video. On by default: the phone's own
+/// volume decides (user, 2026-11-04); the pill's speaker icon mutes until
+/// it is tapped again.
 final class VideoMutedProvider extends $NotifierProvider<VideoMuted, bool> {
-  /// Sound is per session, not per video: once on, following videos play
-  /// with sound until it's turned off (S5).
+  /// Sound is per session, not per video. On by default: the phone's own
+  /// volume decides (user, 2026-11-04); the pill's speaker icon mutes until
+  /// it is tapped again.
   VideoMutedProvider._()
     : super(
         from: null,
@@ -143,10 +146,11 @@ final class VideoMutedProvider extends $NotifierProvider<VideoMuted, bool> {
   }
 }
 
-String _$videoMutedHash() => r'a69a723f95acd99ef5b9d9ade9e3c8012395267e';
+String _$videoMutedHash() => r'5adc82c89b774b0b8883c02f6de92ac06985ab1d';
 
-/// Sound is per session, not per video: once on, following videos play
-/// with sound until it's turned off (S5).
+/// Sound is per session, not per video. On by default: the phone's own
+/// volume decides (user, 2026-11-04); the pill's speaker icon mutes until
+/// it is tapped again.
 
 abstract class _$VideoMuted extends $Notifier<bool> {
   bool build();
@@ -167,23 +171,23 @@ abstract class _$VideoMuted extends $Notifier<bool> {
 }
 
 /// Desktop: the videos the user paused (click on the video, the bar's
-/// play/pause button, Space). A pause sticks until they play it again,
-/// whatever shows the video next (Quick look, the viewer); the phone never
-/// pauses (videos loop, S5).
+/// play/pause button, Space) and the phone (a tap on the video, user
+/// 2026-11-04). A pause sticks until they play it again, whatever shows the
+/// video next (deck, Quick look, the viewer).
 
 @ProviderFor(VideoPaused)
 final videoPausedProvider = VideoPausedProvider._();
 
 /// Desktop: the videos the user paused (click on the video, the bar's
-/// play/pause button, Space). A pause sticks until they play it again,
-/// whatever shows the video next (Quick look, the viewer); the phone never
-/// pauses (videos loop, S5).
+/// play/pause button, Space) and the phone (a tap on the video, user
+/// 2026-11-04). A pause sticks until they play it again, whatever shows the
+/// video next (deck, Quick look, the viewer).
 final class VideoPausedProvider
     extends $NotifierProvider<VideoPaused, Set<String>> {
   /// Desktop: the videos the user paused (click on the video, the bar's
-  /// play/pause button, Space). A pause sticks until they play it again,
-  /// whatever shows the video next (Quick look, the viewer); the phone never
-  /// pauses (videos loop, S5).
+  /// play/pause button, Space) and the phone (a tap on the video, user
+  /// 2026-11-04). A pause sticks until they play it again, whatever shows the
+  /// video next (deck, Quick look, the viewer).
   VideoPausedProvider._()
     : super(
         from: null,
@@ -214,9 +218,9 @@ final class VideoPausedProvider
 String _$videoPausedHash() => r'f0fe6e5f2f97d3e99116b0aed1daedd638eae040';
 
 /// Desktop: the videos the user paused (click on the video, the bar's
-/// play/pause button, Space). A pause sticks until they play it again,
-/// whatever shows the video next (Quick look, the viewer); the phone never
-/// pauses (videos loop, S5).
+/// play/pause button, Space) and the phone (a tap on the video, user
+/// 2026-11-04). A pause sticks until they play it again, whatever shows the
+/// video next (deck, Quick look, the viewer).
 
 abstract class _$VideoPaused extends $Notifier<Set<String>> {
   Set<String> build();

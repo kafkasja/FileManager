@@ -77,6 +77,7 @@ class ExplorerView<T> extends StatefulWidget {
     this.dragController,
     this.dragDataOf,
     this.itemDropOffer,
+    this.itemHoverHold,
     this.columnWidths = const {},
     this.onColumnWidthsChanged,
     super.key,
@@ -129,6 +130,10 @@ class ExplorerView<T> extends StatefulWidget {
 
   /// Items that take drops (folders); null = none.
   final DropOfferBuilder? Function(T item)? itemDropOffer;
+
+  /// E3: a drag rested 1 s on an item (a drop target): spring-loaded
+  /// folders open.
+  final void Function(T item)? itemHoverHold;
 
   /// Details column widths the user dragged before (unscaled; by column
   /// id), e.g. remembered in the settings.
@@ -456,8 +461,12 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
       _pressAt = null;
       return;
     }
-    _dragging = true;
-    controller.begin(data, e.position, copy: ctrl);
+    controller
+      ..begin(data, e.position, copy: ctrl)
+      // E3: the controller follows the pointer from here, so the drag
+      // survives this list being rebuilt (a tab switched while hovering).
+      ..trackPointer(e.pointer);
+    _pressAt = null;
   }
 
   void _onItemUp(PointerUpEvent e) {
@@ -625,7 +634,9 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   bool _typeToFind(KeyEvent event, {required bool ctrl}) {
     final nameOf = widget.nameOf;
     final ch = event.character;
-    if (nameOf == null || ctrl || ch == null || ch.trim().isEmpty) {
+    // E3: Alt+letter is a shortcut (Alt+P panes, Alt+D address bar).
+    final alt = HardwareKeyboard.instance.isAltPressed;
+    if (nameOf == null || ctrl || alt || ch == null || ch.trim().isEmpty) {
       return false;
     }
     _typedReset?.cancel();
@@ -784,6 +795,11 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
             key: ValueKey('$_dropKeyPrefix$id'),
             offer: offer,
             radius: geo.details ? 4 : 10,
+            holdDelay: const Duration(seconds: 1),
+            onHoverHold: switch (widget.itemHoverHold) {
+              final hold? => () => hold(item),
+              null => null,
+            },
             child: view,
           );
   }
