@@ -316,6 +316,15 @@ typedef ViewerActionsBuilder = List<Widget> Function(
   FileRef file,
 );
 
+/// The action bar under the shown page (the file's actions, labelled).
+/// [onLeft]: the action removed [file] from the list (deleted, moved):
+/// the viewer shows the next file, or closes after the last one.
+typedef ViewerBarBuilder = Widget Function(
+  BuildContext context,
+  FileRef file,
+  ValueChanged<FileRef> onLeft,
+);
+
 /// Opens a read-only viewer that pages through [source] from
 /// [initialIndex] (B7). Same route as [openViewer]: everything underneath
 /// stays mounted. Completes with the last file shown (null if none).
@@ -325,6 +334,7 @@ Future<FileRef?> openPagedViewer(
   required int initialIndex,
   required ViewerPageBuilder otherPage,
   ViewerActionsBuilder? actions,
+  ViewerBarBuilder? bar,
 }) async {
   final open = ProviderScope.containerOf(
     context,
@@ -342,6 +352,7 @@ Future<FileRef?> openPagedViewer(
           initialIndex: initialIndex,
           otherPage: otherPage,
           actions: actions,
+          bar: bar,
           onShown: (f) => last = f,
         ),
         transitionsBuilder: (_, animation, _, child) =>
@@ -362,6 +373,7 @@ class PagedFileViewer extends ConsumerStatefulWidget {
     required this.initialIndex,
     required this.otherPage,
     this.actions,
+    this.bar,
     this.onShown,
     super.key,
   });
@@ -370,6 +382,7 @@ class PagedFileViewer extends ConsumerStatefulWidget {
   final int initialIndex;
   final ViewerPageBuilder otherPage;
   final ViewerActionsBuilder? actions;
+  final ViewerBarBuilder? bar;
 
   /// Every page change (and the first page).
   final ValueChanged<FileRef>? onShown;
@@ -390,7 +403,18 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
   /// Load the next page this close to the end.
   static const _prefetch = 3;
 
-  List<FileRef> get _items => widget.source.items;
+  /// Files an action removed (deleted, moved away) while shown; the
+  /// source may still list them until its next reload.
+  final Set<String> _left = {};
+
+  List<FileRef> get _items {
+    final all = widget.source.items;
+    if (_left.isEmpty) return all;
+    return [
+      for (final f in all)
+        if (!_left.contains(f.id)) f,
+    ];
+  }
 
   @override
   void initState() {
@@ -424,6 +448,36 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
     if (_pages.hasClients && _pages.page?.round() != target) {
       _pages.jumpToPage(target);
     }
+  }
+
+  /// [f] left the list: the next file takes its place; after the last
+  /// file the viewer closes.
+  void _onLeft(FileRef f) {
+    if (!mounted) return;
+    final before = _items;
+    final at = before.indexWhere((i) => i.id == f.id);
+    if (at < 0) return;
+    if (at == before.length - 1 && !widget.source.hasMore) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    _left.add(f.id);
+    final items = _items;
+    if (items.isEmpty) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    final target = at.clamp(0, items.length - 1);
+    setState(() {
+      _index = target;
+      _zoomed = false;
+      _shownId = items[target].id;
+    });
+    if (_pages.hasClients && _pages.page?.round() != target) {
+      _pages.jumpToPage(target);
+    }
+    widget.onShown?.call(items[target]);
+    _afterPageChange();
   }
 
   void _onPageChanged(int i) {
@@ -474,8 +528,17 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
     final actions = file == null
         ? const <Widget>[]
         : widget.actions?.call(context, file) ?? const <Widget>[];
+    final bar = widget.bar;
     final scaffold = Scaffold(
       backgroundColor: Colors.black,
+      // The page runs on under the bar; snackbars (Undo) sit above it.
+      extendBody: true,
+      bottomNavigationBar: _chrome && file != null && bar != null
+          ? KeyedSubtree(
+              key: const ValueKey('viewer-action-bar'),
+              child: bar(context, file, _onLeft),
+            )
+          : null,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -513,7 +576,8 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
                       mainAxisSize: MainAxisSize.min,
                       spacing: 8,
                       children: [
-                        _DetailsButton(file: file),
+                        // With a bar, Details is one of its actions.
+                        if (bar == null) _DetailsButton(file: file),
                         ...actions,
                       ],
                     ),

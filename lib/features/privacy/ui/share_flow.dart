@@ -33,6 +33,7 @@ ShareSheet shareSheet(Ref ref) =>
 
 /// ⋮ menu → Share (TASK-X2).
 final FileMenuItem shareFileMenuItem = FileMenuItem(
+  id: FileMenuIds.share,
   order: 18,
   label: (c) => c.l10n.privacyShareAction,
   icon: Icons.share_outlined,

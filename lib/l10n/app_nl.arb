@@ -1965,5 +1965,9 @@
   "linkShowMyCode": "Of verbind vanaf het andere apparaat met deze code",
   "linkTitle": "Een apparaat verbinden",
   "linkShowCode": "Mijn code tonen",
-  "linkShowCodeHint": "Het andere apparaat scant of typt hem. Daarna zien jullie elkaars bestanden."
+  "linkShowCodeHint": "Het andere apparaat scant of typt hem. Daarna zien jullie elkaars bestanden.",
+  "viewerMore": "Meer",
+  "viewerOpen": "Openen",
+  "viewerOpenDownloading": "{name} wordt gedownload om te openen",
+  "viewerOpenFailed": "{name} kon niet worden gedownload"
 }

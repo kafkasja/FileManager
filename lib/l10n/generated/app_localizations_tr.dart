@@ -8539,4 +8539,20 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get linkShowCodeHint =>
       'Diğer cihaz tarar veya yazar. Sonra ikiniz de birbirinizin dosyalarını görürsünüz.';
+
+  @override
+  String get viewerMore => 'Diğer';
+
+  @override
+  String get viewerOpen => 'Aç';
+
+  @override
+  String viewerOpenDownloading(String name) {
+    return '$name açmak için indiriliyor';
+  }
+
+  @override
+  String viewerOpenFailed(String name) {
+    return '$name indirilemedi';
+  }
 }

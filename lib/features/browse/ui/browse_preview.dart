@@ -13,12 +13,12 @@ import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/text_viewer_screen.dart';
+import 'package:kfm/features/browse/ui/viewer_action_bar.dart';
 import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
-import 'package:kfm/features/tags/ui/file_tags_sheet.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
 
 /// Files the paged preview opens itself (TASK-B7); the rest go straight to
@@ -44,6 +44,7 @@ Future<FileRef?> openResultsPreview(
       initialIndex: index,
       otherPage: previewOtherPage,
       actions: previewActions,
+      bar: localViewerBar,
     );
   } finally {
     source.dispose();
@@ -90,6 +91,7 @@ Future<void> openSelectionPreview(
       initialIndex: startAt.clamp(0, source.items.length - 1),
       otherPage: previewOtherPage,
       actions: previewActions,
+      bar: localViewerBar,
     );
   } finally {
     source.dispose();
@@ -258,15 +260,19 @@ class FileInfoCard extends ConsumerWidget {
   }
 }
 
-/// The shown page's buttons: Select / Remove (B6 rules) and, for photos and
-/// videos, "Open with"; B4's ⋮ file menu for photos, videos and text
-/// (other files have it on their info card).
+/// The shown page's buttons over the action bar: ♡ (B9, with Undo) and
+/// Select / Remove (B6 rules). Everything else is on [localViewerBar].
 List<Widget> previewActions(BuildContext context, FileRef f) => [
-  if (opensInPreview(f)) ...[_FavoriteAction(file: f), _TagsAction(file: f)],
-  if (f.isMedia) _OpenWithAction(file: f),
-  if (opensInPreview(f)) FileActionsMenuButton(file: f, overlay: true),
+  if (opensInPreview(f)) _FavoriteAction(file: f),
   PreviewSelectButton(file: f),
 ];
+
+/// The file's actions under the preview (one list with the ⋮ menu).
+Widget localViewerBar(
+  BuildContext context,
+  FileRef file,
+  ValueChanged<FileRef> onLeft,
+) => LocalViewerBar(file: file, onLeft: onLeft);
 
 /// B9: ♡ toggle for the shown file (with Undo).
 class _FavoriteAction extends ConsumerWidget {
@@ -291,41 +297,6 @@ class _FavoriteAction extends ConsumerWidget {
           unawaited(setFavorites(context, [file.id], favorite: !isFav)),
     );
   }
-}
-
-/// B9: the shown file's Tags sheet.
-class _TagsAction extends StatelessWidget {
-  const new({required this.file});
-
-  final FileRef file;
-
-  @override
-  Widget build(BuildContext context) => IconButton(
-    tooltip: context.l10n.fileTagsTitle,
-    style: IconButton.styleFrom(
-      backgroundColor: Colors.black54,
-      foregroundColor: Colors.white,
-    ),
-    icon: const Icon(Icons.label_outline),
-    onPressed: () => unawaited(showFileTagsSheet(context, file.id)),
-  );
-}
-
-class _OpenWithAction extends ConsumerWidget {
-  const new({required this.file});
-
-  final FileRef file;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => IconButton(
-    tooltip: context.l10n.openWith,
-    style: IconButton.styleFrom(
-      backgroundColor: Colors.black54,
-      foregroundColor: Colors.white,
-    ),
-    icon: const Icon(Icons.open_in_new),
-    onPressed: () => unawaited(openWithOrExplain(context, ref, file)),
-  );
 }
 
 /// Normal / Select: "Select", or a disabled "Selected ✓" (no unselect).

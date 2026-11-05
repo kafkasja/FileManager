@@ -8602,4 +8602,20 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get linkShowCodeHint =>
       'Het andere apparaat scant of typt hem. Daarna zien jullie elkaars bestanden.';
+
+  @override
+  String get viewerMore => 'Meer';
+
+  @override
+  String get viewerOpen => 'Openen';
+
+  @override
+  String viewerOpenDownloading(String name) {
+    return '$name wordt gedownload om te openen';
+  }
+
+  @override
+  String viewerOpenFailed(String name) {
+    return '$name kon niet worden gedownload';
+  }
 }

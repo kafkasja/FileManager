@@ -46,7 +46,7 @@ void main() {
             FileMenuItem(
               label: (_) => 'x',
               icon: Icons.share,
-              onSelected: (_, _, _) async {},
+              onSelected: (_, _, _) async => null,
             ),
           ]),
         ],

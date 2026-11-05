@@ -249,11 +249,98 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
       context,
       startId: focus,
       watchFiles: (_) => media,
+      actions: _quickLookActions(),
     );
     if (last != null && mounted) {
       _setSelection(ExplorerSelection(ids: {last}, anchor: last, focus: last));
       _explorer.currentState?.reveal(last);
     }
+  }
+
+  /// Quick look's buttons and keys (user feedback: an enlarged file must
+  /// offer its actions): the right-click menu's flows, Send to and Delete
+  /// straight from the shared file menu list.
+  List<QuickLookAction> _quickLookActions() {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final neutral = scheme.secondary;
+    final items = ref.read(fileMenuItemsProvider);
+    FileMenuItem? item(String id) => items.where((i) => i.id == id).firstOrNull;
+    final send = item(FileMenuIds.sendLinked);
+    final delete = item(FileMenuIds.delete);
+    bool key(SingleActivator a, KeyEvent e) =>
+        a.accepts(e, HardwareKeyboard.instance);
+    return [
+      QuickLookAction(
+        buttonKey: const ValueKey('quick-look-open'),
+        label: l10n.desktopBrowseOpen,
+        icon: Icons.open_in_new,
+        color: neutral,
+        keyHint: DesktopKeys.label(DesktopKeys.open),
+        matches: (e) => key(DesktopKeys.open, e),
+        run: (f) async {
+          await openOrExplain(context, ref, f);
+          return false;
+        },
+      ),
+      QuickLookAction(
+        buttonKey: const ValueKey('quick-look-location'),
+        label: l10n.desktopOpenFileLocation,
+        icon: Icons.folder_open_outlined,
+        color: neutral,
+        // The new tab shows under Quick look: close it first.
+        closes: true,
+        run: (f) {
+          openFileLocation(ref, f);
+          return false;
+        },
+      ),
+      QuickLookAction(
+        buttonKey: const ValueKey('quick-look-copy-path'),
+        label: l10n.desktopCopyAsPath,
+        icon: Icons.content_paste_go,
+        color: neutral,
+        keyHint: DesktopKeys.label(DesktopKeys.copyAsPath),
+        matches: (e) => key(DesktopKeys.copyAsPath, e),
+        run: (f) async {
+          await copyPathsAsText(ref, [f.path]);
+          return false;
+        },
+      ),
+      if (send != null)
+        QuickLookAction(
+          buttonKey: const ValueKey('quick-look-send'),
+          label: send.label(context),
+          icon: send.icon,
+          color: neutral,
+          run: (f) async {
+            await send.onSelected(context, ref, f);
+            return false;
+          },
+        ),
+      if (delete != null)
+        QuickLookAction(
+          buttonKey: const ValueKey('quick-look-delete'),
+          label: delete.label(context),
+          icon: delete.icon,
+          color: scheme.error,
+          keyHint: DesktopKeys.label(DesktopKeys.delete),
+          matches: (e) => key(DesktopKeys.delete, e),
+          run: (f) async => await delete.onSelected(context, ref, f) == true,
+        ),
+      QuickLookAction(
+        buttonKey: const ValueKey('quick-look-properties'),
+        label: l10n.desktopProperties,
+        icon: Icons.info_outline,
+        color: neutral,
+        keyHint: DesktopKeys.label(DesktopKeys.properties),
+        matches: (e) => key(DesktopKeys.properties, e),
+        run: (f) async {
+          await showFileProperties(context, ref, f);
+          return false;
+        },
+      ),
+    ];
   }
 
   KeyEventResult _onKey(KeyEvent event) {

@@ -274,13 +274,14 @@ void main() {
     await _finish(tester);
   });
 
-  testWidgets('preview Tags button opens the same sheet', (tester) async {
+  testWidgets('preview More → Tags opens the same sheet', (tester) async {
     final app = await pumpApp(tester, files: _photos(1));
     final tags = app.container.read(tagRepositoryProvider);
     final holiday = await tags.create('Holiday', kTagColors[0]);
     await _openBrowse(tester);
     await _tap(tester, _tile(_name(0)));
-    await _tap(tester, find.byTooltip('Tags'));
+    await _tap(tester, find.byKey(const ValueKey('viewer-more')));
+    await _tap(tester, find.widgetWithText(ListTile, 'Tags…'));
     await _tap(tester, find.widgetWithText(CheckboxListTile, 'Holiday'));
     expect(await tags.tagIdsOf(_id(0)), {holiday.id});
     await _finish(tester);

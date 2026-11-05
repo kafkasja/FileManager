@@ -77,6 +77,9 @@ abstract final class DesktopKeys {
     control: true,
     shift: true,
   );
+
+  /// Open with the default app (Quick look, like Enter in the list).
+  static const open = SingleActivator(LogicalKeyboardKey.enter);
   static const properties = SingleActivator(
     LogicalKeyboardKey.enter,
     alt: true,

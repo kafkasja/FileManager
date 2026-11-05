@@ -68,6 +68,7 @@ Future<void> sendToLink(
 
 /// The ⋮ menu's first entry while linked (order 1: before Open with).
 FileMenuItem sendToLinkFileMenuItem(DeviceLink link) => FileMenuItem(
+  id: FileMenuIds.sendLinked,
   order: 1,
   label: (c) => c.l10n.linkSendTo(link.peerName),
   icon: Icons.send_to_mobile,

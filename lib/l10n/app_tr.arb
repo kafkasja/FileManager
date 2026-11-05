@@ -1965,5 +1965,9 @@
   "linkShowMyCode": "Ya da diğer cihazdan bu kodla bağlanın",
   "linkTitle": "Bir cihaz bağla",
   "linkShowCode": "Kodumu göster",
-  "linkShowCodeHint": "Diğer cihaz tarar veya yazar. Sonra ikiniz de birbirinizin dosyalarını görürsünüz."
+  "linkShowCodeHint": "Diğer cihaz tarar veya yazar. Sonra ikiniz de birbirinizin dosyalarını görürsünüz.",
+  "viewerMore": "Diğer",
+  "viewerOpen": "Aç",
+  "viewerOpenDownloading": "{name} açmak için indiriliyor",
+  "viewerOpenFailed": "{name} indirilemedi"
 }

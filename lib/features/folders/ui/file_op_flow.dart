@@ -55,7 +55,10 @@ Future<CompletedOperation?> runFileOperation(
 }
 
 /// Move to… / Copy to…: the folder picker, then [runFileOperation].
-Future<void> moveOrCopyFiles(
+/// Completes with `true` when a move took files away from their folder
+/// now (a viewer then shows the next file); a verified job (U2, X3) moves
+/// them later, so `false`.
+Future<bool> moveOrCopyFiles(
   BuildContext context,
   WidgetRef ref,
   List<FileRef> files, {
@@ -63,7 +66,7 @@ Future<void> moveOrCopyFiles(
   int skippedNeedAccess = 0,
   bool fromSelection = false,
 }) async {
-  if (files.isEmpty) return;
+  if (files.isEmpty) return false;
   final folders = {for (final f in files) f.folderPath};
   final picked = await showMoveTargetPicker(
     context,
@@ -71,7 +74,7 @@ Future<void> moveOrCopyFiles(
     // Same-folder move is a no-op.
     disabledFolder: !copy && folders.length == 1 ? folders.single : null,
   );
-  if (picked == null || !context.mounted) return;
+  if (picked == null || !context.mounted) return false;
   final String target;
   switch (picked) {
     case CloudTarget(:final destinationId):
@@ -84,11 +87,11 @@ Future<void> moveOrCopyFiles(
         move: !copy,
         fromSelection: fromSelection,
       );
-      return;
+      return false;
     case FolderTarget(:final path):
       target = path;
   }
-  if (!context.mounted) return;
+  if (!context.mounted) return false;
   // U2: another place (SD card, USB drive) → a verified local job.
   if (needsLocalJob(ref, files, target)) {
     await startLocalJobFlow(
@@ -99,33 +102,35 @@ Future<void> moveOrCopyFiles(
       move: !copy,
       fromSelection: fromSelection,
     );
-    return;
+    return false;
   }
-  await runFileOperation(
+  final done = await runFileOperation(
     context,
     ref,
     copy ? CopyOp(files, target) : MoveOp(files, target),
     skippedNeedAccess: skippedNeedAccess,
   );
+  return !copy && (done?.succeeded ?? 0) > 0;
 }
 
 /// Delete in the user's delete mode (D1): trash, or permanent after a
-/// confirm.
-Future<void> deleteFiles(
+/// confirm. Completes with `true` when files were deleted.
+Future<bool> deleteFiles(
   BuildContext context,
   WidgetRef ref,
   List<FileRef> files, {
   int skippedNeedAccess = 0,
 }) async {
-  if (files.isEmpty) return;
+  if (files.isEmpty) return false;
   final op = await ref.read(fileOperationRunnerProvider).deleteOp(files);
-  if (!context.mounted) return;
-  await runFileOperation(
+  if (!context.mounted) return false;
+  final done = await runFileOperation(
     context,
     ref,
     op,
     skippedNeedAccess: skippedNeedAccess,
   );
+  return (done?.succeeded ?? 0) > 0;
 }
 
 /// Duplicate next to the originals (`a (1).jpg`).

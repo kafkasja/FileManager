@@ -11900,6 +11900,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The other device scans or types it. Then you both see each other\'s files.'**
   String get linkShowCodeHint;
+
+  /// Viewer action bar: opens the rest of the file's actions.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get viewerMore;
+
+  /// Remote viewer action bar: downloads the file, then opens it with the default app.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get viewerOpen;
+
+  /// Snackbar after Open on another device's file.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {name} to open it'**
+  String viewerOpenDownloading(String name);
+
+  /// Snackbar when Open on another device's file could not download it.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t download {name}'**
+  String viewerOpenFailed(String name);
 }
 
 class _AppLocalizationsDelegate

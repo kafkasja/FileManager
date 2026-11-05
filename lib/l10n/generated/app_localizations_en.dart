@@ -8530,4 +8530,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get linkShowCodeHint =>
       'The other device scans or types it. Then you both see each other\'s files.';
+
+  @override
+  String get viewerMore => 'More';
+
+  @override
+  String get viewerOpen => 'Open';
+
+  @override
+  String viewerOpenDownloading(String name) {
+    return 'Downloading $name to open it';
+  }
+
+  @override
+  String viewerOpenFailed(String name) {
+    return 'Couldn\'t download $name';
+  }
 }

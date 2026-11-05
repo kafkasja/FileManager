@@ -9,6 +9,9 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
+import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/features/browse/ui/open_file.dart';
+import 'package:kfm/features/browse/ui/viewer_action_bar.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
 import 'package:kfm/features/browse/ui/widgets/sort_sheet.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
@@ -24,6 +27,9 @@ import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/session/domain/remote_deck_root.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
+import 'package:kfm/features/transfers/data/transfer_engine.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
+import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/features/transfers/ui/transfer_badge.dart';
 import 'package:kfm/features/transfers/ui/transfer_flows.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -236,10 +242,129 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
         source: source,
         initialIndex: index < 0 ? 0 : index,
         otherPage: (_, file) => FileDetailsList(file: file),
+        bar: _viewerBar,
       );
     } finally {
       source.dispose();
     }
+  }
+
+  /// The other device's name and whether the open folder's root takes
+  /// writes (Move to trash), as the app bar shows them.
+  ({String name, bool writable}) _peer() {
+    final connection = ref.read(remoteConnectionControllerProvider);
+    final view = _controller.currentView();
+    return switch (connection) {
+      RemoteConnected(:final peerName, :final peerFingerprint, :final roots)
+          when peerFingerprint == _fp =>
+        (
+          name: peerName,
+          writable: roots.any((r) => r.id == view.rootId && !r.readOnly),
+        ),
+      RemoteDisconnected(:final peerName) => (name: peerName, writable: false),
+      _ => (name: '', writable: false),
+    };
+  }
+
+  /// The enlarged remote file's actions: Download (to the receive folder,
+  /// N9's dialog and E1's take prompt), Open (download, then the default
+  /// app), Details, and Move to trash on the other device when its folder
+  /// allows writes.
+  Widget _viewerBar(
+    BuildContext context,
+    FileRef file,
+    ValueChanged<FileRef> onLeft,
+  ) {
+    final l10n = context.l10n;
+    final peer = _peer();
+    return ViewerActionBar(
+      actions: [
+        ViewerBarAction(
+          key: const ValueKey('remote-viewer-download'),
+          label: l10n.transferDownloadAction,
+          icon: Icons.download_outlined,
+          onPressed: () => unawaited(_download([file], peer.name)),
+        ),
+        ViewerBarAction(
+          key: const ValueKey('remote-viewer-open'),
+          label: l10n.viewerOpen,
+          icon: Icons.open_in_new,
+          onPressed: () => unawaited(_downloadAndOpen(file, peer.name)),
+        ),
+        ViewerBarAction(
+          key: const ValueKey('remote-viewer-details'),
+          label: l10n.fileMenuDetails,
+          icon: Icons.info_outline,
+          onPressed: () => unawaited(showFileDetails(context, file)),
+        ),
+        if (peer.writable)
+          ViewerBarAction(
+            key: const ValueKey('remote-viewer-trash'),
+            label: l10n.swipeActionTrash,
+            icon: Icons.delete_outline,
+            onPressed: () => unawaited(() async {
+              if (await _trash([file], peer.name)) onLeft(file);
+            }()),
+          ),
+      ],
+    );
+  }
+
+  /// Open: one copy job into the receive folder (the engine asks the other
+  /// device first when taking needs approval), then the default app once
+  /// it's here. E1's "… saved to …" snackbar shows as for any download.
+  Future<void> _downloadAndOpen(FileRef f, String device) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    void failed() => messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(persist: false, content: Text(l10n.viewerOpenFailed(f.name))),
+      );
+    final FileRef? local;
+    try {
+      final jobId = await ref
+          .read(transferEngineProvider)
+          .enqueueDownload(
+            [f],
+            peerFingerprint: _fp,
+            peerName: device,
+            localFolder: defaultDownloadFolder(
+              ref.read(downloadsRootProvider),
+              device,
+            ),
+          );
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            persist: false,
+            content: Text(l10n.viewerOpenDownloading(f.name)),
+          ),
+        );
+      final job = await ref
+          .read(transfersRepositoryProvider)
+          .watchJobs()
+          .map((jobs) => jobs.where((j) => j.id == jobId).firstOrNull)
+          .firstWhere((j) => j == null || j.isFinished);
+      final fileId = job?.files
+          .where((x) => x.status == TransferFileStatus.done)
+          .firstOrNull
+          ?.targetFileId;
+      local = fileId == null
+          ? null
+          : await ref.read(fileSourceProvider).stat(fileId);
+    } on Object {
+      // Rule 8: said, not swallowed.
+      failed();
+      return;
+    }
+    if (!mounted) return;
+    if (local == null) {
+      failed();
+      return;
+    }
+    await openOrExplain(context, ref, local);
   }
 
   void _snack(String text) {
@@ -276,7 +401,8 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
     }
   }
 
-  Future<void> _trash(List<FileRef> files, String device) async {
+  /// Completes with `true` when files went to the other device's trash.
+  Future<bool> _trash(List<FileRef> files, String device) async {
     final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
@@ -295,7 +421,7 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
         ],
       ),
     );
-    if (ok != true || !mounted) return;
+    if (ok != true || !mounted) return false;
     try {
       final result = await _controller.trash(files);
       _clearSelection();
@@ -306,8 +432,10 @@ class _RemoteBrowseScreenState extends ConsumerState<RemoteBrowseScreen> {
       } else {
         _snack(l10n.remoteTrashed(result.trashed.length, device));
       }
+      return result.trashed.isNotEmpty;
     } on Object catch (e) {
       _snack(remoteFailureText(l10n, e, device));
+      return false;
     }
   }
 
