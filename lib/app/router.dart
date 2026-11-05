@@ -24,7 +24,9 @@ import 'package:kfm/features/presets/ui/preset_editor_screen.dart';
 import 'package:kfm/features/rename/ui/rename_batch_screen.dart';
 import 'package:kfm/features/search/ui/search_screen.dart';
 import 'package:kfm/features/selection/ui/selected_files_screen.dart';
+import 'package:kfm/features/settings/ui/settings_entry_view.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
+import 'package:kfm/features/settings/ui/settings_sections.dart';
 import 'package:kfm/features/share_in/ui/shared_files_screen.dart';
 import 'package:kfm/features/similar/ui/clean_duplicates_screen.dart';
 import 'package:kfm/features/similar/ui/similar_screen.dart';
@@ -94,6 +96,13 @@ abstract final class AppRoutes {
   /// flashing it.
   static String settingsEntry(String id) =>
       Uri(path: settings, queryParameters: {'entry': id}).toString();
+
+  /// The phone's page of Settings section [id] (`'files'`), optionally
+  /// scrolled to [entry]. Desktop shows its own category list instead.
+  static String settingsSection(String id, {String? entry}) => Uri(
+    path: '$settings/section/$id',
+    queryParameters: entry == null ? null : {'entry': entry},
+  ).toString();
 
   /// PL3: the desktop sidebar's Devices section (desktop only).
   static const devices = '/devices';
@@ -388,13 +397,40 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.settings,
+                // Phone: `/settings?entry=<id>` opens that entry's section
+                // page (the overview stays below it for back).
+                redirect: (context, state) {
+                  final entry = state.uri.queryParameters['entry'];
+                  if (desktop ||
+                      entry == null ||
+                      state.uri.path != AppRoutes.settings) {
+                    return null;
+                  }
+                  final section = sectionOfEntry(
+                    ref.read(settingsSectionsProvider),
+                    entry,
+                  );
+                  return section == null
+                      ? null
+                      : AppRoutes.settingsSection(section.id, entry: entry);
+                },
                 builder: (context, state) {
                   final entry = state.uri.queryParameters['entry'];
                   return desktop
                       ? desktopSettingsScreen(entry: entry)
-                      : SettingsScreen(entry: entry);
+                      : const SettingsScreen();
                 },
                 routes: [
+                  GoRoute(
+                    path: 'section/:id',
+                    redirect: (context, state) => desktop
+                        ? AppRoutes.settings
+                        : null,
+                    builder: (context, state) => SettingsSectionScreen(
+                      sectionId: state.pathParameters['id'] ?? '',
+                      entry: state.uri.queryParameters['entry'],
+                    ),
+                  ),
                   GoRoute(
                     path: 'swipes',
                     builder: (context, state) => const CustomizeSwipesScreen(),

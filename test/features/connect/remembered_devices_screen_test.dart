@@ -14,6 +14,7 @@ import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
 
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 import 'fake_discovery.dart';
 
 class _FakeIdentity implements DeviceIdentityRepository {
@@ -124,8 +125,7 @@ void main() {
   }
 
   Future<void> openList(WidgetTester tester) async {
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'connect');
     await tester.scrollUntilVisible(find.text('Remembered devices'), 200);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Remembered devices'));
@@ -265,8 +265,7 @@ void main() {
     final before = await tester.runAsync(
       () => app.container.read(deviceIdentityProvider.future),
     );
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'connect');
     await tester.scrollUntilVisible(
       find.text('Reset this device’s identity'),
       200,

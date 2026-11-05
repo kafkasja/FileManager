@@ -21,6 +21,7 @@ import 'package:kfm/features/trash/domain/delete_mode.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 
 const _trash = 'Swipe left to throw away';
 const _keep = 'Swipe right to keep';
@@ -406,8 +407,7 @@ void main() {
         .read(onboardingControllerProvider.notifier)
         .markHintSeen(HintIds.presets);
     expect(find.byType(SwipeTutorialOverlay), findsNothing);
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'general');
     final row = find.text('Show tutorial again');
     await tester.scrollUntilVisible(row, 200);
     await tester.ensureVisible(row);

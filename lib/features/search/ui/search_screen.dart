@@ -848,6 +848,15 @@ class _EmptySearch extends ConsumerWidget {
             ],
           ),
         ),
+        // How the smart words work, where they are typed (was in Settings).
+        Padding(
+          padding: EdgeInsetsDirectional.only(top: spacing),
+          child: ListTile(
+            key: const ValueKey('search-tip'),
+            leading: const Icon(Icons.lightbulb_outline),
+            subtitle: Text(l10n.searchSettingsTip),
+          ),
+        ),
       ],
     );
   }

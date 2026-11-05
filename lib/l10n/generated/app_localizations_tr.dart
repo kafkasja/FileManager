@@ -7971,6 +7971,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsSearchClear => 'Aramayı temizle';
 
   @override
+  String get settingsSummarySeparator => ', ';
+
+  @override
   String get settingsSearchEmpty => 'Eşleşen ayar yok. Başka bir kelime dene.';
 
   @override

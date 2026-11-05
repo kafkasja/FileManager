@@ -1847,6 +1847,7 @@
   "settingsKeywordsBigFiles": "groot,grote,grootte,drempel",
   "settingsSearchHint": "Instellingen zoeken",
   "settingsSearchClear": "Zoekopdracht wissen",
+  "settingsSummarySeparator": ", ",
   "settingsSearchEmpty": "Geen instelling gevonden. Probeer een ander woord.",
   "privacyTransferNote": "Locatie-informatie wordt verwijderd (Instellingen → Privacy en toegang)",
   "durationShortSeconds": "{count} s",

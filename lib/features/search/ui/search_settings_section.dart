@@ -10,11 +10,14 @@ import 'package:kfm/features/settings/ui/settings_section.dart';
 
 /// Settings → General, under Language (B8, TASK-E2): "Smart search words
 /// also in". The picker only appears once a second term file is bundled
-/// (L2); the tip always.
+/// (L2), so the entry is hidden until then. The search words tip lives on
+/// the search screen (its empty state), where it is used.
 final searchLanguageEntry = SettingsEntry(
   id: 'general.searchLanguage',
   titleBuilder: (c) => c.l10n.searchSettingsAlsoSearchIn,
   subtitleBuilder: (c) => c.l10n.searchSettingsAlsoSearchInHelp,
+  visible: (ref) =>
+      (ref.watch(availableSearchLanguagesProvider).value?.length ?? 0) > 1,
   builder: (_) => const SearchLanguageRows(),
 );
 
@@ -31,10 +34,6 @@ class SearchLanguageRows extends ConsumerWidget {
         languages != null && languages.length > 1 && main != null;
     return Column(
       children: [
-        ListTile(
-          leading: const Icon(Icons.lightbulb_outline),
-          subtitle: Text(l10n.searchSettingsTip),
-        ),
         if (showPicker)
           ListTile(
             key: const ValueKey('searchSecondaryLanguage'),

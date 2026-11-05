@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/features/settings/ui/settings_screen.dart';
 
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 
 void main() {
   // Monkey seed 1: on a 320 dp phone turned sideways the sheet's rows and
@@ -10,15 +11,14 @@ void main() {
   testWidgets('Clear sheet scrolls on a small phone in landscape', (tester) async {
     addTearDown(tester.view.reset);
     await pumpApp(tester);
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'swipe');
     final tile = find.text('Clear / fresh start…');
     await tester.scrollUntilVisible(
       tile,
       200,
       scrollable: find
           .descendant(
-            of: find.byType(SettingsScreen),
+            of: find.byType(SettingsSectionScreen),
             matching: find.byType(Scrollable),
           )
           .first,

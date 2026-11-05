@@ -11,6 +11,7 @@ import 'package:kfm/features/swipe/ui/file_viewer.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 
 const _camera = '/storage/emulated/0/DCIM/Camera';
 
@@ -287,8 +288,7 @@ void main() {
   ) async {
     _tallScreen(tester);
     final app = await pumpApp(tester);
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'files');
     final row = find.byType(SameTimeWindowRow);
     await tester.scrollUntilVisible(row, 200);
     expect(

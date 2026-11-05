@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/desktop/settings/desktop_icon_choice_dialog.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
@@ -40,6 +41,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 100,
       id: 'general',
+      icon: Icons.tune,
       titleBuilder: (c) => c.l10n.settingsGeneral,
       entries: [
         themeEntry,
@@ -55,6 +57,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 200,
       id: 'swipe',
+      icon: Icons.swipe_outlined,
       titleBuilder: (c) => c.l10n.settingsSwipe,
       desktopTitleBuilder: (c) => c.l10n.settingsSorting,
       entries: [
@@ -72,6 +75,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 300,
       id: 'files',
+      icon: Icons.folder_outlined,
       titleBuilder: (c) => c.l10n.settingsFilesDisplay,
       entries: [
         showSizesEntry,
@@ -86,18 +90,21 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 400,
       id: 'smart',
+      icon: Icons.auto_awesome_outlined,
       titleBuilder: (c) => c.l10n.settingsSmart,
       entries: [similarEntry, aiLabelsEntry, placeNamesEntry],
     ),
     SettingsSection(
       order: 500,
       id: 'storage',
+      icon: Icons.cleaning_services_outlined,
       titleBuilder: (c) => c.l10n.settingsStorageCleanup,
       entries: [deleteModeEntry, retentionEntry, thumbCacheEntry],
     ),
     SettingsSection(
       order: 600,
       id: 'connect',
+      icon: Icons.devices_outlined,
       titleBuilder: (c) => c.l10n.settingsConnectSharing,
       entries: [
         connectEntry,
@@ -111,6 +118,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 700,
       id: 'privacy',
+      icon: Icons.privacy_tip_outlined,
       titleBuilder: (c) => c.l10n.settingsPrivacyAccess,
       entries: [
         // E2 §6: Look everywhere (Windows) / Android's index explained.
@@ -124,6 +132,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 800,
       id: 'a11y',
+      icon: Icons.accessibility_new,
       titleBuilder: (c) => c.l10n.settingsAccessibility,
       entries: [
         textSizeEntry,
@@ -137,6 +146,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
     SettingsSection(
       order: 900,
       id: 'about',
+      icon: Icons.info_outline,
       titleBuilder: (c) => c.l10n.settingsAboutAdvanced,
       entries: [
         versionEntry,

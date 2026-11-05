@@ -7961,6 +7961,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSearchClear => 'Clear search';
 
   @override
+  String get settingsSummarySeparator => ', ';
+
+  @override
   String get settingsSearchEmpty => 'No setting matches. Try another word.';
 
   @override

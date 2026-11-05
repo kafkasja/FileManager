@@ -11187,6 +11187,12 @@ abstract class AppLocalizations {
   /// **'Clear search'**
   String get settingsSearchClear;
 
+  /// Between the setting names in a section's one-line summary on the phone's Settings overview ("Theme, Color, Language").
+  ///
+  /// In en, this message translates to:
+  /// **', '**
+  String get settingsSummarySeparator;
+
   /// E2: settings search without results.
   ///
   /// In en, this message translates to:

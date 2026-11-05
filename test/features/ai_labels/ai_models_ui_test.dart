@@ -16,6 +16,7 @@ import 'package:kfm/l10n/generated/app_localizations.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 
 /// No network, no files: download/remove just change state.
 class FakeStore extends AiModelStore {
@@ -195,8 +196,7 @@ void main() {
     await openImages(tester);
     expect(find.text(_l10n.aiLabelsCardTitle), findsNothing);
 
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'smart');
     final line = find.text(_l10n.aiLabelsNeedsAndroid8);
     await tester.scrollUntilVisible(line, 200);
     expect(line, findsOneWidget);
@@ -221,8 +221,7 @@ void main() {
       'INSERT INTO ai_labels (file_id, label, confidence) VALUES '
       "('ms:1', 'cat', 0.9)",
     );
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'smart');
     final installedLine = find.text(_l10n.aiModelsInstalled(10));
     await tester.scrollUntilVisible(installedLine, 200);
     expect(installedLine, findsOneWidget);

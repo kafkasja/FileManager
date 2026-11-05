@@ -20,6 +20,7 @@ import 'package:kfm/features/connect/ui/connect_screen.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 import 'fake_discovery.dart';
 import 'fake_remote_http.dart';
 
@@ -163,8 +164,7 @@ void main() {
   }
 
   Future<void> openConnect(WidgetTester tester) async {
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'connect');
     await tester.scrollUntilVisible(find.text('Connect a device'), 200);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Connect a device'));
