@@ -11,10 +11,19 @@ import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 /// bar (long names are ellipsized, full name in a tooltip), so the parent
 /// is always visible and clickable.
 class DesktopBreadcrumb extends StatelessWidget {
-  const new({required this.folder, required this.onOpen, super.key});
+  const new({
+    required this.folder,
+    required this.onOpen,
+    this.subfoldersOf,
+    super.key,
+  });
 
   final String? folder;
   final ValueChanged<String?> onOpen;
+
+  /// E3: the ▾ after a part lists that folder's subfolders (Explorer);
+  /// null = plain chevrons.
+  final Future<List<String>> Function(String folder)? subfoldersOf;
 
   /// The widest one part may get, as a share of the bar.
   static const maxPartFraction = 0.4;
@@ -61,11 +70,18 @@ class DesktopBreadcrumb extends StatelessWidget {
                 children: [
                   for (final (i, (path, label)) in parts.indexed) ...[
                     if (i > 0)
-                      Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      switch ((subfoldersOf, parts[i - 1].$1)) {
+                        (final list?, final parent?) => _Chevron(
+                          key: ValueKey('crumb-list-$parent'),
+                          list: () => list(parent),
+                          onOpen: onOpen,
+                        ),
+                        _ => Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      },
                     _Part(
                       key: ValueKey('crumb-${path ?? ''}'),
                       label: label,
@@ -81,6 +97,70 @@ class DesktopBreadcrumb extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A chevron that lists the folder before it (Explorer's ▸ between parts).
+class _Chevron extends StatelessWidget {
+  const new({required this.list, required this.onOpen, super.key});
+
+  final Future<List<String>> Function() list;
+  final ValueChanged<String?> onOpen;
+
+  Future<void> _show(BuildContext context) async {
+    final box = context.findRenderObject()! as RenderBox;
+    final overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final at = box.localToGlobal(
+      box.size.bottomLeft(Offset.zero),
+      ancestor: overlay,
+    );
+    final folders = await list();
+    if (!context.mounted || folders.isEmpty) return;
+    final sorted = [...folders]
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final picked = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(at.dx, at.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      constraints: const BoxConstraints(maxHeight: 420, minWidth: 200),
+      items: [
+        for (final f in sorted)
+          PopupMenuItem<String>(
+            value: f,
+            height: scaledExtent(context, 32),
+            child: Row(
+              children: [
+                const Icon(Icons.folder_outlined, size: 18),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    f.substring(f.lastIndexOf('/') + 1),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+    if (picked != null) onOpen(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    borderRadius: BorderRadius.circular(4),
+    onTap: () => _show(context),
+    child: Padding(
+      padding: const EdgeInsetsDirectional.symmetric(vertical: 6),
+      child: Icon(
+        Icons.chevron_right,
+        size: 16,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
 }
 
 class _Part extends StatelessWidget {

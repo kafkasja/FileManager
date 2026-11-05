@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_disk_files.dart';
+import 'package:kfm/desktop/browse/disk_folders.dart';
 import 'package:kfm/desktop/shell/desktop_address_bar.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
@@ -241,6 +242,55 @@ void main() {
       await tester.pumpAndSettle();
       expect(_tabs(app).current.location, const FolderLocation('/s/DCIM'));
       expect(find.textContaining('1 selected'), findsOneWidget);
+    });
+
+    testWidgets('▸ between parts lists subfolders; typing suggests them', (
+      tester,
+    ) async {
+      final app = await pumpDesktopApp(
+        tester,
+        files: _library(),
+        diskFolders: (f) async => switch (f) {
+          '/s' => const [
+            DiskFolder('/s/DCIM'),
+            DiskFolder('/s/Other'),
+            DiskFolder('/s/Docs'),
+          ],
+          _ => const [],
+        },
+      );
+      app.container
+          .read(desktopTabsControllerProvider.notifier)
+          .navigate(const FolderLocation('/s/DCIM'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('crumb-list-/s')));
+      await tester.pumpAndSettle();
+      expect(find.text('Docs'), findsOneWidget);
+      await tester.tap(find.text('Other').last);
+      await tester.pumpAndSettle();
+      expect(_tabs(app).current.location, const FolderLocation('/s/Other'));
+
+      await tester.tap(find.byKey(const ValueKey('desktop-address-crumbs')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('desktop-address-field')),
+        r'\s\D',
+      );
+      await tester.pumpAndSettle();
+      final list = find.byKey(const ValueKey('desktop-address-suggestions'));
+      expect(list, findsOneWidget);
+      expect(
+        find.descendant(of: list, matching: find.text(r'\s\DCIM')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: list, matching: find.text(r'\s\Docs')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: list, matching: find.text(r'\s\Other')),
+        findsNothing,
+      );
     });
 
     test('typed paths are normalised', () {

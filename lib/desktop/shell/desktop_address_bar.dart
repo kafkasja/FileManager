@@ -190,6 +190,31 @@ class DesktopAddressBarState extends ConsumerState<DesktopAddressBar> {
     }
   }
 
+  /// Up to 12 subfolders of the typed path's parent whose names start
+  /// with what's typed after the last `\`.
+  Future<Iterable<String>> _suggest(String text) async {
+    final t = text.replaceAll(r'\', '/');
+    final slash = t.lastIndexOf('/');
+    if (slash < 0 || _error != null) return const [];
+    final parent = normalizeTypedPath(
+      t.substring(0, slash == 2 && t[1] == ':' ? 2 : slash),
+      ref.read(desktopEnvironmentProvider),
+    );
+    if (parent == null) return const [];
+    final prefix = t.substring(slash + 1).toLowerCase();
+    final folders = await ref.read(diskFolderListerProvider)(parent);
+    final out = [
+      for (final d in folders)
+        if (!d.hidden &&
+            d.path
+                .substring(d.path.lastIndexOf('/') + 1)
+                .toLowerCase()
+                .startsWith(prefix))
+          d.path,
+    ]..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return out.take(12);
+  }
+
   void _searchSubmit(String text) {
     final q = text.trim();
     if (q.isEmpty) return;
@@ -229,6 +254,10 @@ class DesktopAddressBarState extends ConsumerState<DesktopAddressBar> {
     final crumbs = switch (loc) {
       FolderLocation(:final path) => DesktopBreadcrumb(
         folder: path,
+        subfoldersOf: (f) async => [
+          for (final d in await ref.read(diskFolderListerProvider)(f))
+            if (!d.hidden) d.path,
+        ],
         onOpen: (f) => _tabs.navigate(
           f == null ? const HomeLocation() : FolderLocation(f),
         ),
@@ -253,21 +282,30 @@ class DesktopAddressBarState extends ConsumerState<DesktopAddressBar> {
                 bindings: {
                   const SingleActivator(LogicalKeyboardKey.escape): _cancel,
                 },
-                child: TextField(
-                  key: const ValueKey('desktop-address-field'),
-                  controller: _path,
+                child: RawAutocomplete<String>(
+                  textEditingController: _path,
                   focusNode: widget.addressFocus,
-                  style: theme.textTheme.bodyMedium,
-                  decoration: field.copyWith(
-                    errorText: _error,
-                    errorMaxLines: 1,
-                  ),
-                  onChanged: (_) {
-                    if (_error != null) setState(() => _error = null);
-                  },
-                  // Enter keeps the field focused (an error shows in it).
-                  onEditingComplete: () {},
-                  onSubmitted: (t) => unawaited(_submit(t)),
+                  optionsBuilder: (v) => _suggest(v.text),
+                  displayStringForOption: windowsPathOf,
+                  optionsViewBuilder: (context, onSelected, options) =>
+                      _Suggestions(options: options, onSelected: onSelected),
+                  fieldViewBuilder: (context, controller, focusNode, _) =>
+                      TextField(
+                        key: const ValueKey('desktop-address-field'),
+                        controller: controller,
+                        focusNode: focusNode,
+                        style: theme.textTheme.bodyMedium,
+                        decoration: field.copyWith(
+                          errorText: _error,
+                          errorMaxLines: 1,
+                        ),
+                        onChanged: (_) {
+                          if (_error != null) setState(() => _error = null);
+                        },
+                        // Enter keeps the field focused (an error shows in it).
+                        onEditingComplete: () {},
+                        onSubmitted: (t) => unawaited(_submit(t)),
+                      ),
                 ),
               ),
             ],
@@ -377,4 +415,41 @@ void refreshDesktop(WidgetRef ref) {
     ref.invalidate(desktopDiskFoldersProvider(loc.path));
   }
   ref.read(desktopRefreshTickProvider.notifier).bump();
+}
+
+/// The typed-path suggestions under the address field.
+class _Suggestions extends StatelessWidget {
+  const new({required this.options, required this.onSelected});
+
+  final Iterable<String> options;
+  final AutocompleteOnSelected<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final highlighted = AutocompleteHighlightedOption.of(context);
+    final list = options.toList();
+    return Align(
+      alignment: AlignmentDirectional.topStart,
+      child: Material(
+        key: const ValueKey('desktop-address-suggestions'),
+        elevation: 4,
+        borderRadius: BorderRadius.circular(6),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360, maxWidth: 560),
+          child: ListView.builder(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            itemCount: list.length,
+            itemBuilder: (context, i) => ListTile(
+              dense: true,
+              selected: i == highlighted,
+              leading: const Icon(Icons.folder_outlined, size: 18),
+              title: Text(windowsPathOf(list[i])),
+              onTap: () => onSelected(list[i]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
