@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:kfm/core/background/file_hasher.dart';
 import 'package:kfm/core/files/file_names.dart';
@@ -14,10 +15,12 @@ import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
+import 'package:kfm/features/connect/data/transfer_stats_log.dart';
 import 'package:kfm/features/connect/data/upload_store.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/transfer_stats.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:shelf/shelf.dart';
 
@@ -34,7 +37,18 @@ class UploadRoutesEnv {
     this.hashFile = hashFileRef,
     this.grants = const NoOfferGrants(),
     this.publishMode = _mayCopy,
+    this.streamingHash = true,
+    this.spaceCheckBytes = kUploadSpaceCheckBytes,
   });
+
+  /// E1: free space is checked again after this many bytes (tests: 0 =
+  /// every chunk).
+  final int spaceCheckBytes;
+
+  /// E1: a copy's partial is verified with the hash made while it arrived
+  /// instead of reading it back (moves always read back). Tests that hold
+  /// the read-back turn it off.
+  final bool streamingHash;
 
   static Future<String> _hashPath(String path) => hashFileInIsolate(path);
 
@@ -352,7 +366,7 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
   if (u == null) return apiError(ApiErrorCode.notFound);
   final offset = int.parse(r.url.queryParameters['offset']!);
   final length = r.contentLength;
-  if (length == null || length > kTransferChunkBytes) {
+  if (length == null || length > kMaxTransferChunkBytes) {
     return apiError(ApiErrorCode.tooLarge);
   }
   // N10: a chunk of a dropped connection may still hang; the owner's new
@@ -365,14 +379,18 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
   }
   if (offset != u.received) return apiError(ApiErrorCode.conflict);
   if (u.received + length > u.size) return apiError(ApiErrorCode.tooLarge);
-  // Free space is checked per chunk (other files on this device grow too).
-  if (!await _fits(
-    env,
-    target.canonicalPath,
-    size: u.size,
-    left: u.size - u.received,
-  )) {
-    return apiError(ApiErrorCode.insufficientStorage);
+  // Free space: at create and then every [kUploadSpaceCheckBytes] (other
+  // files on this device grow too; E1: not per chunk).
+  if (u.received - u.spaceCheckedAt >= env.spaceCheckBytes) {
+    if (!await _fits(
+      env,
+      target.canonicalPath,
+      size: u.size,
+      left: u.size - u.received,
+    )) {
+      return apiError(ApiErrorCode.insufficientStorage);
+    }
+    u.spaceCheckedAt = u.received;
   }
   if (u.writing != null) return apiError(ApiErrorCode.busy);
   // Q1: another chunk at this offset may have finished during the awaits
@@ -384,6 +402,17 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
   RandomAccessFile? raf;
   try {
     raf = await u.part.open(mode: FileMode.append);
+    if (env.streamingHash && u.hasher == null) {
+      // First chunk here (or after a cut): the bytes already on disk are
+      // hashed once, then everything else as it arrives.
+      final h = await HashSession.start();
+      try {
+        await h.addFile(u.part.path, 0, u.received);
+        u.hasher = h;
+      } on Object {
+        h.dispose();
+      }
+    }
     final written = await _receive(
       env.sessions,
       _session(r).sessionId,
@@ -391,21 +420,29 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
       r.read(),
       raf,
       length,
+      stats: u.stats,
+      hasher: u.hasher,
       onStart: (abort) => u.abortWrite = abort,
     );
     if (written != length) {
-      await raf.truncate(u.received);
+      await _cutBack(env, u, raf);
       return apiError(ApiErrorCode.cancelled);
     }
-    // Write order: the bytes are flushed (fsync) before the `.json`
-    // claims them.
-    await raf.flush();
     u.received += written;
-    await env.uploads.saveMeta(u);
+    u.stats.bytes = u.received;
+    // Write order: the bytes are flushed (fsync) before the `.json`
+    // claims them; E1: every 64 MiB / 5 s and at the end, not per chunk.
+    if (env.uploads.checkpointDue(u)) {
+      final first = u.syncedAt == null;
+      env.uploads.checkpointLater(u);
+      // The first one is awaited: a resume point exists right away.
+      if (first) await u.syncing;
+    }
+    env.uploads.touch(u);
     return _statusOk(u);
   } on Object {
     // The client went away, or Disconnect / a scope edit cancelled it.
-    await raf?.truncate(u.received);
+    if (raf != null) await _cutBack(env, u, raf);
     rethrow;
   } finally {
     await raf?.close();
@@ -415,6 +452,24 @@ Future<Response> _chunk(UploadRoutesEnv env, Request r) async {
     finished.complete();
   }
 }
+
+/// A chunk ended early: the partial goes back to [UploadState.received]
+/// and the running hash (which saw the cut bytes) is dropped.
+Future<void> _cutBack(
+  UploadRoutesEnv env,
+  UploadState u,
+  RandomAccessFile raf,
+) async {
+  env.uploads.dropHasher(u);
+  await raf.truncate(u.received);
+}
+
+/// Bytes the chunk route collects before one write (E1: network chunks
+/// are ~16-64 KiB; one await per chunk capped a 312 MB upload).
+const int _kWriteBlockBytes = 1024 * 1024;
+
+/// Bytes waiting for the disk before the request stream is paused.
+const int _kMaxBufferedBytes = 8 * 1024 * 1024;
 
 /// Streams [body] into [raf]; the subscription is registered with
 /// [sessions] so Disconnect, stop sharing or a scope edit that makes the
@@ -427,15 +482,25 @@ Future<int> _receive(
   RandomAccessFile raf,
   int length, {
   required void Function(void Function() abort) onStart,
+  TransferStats? stats,
+  HashSession? hasher,
 }) {
   final done = Completer<int>();
   var n = 0;
-  // At most one write runs (the stream is paused meanwhile); every end
-  // waits for it, so the caller can truncate or close the file safely.
+  var received = 0;
+  final wait = Stopwatch()..start();
+  // Network chunks are collected into blocks; at most one write runs (the
+  // stream is paused while too much waits). Every end waits for the
+  // write, so the caller can truncate or close the file safely.
+  final buffer = BytesBuilder(copy: false);
+  var writing = false;
+  var ended = false;
+  var stopped = false;
   var pending = Future<void>.value();
   late final StreamSubscription<List<int>> sub;
   void Function()? unregister;
   void finish([Object? error]) {
+    stopped = stopped || error != null;
     unregister?.call();
     unregister = null;
     unawaited(
@@ -450,32 +515,66 @@ Future<int> _receive(
     );
   }
 
+  Future<void> drain() async {
+    try {
+      while (!stopped &&
+          buffer.isNotEmpty &&
+          (ended || buffer.length >= _kWriteBlockBytes)) {
+        final block = buffer.takeBytes();
+        if (sub.isPaused && !ended) sub.resume();
+        final write = Stopwatch()..start();
+        await raf.writeFrom(block);
+        stats?.writeMs += write.elapsedMilliseconds;
+        // Flow control: waits only when the hash worker is behind.
+        await hasher?.add(block);
+        n += block.length;
+      }
+    } finally {
+      writing = false;
+    }
+  }
+
+  void kick() {
+    if (writing) return;
+    writing = true;
+    pending = drain().catchError((Object e) {
+      stopped = true;
+      unawaited(sub.cancel());
+      finish(e);
+    });
+  }
+
   sub = body.listen(
     (chunk) {
-      if (n + chunk.length > length) {
+      if (received + chunk.length > length) {
+        stopped = true;
         unawaited(sub.cancel());
         finish(const FormatException('body longer than Content-Length'));
         return;
       }
-      sub.pause();
-      pending = raf
-          .writeFrom(chunk)
-          .then<void>(
-            (_) {
-              n += chunk.length;
-              sub.resume();
-            },
-            onError: (Object e) {
-              unawaited(sub.cancel());
-              finish(e);
-            },
-          );
+      stats?.readMs += wait.elapsedMilliseconds;
+      received += chunk.length;
+      buffer.add(chunk);
+      if (buffer.length >= _kWriteBlockBytes) kick();
+      if (buffer.length >= _kMaxBufferedBytes) sub.pause();
+      wait.reset();
     },
-    onError: finish,
-    onDone: finish,
+    onError: (Object e) {
+      stopped = true;
+      finish(e);
+    },
+    onDone: () {
+      ended = true;
+      kick();
+      // The last block is written before the count is final.
+      unawaited(pending.whenComplete(finish));
+    },
     cancelOnError: true,
   );
-  final hook = _CancelHook(sub, finish);
+  final hook = _CancelHook(sub, () {
+    stopped = true;
+    finish();
+  });
   unregister = sessions.registerStream(
     sessionId,
     hook,
@@ -486,7 +585,7 @@ Future<int> _receive(
   return done.future;
 }
 
-/// N9 complete; N11 verifies it when the client sends its `sha256`: the
+// N9 complete; N11 verifies it when the client sends its `sha256`: the
 /// partial is hashed before anything is published (mismatch → partial
 /// deleted, 409 `verification_failed`), and the published file is read
 /// back and hashed again (mismatch → that copy is deleted, 409; skipped
@@ -518,7 +617,13 @@ Future<Response> _complete(UploadRoutesEnv env, Request r) async {
   if (running != null) return _completeAnswer(await running);
   if (u.writing != null) return apiError(ApiErrorCode.busy);
   if (u.received != u.size) return apiError(ApiErrorCode.conflict);
-  final outcome = _publishUpload(env, u, target.canonicalPath, body.sha256);
+  final outcome = _publishUpload(
+    env,
+    u,
+    target.canonicalPath,
+    body.sha256,
+    readBack: body.readBack,
+  );
   u.completing = outcome;
   try {
     return _completeAnswer(await outcome);
@@ -541,17 +646,40 @@ Future<CompleteOutcome> _publishUpload(
   UploadRoutesEnv env,
   UploadState u,
   String targetFolder,
-  String? expected,
-) async {
+  String? expected, {
+  bool readBack = false,
+}) async {
+  final complete = Stopwatch()..start();
+  // E1: everything on disk before it is hashed or published.
+  try {
+    await env.uploads.ensureSynced(u);
+  } on Object {
+    return const CompleteOutcome(error: ApiErrorCode.internal);
+  }
+  final streamed = u.hasher;
+  u.hasher = null;
+  if (expected == null) streamed?.dispose();
   if (expected != null) {
     final String partHash;
+    final hash = Stopwatch()..start();
     try {
-      partHash = await env.hashPath(u.part.path);
+      if (streamed != null &&
+          streamed.length == u.size &&
+          !readBack &&
+          env.streamingHash) {
+        // A copy: the hash made while the bytes arrived (E1).
+        partHash = await streamed.close();
+      } else {
+        partHash = await env.hashPath(u.part.path);
+        u.stats.hashMs += hash.elapsedMilliseconds;
+      }
     } on Object {
       // A read error keeps the partial (the client asks again); only a
       // partial that is gone ends the upload.
       if (!await u.part.exists()) await env.uploads.remove(u.uploadId);
       return const CompleteOutcome(error: ApiErrorCode.internal);
+    } finally {
+      streamed?.dispose();
     }
     if (partHash != expected) {
       await env.uploads.remove(u.uploadId);
@@ -606,6 +734,8 @@ Future<CompleteOutcome> _publishUpload(
   if (isOfferRootId(u.rootId)) await env.grants.completed(u.uploadId, out.id);
   await env.uploads.completed(u, finalId: out.id, sha256: finalHash);
   unawaited(env.addToIndex([out]));
+  u.stats.completeMs += complete.elapsedMilliseconds;
+  logTransferStats(u.stats.summary('receive'));
   return CompleteOutcome(finalId: out.id, sha256: finalHash);
 }
 

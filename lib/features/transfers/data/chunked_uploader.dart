@@ -11,7 +11,9 @@ import 'package:kfm/core/files/file_source.dart';
 import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/data/transfer_stats_log.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/transfer_stats.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 import 'package:kfm/features/transfers/data/transfer_run.dart';
 import 'package:kfm/features/transfers/domain/transfer_job.dart';
@@ -56,11 +58,16 @@ class ChunkedUploader {
     required this._save,
     this._hash = hashPrepared,
     this.chunkBytes = kTransferChunkBytes,
+    this.streamingHash = true,
     Random? random,
   }) : _random = random ?? Random.secure();
 
   /// Bytes per `PUT` (tests use small chunks).
   final int chunkBytes;
+
+  /// E1: hash the bytes while they are sent instead of reading the file
+  /// again afterwards (a resume re-reads the part already sent once).
+  final bool streamingHash;
 
   final FileSource _local;
   final TransferPreprocessor _preprocessor;
@@ -107,6 +114,8 @@ class ChunkedUploader {
       );
     }
     final prepared = await _preprocessor.prepare(source, _local);
+    final stats = TransferStats();
+    HashSession? hasher;
     try {
       final size = prepared.sizeBytes;
       int? received;
@@ -154,21 +163,38 @@ class ChunkedUploader {
       // Every byte was already there: a retry after a lost complete.
       final allThere = at == size;
       run.confirm(at);
+      if (streamingHash && !allThere) {
+        hasher = await _startHash(prepared, at);
+      }
       var resyncs = 0;
       while (at < size) {
         if (run.stopped) throw const TransferStopped();
         final end = min(at + chunkBytes, size);
         int next;
+        final sent = Stopwatch()..start();
         try {
+          final h = hasher;
+          var body = countedStream(run, prepared.read(at, end), at);
+          if (h != null) {
+            // Order kept; the source waits only when the worker is behind.
+            body = body.asyncMap((b) async {
+              await h.add(b);
+              return b;
+            });
+          }
           final st = await http.putStream(
             ApiRoutes.uploadChunk(id),
-            countedStream(run, prepared.read(at, end), at),
+            body,
             end - at,
             decode: UploadStatusDto.fromJson,
             query: {'offset': '$at'},
           );
           next = st.received;
+          stats.networkMs += sent.elapsedMilliseconds;
+          // The hash saw exactly [at, end); anything else can't be used.
+          if (next != end) hasher = _drop(hasher);
         } on RemoteApiException catch (e) {
+          hasher = _drop(hasher);
           if (e.code != ApiErrorCode.conflict || run.stopped) rethrow;
           // 409: the other device has a different offset; seek there.
           if (++resyncs > kMaxOffsetResyncs) rethrow;
@@ -206,7 +232,18 @@ class ChunkedUploader {
       // reading the whole file again. A wrong one only fails verification
       // (that clears it).
       final stored = allThere ? f.senderSha256 : null;
-      final sha = stored ?? await _hash(prepared);
+      final streamed = hasher;
+      hasher = null;
+      var sha = stored;
+      if (sha == null && streamed != null && streamed.length == size) {
+        sha = await streamed.close();
+      }
+      if (sha == null) {
+        final hash = Stopwatch()..start();
+        sha = await _hash(prepared);
+        stats.hashMs += hash.elapsedMilliseconds;
+      }
+      streamed?.dispose();
       if (sha != f.senderSha256) {
         await _save(f.id, TransferFilesCompanion(senderSha256: Value(sha)));
       }
@@ -215,12 +252,18 @@ class ChunkedUploader {
       // `GET /v1/uploads/<id>` (all bytes there, or already published) and
       // completes again; the other device answers a repeat with the running
       // or remembered result, never a second copy.
+      final completing = Stopwatch()..start();
       final done = await http.postJson(
         ApiRoutes.uploadComplete(id),
-        CompleteUploadDto(sha256: sha).toJson(),
+        // A move: the other device reads the part back (rule 10).
+        CompleteUploadDto(sha256: sha, readBack: move).toJson(),
         decode: UploadCompletedDto.fromJson,
         timeout: completeTimeoutFor(size),
       );
+      stats
+        ..completeMs = completing.elapsedMilliseconds
+        ..bytes = size;
+      logTransferStats(stats.summary('send'));
       if (!move) return (finalId: done.finalId, receiverSha256: null);
       // The other device hashed the part and the published file; an older
       // peer that doesn't answer a hash proves nothing.
@@ -234,6 +277,9 @@ class ChunkedUploader {
         throw const TransferFailure(TransferErrors.verificationFailed);
       }
       return (finalId: done.finalId, receiverSha256: check.sha256);
+    } on Object {
+      hasher = _drop(hasher);
+      rethrow;
     } finally {
       try {
         await prepared.cleanup();
@@ -241,6 +287,36 @@ class ChunkedUploader {
         developer.log('prepared file not cleaned: $e', name: 'kfm.transfers');
       }
     }
+  }
+
+  /// A running hash with `[0, from)` already fed (a resume re-reads what
+  /// was sent before). Null when no worker could start: the file is then
+  /// hashed after sending, as before.
+  static Future<HashSession?> _startHash(PreparedSource p, int from) async {
+    HashSession? h;
+    try {
+      h = await HashSession.start();
+      if (from > 0) {
+        final path = p.path;
+        if (path != null) {
+          await h.addFile(path, 0, from);
+        } else {
+          await for (final b in p.read(0, from)) {
+            await h.add(b);
+          }
+        }
+      }
+      return h;
+    } on Object catch (e) {
+      developer.log('streaming hash not started: $e', name: 'kfm.transfers');
+      h?.dispose();
+      return null;
+    }
+  }
+
+  static HashSession? _drop(HashSession? h) {
+    h?.dispose();
+    return null;
   }
 
   Future<FileRef> _stat(TransferFile f) async =>

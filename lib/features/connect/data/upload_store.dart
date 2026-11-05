@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:kfm/core/background/file_hasher.dart';
 import 'package:kfm/core/files/file_names.dart';
 import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
+import 'package:kfm/features/connect/domain/transfer_stats.dart';
 import 'package:kfm/features/connect/domain/upload_protocol.dart';
 
 /// Partials untouched this long are deleted (TASK-N10).
@@ -24,7 +26,9 @@ class UploadState {
     required this.meta,
     required this.createdAtMs,
     this.received = 0,
-  });
+  }) : synced = received,
+       syncTarget = received,
+       spaceCheckedAt = received;
 
   final String uploadId;
 
@@ -43,7 +47,30 @@ class UploadState {
   /// `<staging>/up-<uploadId>.json`: the durable truth (never claims bytes
   /// that aren't flushed to [part]).
   final File meta;
+
+  /// Bytes written to [part] (live; the client's next offset).
   int received;
+
+  /// E1: bytes fsynced and claimed by [meta] (≤ [received]).
+  int synced;
+
+  /// E1: the bytes the last scheduled checkpoint makes durable, and when
+  /// it was scheduled.
+  int syncTarget;
+  DateTime? syncedAt;
+
+  /// E1: the checkpoint running in the background, if any.
+  Future<void>? syncing;
+
+  /// E1: [received] when free space was last checked.
+  int spaceCheckedAt;
+
+  /// E1: SHA-256 of `[0, received)` as it arrived; null when it can't be
+  /// trusted (a chunk was cut back) or hasn't started.
+  HashSession? hasher;
+
+  /// E1: where the receiving side's time went.
+  final TransferStats stats = TransferStats();
 
   /// The chunk being written, if any.
   Future<void>? writing;
@@ -78,7 +105,8 @@ class UploadState {
     'path': path,
     'name': name,
     'size': size,
-    'received': received,
+    // Only what is synced (E1: checkpoints lag behind [received]).
+    'received': synced,
     'createdAtMs': createdAtMs,
     'updatedAtMs': nowMs,
   };
@@ -231,6 +259,73 @@ class UploadStore {
     return state;
   }
 
+  /// E1: makes what [u] received so far durable in the background (fsync,
+  /// then the `.json` claims it) while the next chunk comes in. One at a
+  /// time; a failure only leaves the `.json` behind (a crash then re-sends
+  /// a little more).
+  void checkpointLater(UploadState u) {
+    final target = u.received;
+    u
+      ..syncTarget = target
+      ..syncedAt = _clock();
+    final before = u.syncing ?? Future<void>.value();
+    late final Future<void> run;
+    run = before
+        .then((_) => _sync(u, target))
+        .catchError(
+          (Object e) =>
+              developer.log('partial not synced: $e', name: 'kfm.connect'),
+        )
+        .whenComplete(() {
+          if (identical(u.syncing, run)) u.syncing = null;
+        });
+    u.syncing = run;
+  }
+
+  Future<void> _sync(UploadState u, int target) async {
+    if (u.synced >= target || !identical(_uploads[u.uploadId], u)) return;
+    final sw = Stopwatch()..start();
+    final raf = await u.part.open(mode: FileMode.append);
+    try {
+      await raf.flush();
+    } finally {
+      await raf.close();
+    }
+    u.stats.syncMs += sw.elapsedMilliseconds;
+    u.synced = target;
+    await saveMeta(u);
+  }
+
+  /// E1: a chunk was stored without a checkpoint (activity + progress).
+  void touch(UploadState u) {
+    _lastChunkAt = _clock();
+    if (identical(_uploads[u.uploadId], u)) _emit(u, UploadPhase.progressed);
+  }
+
+  /// E1: a checkpoint is due after a chunk.
+  bool checkpointDue(UploadState u) {
+    final at = u.syncedAt;
+    return u.received - u.syncTarget >= kUploadCheckpointBytes ||
+        at == null ||
+        _clock().difference(at) >= kUploadCheckpointInterval;
+  }
+
+  /// E1: every received byte is durable (before complete hashes or
+  /// publishes the partial).
+  Future<void> ensureSynced(UploadState u) async {
+    await u.syncing;
+    if (u.synced < u.received) {
+      u.syncTarget = u.received;
+      await _sync(u, u.received);
+    }
+  }
+
+  /// E1: the running hash can no longer be trusted (a chunk was cut back).
+  void dropHasher(UploadState u) {
+    u.hasher?.dispose();
+    u.hasher = null;
+  }
+
   /// Rewrites [u]'s `.json` atomically (temp file, flush, rename). Call
   /// only after the bytes it claims are flushed.
   Future<void> saveMeta(UploadState u) async {
@@ -252,6 +347,9 @@ class UploadStore {
     if (u == null) return;
     if (emit) _emit(u, UploadPhase.removed);
     u.abortWrite?.call();
+    _release(u);
+    // A background checkpoint has the partial open.
+    await u.syncing;
     await _delete(u.part);
     await _delete(u.meta);
   }
@@ -282,8 +380,13 @@ class UploadStore {
     if (identical(_uploads[u.uploadId], u)) {
       _emit(u, UploadPhase.completed);
       await _remove(u.uploadId, emit: false);
+    } else {
+      _release(u);
     }
   }
+
+  /// Ends [u]'s hash worker (it is going away).
+  void _release(UploadState u) => dropHasher(u);
 
   /// [uploadId]'s remembered completion if [fingerprint] owns it.
   CompletedUpload? lookupCompleted(String uploadId, String fingerprint) {

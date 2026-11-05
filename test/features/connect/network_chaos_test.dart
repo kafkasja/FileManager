@@ -140,6 +140,8 @@ class _Peer {
             ),
             ...uploadRoutes(
               UploadRoutesEnv(
+                // These check the read-back hash (E1: copies skip it).
+                streamingHash: false,
                 guard: guard,
                 sessions: sessions,
                 uploads: uploads,

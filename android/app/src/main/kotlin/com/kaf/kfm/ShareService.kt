@@ -56,6 +56,7 @@ data class Presence(
 class ShareService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
+    private var lowLatencyLock: WifiManager.WifiLock? = null
     private var types = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -169,15 +170,17 @@ class ShareService : Service() {
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "kfm:background")
                 .apply { setReferenceCounted(false); acquire() }
         }
+        val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        // E1: HIGH_PERF keeps Wi-Fi out of power save with the screen off
+        // (phones throttle it then: a 312 MB send crawled); LOW_LATENCY
+        // (API 29+) only works while KFM is on screen, so both are held.
         if (wifiLock == null) {
             @Suppress("DEPRECATION")
-            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                WifiManager.WIFI_MODE_FULL_LOW_LATENCY
-            } else {
-                WifiManager.WIFI_MODE_FULL_HIGH_PERF
-            }
-            wifiLock = (applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-                .createWifiLock(mode, "kfm:background")
+            wifiLock = wifi.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "kfm:background")
+                .apply { setReferenceCounted(false); acquire() }
+        }
+        if (lowLatencyLock == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            lowLatencyLock = wifi.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "kfm:foreground")
                 .apply { setReferenceCounted(false); acquire() }
         }
     }
@@ -187,6 +190,8 @@ class ShareService : Service() {
         wakeLock = null
         wifiLock?.takeIf { it.isHeld }?.release()
         wifiLock = null
+        lowLatencyLock?.takeIf { it.isHeld }?.release()
+        lowLatencyLock = null
     }
 
     companion object {

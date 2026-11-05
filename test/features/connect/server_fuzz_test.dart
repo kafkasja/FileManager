@@ -164,6 +164,8 @@ void main() {
       ),
       ...uploadRoutes(
         UploadRoutesEnv(
+          // Free space on every chunk (the Q1 race needs it).
+          spaceCheckBytes: 0,
           guard: guard,
           sessions: sessions,
           uploads: uploads,
