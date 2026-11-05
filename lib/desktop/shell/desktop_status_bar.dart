@@ -6,6 +6,7 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/desktop/connect/desktop_device_rows.dart';
 import 'package:kfm/desktop/shell/desktop_drives.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
@@ -19,10 +20,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'desktop_status_bar.g.dart';
 
-/// E1 hook: "Connected to `phone`" in the status bar (a link widget);
-/// null until E1c fills it.
+/// E1 hook: "Connected to `phone`" in the status bar (E1c's
+/// [DesktopLinkStatus]; draws nothing while not linked).
 @Riverpod(keepAlive: true)
-Widget? desktopStatusConnection(Ref ref) => null;
+Widget? desktopStatusConnection(Ref ref) => const DesktopLinkStatus();
 
 /// The view toggles at the end of the status bar (Details / Large icons),
 /// set by the screen that has a view (Browse, Sort, Trash).

@@ -64,4 +64,4 @@ final class SelectionActionsProvider
   }
 }
 
-String _$selectionActionsHash() => r'ef44f6ef26d1901babff60fcb6aaffb0ef0f1ae3';
+String _$selectionActionsHash() => r'00b980941180fa0d72f32d52798f8dfe547066e1';

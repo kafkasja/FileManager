@@ -7,6 +7,7 @@ import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/desktop/connect/desktop_device_rows.dart';
 import 'package:kfm/desktop/shell/desktop_drives.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
@@ -24,9 +25,9 @@ part 'desktop_nav_pane.g.dart';
 
 /// E1 hook: the device rows of the nav pane's Devices group (linked and
 /// remembered devices: status dot, "Send to `name`" drop, click = remote
-/// browse). Empty until E1c fills it.
+/// browse); E1c's [DesktopDeviceRows].
 @Riverpod(keepAlive: true)
-List<Widget> desktopNavDeviceRows(Ref ref) => const [];
+List<Widget> desktopNavDeviceRows(Ref ref) => const [DesktopDeviceRows()];
 
 /// Nav pane width (`desktop.navWidth`, 160–360 px).
 @Riverpod(keepAlive: true)

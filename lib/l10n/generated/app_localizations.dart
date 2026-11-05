@@ -11678,6 +11678,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files other devices send you land here, in a folder per device.'**
   String get receiveFolderHelp;
+
+  /// E1: first entry of file menus and the selection bar while a device is linked; one tap sends.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to {device}'**
+  String linkSendTo(String device);
+
+  /// E1: snackbar after Send to <device>.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Sending 1 file to {device}} other{Sending {count} files to {device}}}'**
+  String linkSending(int count, String device);
+
+  /// E1: snackbar when Send to <device> could not queue the files.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send to {device}. Try again.'**
+  String linkSendFailed(String device);
+
+  /// E1: chip above the phone tabs and in the desktop status bar while a device is linked.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {device}'**
+  String linkConnectedTo(String device);
+
+  /// E1: button on the 'Connected to <device>' chip; opens the device's files.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get linkOpen;
+
+  /// E1: card on Browse that opens the Connect screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby devices'**
+  String get linkNearbyDevices;
+
+  /// E1: second line of the 'Nearby devices' card on Browse.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a phone or PC'**
+  String get linkNearbyDevicesHint;
+
+  /// E1: tooltip of a remembered device in the desktop navigation pane.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to {device}'**
+  String linkReconnectTo(String device);
+
+  /// E1: snackbar while a remembered device in the desktop navigation pane reconnects.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {device}…'**
+  String linkReconnecting(String device);
 }
 
 class _AppLocalizationsDelegate

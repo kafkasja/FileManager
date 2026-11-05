@@ -1928,5 +1928,14 @@
   "showInFolder": "Toon in map",
   "receiveFolderTitle": "Ontvangen bestanden gaan naar",
   "receiveFolderReset": "Standaardmap gebruiken",
-  "receiveFolderHelp": "Bestanden die andere apparaten je sturen komen hier, in een map per apparaat."
+  "receiveFolderHelp": "Bestanden die andere apparaten je sturen komen hier, in een map per apparaat.",
+  "linkSendTo": "Stuur naar {device}",
+  "linkSending": "{count, plural, =1{1 bestand wordt naar {device} gestuurd} other{{count} bestanden worden naar {device} gestuurd}}",
+  "linkSendFailed": "Versturen naar {device} is mislukt. Probeer het opnieuw.",
+  "linkConnectedTo": "Verbonden met {device}",
+  "linkOpen": "Openen",
+  "linkNearbyDevices": "Apparaten in de buurt",
+  "linkNearbyDevicesHint": "Verbind een telefoon of pc",
+  "linkReconnectTo": "Verbinden met {device}",
+  "linkReconnecting": "Verbinden met {device}…"
 }

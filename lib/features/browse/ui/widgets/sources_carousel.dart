@@ -37,7 +37,10 @@ class SourcesCarousel extends ConsumerWidget {
     final remote = ref.watch(remoteConnectionControllerProvider);
     final cards = <Widget>[
       if (remote case RemoteConnected(:final peerName, :final peerFingerprint))
-        _RemoteDeviceCard(name: peerName, peerFingerprint: peerFingerprint),
+        _RemoteDeviceCard(name: peerName, peerFingerprint: peerFingerprint)
+      else
+        // E1: Connect is easy to find (opens the Connect screen).
+        const _NearbyDevicesCard(),
       for (final r in recents)
         _CollectionCard(collection: RecentCollection(r), recent: true),
       for (final source in BrowseSourceChip.values)
@@ -232,6 +235,73 @@ class _RemoteDeviceCard extends StatelessWidget {
                         l10n.remoteConnectedDevice,
                         style: text.labelMedium?.copyWith(
                           color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// E1: "Nearby devices · Connect a phone or PC" while nothing is linked.
+class _NearbyDevicesCard extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final spacing = context.tokens.spacing;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: SourcesCarousel.cardWidth,
+      child: Semantics(
+        button: true,
+        label: l10n.linkNearbyDevices,
+        excludeSemantics: true,
+        child: Material(
+          key: const ValueKey('browse-nearby-devices'),
+          borderRadius: BorderRadius.circular(context.tokens.radius),
+          clipBehavior: Clip.antiAlias,
+          color: scheme.secondaryContainer,
+          child: InkWell(
+            onTap: () => unawaited(context.push(AppRoutes.connect)),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Icon(
+                  Icons.devices_outlined,
+                  size: 48,
+                  color: scheme.onSecondaryContainer,
+                ),
+                PositionedDirectional(
+                  start: spacing,
+                  end: spacing,
+                  bottom: spacing,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.linkNearbyDevices,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.titleMedium?.copyWith(
+                          color: scheme.onSecondaryContainer,
+                        ),
+                      ),
+                      Text(
+                        l10n.linkNearbyDevicesHint,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.labelMedium?.copyWith(
+                          color: scheme.onSecondaryContainer,
                         ),
                       ),
                     ],

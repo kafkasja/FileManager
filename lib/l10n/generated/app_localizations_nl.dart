@@ -8425,4 +8425,49 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get receiveFolderHelp =>
       'Bestanden die andere apparaten je sturen komen hier, in een map per apparaat.';
+
+  @override
+  String linkSendTo(String device) {
+    return 'Stuur naar $device';
+  }
+
+  @override
+  String linkSending(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden worden naar $device gestuurd',
+      one: '1 bestand wordt naar $device gestuurd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String linkSendFailed(String device) {
+    return 'Versturen naar $device is mislukt. Probeer het opnieuw.';
+  }
+
+  @override
+  String linkConnectedTo(String device) {
+    return 'Verbonden met $device';
+  }
+
+  @override
+  String get linkOpen => 'Openen';
+
+  @override
+  String get linkNearbyDevices => 'Apparaten in de buurt';
+
+  @override
+  String get linkNearbyDevicesHint => 'Verbind een telefoon of pc';
+
+  @override
+  String linkReconnectTo(String device) {
+    return 'Verbinden met $device';
+  }
+
+  @override
+  String linkReconnecting(String device) {
+    return 'Verbinden met $device…';
+  }
 }

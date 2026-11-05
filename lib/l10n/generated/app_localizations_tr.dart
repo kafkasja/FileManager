@@ -8364,4 +8364,49 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get receiveFolderHelp =>
       'Diğer cihazların gönderdiği dosyalar buraya, her cihaz için ayrı bir klasöre gelir.';
+
+  @override
+  String linkSendTo(String device) {
+    return '$device cihazına gönder';
+  }
+
+  @override
+  String linkSending(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dosya $device cihazına gönderiliyor',
+      one: '1 dosya $device cihazına gönderiliyor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String linkSendFailed(String device) {
+    return '$device cihazına gönderilemedi. Tekrar deneyin.';
+  }
+
+  @override
+  String linkConnectedTo(String device) {
+    return '$device cihazına bağlı';
+  }
+
+  @override
+  String get linkOpen => 'Aç';
+
+  @override
+  String get linkNearbyDevices => 'Yakındaki cihazlar';
+
+  @override
+  String get linkNearbyDevicesHint => 'Bir telefon veya bilgisayar bağlayın';
+
+  @override
+  String linkReconnectTo(String device) {
+    return '$device cihazına bağlan';
+  }
+
+  @override
+  String linkReconnecting(String device) {
+    return '$device cihazına bağlanılıyor…';
+  }
 }

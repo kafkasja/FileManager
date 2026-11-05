@@ -1928,5 +1928,14 @@
   "showInFolder": "Klasörde göster",
   "receiveFolderTitle": "Alınan dosyaların gideceği yer",
   "receiveFolderReset": "Varsayılan klasörü kullan",
-  "receiveFolderHelp": "Diğer cihazların gönderdiği dosyalar buraya, her cihaz için ayrı bir klasöre gelir."
+  "receiveFolderHelp": "Diğer cihazların gönderdiği dosyalar buraya, her cihaz için ayrı bir klasöre gelir.",
+  "linkSendTo": "{device} cihazına gönder",
+  "linkSending": "{count, plural, =1{1 dosya {device} cihazına gönderiliyor} other{{count} dosya {device} cihazına gönderiliyor}}",
+  "linkSendFailed": "{device} cihazına gönderilemedi. Tekrar deneyin.",
+  "linkConnectedTo": "{device} cihazına bağlı",
+  "linkOpen": "Aç",
+  "linkNearbyDevices": "Yakındaki cihazlar",
+  "linkNearbyDevicesHint": "Bir telefon veya bilgisayar bağlayın",
+  "linkReconnectTo": "{device} cihazına bağlan",
+  "linkReconnecting": "{device} cihazına bağlanılıyor…"
 }

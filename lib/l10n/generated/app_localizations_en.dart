@@ -8354,4 +8354,49 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get receiveFolderHelp =>
       'Files other devices send you land here, in a folder per device.';
+
+  @override
+  String linkSendTo(String device) {
+    return 'Send to $device';
+  }
+
+  @override
+  String linkSending(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sending $count files to $device',
+      one: 'Sending 1 file to $device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String linkSendFailed(String device) {
+    return 'Couldn\'t send to $device. Try again.';
+  }
+
+  @override
+  String linkConnectedTo(String device) {
+    return 'Connected to $device';
+  }
+
+  @override
+  String get linkOpen => 'Open';
+
+  @override
+  String get linkNearbyDevices => 'Nearby devices';
+
+  @override
+  String get linkNearbyDevicesHint => 'Connect a phone or PC';
+
+  @override
+  String linkReconnectTo(String device) {
+    return 'Connect to $device';
+  }
+
+  @override
+  String linkReconnecting(String device) {
+    return 'Connecting to $device…';
+  }
 }
