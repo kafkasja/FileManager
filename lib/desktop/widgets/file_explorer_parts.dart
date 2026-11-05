@@ -132,6 +132,7 @@ abstract final class FileColumns {
   static const date = 'date';
   static const size = 'size';
   static const type = 'type';
+  static const folder = 'folder';
 }
 
 /// Name · Date · Size · Type columns for files, mapped through [fileOf]
@@ -142,6 +143,7 @@ List<ExplorerColumn<T>> fileColumns<T>(
   required Widget Function(BuildContext context, T item) nameCell,
   String? Function(T item)? typeOf,
   bool sortable = true,
+  bool folderColumn = false,
 }) {
   final l10n = context.l10n;
   final locale = Localizations.localeOf(context).toLanguageTag();
@@ -156,6 +158,19 @@ List<ExplorerColumn<T>> fileColumns<T>(
       sortable: sortable,
       cell: nameCell,
     ),
+    if (folderColumn)
+      ExplorerColumn<T>(
+        id: FileColumns.folder,
+        label: l10n.desktopColumnFolder,
+        width: 220,
+        cell: (context, item) => switch (fileOf(item)) {
+          final f? => Tooltip(
+            message: f.folderPath.replaceAll('/', r'\'),
+            child: text(f.folderPath.replaceAll('/', r'\')),
+          ),
+          null => const SizedBox.shrink(),
+        },
+      ),
     ExplorerColumn<T>(
       id: FileColumns.date,
       label: l10n.browseSortDate,
@@ -221,6 +236,9 @@ class FileNameCell extends ConsumerWidget {
           (final f?, _) => ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: Thumbnail(file: f),
+          ),
+          (null, final p?) when p.length == 2 && p.endsWith(':') => Center(
+            child: FileTypeIcon.drive(p, size: useShellIcons(ref) ? 16 : 20),
           ),
           (null, final p?) => Center(
             child: FileTypeIcon.folder(

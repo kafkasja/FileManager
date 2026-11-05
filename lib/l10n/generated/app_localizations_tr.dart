@@ -7713,4 +7713,175 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupSettingFileIcons => 'Dosya simgeleri (masaüstü)';
+
+  @override
+  String get desktopHome => 'Giriş';
+
+  @override
+  String desktopTabSearch(String query) {
+    return 'Ara: $query';
+  }
+
+  @override
+  String get desktopTabNew => 'Yeni sekme';
+
+  @override
+  String get desktopTabDuplicate => 'Sekmeyi çoğalt';
+
+  @override
+  String get desktopTabClose => 'Sekmeyi kapat';
+
+  @override
+  String get desktopTabCloseOthers => 'Diğer sekmeleri kapat';
+
+  @override
+  String get desktopTabCloseRight => 'Sağdaki sekmeleri kapat';
+
+  @override
+  String get desktopTabReopen => 'Kapatılan sekmeyi yeniden aç';
+
+  @override
+  String desktopAddressNotFound(String path) {
+    return 'KFM \'$path\' öğesini bulamıyor. Yazımı kontrol edip tekrar deneyin.';
+  }
+
+  @override
+  String get desktopAddressLabel => 'Adres';
+
+  @override
+  String desktopSearchIn(String name) {
+    return '$name içinde ara';
+  }
+
+  @override
+  String desktopSearchNone(String query) {
+    return '\'$query\' ile eşleşen dosya yok.';
+  }
+
+  @override
+  String get desktopColumnFolder => 'Klasör';
+
+  @override
+  String get desktopQuickAccess => 'Hızlı erişim';
+
+  @override
+  String get desktopPinToQuickAccess => 'Hızlı erişime sabitle';
+
+  @override
+  String get desktopUnpinFromQuickAccess => 'Hızlı erişimden kaldır';
+
+  @override
+  String get desktopThisPc => 'Bu bilgisayar';
+
+  @override
+  String get desktopConnectDevice => 'Cihaz bağla';
+
+  @override
+  String get desktopOpenInNewTab => 'Yeni sekmede aç';
+
+  @override
+  String get desktopCmdNew => 'Yeni';
+
+  @override
+  String get desktopCmdView => 'Görünüm';
+
+  @override
+  String get desktopCmdSortBy => 'Sırala';
+
+  @override
+  String get desktopViewNavPane => 'Gezinti bölmesi';
+
+  @override
+  String get desktopViewHidden => 'Gizli öğeler';
+
+  @override
+  String get desktopViewPreviewPane => 'Önizleme bölmesi';
+
+  @override
+  String get desktopViewDetailsPane => 'Ayrıntılar bölmesi';
+
+  @override
+  String get desktopSortAscending => 'Artan';
+
+  @override
+  String get desktopSortDescending => 'Azalan';
+
+  @override
+  String get desktopCopyAsPath => 'Yol olarak kopyala';
+
+  @override
+  String desktopPathCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count yol kopyalandı',
+      one: 'Yol kopyalandı',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopOpenFileLocation => 'Dosya konumunu aç';
+
+  @override
+  String get desktopShowInExplorer => 'Windows Gezgini\'nde göster';
+
+  @override
+  String get desktopProperties => 'Özellikler';
+
+  @override
+  String get desktopOpenInKfm => 'KFM görüntüleyicide aç';
+
+  @override
+  String desktopStatusLeft(int count) {
+    return '$count kaldı';
+  }
+
+  @override
+  String desktopStatusDriveFree(String drive, String free, String total) {
+    return '$drive $total alanın $free boş';
+  }
+
+  @override
+  String get desktopFolderGone => 'Bu klasör artık yok.';
+
+  @override
+  String get trashPropsOriginalLocation => 'Özgün konum';
+
+  @override
+  String get trashPropsDeleted => 'Silinme';
+
+  @override
+  String get trashPropsWaiting =>
+      'Bekliyor, henüz Geri Dönüşüm Kutusu\'nda değil';
+
+  @override
+  String trashPropsSummary(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öğe',
+      one: '1 öğe',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get trashEmpty => 'Çöpü boşalt';
+
+  @override
+  String trashEmptyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öğe',
+      one: '1 öğe',
+    );
+    return '$_temp0 kalıcı olarak silinsin mi?';
+  }
+
+  @override
+  String trashEmptyBody(String size) {
+    return 'KFM\'de bekleyen dosyalar dahil $size silinecek. Bu geri alınamaz.';
+  }
 }

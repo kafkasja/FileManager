@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 
@@ -122,6 +124,7 @@ class DesktopDragController extends ChangeNotifier {
         !(Offset.zero & size).contains(position)) {
       _handingOff = true;
       _setHover(null, null);
+      _setHold(null);
       _position = null;
       notifyListeners();
       unawaited(
@@ -146,11 +149,43 @@ class DesktopDragController extends ChangeNotifier {
 
   void cancel() => _clear();
 
+  // --- E3: the pointer of a drag started in a KFM list ----------------------
+  int? _pointer;
+
+  /// Follows [pointer] (moves update, up drops, cancel cancels) through the
+  /// global pointer router, independent of the widget that started it.
+  void trackPointer(int pointer) {
+    _untrack();
+    _pointer = pointer;
+    GestureBinding.instance.pointerRouter.addRoute(pointer, _route);
+  }
+
+  void _route(PointerEvent e) {
+    if (e is PointerMoveEvent) {
+      update(e.position, copy: HardwareKeyboard.instance.isControlPressed);
+    } else if (e is PointerUpEvent) {
+      _untrack();
+      unawaited(drop());
+    } else if (e is PointerCancelEvent) {
+      _untrack();
+      cancel();
+    }
+  }
+
+  void _untrack() {
+    if (_pointer case final p?) {
+      GestureBinding.instance.pointerRouter.removeRoute(p, _route);
+    }
+    _pointer = null;
+  }
+
   void _clear() {
+    _untrack();
     if (_data == null && _hover == null) return;
     _data = null;
     _position = null;
     _setHover(null, null);
+    _setHold(null);
     notifyListeners();
   }
 
@@ -159,6 +194,7 @@ class DesktopDragController extends ChangeNotifier {
     final data = _data!;
     _DropTargetState? found;
     DropOffer? offer;
+    _DropTargetState? hold;
     final result = HitTestResult();
     final binding = WidgetsBinding.instance;
     final views = binding.renderViews;
@@ -170,6 +206,7 @@ class DesktopDragController extends ChangeNotifier {
       if (target is RenderMetaData && target.metaData is _DropTargetState) {
         final state = target.metaData as _DropTargetState;
         if (!state.mounted) continue;
+        hold ??= state.widget.onHoverHold == null ? null : state;
         final o = state.widget.offer(data, copy: _copy);
         if (o != null) {
           found = state;
@@ -179,7 +216,25 @@ class DesktopDragController extends ChangeNotifier {
       }
     }
     _setHover(found, offer);
+    _setHold(hold);
     notifyListeners();
+  }
+
+  // E3: the target the pointer rests on, for [DesktopDropTarget.onHoverHold].
+  _DropTargetState? _holdTarget;
+  Timer? _holdTimer;
+
+  void _setHold(_DropTargetState? target) {
+    if (target == _holdTarget) return;
+    _holdTimer?.cancel();
+    _holdTimer = null;
+    _holdTarget = target;
+    final hold = target?.widget.onHoverHold;
+    if (target == null || hold == null) return;
+    _holdTimer = Timer(target.widget.holdDelay, () {
+      _holdTimer = null;
+      if (_data != null && _holdTarget == target && target.mounted) hold();
+    });
   }
 
   void _setHover(_DropTargetState? target, DropOffer? offer) {
@@ -200,12 +255,20 @@ class DesktopDropTarget extends StatefulWidget {
     required this.offer,
     required this.child,
     this.radius = 8,
+    this.onHoverHold,
+    this.holdDelay = const Duration(milliseconds: 600),
     super.key,
   });
 
   final DropOfferBuilder offer;
   final Widget child;
   final double radius;
+
+  /// E3: a drag rested on this target for [holdDelay] (a tab switches to
+  /// itself, a folder opens: spring-loaded folders). Also for targets that
+  /// don't take the drag themselves.
+  final VoidCallback? onHoverHold;
+  final Duration holdDelay;
 
   @override
   State<DesktopDropTarget> createState() => _DropTargetState();

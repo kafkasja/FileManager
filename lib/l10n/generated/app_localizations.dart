@@ -10736,6 +10736,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File icons (desktop)'**
   String get backupSettingFileIcons;
+
+  /// E3: desktop Home location (Quick access + drives), tab title and nav pane row.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get desktopHome;
+
+  /// E3: title of a desktop tab showing search results.
+  ///
+  /// In en, this message translates to:
+  /// **'Search: {query}'**
+  String desktopTabSearch(String query);
+
+  /// E3: desktop tab strip: open a new tab.
+  ///
+  /// In en, this message translates to:
+  /// **'New tab'**
+  String get desktopTabNew;
+
+  /// E3: desktop tab menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate tab'**
+  String get desktopTabDuplicate;
+
+  /// E3: desktop tab menu / close button.
+  ///
+  /// In en, this message translates to:
+  /// **'Close tab'**
+  String get desktopTabClose;
+
+  /// E3: desktop tab menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Close other tabs'**
+  String get desktopTabCloseOthers;
+
+  /// E3: desktop tab menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Close tabs to the right'**
+  String get desktopTabCloseRight;
+
+  /// E3: desktop tab menu (Ctrl+Shift+T).
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen closed tab'**
+  String get desktopTabReopen;
+
+  /// E3: desktop address bar: the typed path doesn't exist.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM can\'t find \'{path}\'. Check the spelling and try again.'**
+  String desktopAddressNotFound(String path);
+
+  /// E3: screen reader label of the desktop address bar (click to type a path).
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get desktopAddressLabel;
+
+  /// E3: desktop search box hint inside a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search {name}'**
+  String desktopSearchIn(String name);
+
+  /// E3: desktop search results: nothing found.
+  ///
+  /// In en, this message translates to:
+  /// **'No files match \'{query}\'.'**
+  String desktopSearchNone(String query);
+
+  /// E3: Details column with the folder a file is in (search results, Sort).
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get desktopColumnFolder;
+
+  /// E3: nav pane group / Home section of pinned folders.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick access'**
+  String get desktopQuickAccess;
+
+  /// E3: folder menu / drop on the Quick access header.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to Quick access'**
+  String get desktopPinToQuickAccess;
+
+  /// E3: Quick access pin menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin from Quick access'**
+  String get desktopUnpinFromQuickAccess;
+
+  /// E3: nav pane group with the drives / Home section.
+  ///
+  /// In en, this message translates to:
+  /// **'This PC'**
+  String get desktopThisPc;
+
+  /// E3: nav pane Devices group: opens Devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a device'**
+  String get desktopConnectDevice;
+
+  /// E3: folder menu entry (middle-click does the same).
+  ///
+  /// In en, this message translates to:
+  /// **'Open in new tab'**
+  String get desktopOpenInNewTab;
+
+  /// E3: command bar: New menu.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get desktopCmdNew;
+
+  /// E3: command bar: View menu.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get desktopCmdView;
+
+  /// E3: command bar: sort order menu (name, date, size).
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get desktopCmdSortBy;
+
+  /// E3: View menu toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation pane'**
+  String get desktopViewNavPane;
+
+  /// E3: View menu toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden items'**
+  String get desktopViewHidden;
+
+  /// E3: View menu toggle (Alt+P).
+  ///
+  /// In en, this message translates to:
+  /// **'Preview pane'**
+  String get desktopViewPreviewPane;
+
+  /// E3: View menu toggle (Alt+Shift+P).
+  ///
+  /// In en, this message translates to:
+  /// **'Details pane'**
+  String get desktopViewDetailsPane;
+
+  /// E3: Sort menu direction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get desktopSortAscending;
+
+  /// E3: Sort menu direction.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get desktopSortDescending;
+
+  /// E3: file menu / command: copies the full path.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy as path'**
+  String get desktopCopyAsPath;
+
+  /// E3: status bar after Copy as path.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Path copied} other{{count} paths copied}}'**
+  String desktopPathCopied(int count);
+
+  /// E3: opens the file's folder in a new tab with the file selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Open file location'**
+  String get desktopOpenFileLocation;
+
+  /// E3: opens File Explorer with the file selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Windows Explorer'**
+  String get desktopShowInExplorer;
+
+  /// E3: file menu (Alt+Enter).
+  ///
+  /// In en, this message translates to:
+  /// **'Properties'**
+  String get desktopProperties;
+
+  /// E3: file menu: KFM's own viewer (double-click opens the Windows app).
+  ///
+  /// In en, this message translates to:
+  /// **'Open in KFM viewer'**
+  String get desktopOpenInKfm;
+
+  /// E3: status bar in Sort: files still to sort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left'**
+  String desktopStatusLeft(int count);
+
+  /// E3: status bar drive space.
+  ///
+  /// In en, this message translates to:
+  /// **'{drive} {free} free of {total}'**
+  String desktopStatusDriveFree(String drive, String free, String total);
+
+  /// E3: a tab's folder was deleted or its drive ejected.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder no longer exists.'**
+  String get desktopFolderGone;
+
+  /// E3: trash Properties row.
+  ///
+  /// In en, this message translates to:
+  /// **'Original location'**
+  String get trashPropsOriginalLocation;
+
+  /// E3: trash Properties row (date and time).
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get trashPropsDeleted;
+
+  /// E3: trash Properties: a KFM pending delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting, not in the Recycle Bin yet'**
+  String get trashPropsWaiting;
+
+  /// E3: trash Properties title for several items.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}} · {size}'**
+  String trashPropsSummary(int count, String size);
+
+  /// E3: desktop Trash command.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty trash'**
+  String get trashEmpty;
+
+  /// E3: Empty trash confirm title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {count, plural, =1{1 item} other{{count} items}} forever?'**
+  String trashEmptyTitle(int count);
+
+  /// E3: Empty trash confirm body.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} will be deleted, including files still waiting in KFM. This can\'t be undone.'**
+  String trashEmptyBody(String size);
 }
 
 class _AppLocalizationsDelegate

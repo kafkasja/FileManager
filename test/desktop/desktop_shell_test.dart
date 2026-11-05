@@ -5,26 +5,36 @@ import 'package:kfm/app/app_scaffold.dart';
 import 'package:kfm/desktop/connect/desktop_devices_screen.dart';
 import 'package:kfm/desktop/settings/desktop_settings_screen.dart';
 import 'package:kfm/desktop/shell/desktop_app_shell.dart';
-import 'package:kfm/desktop/shell/desktop_shell_state.dart';
-import 'package:kfm/desktop/shell/desktop_sidebar.dart';
+import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
+import 'package:kfm/desktop/tabs/desktop_tab_strip.dart';
 import 'package:kfm/desktop/trash/desktop_trash_screen.dart';
 
 import '../helpers/pump_app.dart';
 import 'desktop_helpers.dart';
 
 void main() {
-  testWidgets('desktop form factor opens the desktop shell', (tester) async {
+  testWidgets('desktop form factor opens the File Explorer layout', (
+    tester,
+  ) async {
     await pumpDesktopApp(tester, files: desktopLibrary(3));
     expect(find.byType(DesktopAppShell), findsOneWidget);
     expect(find.byType(AppScaffold), findsNothing);
     expect(find.byType(NavigationBar), findsNothing);
-    for (final s in DesktopSection.values) {
-      expect(find.byKey(ValueKey('desktop-nav-${s.name}')), findsOneWidget);
+    expect(find.byType(DesktopTabStrip), findsOneWidget);
+    expect(find.byType(DesktopNavPane), findsOneWidget);
+    for (final k in [
+      'desktop-nav-sort',
+      'desktop-nav-browse',
+      'desktop-nav-trash',
+      'desktop-nav-devices',
+      'desktop-nav-settings',
+    ]) {
+      expect(find.byKey(ValueKey(k)), findsOneWidget);
     }
     expect(find.byKey(const ValueKey('desktop-search')), findsOneWidget);
-    // Places: the index's top folders (not Windows here).
-    expect(find.text('Places'), findsOneWidget);
-    expect(find.text('Collections'), findsOneWidget);
+    // Quick access: the index's top folders (not Windows here).
+    expect(find.text('Quick access'), findsOneWidget);
+    expect(find.text('This PC'), findsOneWidget);
   });
 
   testWidgets('the mobile form factor keeps the phone shell', (tester) async {
@@ -33,7 +43,7 @@ void main() {
     expect(find.byType(DesktopAppShell), findsNothing);
   });
 
-  testWidgets('sidebar switches sections, Devices included', (tester) async {
+  testWidgets('nav pane switches sections, Devices included', (tester) async {
     await pumpDesktopApp(tester, files: desktopLibrary(1));
     await tester.tap(find.byKey(const ValueKey('desktop-nav-trash')));
     await tester.pumpAndSettle();
@@ -46,25 +56,45 @@ void main() {
     expect(find.byType(DesktopSettingsScreen), findsOneWidget);
   });
 
-  testWidgets('details pane toggles by button and Ctrl+I', (tester) async {
+  testWidgets('details pane toggles by View ▾ and Alt+Shift+P', (tester) async {
     await pumpDesktopApp(tester, files: desktopLibrary(1));
+    await tester.tap(find.byKey(const ValueKey('desktop-nav-browse')));
+    await tester.pumpAndSettle();
     expect(find.text('Select a file to see its details'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('desktop-details-toggle')));
+    await tester.tap(find.byKey(const ValueKey('cmd-view')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('cmd-view-details-pane')));
     await tester.pumpAndSettle();
     expect(find.text('Select a file to see its details'), findsOneWidget);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyI);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    // Back in the list (a click on it), then the key.
+    await tester.tap(find.text('s').last);
+    await tester.pumpAndSettle();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
     await tester.pumpAndSettle();
     expect(find.text('Select a file to see its details'), findsNothing);
   });
 
-  testWidgets('sidebar collapses to icons', (tester) async {
+  testWidgets('the nav pane resizes by its splitter, 160–360 px', (
+    tester,
+  ) async {
     await pumpDesktopApp(tester, files: desktopLibrary(1));
-    final sidebar = find.byType(DesktopSidebar);
-    expect(tester.getSize(sidebar).width, DesktopSidebar.width);
-    await tester.tap(find.byKey(const ValueKey('desktop-sidebar-toggle')));
+    final pane = find.byType(DesktopNavPane);
+    expect(tester.getSize(pane).width, DesktopNavWidth.fallback);
+    await tester.drag(
+      find.byKey(const ValueKey('desktop-nav-splitter')),
+      const Offset(400, 0),
+    );
     await tester.pumpAndSettle();
-    expect(tester.getSize(sidebar).width, DesktopSidebar.collapsedWidth);
+    expect(tester.getSize(pane).width, DesktopNavWidth.max);
+    await tester.drag(
+      find.byKey(const ValueKey('desktop-nav-splitter')),
+      const Offset(-400, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getSize(pane).width, DesktopNavWidth.min);
   });
 }

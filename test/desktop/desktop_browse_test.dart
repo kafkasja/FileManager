@@ -135,7 +135,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(app.files.trash, hasLength(2));
     expect(_rows(tester), ['Trip', 'b.jpg']);
-    await tester.tap(find.byKey(const ValueKey('browse-undo')));
+    await tester.tap(find.byKey(const ValueKey('cmd-undo')));
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(app.files.trash, isEmpty);
@@ -147,7 +147,8 @@ void main() {
     await tester.tap(find.text('b.jpg'), buttons: kSecondaryButton);
     await tester.pumpAndSettle();
     expect(find.text('Open'), findsOneWidget);
-    expect(find.text('Copy'), findsOneWidget);
+    // The menu entry and the command bar's Copy.
+    expect(find.text('Copy'), findsNWidgets(2));
     expect(find.text('Delete permanently'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();

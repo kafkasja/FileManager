@@ -1,14 +1,12 @@
+import 'dart:async';
+
 import 'package:kfm/core/files/file_ref.dart';
-import 'package:kfm/core/index/index_query.dart';
-import 'package:kfm/core/platform/host_platform.dart';
-import 'package:kfm/core/platform/windows/index_roots.dart';
-import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'desktop_shell_state.g.dart';
 
-/// The desktop sidebar's sections (TASK-PL3), with the shell branch each
+/// The desktop shell's sections (TASK-PL3), with the shell branch each
 /// one shows. Branches 0–3 are the phone's tabs; Devices is desktop-only.
 enum DesktopSection {
   sort(0),
@@ -35,15 +33,6 @@ class DesktopDetailsPane extends _$DesktopDetailsPane {
   void toggle() => state = !state;
 }
 
-/// Sidebar collapsed to icons.
-@Riverpod(keepAlive: true)
-class DesktopSidebarCollapsed extends _$DesktopSidebarCollapsed {
-  @override
-  bool build() => false;
-
-  void toggle() => state = !state;
-}
-
 /// The focused file of a desktop screen (the details pane shows it).
 @Riverpod(keepAlive: true)
 class DesktopFocusedFile extends _$DesktopFocusedFile {
@@ -60,22 +49,54 @@ class DesktopFocusedFile extends _$DesktopFocusedFile {
 /// What the status bar says for one section.
 @immutable
 class DesktopStatus {
-  const new({this.items, this.selected = 0, this.selectedBytes = 0});
+  const new({
+    this.items,
+    this.selected = 0,
+    this.selectedBytes = 0,
+    this.left,
+    this.driveHint,
+    this.totalBytes,
+    this.message,
+  });
 
   /// Items in view (null = not counted).
   final int? items;
   final int selected;
   final int selectedBytes;
 
+  /// E3: Sort's files still to sort.
+  final int? left;
+
+  /// E3: a path whose drive the bar shows (Sort: the focused file).
+  final String? driveHint;
+
+  /// E3: the size of everything listed (Trash).
+  final int? totalBytes;
+
+  /// E3: the last action ("Trashed 3"), shown for a few seconds.
+  final String? message;
+
   @override
   bool operator ==(Object other) =>
       other is DesktopStatus &&
       other.items == items &&
       other.selected == selected &&
-      other.selectedBytes == selectedBytes;
+      other.selectedBytes == selectedBytes &&
+      other.left == left &&
+      other.driveHint == driveHint &&
+      other.totalBytes == totalBytes &&
+      other.message == message;
 
   @override
-  int get hashCode => Object.hash(items, selected, selectedBytes);
+  int get hashCode => Object.hash(
+    items,
+    selected,
+    selectedBytes,
+    left,
+    driveHint,
+    totalBytes,
+    message,
+  );
 }
 
 /// Each desktop screen reports its counts here; the status bar shows the
@@ -90,42 +111,23 @@ class DesktopStatusLine extends _$DesktopStatusLine {
   }
 }
 
-/// One folder under Places.
-@immutable
-class DesktopPlace {
-  const new(this.path, {this.available = true});
-
-  /// '/'-separated, no trailing '/' (a drive root is `C:`).
-  final String path;
-  final bool available;
-
-  String get name {
-    final i = path.lastIndexOf('/');
-    return i < 0 ? path : path.substring(i + 1);
-  }
+/// E3: the status bar's last action ("Path copied", "Trashed 3"), cleared
+/// after a few seconds.
+@Riverpod(keepAlive: true)
+class DesktopStatusMessage extends _$DesktopStatusMessage {
+  Timer? _clear;
 
   @override
-  bool operator ==(Object other) =>
-      other is DesktopPlace &&
-      other.path == path &&
-      other.available == available;
-
-  @override
-  int get hashCode => Object.hash(path, available);
-}
-
-/// Places in the sidebar: on Windows the folders KFM scans (PL1 index
-/// roots: Pictures, Videos, Downloads, Documents by default), elsewhere the
-/// index's top folders. Drives and devices come later (TASK-PL3 step 5).
-@riverpod
-Future<List<DesktopPlace>> desktopPlaces(Ref ref) async {
-  if (isWindowsHost) {
-    final roots = await ref.watch(windowsIndexRootStatusProvider.future);
-    return [
-      for (final r in roots)
-        DesktopPlace(r.path.replaceAll(r'\', '/'), available: r.available),
-    ];
+  String? build() {
+    ref.onDispose(() => _clear?.cancel());
+    return null;
   }
-  final folders = await ref.watch(browseFoldersProvider(IndexQuery.all).future);
-  return [for (final f in folders) DesktopPlace(f.path)];
+
+  void show(String message, {Duration duration = const Duration(seconds: 4)}) {
+    _clear?.cancel();
+    state = message;
+    _clear = Timer(duration, () {
+      if (ref.mounted) state = null;
+    });
+  }
 }

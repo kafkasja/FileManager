@@ -7703,4 +7703,174 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupSettingFileIcons => 'File icons (desktop)';
+
+  @override
+  String get desktopHome => 'Home';
+
+  @override
+  String desktopTabSearch(String query) {
+    return 'Search: $query';
+  }
+
+  @override
+  String get desktopTabNew => 'New tab';
+
+  @override
+  String get desktopTabDuplicate => 'Duplicate tab';
+
+  @override
+  String get desktopTabClose => 'Close tab';
+
+  @override
+  String get desktopTabCloseOthers => 'Close other tabs';
+
+  @override
+  String get desktopTabCloseRight => 'Close tabs to the right';
+
+  @override
+  String get desktopTabReopen => 'Reopen closed tab';
+
+  @override
+  String desktopAddressNotFound(String path) {
+    return 'KFM can\'t find \'$path\'. Check the spelling and try again.';
+  }
+
+  @override
+  String get desktopAddressLabel => 'Address';
+
+  @override
+  String desktopSearchIn(String name) {
+    return 'Search $name';
+  }
+
+  @override
+  String desktopSearchNone(String query) {
+    return 'No files match \'$query\'.';
+  }
+
+  @override
+  String get desktopColumnFolder => 'Folder';
+
+  @override
+  String get desktopQuickAccess => 'Quick access';
+
+  @override
+  String get desktopPinToQuickAccess => 'Pin to Quick access';
+
+  @override
+  String get desktopUnpinFromQuickAccess => 'Unpin from Quick access';
+
+  @override
+  String get desktopThisPc => 'This PC';
+
+  @override
+  String get desktopConnectDevice => 'Connect a device';
+
+  @override
+  String get desktopOpenInNewTab => 'Open in new tab';
+
+  @override
+  String get desktopCmdNew => 'New';
+
+  @override
+  String get desktopCmdView => 'View';
+
+  @override
+  String get desktopCmdSortBy => 'Sort';
+
+  @override
+  String get desktopViewNavPane => 'Navigation pane';
+
+  @override
+  String get desktopViewHidden => 'Hidden items';
+
+  @override
+  String get desktopViewPreviewPane => 'Preview pane';
+
+  @override
+  String get desktopViewDetailsPane => 'Details pane';
+
+  @override
+  String get desktopSortAscending => 'Ascending';
+
+  @override
+  String get desktopSortDescending => 'Descending';
+
+  @override
+  String get desktopCopyAsPath => 'Copy as path';
+
+  @override
+  String desktopPathCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count paths copied',
+      one: 'Path copied',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get desktopOpenFileLocation => 'Open file location';
+
+  @override
+  String get desktopShowInExplorer => 'Show in Windows Explorer';
+
+  @override
+  String get desktopProperties => 'Properties';
+
+  @override
+  String get desktopOpenInKfm => 'Open in KFM viewer';
+
+  @override
+  String desktopStatusLeft(int count) {
+    return '$count left';
+  }
+
+  @override
+  String desktopStatusDriveFree(String drive, String free, String total) {
+    return '$drive $free free of $total';
+  }
+
+  @override
+  String get desktopFolderGone => 'This folder no longer exists.';
+
+  @override
+  String get trashPropsOriginalLocation => 'Original location';
+
+  @override
+  String get trashPropsDeleted => 'Deleted';
+
+  @override
+  String get trashPropsWaiting => 'Waiting, not in the Recycle Bin yet';
+
+  @override
+  String trashPropsSummary(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get trashEmpty => 'Empty trash';
+
+  @override
+  String trashEmptyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return 'Delete $_temp0 forever?';
+  }
+
+  @override
+  String trashEmptyBody(String size) {
+    return '$size will be deleted, including files still waiting in KFM. This can\'t be undone.';
+  }
 }
