@@ -5,6 +5,7 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
+import 'package:kfm/features/settings/ui/settings_screen.dart';
 import 'package:kfm/features/stats/data/stats_repository.dart';
 import 'package:kfm/features/stats/ui/session_summary_sheet.dart';
 import 'package:kfm/features/swipe/domain/swipe_action.dart';
@@ -13,6 +14,7 @@ import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
 
 import '../core/files/fake_file_source.dart';
 import '../helpers/pump_app.dart';
+import '../helpers/settings_helpers.dart';
 
 /// Trashed files land in the pending folder (listed by name).
 class _PendingTrashSource extends FakeFileSource {
@@ -170,17 +172,39 @@ void main() {
     await tester.tap(_tab(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    final list = find.byType(Scrollable).first;
     var sawTextSize = false;
     var sawVersion = false;
-    final position = tester.state<ScrollableState>(list).position;
-    for (var i = 0; i < 200; i++) {
-      sawTextSize |= find.text('Text size').evaluate().isNotEmpty;
-      sawVersion |= find.text('Version 0.1.0').evaluate().isNotEmpty;
-      if (i > 0 && position.pixels >= position.maxScrollExtent) break;
-      await tester.drag(list, const Offset(0, -300));
+    // The overview, then every section page top to bottom.
+    for (final id in [
+      'general',
+      'swipe',
+      'files',
+      'smart',
+      'storage',
+      'connect',
+      'privacy',
+      'a11y',
+      'about',
+    ]) {
+      await openSettingsSection(tester, id);
+      expect(tester.takeException(), isNull, reason: 'opening $id');
+      final list = find
+          .descendant(
+            of: find.byType(SettingsSectionScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      final position = tester.state<ScrollableState>(list).position;
+      for (var i = 0; i < 100; i++) {
+        sawTextSize |= find.text('Text size').evaluate().isNotEmpty;
+        sawVersion |= find.text('Version 0.1.0').evaluate().isNotEmpty;
+        if (position.pixels >= position.maxScrollExtent) break;
+        await tester.drag(list, const Offset(0, -300));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '$id after drag $i');
+      }
+      await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: 'after drag $i');
     }
     expect(sawTextSize, isTrue);
     expect(sawVersion, isTrue);
@@ -206,6 +230,7 @@ void main() {
     expect(_bodyScale(tester), closeTo(14 * 1.25, 1e-9));
     await tester.tap(_tab(Icons.settings_outlined));
     await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'a11y');
     await tester.ensureVisible(find.text('Large'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Large'));

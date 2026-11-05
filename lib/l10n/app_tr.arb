@@ -1847,6 +1847,7 @@
   "settingsKeywordsBigFiles": "büyük,boyut,sınır,eşik",
   "settingsSearchHint": "Ayarlarda ara",
   "settingsSearchClear": "Aramayı temizle",
+  "settingsSummarySeparator": ", ",
   "settingsSearchEmpty": "Eşleşen ayar yok. Başka bir kelime dene.",
   "privacyTransferNote": "Konum bilgisi kaldırılır (Ayarlar → Gizlilik ve erişim)",
   "durationShortSeconds": "{count} sn",

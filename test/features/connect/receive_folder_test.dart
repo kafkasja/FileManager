@@ -11,6 +11,7 @@ import 'package:kfm/features/transfers/data/transfer_providers.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 
 /// TASK-E1 D ("i have no idea where that video is now"): the receive
 /// folder setting and "… saved to …" with Show in folder / Open / Copy
@@ -66,8 +67,7 @@ void main() {
   testWidgets('Settings → Connect a device shows where received files go; '
       'Change opens the folder picker', (tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Settings').last);
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'connect');
     final row = find.byKey(const ValueKey('settings-receive-folder'));
     await tester.scrollUntilVisible(row, 200);
     await tester.pumpAndSettle();

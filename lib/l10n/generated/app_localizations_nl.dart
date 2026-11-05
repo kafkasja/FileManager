@@ -8030,6 +8030,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsSearchClear => 'Zoekopdracht wissen';
 
   @override
+  String get settingsSummarySeparator => ', ';
+
+  @override
   String get settingsSearchEmpty =>
       'Geen instelling gevonden. Probeer een ander woord.';
 

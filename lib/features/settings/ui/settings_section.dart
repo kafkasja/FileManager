@@ -66,12 +66,17 @@ class SettingsSection {
   const new({
     required this.order,
     required this.id,
+    required this.icon,
     required this.titleBuilder,
     required this.entries,
     this.desktopTitleBuilder,
   });
 
   final int order;
+
+  /// The phone overview's tile icon (one tile per section, like Android's
+  /// own Settings app).
+  final IconData icon;
 
   /// Stable, e.g. `'files'`; the desktop category key uses it.
   final String id;

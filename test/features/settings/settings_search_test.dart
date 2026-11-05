@@ -58,6 +58,11 @@ void main() {
     expect(find.text('Storage & cleanup'), findsOneWidget);
     await tester.tap(hit);
     await tester.pumpAndSettle();
+    // The entry's section page, not the overview.
+    expect(
+      find.byKey(const ValueKey('settings-page-storage')),
+      findsOneWidget,
+    );
     final row = find.byKey(const ValueKey('setting-storage.thumbCache'));
     expect(row, findsOneWidget);
     final box = tester.getRect(row);
@@ -95,8 +100,25 @@ void main() {
         .read(routerProvider)
         .go(AppRoutes.settingsEntry('about.licences'));
     await tester.pumpAndSettle();
+    expect(
+      app.container
+          .read(routerProvider)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .path,
+      '/settings/section/about',
+    );
     final row = find.byKey(const ValueKey('setting-about.licences'));
     final screen = tester.getRect(find.byType(Scaffold).first);
     expect(screen.overlaps(tester.getRect(row)), isTrue);
+    // Back goes to the overview.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(row, findsNothing);
+    expect(
+      find.byKey(const ValueKey('settings-section-about')),
+      findsOneWidget,
+    );
   });
 }

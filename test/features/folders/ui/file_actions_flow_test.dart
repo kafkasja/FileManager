@@ -9,6 +9,7 @@ import 'package:kfm/features/selection/ui/selection_controller.dart';
 
 import '../../../core/files/fake_file_source.dart';
 import '../../../helpers/pump_app.dart';
+import '../../../helpers/settings_helpers.dart';
 
 const _root = '/storage/emulated/0';
 
@@ -257,8 +258,7 @@ void main() {
 
   testWidgets('Settings → Files: drop action', (tester) async {
     final app = await pumpApp(tester);
-    await tester.tap(find.text('Settings'));
-    await tester.pumpAndSettle();
+    await openSettingsSection(tester, 'files');
     final drop = find.text('Dropping files on a folder');
     await tester.scrollUntilVisible(drop, 200);
     await tester.pumpAndSettle();

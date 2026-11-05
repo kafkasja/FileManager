@@ -10,6 +10,7 @@ import 'package:kfm/features/settings/ui/settings_sections.dart';
 
 import '../core/platform/permissions/fake_permission_service.dart';
 import '../helpers/pump_app.dart';
+import '../helpers/settings_helpers.dart';
 
 Future<void> _openSettings(WidgetTester tester) async {
   await tester.tap(find.text('Settings').last);
@@ -23,7 +24,7 @@ void main() {
   testWidgets('Dark theme applies instantly and is stored', (tester) async {
     final app = await pumpApp(tester);
     expect(_themeMode(tester), ThemeMode.system);
-    await _openSettings(tester);
+    await openSettingsSection(tester, 'general');
 
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
@@ -43,7 +44,7 @@ void main() {
     tester,
   ) async {
     final app = await pumpApp(tester);
-    await _openSettings(tester);
+    await openSettingsSection(tester, 'general');
     await tester.tap(
       find.descendant(
         of: find.byKey(const ValueKey('setting-general.language')),
@@ -72,11 +73,56 @@ void main() {
     expect(ids.first, 'general');
     expect(ids.last, 'about');
     expect(find.text('General'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('Version 0.1.0'), 200);
-    expect(find.text('About & advanced'), findsOneWidget);
+    // The overview only: one tile per section, no rows.
+    expect(find.byKey(const ValueKey('setting-general.theme')), findsNothing);
+    final tiles = find.byWidgetPredicate(
+      (w) =>
+          w.key is ValueKey<String> &&
+          (w.key! as ValueKey<String>).value.startsWith('settings-section-'),
+    );
+    final shown = [
+      for (final e in tiles.evaluate())
+        (e.widget.key! as ValueKey<String>).value.substring(
+          'settings-section-'.length,
+        ),
+    ];
+    expect(shown.first, 'general');
+    expect(
+      shown,
+      orderedEquals([
+        for (final id in ids)
+          if (shown.contains(id)) id,
+      ]),
+    );
+    await tester.scrollUntilVisible(find.text('About & advanced'), 200);
+    await openSettingsSection(tester, 'about');
     expect(find.text('Version 0.1.0'), findsOneWidget);
+    // Back returns to the overview.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Version 0.1.0'), findsNothing);
+    expect(find.text('About & advanced'), findsOneWidget);
     // Scrolling disposed list rows' drift streams: let their close timers run.
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('a section tile sums up its first entries', (tester) async {
+    await pumpApp(tester);
+    await _openSettings(tester);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('settings-section-general')),
+        matching: find.text('Theme, Color, Language'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('settings-section-general')),
+        matching: find.byIcon(Icons.tune),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Permissions section shows each state and its action', (
@@ -89,7 +135,7 @@ void main() {
       ),
     );
     await pumpApp(tester, permissions: permissions);
-    await _openSettings(tester);
+    await openSettingsSection(tester, 'privacy');
     await tester.scrollUntilVisible(
       find.text('Skip confirmation dialogs'),
       200,
@@ -114,7 +160,7 @@ void main() {
         grantedAccess.copyWith(mediaManagementSupported: false),
       ),
     );
-    await _openSettings(tester);
+    await openSettingsSection(tester, 'privacy');
     await tester.scrollUntilVisible(find.text('All files access'), 200);
     expect(find.text('Skip confirmation dialogs'), findsNothing);
   });

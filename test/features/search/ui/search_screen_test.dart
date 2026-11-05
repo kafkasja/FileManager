@@ -266,6 +266,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(_l10n.searchNoMatch), findsNothing);
     expect(find.text(_l10n.searchSuggestions), findsOneWidget);
+    // The smart-words tip lives here, not in Settings.
+    expect(find.text(_l10n.searchSettingsTip), findsOneWidget);
     expect(find.widgetWithText(TextField, 'zzzz'), findsNothing);
     await _settle(tester);
   });

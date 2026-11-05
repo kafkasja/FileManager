@@ -32,9 +32,8 @@ Future<TestApp> _pump(WidgetTester tester) async {
 }
 
 Future<void> _openScreen(WidgetTester tester, TestApp app) async {
-  app.container.read(routerProvider).go(AppRoutes.settings);
+  app.container.read(routerProvider).go(AppRoutes.settingsSection('swipe'));
   await tester.pumpAndSettle();
-  // L4/L5's Accessibility section sits above Swipe.
   await tester.scrollUntilVisible(find.text('Customize swipes'), 200);
   await tester.pumpAndSettle();
   await tester.tap(find.text('Customize swipes'));

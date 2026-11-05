@@ -4548,6 +4548,8 @@
   "@settingsSearchHint": {"description": "E2: settings search field hint / button tooltip."},
   "settingsSearchClear": "Clear search",
   "@settingsSearchClear": {"description": "E2: clears the settings search."},
+  "settingsSummarySeparator": ", ",
+  "@settingsSummarySeparator": {"description": "Between the setting names in a section's one-line summary on the phone's Settings overview (\"Theme, Color, Language\")."},
   "settingsSearchEmpty": "No setting matches. Try another word.",
   "@settingsSearchEmpty": {"description": "E2: settings search without results."},
   "privacyTransferNote": "Location info is removed (Settings → Privacy & access)",

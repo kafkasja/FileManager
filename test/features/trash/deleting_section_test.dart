@@ -15,7 +15,7 @@ final Finder _retention = find.descendant(
 
 Future<TestApp> _open(WidgetTester tester) async {
   final app = await pumpApp(tester);
-  app.container.read(routerProvider).go(AppRoutes.settings);
+  app.container.read(routerProvider).go(AppRoutes.settingsSection('storage'));
   await tester.pumpAndSettle();
   await tester.scrollUntilVisible(
     _retention,

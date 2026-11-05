@@ -8,13 +8,13 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 
 import '../../helpers/pump_app.dart';
+import '../../helpers/settings_helpers.dart';
 
 MaterialApp _app(WidgetTester tester) =>
     tester.widget<MaterialApp>(find.byType(MaterialApp));
 
 Future<void> _openSettings(WidgetTester tester) async {
-  await tester.tap(find.text('Settings').last);
-  await tester.pumpAndSettle();
+  await openSettingsSection(tester, 'general');
 }
 
 void main() {
