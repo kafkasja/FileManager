@@ -15,6 +15,7 @@ class FileGridTile extends StatelessWidget {
     required this.onTap,
     this.showSize = false,
     this.highlightBig = false,
+    this.bigFileBytes = defaultBigFileBytes,
     this.menu,
     this.highlight = const [],
     super.key,
@@ -38,8 +39,12 @@ class FileGridTile extends StatelessWidget {
   /// [showSize] is off.
   final bool highlightBig;
 
-  /// Same value as `kBigFileBytes` (Settings → Browse).
-  static const int bigFileBytes = 100 * 1024 * 1024;
+  /// The user's big-file threshold (TASK-E2: one value for the highlight
+  /// and Storage → Big files), read once per list by the caller.
+  final int bigFileBytes;
+
+  /// `AppSettings.storageBigFileThresholdBytes`'s default.
+  static const int defaultBigFileBytes = 100 * 1024 * 1024;
 
   /// What the ⋮ takes at the bottom-end: its 2 px inset, the 8 px tap-target
   /// margin, the 32 px button and a 4 px gap. The name stays clear of it.
@@ -170,6 +175,7 @@ class FileListRow extends StatelessWidget {
     required this.file,
     required this.onTap,
     this.highlightBig = false,
+    this.bigFileBytes = FileGridTile.defaultBigFileBytes,
     this.menu,
     this.highlight = const [],
     super.key,
@@ -188,6 +194,9 @@ class FileListRow extends StatelessWidget {
 
   /// Big files' size in the error color.
   final bool highlightBig;
+
+  /// See [FileGridTile.bigFileBytes].
+  final int bigFileBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +227,7 @@ class FileListRow extends StatelessWidget {
           formatBytes(file.sizeBytes, locale: locale),
           formatDate(file.sortDate, locale: locale),
         ].join(' · '),
-        style: highlightBig && file.sizeBytes >= FileGridTile.bigFileBytes
+        style: highlightBig && file.sizeBytes >= bigFileBytes
             ? TextStyle(
                 color: Theme.of(context).colorScheme.error,
                 fontWeight: FontWeight.bold,

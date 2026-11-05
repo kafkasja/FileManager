@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/diagnostics/error_log.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
-import 'package:kfm/features/settings/ui/about_section.dart';
+import 'package:kfm/features/settings/ui/about_advanced_entries.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:kfm/l10n/generated/app_localizations_en.dart';
 
@@ -45,7 +45,7 @@ Future<void> _pump(
       child: const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: SingleChildScrollView(child: AboutSection())),
+        home: Scaffold(body: SingleChildScrollView(child: ErrorLogRows())),
       ),
     ),
   );

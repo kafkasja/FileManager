@@ -6,6 +6,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/app_database.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
@@ -186,12 +187,16 @@ void main() {
     );
   }
 
+  // E2: Settings has one "Connect a device" row (E1 decides where sharing
+  // starts); the share screen is opened by its route from Settings.
   Future<void> openShare(WidgetTester tester) async {
     await tester.tap(find.text('Settings').last);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Share this device'), 200);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Share this device'));
+    unawaited(
+      ProviderScope.containerOf(
+        tester.element(find.byType(Scaffold).first),
+      ).read(routerProvider).push(AppRoutes.connectShare),
+    );
     await tester.pumpAndSettle();
   }
 

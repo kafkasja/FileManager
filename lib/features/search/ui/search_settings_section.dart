@@ -6,10 +6,19 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/search/data/search_vocabulary.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 
-/// Settings → Search (B8). "Also search in" only appears once a second
-/// term file is bundled (L2); until then just a tip.
-class SearchSettingsSection extends ConsumerWidget {
+/// Settings → General, under Language (B8, TASK-E2): "Smart search words
+/// also in". The picker only appears once a second term file is bundled
+/// (L2); the tip always.
+final searchLanguageEntry = SettingsEntry(
+  id: 'general.searchLanguage',
+  titleBuilder: (c) => c.l10n.searchSettingsAlsoSearchIn,
+  subtitleBuilder: (c) => c.l10n.searchSettingsAlsoSearchInHelp,
+  builder: (_) => const SearchLanguageRows(),
+);
+
+class SearchLanguageRows extends ConsumerWidget {
   const new({super.key});
 
   @override

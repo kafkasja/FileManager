@@ -2051,10 +2051,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsHighlightBig => 'Grote bestanden markeren';
 
   @override
-  String get settingsHighlightBigHelp =>
-      'Bestanden van 100 MB of meer krijgen een rood groottelabel';
-
-  @override
   String selectionCount(int count, String size) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2253,21 +2249,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get settingsSameTimeWindow => 'Tijdvenster voor zelfde moment';
-
-  @override
-  String get settingsSameTimeWindowHelp =>
-      'Bladeren → Zelfde moment groepeert foto\'s en video\'s die binnen zoveel seconden zijn gemaakt';
-
-  @override
-  String seconds(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count seconden',
-      one: '1 seconde',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get fileMenuTooltip => 'Bestandsacties';
@@ -5489,10 +5470,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Locatie kon niet worden verwijderd, dus het is niet verstuurd';
 
   @override
-  String get privacyTransferNote =>
-      'Locatie-informatie wordt verwijderd (Instellingen → Privacy)';
-
-  @override
   String get privacyMoveWarningTitle => 'Verplaatsen zonder locatie?';
 
   @override
@@ -7740,5 +7717,251 @@ class AppLocalizationsNl extends AppLocalizations {
       one: 'Overdracht mislukt',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get settingsGeneral => 'Algemeen';
+
+  @override
+  String get settingsSorting => 'Sorteren';
+
+  @override
+  String get settingsFilesDisplay => 'Bestanden en weergave';
+
+  @override
+  String get settingsSmart => 'Slimme functies';
+
+  @override
+  String get settingsStorageCleanup => 'Opslag en opruimen';
+
+  @override
+  String get settingsConnectSharing => 'Verbinden en delen';
+
+  @override
+  String get settingsPrivacyAccess => 'Privacy en toegang';
+
+  @override
+  String get settingsAboutAdvanced => 'Over en geavanceerd';
+
+  @override
+  String get thumbCacheHelp =>
+      'Kleine voorbeelden die KFM bewaart zodat mappen snel openen. Wissen maakt de ruimte vrij; je bestanden blijven onaangeroerd en de voorbeelden komen terug wanneer nodig.';
+
+  @override
+  String get errorLogHelp =>
+      'Fouten die KFM tegenkwam, zonder bestandsnamen of paden. Deel het om een probleem te melden.';
+
+  @override
+  String get devSettingsHelp =>
+      'Indexhulpmiddelen om KFM op een apparaat te controleren (alleen debug-builds).';
+
+  @override
+  String get settingsShowSessionSummaryHelp =>
+      'Na Klaar een kort overzicht van wat je hebt bewaard, verwijderd en verplaatst.';
+
+  @override
+  String get reviewedResetHelp =>
+      'Bestanden die je al hebt gesorteerd, verschijnen weer als nieuw. Er wordt niets verwijderd.';
+
+  @override
+  String get settingsFreshStartHelp =>
+      'Kies wat je wist: de huidige sessie, geschiedenis, tags of alles.';
+
+  @override
+  String get tutorialShowAgainHelp =>
+      'De korte swipe-uitleg en de eenmalige tips nog een keer.';
+
+  @override
+  String get settingsDropActionHelp =>
+      'Wat er gebeurt als je bestanden naar een map sleept.';
+
+  @override
+  String get storageBigFileThresholdHelp =>
+      'Gebruikt door de markering van grote bestanden en Opslag → Grote bestanden.';
+
+  @override
+  String get settingsDeleteMode => 'Bij verwijderen';
+
+  @override
+  String get settingsDeleteModeHelp =>
+      'Verwijderde bestanden naar de prullenbak, of definitief verwijderen.';
+
+  @override
+  String get settingsPermissionsHelp =>
+      'Wat KFM op deze telefoon mag lezen, en een knop om dat te wijzigen.';
+
+  @override
+  String get backupRestoreTitle => 'Back-up en herstellen';
+
+  @override
+  String get backupRestoreHelp =>
+      'Zet je tags, favorieten, presets en instellingen over naar een ander apparaat. Bestanden worden niet gekopieerd.';
+
+  @override
+  String get cloudDestinationsHelp =>
+      'Cloud-apps op dit apparaat waar KFM bestanden naartoe kan sturen.';
+
+  @override
+  String get connectADevice => 'Een apparaat verbinden';
+
+  @override
+  String get connectADeviceHelp =>
+      'Bekijk en stuur bestanden tussen je telefoon en pc via wifi.';
+
+  @override
+  String get transfersSettingHelp => 'Alle wifi-overdrachten, lopend en klaar.';
+
+  @override
+  String get privacyDevicesTitle => 'Apparaten die je bestanden kunnen zien';
+
+  @override
+  String get privacyDevicesHelp =>
+      'Onthouden apparaten en wat ze mogen. Vergeet er een om het te blokkeren.';
+
+  @override
+  String get privacyNeverTitle => 'Wat KFM nooit doet';
+
+  @override
+  String get privacyNeverBody =>
+      'Geen advertenties, geen account, geen tracking. KFM uploadt je bestanden nooit: alleen apparaten die je verbindt en cloud-apps die je kiest krijgen ze.';
+
+  @override
+  String get a11yScreenReaderTitle => 'Schermlezers';
+
+  @override
+  String get a11yScreenReaderBody =>
+      'Bestandstegels lezen hun naam, type, grootte en datum voor. Swipekaarten bieden hun acties aan in het actiemenu.';
+
+  @override
+  String get settingsKeywordsTheme => 'donker,licht,nacht,modus,uiterlijk';
+
+  @override
+  String get settingsKeywordsAccent => 'kleur,accent';
+
+  @override
+  String get settingsKeywordsTextSize => 'lettertype,grote tekst,zoom,groter';
+
+  @override
+  String get settingsKeywordsThumbCache => 'cache,voorbeelden,ruimte,vrijmaken';
+
+  @override
+  String get settingsKeywordsVersion => 'versie,over,app';
+
+  @override
+  String get settingsKeywordsPermissions =>
+      'toestemming,toegang,toestaan,opslag';
+
+  @override
+  String get settingsKeywordsSimilar => 'dubbele,wazig,vergelijkbaar';
+
+  @override
+  String get settingsKeywordsAiLabels =>
+      'ai,labels,herkenning,modellen,downloaden';
+
+  @override
+  String get settingsKeywordsLocation => 'locatie,gps,plaats,exif';
+
+  @override
+  String get settingsKeywordsBackup =>
+      'exporteren,importeren,herstellen,back-up';
+
+  @override
+  String get settingsKeywordsCloud => 'cloud,drive,onedrive,uploaden';
+
+  @override
+  String get settingsKeywordsConnect => 'delen,wifi,pc,telefoon,qr,sturen';
+
+  @override
+  String get settingsKeywordsPrivacy =>
+      'privacy,tracking,advertenties,uploaden';
+
+  @override
+  String get settingsKeywordsScreenReader =>
+      'talkback,verteller,blind,schermlezer';
+
+  @override
+  String get settingsKeywordsBigFiles => 'groot,grote,grootte,drempel';
+
+  @override
+  String get settingsSearchHint => 'Instellingen zoeken';
+
+  @override
+  String get settingsSearchClear => 'Zoekopdracht wissen';
+
+  @override
+  String get settingsSearchEmpty =>
+      'Geen instelling gevonden. Probeer een ander woord.';
+
+  @override
+  String get privacyTransferNote =>
+      'Locatie-informatie wordt verwijderd (Instellingen → Privacy en toegang)';
+
+  @override
+  String durationShortSeconds(int count) {
+    return '$count s';
+  }
+
+  @override
+  String durationShortMinutes(int count) {
+    return '$count min';
+  }
+
+  @override
+  String durationShortMinutesSeconds(int minutes, int seconds) {
+    return '$minutes min $seconds s';
+  }
+
+  @override
+  String durationShortHours(int count) {
+    return '$count u';
+  }
+
+  @override
+  String durationShortHoursMinutes(int hours, int minutes) {
+    return '$hours u $minutes min';
+  }
+
+  @override
+  String get unitSecondsShort => 's';
+
+  @override
+  String get unitMinutesShort => 'min';
+
+  @override
+  String get unitHoursShort => 'u';
+
+  @override
+  String get unitMegabytesShort => 'MB';
+
+  @override
+  String get unitGigabytesShort => 'GB';
+
+  @override
+  String get unitInputAmount => 'Hoeveelheid';
+
+  @override
+  String unitInputRange(String min, String max) {
+    return 'Voer een waarde in van $min tot $max';
+  }
+
+  @override
+  String get unitInputSave => 'Opslaan';
+
+  @override
+  String bigFileThresholdLine(String size) {
+    return 'Bestanden van $size of meer tellen als groot';
+  }
+
+  @override
+  String get settingsHighlightBigLine =>
+      'Grote bestanden krijgen een rood groottelabel, ook als groottes uit staan';
+
+  @override
+  String get settingsSameTimeWindowAbout =>
+      'Bladeren → Zelfde moment groepeert foto\'s en video\'s die zo kort na elkaar zijn gemaakt';
+
+  @override
+  String sameTimeWindowLine(String time) {
+    return 'Foto\'s en video\'s die binnen $time na elkaar zijn gemaakt, worden gegroepeerd';
   }
 }

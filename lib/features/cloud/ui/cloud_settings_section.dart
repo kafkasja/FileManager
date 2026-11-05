@@ -11,22 +11,37 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/cloud/ui/cloud_badge_cache.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/swipe/domain/swipe_source.dart';
 import 'package:kfm/features/swipe/ui/swipe_source_launcher.dart';
 
-/// Settings → Cloud (TASK-X3): one row to the destinations screen. Reads
-/// the DB only, never the cloud channel. X4: once KFM uploaded something,
-/// the "Show cloud icon" switch with its help text and "Swipe files already
-/// on cloud".
-class CloudSettingsSection extends ConsumerWidget {
+/// Settings → Files & display (TASK-X3/X4, E2): the destinations row (reads
+/// the DB only, never the cloud channel), and once KFM uploaded something
+/// the "Show cloud icon" switch with "Swipe files already on cloud".
+final cloudDestinationsEntry = SettingsEntry(
+  id: 'files.cloudDestinations',
+  titleBuilder: (c) => c.l10n.cloudDestinations,
+  subtitleBuilder: (c) => c.l10n.cloudDestinationsHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsCloud,
+  builder: (_) => const CloudDestinationsRow(),
+);
+
+final cloudBadgeEntry = SettingsEntry(
+  id: 'files.cloudBadge',
+  titleBuilder: (c) => c.l10n.cloudShowBadge,
+  subtitleBuilder: (c) => c.l10n.cloudBadgeHelp,
+  visible: (ref) => ref.watch(cloudHasUploadsProvider).value ?? false,
+  builder: (_) => const CloudBadgeRows(),
+);
+
+class CloudDestinationsRow extends ConsumerWidget {
   const new({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final count = ref.watch(activeCloudDestinationsProvider).value?.length ?? 0;
-    final hasUploads = ref.watch(cloudHasUploadsProvider).value ?? false;
-    final destinations = ListTile(
+    return ListTile(
       key: const ValueKey('settings-cloud-destinations'),
       leading: const Icon(Icons.cloud_outlined),
       title: Text(l10n.cloudDestinations),
@@ -38,11 +53,18 @@ class CloudSettingsSection extends ConsumerWidget {
       trailing: const Icon(Icons.chevron_right),
       onTap: () => unawaited(context.push(AppRoutes.cloudSettings)),
     );
-    if (!hasUploads) return destinations;
+  }
+}
+
+class CloudBadgeRows extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final show = ref.watch(cloudShowBadgeProvider).value ?? true;
     return Column(
       children: [
-        destinations,
         SwitchListTile(
           key: const ValueKey('settings-cloud-show-badge'),
           secondary: const Icon(Icons.cloud_done_outlined),

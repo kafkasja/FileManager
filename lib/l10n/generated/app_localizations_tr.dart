@@ -2039,10 +2039,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsHighlightBig => 'Büyük dosyaları vurgula';
 
   @override
-  String get settingsHighlightBigHelp =>
-      '100 MB ve üzeri dosyalar kırmızı boyut etiketi alır';
-
-  @override
   String selectionCount(int count, String size) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2241,21 +2237,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsSameTimeWindow => 'Aynı an aralığı';
-
-  @override
-  String get settingsSameTimeWindowHelp =>
-      'Göz at → Aynı an, bu kadar saniye içinde çekilen fotoğraf ve videoları gruplar';
-
-  @override
-  String seconds(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count saniye',
-      one: '1 saniye',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get fileMenuTooltip => 'Dosya işlemleri';
@@ -5457,10 +5438,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Konum kaldırılamadığı için gönderilmedi';
 
   @override
-  String get privacyTransferNote =>
-      'Konum bilgisi kaldırılır (Ayarlar → Gizlilik)';
-
-  @override
   String get privacyMoveWarningTitle => 'Konum olmadan taşınsın mı?';
 
   @override
@@ -7684,5 +7661,248 @@ class AppLocalizationsTr extends AppLocalizations {
       one: 'Aktarım başarısız',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get settingsGeneral => 'Genel';
+
+  @override
+  String get settingsSorting => 'Sıralama';
+
+  @override
+  String get settingsFilesDisplay => 'Dosyalar ve görünüm';
+
+  @override
+  String get settingsSmart => 'Akıllı özellikler';
+
+  @override
+  String get settingsStorageCleanup => 'Depolama ve temizlik';
+
+  @override
+  String get settingsConnectSharing => 'Bağlanma ve paylaşma';
+
+  @override
+  String get settingsPrivacyAccess => 'Gizlilik ve erişim';
+
+  @override
+  String get settingsAboutAdvanced => 'Hakkında ve gelişmiş';
+
+  @override
+  String get thumbCacheHelp =>
+      'KFM\'nin klasörler hızlı açılsın diye kaydettiği küçük önizlemeler. Temizle yeri boşaltır; dosyalarına dokunulmaz ve önizlemeler gerektiğinde geri gelir.';
+
+  @override
+  String get errorLogHelp =>
+      'KFM\'nin karşılaştığı hatalar; dosya adları ve yollar olmadan. Bir sorunu bildirmek için paylaş.';
+
+  @override
+  String get devSettingsHelp =>
+      'KFM\'yi bir cihazda denetlemek için dizin araçları (yalnızca hata ayıklama sürümleri).';
+
+  @override
+  String get settingsShowSessionSummaryHelp =>
+      'Bitti\'den sonra neyi tuttuğunun, sildiğinin ve taşıdığının kısa bir özeti.';
+
+  @override
+  String get reviewedResetHelp =>
+      'Daha önce sıraladığın dosyalar yeniden yeni olarak görünür. Hiçbir şey silinmez.';
+
+  @override
+  String get settingsFreshStartHelp =>
+      'Neyin temizleneceğini seç: geçerli oturum, geçmiş, etiketler veya hepsi.';
+
+  @override
+  String get tutorialShowAgainHelp =>
+      'Kısa kaydırma öğreticisi ve tek seferlik ipuçları bir kez daha.';
+
+  @override
+  String get settingsDropActionHelp =>
+      'Dosyaları bir klasörün üstüne sürüklediğinde ne olacağı.';
+
+  @override
+  String get storageBigFileThresholdHelp =>
+      'Büyük dosya vurgusu ve Depolama → Büyük dosyalar bunu kullanır.';
+
+  @override
+  String get settingsDeleteMode => 'Silerken';
+
+  @override
+  String get settingsDeleteModeHelp =>
+      'Silinen dosyaları çöp kutusuna taşı ya da kalıcı olarak sil.';
+
+  @override
+  String get settingsPermissionsHelp =>
+      'KFM\'nin bu telefonda neleri okuyabileceği ve bunu değiştirme düğmesi.';
+
+  @override
+  String get backupRestoreTitle => 'Yedekle ve geri yükle';
+
+  @override
+  String get backupRestoreHelp =>
+      'Etiketlerini, favorilerini, ön ayarlarını ve ayarlarını başka bir cihaza taşır. Dosyalar kopyalanmaz.';
+
+  @override
+  String get cloudDestinationsHelp =>
+      'KFM\'nin dosya gönderebileceği, bu cihazdaki bulut uygulamaları.';
+
+  @override
+  String get connectADevice => 'Bir cihaz bağla';
+
+  @override
+  String get connectADeviceHelp =>
+      'Telefonun ile bilgisayarın arasında Wi-Fi üzerinden dosyaları gör ve gönder.';
+
+  @override
+  String get transfersSettingHelp => 'Süren ve biten tüm Wi-Fi aktarımları.';
+
+  @override
+  String get privacyDevicesTitle => 'Dosyalarını görebilen cihazlar';
+
+  @override
+  String get privacyDevicesHelp =>
+      'Hatırlanan cihazlar ve neler yapabilecekleri. Engellemek için birini unut.';
+
+  @override
+  String get privacyNeverTitle => 'KFM\'nin asla yapmadıkları';
+
+  @override
+  String get privacyNeverBody =>
+      'Reklam yok, hesap yok, izleme yok. KFM dosyalarını asla yüklemez: onları yalnızca bağladığın cihazlar ve seçtiğin bulut uygulamaları alır.';
+
+  @override
+  String get a11yScreenReaderTitle => 'Ekran okuyucular';
+
+  @override
+  String get a11yScreenReaderBody =>
+      'Dosya kutucukları adlarını, türlerini, boyutlarını ve tarihlerini okur. Kaydırma kartları eylemlerini eylemler menüsünde sunar.';
+
+  @override
+  String get settingsKeywordsTheme => 'koyu,açık,gece,mod,görünüm';
+
+  @override
+  String get settingsKeywordsAccent => 'renk,vurgu';
+
+  @override
+  String get settingsKeywordsTextSize =>
+      'yazı tipi,büyük yazı,yakınlaştır,daha büyük';
+
+  @override
+  String get settingsKeywordsThumbCache => 'önbellek,önizleme,alan,boşalt';
+
+  @override
+  String get settingsKeywordsVersion => 'sürüm,hakkında,uygulama';
+
+  @override
+  String get settingsKeywordsPermissions => 'izin,erişim,izin ver,depolama';
+
+  @override
+  String get settingsKeywordsSimilar => 'kopya,bulanık,benzer';
+
+  @override
+  String get settingsKeywordsAiLabels => 'yapay zeka,etiket,tanıma,model,indir';
+
+  @override
+  String get settingsKeywordsLocation => 'konum,gps,yer,exif';
+
+  @override
+  String get settingsKeywordsBackup => 'dışa aktar,içe aktar,geri yükle,yedek';
+
+  @override
+  String get settingsKeywordsCloud => 'bulut,drive,onedrive,yükle';
+
+  @override
+  String get settingsKeywordsConnect =>
+      'paylaş,wifi,bilgisayar,telefon,qr,gönder';
+
+  @override
+  String get settingsKeywordsPrivacy => 'gizlilik,izleme,reklam,yükleme';
+
+  @override
+  String get settingsKeywordsScreenReader =>
+      'talkback,ekran okuyucu,anlatıcı,görme engelli';
+
+  @override
+  String get settingsKeywordsBigFiles => 'büyük,boyut,sınır,eşik';
+
+  @override
+  String get settingsSearchHint => 'Ayarlarda ara';
+
+  @override
+  String get settingsSearchClear => 'Aramayı temizle';
+
+  @override
+  String get settingsSearchEmpty => 'Eşleşen ayar yok. Başka bir kelime dene.';
+
+  @override
+  String get privacyTransferNote =>
+      'Konum bilgisi kaldırılır (Ayarlar → Gizlilik ve erişim)';
+
+  @override
+  String durationShortSeconds(int count) {
+    return '$count sn';
+  }
+
+  @override
+  String durationShortMinutes(int count) {
+    return '$count dk';
+  }
+
+  @override
+  String durationShortMinutesSeconds(int minutes, int seconds) {
+    return '$minutes dk $seconds sn';
+  }
+
+  @override
+  String durationShortHours(int count) {
+    return '$count sa';
+  }
+
+  @override
+  String durationShortHoursMinutes(int hours, int minutes) {
+    return '$hours sa $minutes dk';
+  }
+
+  @override
+  String get unitSecondsShort => 'sn';
+
+  @override
+  String get unitMinutesShort => 'dk';
+
+  @override
+  String get unitHoursShort => 'sa';
+
+  @override
+  String get unitMegabytesShort => 'MB';
+
+  @override
+  String get unitGigabytesShort => 'GB';
+
+  @override
+  String get unitInputAmount => 'Miktar';
+
+  @override
+  String unitInputRange(String min, String max) {
+    return '$min ile $max arasında bir değer gir';
+  }
+
+  @override
+  String get unitInputSave => 'Kaydet';
+
+  @override
+  String bigFileThresholdLine(String size) {
+    return '$size ve üzeri dosyalar büyük sayılır';
+  }
+
+  @override
+  String get settingsHighlightBigLine =>
+      'Büyük dosyalar, boyutlar kapalı olsa bile kırmızı boyut etiketi alır';
+
+  @override
+  String get settingsSameTimeWindowAbout =>
+      'Göz at → Aynı an, bu kadar kısa arayla çekilen fotoğraf ve videoları gruplar';
+
+  @override
+  String sameTimeWindowLine(String time) {
+    return 'Birbirinden en fazla $time arayla çekilen fotoğraf ve videolar gruplanır';
   }
 }

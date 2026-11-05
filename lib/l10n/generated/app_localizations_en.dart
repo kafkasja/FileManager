@@ -2036,10 +2036,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHighlightBig => 'Highlight big files';
 
   @override
-  String get settingsHighlightBigHelp =>
-      'Files of 100 MB or more get a red size label';
-
-  @override
   String selectionCount(int count, String size) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2236,21 +2232,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSameTimeWindow => 'Same time window';
-
-  @override
-  String get settingsSameTimeWindowHelp =>
-      'Browse → Same time groups photos and videos taken within this many seconds';
-
-  @override
-  String seconds(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count seconds',
-      one: '1 second',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get fileMenuTooltip => 'File actions';
@@ -5441,10 +5422,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location couldn\'t be removed, so it wasn\'t sent';
 
   @override
-  String get privacyTransferNote =>
-      'Location info is removed (Settings → Privacy)';
-
-  @override
   String get privacyMoveWarningTitle => 'Move without location?';
 
   @override
@@ -7674,5 +7651,248 @@ class AppLocalizationsEn extends AppLocalizations {
       one: 'Transfer failed',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get settingsGeneral => 'General';
+
+  @override
+  String get settingsSorting => 'Sorting';
+
+  @override
+  String get settingsFilesDisplay => 'Files & display';
+
+  @override
+  String get settingsSmart => 'Smart features';
+
+  @override
+  String get settingsStorageCleanup => 'Storage & cleanup';
+
+  @override
+  String get settingsConnectSharing => 'Connect & sharing';
+
+  @override
+  String get settingsPrivacyAccess => 'Privacy & access';
+
+  @override
+  String get settingsAboutAdvanced => 'About & advanced';
+
+  @override
+  String get thumbCacheHelp =>
+      'Small previews KFM saves so folders open fast. Clear frees the space; your files aren\'t touched and the previews come back when needed.';
+
+  @override
+  String get errorLogHelp =>
+      'Errors KFM ran into, without file names or paths. Share it to report a problem.';
+
+  @override
+  String get devSettingsHelp =>
+      'Index tools for checking KFM on a device (debug builds only).';
+
+  @override
+  String get settingsShowSessionSummaryHelp =>
+      'After Done, a short overview of what you kept, deleted and moved.';
+
+  @override
+  String get reviewedResetHelp =>
+      'Files you already sorted show up as new again. Nothing is deleted.';
+
+  @override
+  String get settingsFreshStartHelp =>
+      'Choose what to clear: the current session, history, tags or everything.';
+
+  @override
+  String get tutorialShowAgainHelp =>
+      'The short swipe tutorial and the one-time tips once more.';
+
+  @override
+  String get settingsDropActionHelp =>
+      'What happens when you drag files onto a folder.';
+
+  @override
+  String get storageBigFileThresholdHelp =>
+      'Used by the big-file highlight and Storage → Big files.';
+
+  @override
+  String get settingsDeleteMode => 'When you delete';
+
+  @override
+  String get settingsDeleteModeHelp =>
+      'Move deleted files to the trash, or delete them for good.';
+
+  @override
+  String get settingsPermissionsHelp =>
+      'What KFM may read on this phone, and a button to change it.';
+
+  @override
+  String get backupRestoreTitle => 'Backup & restore';
+
+  @override
+  String get backupRestoreHelp =>
+      'Moves your tags, favorites, presets and settings to another device. Files are not copied.';
+
+  @override
+  String get cloudDestinationsHelp =>
+      'Cloud apps on this device that KFM can send files to.';
+
+  @override
+  String get connectADevice => 'Connect a device';
+
+  @override
+  String get connectADeviceHelp =>
+      'See and send files between your phone and PC over Wi-Fi.';
+
+  @override
+  String get transfersSettingHelp =>
+      'Every Wi-Fi transfer, running and finished.';
+
+  @override
+  String get privacyDevicesTitle => 'Devices that can see your files';
+
+  @override
+  String get privacyDevicesHelp =>
+      'Remembered devices and what they may do. Forget one to block it.';
+
+  @override
+  String get privacyNeverTitle => 'What KFM never does';
+
+  @override
+  String get privacyNeverBody =>
+      'No ads, no account, no tracking. KFM never uploads your files: only devices you connect and cloud apps you choose get them.';
+
+  @override
+  String get a11yScreenReaderTitle => 'Screen readers';
+
+  @override
+  String get a11yScreenReaderBody =>
+      'File tiles read their name, type, size and date. Swipe cards offer their actions in the actions menu.';
+
+  @override
+  String get settingsKeywordsTheme => 'dark,light,night,mode,appearance';
+
+  @override
+  String get settingsKeywordsAccent => 'colour,color,accent';
+
+  @override
+  String get settingsKeywordsTextSize => 'font,big text,zoom,larger';
+
+  @override
+  String get settingsKeywordsThumbCache => 'cache,previews,space,free up';
+
+  @override
+  String get settingsKeywordsVersion => 'version,about,app';
+
+  @override
+  String get settingsKeywordsPermissions => 'permission,access,allow,storage';
+
+  @override
+  String get settingsKeywordsSimilar => 'duplicates,blurry,similar';
+
+  @override
+  String get settingsKeywordsAiLabels =>
+      'ai,labels,recognition,models,download';
+
+  @override
+  String get settingsKeywordsLocation => 'location,gps,place,exif';
+
+  @override
+  String get settingsKeywordsBackup => 'export,import,restore,backup';
+
+  @override
+  String get settingsKeywordsCloud => 'cloud,drive,onedrive,upload';
+
+  @override
+  String get settingsKeywordsConnect => 'share,wifi,pc,phone,qr,send';
+
+  @override
+  String get settingsKeywordsPrivacy => 'privacy,tracking,ads,upload';
+
+  @override
+  String get settingsKeywordsScreenReader =>
+      'talkback,narrator,blind,screen reader';
+
+  @override
+  String get settingsKeywordsBigFiles => 'big,large,size,threshold';
+
+  @override
+  String get settingsSearchHint => 'Search settings';
+
+  @override
+  String get settingsSearchClear => 'Clear search';
+
+  @override
+  String get settingsSearchEmpty => 'No setting matches. Try another word.';
+
+  @override
+  String get privacyTransferNote =>
+      'Location info is removed (Settings → Privacy & access)';
+
+  @override
+  String durationShortSeconds(int count) {
+    return '$count s';
+  }
+
+  @override
+  String durationShortMinutes(int count) {
+    return '$count min';
+  }
+
+  @override
+  String durationShortMinutesSeconds(int minutes, int seconds) {
+    return '$minutes min $seconds s';
+  }
+
+  @override
+  String durationShortHours(int count) {
+    return '$count h';
+  }
+
+  @override
+  String durationShortHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String get unitSecondsShort => 's';
+
+  @override
+  String get unitMinutesShort => 'min';
+
+  @override
+  String get unitHoursShort => 'h';
+
+  @override
+  String get unitMegabytesShort => 'MB';
+
+  @override
+  String get unitGigabytesShort => 'GB';
+
+  @override
+  String get unitInputAmount => 'Amount';
+
+  @override
+  String unitInputRange(String min, String max) {
+    return 'Enter a value from $min to $max';
+  }
+
+  @override
+  String get unitInputSave => 'Save';
+
+  @override
+  String bigFileThresholdLine(String size) {
+    return 'Files of $size or more count as big';
+  }
+
+  @override
+  String get settingsHighlightBigLine =>
+      'Big files get a red size label, even with sizes off';
+
+  @override
+  String get settingsSameTimeWindowAbout =>
+      'Browse → Same time groups photos and videos taken this close together';
+
+  @override
+  String sameTimeWindowLine(String time) {
+    return 'Photos and videos taken within $time of each other are grouped';
   }
 }

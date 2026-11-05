@@ -44,7 +44,12 @@ void main() {
   ) async {
     final app = await pumpApp(tester);
     await _openSettings(tester);
-    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('setting-general.language')),
+        matching: find.byType(DropdownButton<String>),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('English'), findsWidgets);
     await tester.tap(find.text('English').last);
@@ -61,34 +66,14 @@ void main() {
   testWidgets('Settings shows the sections in order', (tester) async {
     final app = await pumpApp(tester);
     await _openSettings(tester);
-    final orders = [
-      for (final s in app.container.read(settingsSectionsProvider)) s.order,
+    final ids = [
+      for (final s in app.container.read(settingsSectionsProvider)) s.id,
     ];
-    expect(orders, [...orders]..sort());
-    expect(orders.take(19), [
-      100,
-      150,
-      200,
-      250,
-      260,
-      300,
-      350,
-      400,
-      500,
-      550,
-      560,
-      570,
-      600,
-      650,
-      690,
-      700,
-      800,
-      850,
-      900,
-    ]);
-    expect(find.text('Appearance'), findsOneWidget);
+    expect(ids.first, 'general');
+    expect(ids.last, 'about');
+    expect(find.text('General'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Version 0.1.0'), 200);
-    expect(find.text('About'), findsOneWidget);
+    expect(find.text('About & advanced'), findsOneWidget);
     expect(find.text('Version 0.1.0'), findsOneWidget);
     // Scrolling disposed list rows' drift streams: let their close timers run.
     await tester.pumpAndSettle();

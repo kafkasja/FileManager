@@ -10,8 +10,19 @@ import 'package:kfm/features/ai_labels/data/ai_model_store.dart';
 import 'package:kfm/features/ai_labels/data/labeling_job.dart';
 import 'package:kfm/features/ai_labels/ui/ai_model_state_text.dart';
 import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 
-/// Settings → Photo labels (AI) (TASK-C3 §7, order 600).
+/// Settings → Smart features → Photo labels (AI) (TASK-C3 §7, E2 §5).
+/// Never hidden: where labels can't run, the row says why.
+final aiLabelsEntry = SettingsEntry(
+  id: 'smart.aiLabels',
+  titleBuilder: (c) => c.l10n.aiLabelsTitle,
+  subtitleBuilder: (c) => c.l10n.aiLabelsEnableHint,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsAiLabels,
+  builder: (_) => const AiLabelsSettingsSection(),
+);
+
+/// Settings → Photo labels (AI) (TASK-C3 §7).
 class AiLabelsSettingsSection extends ConsumerWidget {
   const new({super.key});
 

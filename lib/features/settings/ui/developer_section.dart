@@ -9,6 +9,7 @@ import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 
 /// Debug builds only: index size, full rescan, and the first 200 indexed
 /// files, to check F3/F5 on a real device.
@@ -111,3 +112,11 @@ class _IndexListScreen extends ConsumerWidget {
     );
   }
 }
+
+/// Debug builds only (About & advanced).
+final developerEntry = SettingsEntry(
+  id: 'about.developer',
+  titleBuilder: (c) => c.l10n.settingsDeveloper,
+  subtitleBuilder: (c) => c.l10n.devSettingsHelp,
+  builder: (_) => const DeveloperSection(),
+);

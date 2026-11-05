@@ -3052,12 +3052,6 @@ abstract class AppLocalizations {
   /// **'Highlight big files'**
   String get settingsHighlightBig;
 
-  /// No description provided for @settingsHighlightBigHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Files of 100 MB or more get a red size label'**
-  String get settingsHighlightBigHelp;
-
   /// No description provided for @selectionCount.
   ///
   /// In en, this message translates to:
@@ -3279,18 +3273,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Same time window'**
   String get settingsSameTimeWindow;
-
-  /// No description provided for @settingsSameTimeWindowHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse → Same time groups photos and videos taken within this many seconds'**
-  String get settingsSameTimeWindowHelp;
-
-  /// No description provided for @seconds.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
-  String seconds(int count);
 
   /// No description provided for @fileMenuTooltip.
   ///
@@ -7689,12 +7671,6 @@ abstract class AppLocalizations {
   /// **'Location couldn\'t be removed, so it wasn\'t sent'**
   String get privacyTransferNotRemoved;
 
-  /// X2 note in the send-to-device folder picker while Remove location is on.
-  ///
-  /// In en, this message translates to:
-  /// **'Location info is removed (Settings → Privacy)'**
-  String get privacyTransferNote;
-
   /// X2 dialog before moving photos/videos to another device with Remove location on.
   ///
   /// In en, this message translates to:
@@ -10682,6 +10658,414 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Transfer failed} other{{count} transfers failed}}'**
   String jobsEndFailedTitle(int count);
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
+  /// E2 desktop title of the Swiping section (desktop sorts without swiping).
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting'**
+  String get settingsSorting;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Files & display'**
+  String get settingsFilesDisplay;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart features'**
+  String get settingsSmart;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage & cleanup'**
+  String get settingsStorageCleanup;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect & sharing'**
+  String get settingsConnectSharing;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & access'**
+  String get settingsPrivacyAccess;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'About & advanced'**
+  String get settingsAboutAdvanced;
+
+  /// E2: description under Thumbnail cache.
+  ///
+  /// In en, this message translates to:
+  /// **'Small previews KFM saves so folders open fast. Clear frees the space; your files aren\'t touched and the previews come back when needed.'**
+  String get thumbCacheHelp;
+
+  /// E2: description of the error log entry (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Errors KFM ran into, without file names or paths. Share it to report a problem.'**
+  String get errorLogHelp;
+
+  /// E2: description of the Developer entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Index tools for checking KFM on a device (debug builds only).'**
+  String get devSettingsHelp;
+
+  /// E2: description under Show summary after Done.
+  ///
+  /// In en, this message translates to:
+  /// **'After Done, a short overview of what you kept, deleted and moved.'**
+  String get settingsShowSessionSummaryHelp;
+
+  /// E2: description under Reset reviewed labels.
+  ///
+  /// In en, this message translates to:
+  /// **'Files you already sorted show up as new again. Nothing is deleted.'**
+  String get reviewedResetHelp;
+
+  /// E2: description under Clear / fresh start.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what to clear: the current session, history, tags or everything.'**
+  String get settingsFreshStartHelp;
+
+  /// E2: description under Show tutorial again.
+  ///
+  /// In en, this message translates to:
+  /// **'The short swipe tutorial and the one-time tips once more.'**
+  String get tutorialShowAgainHelp;
+
+  /// E2: description under Dropping files on a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'What happens when you drag files onto a folder.'**
+  String get settingsDropActionHelp;
+
+  /// E2: description under Big files start at.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by the big-file highlight and Storage → Big files.'**
+  String get storageBigFileThresholdHelp;
+
+  /// E2: title of the delete mode entry (search result).
+  ///
+  /// In en, this message translates to:
+  /// **'When you delete'**
+  String get settingsDeleteMode;
+
+  /// E2: description of the delete mode entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Move deleted files to the trash, or delete them for good.'**
+  String get settingsDeleteModeHelp;
+
+  /// E2: description of the Android permissions entry (phone only).
+  ///
+  /// In en, this message translates to:
+  /// **'What KFM may read on this phone, and a button to change it.'**
+  String get settingsPermissionsHelp;
+
+  /// E2: title of the backup entry in About & advanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get backupRestoreTitle;
+
+  /// E2: description of Backup & restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves your tags, favorites, presets and settings to another device. Files are not copied.'**
+  String get backupRestoreHelp;
+
+  /// E2: description of the cloud destinations entry (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud apps on this device that KFM can send files to.'**
+  String get cloudDestinationsHelp;
+
+  /// E2: one Settings row for sharing and connecting (E1 adjusts the target).
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a device'**
+  String get connectADevice;
+
+  /// E2: description under Connect a device (mentions both device kinds on purpose).
+  ///
+  /// In en, this message translates to:
+  /// **'See and send files between your phone and PC over Wi-Fi.'**
+  String get connectADeviceHelp;
+
+  /// E2: description of the Transfers entry (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Every Wi-Fi transfer, running and finished.'**
+  String get transfersSettingHelp;
+
+  /// E2: Privacy & access row opening the remembered devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices that can see your files'**
+  String get privacyDevicesTitle;
+
+  /// E2: description under Devices that can see your files.
+  ///
+  /// In en, this message translates to:
+  /// **'Remembered devices and what they may do. Forget one to block it.'**
+  String get privacyDevicesHelp;
+
+  /// E2: privacy note title.
+  ///
+  /// In en, this message translates to:
+  /// **'What KFM never does'**
+  String get privacyNeverTitle;
+
+  /// E2: privacy note body.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads, no account, no tracking. KFM never uploads your files: only devices you connect and cloud apps you choose get them.'**
+  String get privacyNeverBody;
+
+  /// E2: Accessibility note title (TalkBack / Narrator).
+  ///
+  /// In en, this message translates to:
+  /// **'Screen readers'**
+  String get a11yScreenReaderTitle;
+
+  /// E2: Accessibility note body.
+  ///
+  /// In en, this message translates to:
+  /// **'File tiles read their name, type, size and date. Swipe cards offer their actions in the actions menu.'**
+  String get a11yScreenReaderBody;
+
+  /// E2 settings search words for Theme (comma-separated, not shown).
+  ///
+  /// In en, this message translates to:
+  /// **'dark,light,night,mode,appearance'**
+  String get settingsKeywordsTheme;
+
+  /// E2 settings search words for the color theme.
+  ///
+  /// In en, this message translates to:
+  /// **'colour,color,accent'**
+  String get settingsKeywordsAccent;
+
+  /// E2 settings search words for Text size.
+  ///
+  /// In en, this message translates to:
+  /// **'font,big text,zoom,larger'**
+  String get settingsKeywordsTextSize;
+
+  /// E2 settings search words for the thumbnail cache.
+  ///
+  /// In en, this message translates to:
+  /// **'cache,previews,space,free up'**
+  String get settingsKeywordsThumbCache;
+
+  /// E2 settings search words for the version row.
+  ///
+  /// In en, this message translates to:
+  /// **'version,about,app'**
+  String get settingsKeywordsVersion;
+
+  /// E2 settings search words for App permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'permission,access,allow,storage'**
+  String get settingsKeywordsPermissions;
+
+  /// E2 settings search words for Similar photos.
+  ///
+  /// In en, this message translates to:
+  /// **'duplicates,blurry,similar'**
+  String get settingsKeywordsSimilar;
+
+  /// E2 settings search words for Photo labels (AI).
+  ///
+  /// In en, this message translates to:
+  /// **'ai,labels,recognition,models,download'**
+  String get settingsKeywordsAiLabels;
+
+  /// E2 settings search words for location privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'location,gps,place,exif'**
+  String get settingsKeywordsLocation;
+
+  /// E2 settings search words for Backup & restore.
+  ///
+  /// In en, this message translates to:
+  /// **'export,import,restore,backup'**
+  String get settingsKeywordsBackup;
+
+  /// E2 settings search words for the cloud rows.
+  ///
+  /// In en, this message translates to:
+  /// **'cloud,drive,onedrive,upload'**
+  String get settingsKeywordsCloud;
+
+  /// E2 settings search words for Connect a device.
+  ///
+  /// In en, this message translates to:
+  /// **'share,wifi,pc,phone,qr,send'**
+  String get settingsKeywordsConnect;
+
+  /// E2 settings search words for the privacy note.
+  ///
+  /// In en, this message translates to:
+  /// **'privacy,tracking,ads,upload'**
+  String get settingsKeywordsPrivacy;
+
+  /// E2 settings search words for the screen reader note.
+  ///
+  /// In en, this message translates to:
+  /// **'talkback,narrator,blind,screen reader'**
+  String get settingsKeywordsScreenReader;
+
+  /// E2 settings search words for Big files start at.
+  ///
+  /// In en, this message translates to:
+  /// **'big,large,size,threshold'**
+  String get settingsKeywordsBigFiles;
+
+  /// E2: settings search field hint / button tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings'**
+  String get settingsSearchHint;
+
+  /// E2: clears the settings search.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get settingsSearchClear;
+
+  /// E2: settings search without results.
+  ///
+  /// In en, this message translates to:
+  /// **'No setting matches. Try another word.'**
+  String get settingsSearchEmpty;
+
+  /// X2 note in the send-to-device folder picker while Remove location is on (E2: new section name).
+  ///
+  /// In en, this message translates to:
+  /// **'Location info is removed (Settings → Privacy & access)'**
+  String get privacyTransferNote;
+
+  /// E2: short duration, seconds only ("45 s").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} s'**
+  String durationShortSeconds(int count);
+
+  /// E2: short duration, whole minutes ("2 min").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String durationShortMinutes(int count);
+
+  /// E2: short duration, minutes and seconds ("1 min 30 s").
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min {seconds} s'**
+  String durationShortMinutesSeconds(int minutes, int seconds);
+
+  /// E2: short duration, whole hours ("1 h").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h'**
+  String durationShortHours(int count);
+
+  /// E2: short duration, hours and minutes ("1 h 30 min").
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String durationShortHoursMinutes(int hours, int minutes);
+
+  /// E2: unit picker label for seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'s'**
+  String get unitSecondsShort;
+
+  /// E2: unit picker label for minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get unitMinutesShort;
+
+  /// E2: unit picker label for hours.
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get unitHoursShort;
+
+  /// E2: unit picker label for megabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'MB'**
+  String get unitMegabytesShort;
+
+  /// E2: unit picker label for gigabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'GB'**
+  String get unitGigabytesShort;
+
+  /// E2: label of the number field in the value sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get unitInputAmount;
+
+  /// E2: error under the number field.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value from {min} to {max}'**
+  String unitInputRange(String min, String max);
+
+  /// E2: saves the typed value.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get unitInputSave;
+
+  /// E2: row text under Big files start at, with the current value.
+  ///
+  /// In en, this message translates to:
+  /// **'Files of {size} or more count as big'**
+  String bigFileThresholdLine(String size);
+
+  /// E2: Highlight big files description (the size is set in Big files start at).
+  ///
+  /// In en, this message translates to:
+  /// **'Big files get a red size label, even with sizes off'**
+  String get settingsHighlightBigLine;
+
+  /// E2: Same time window description (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Browse → Same time groups photos and videos taken this close together'**
+  String get settingsSameTimeWindowAbout;
+
+  /// E2: row text under Same time window, with the current value ("2 min").
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos taken within {time} of each other are grouped'**
+  String sameTimeWindowLine(String time);
 }
 
 class _AppLocalizationsDelegate

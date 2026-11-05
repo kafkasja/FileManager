@@ -106,39 +106,43 @@ void main() {
     );
   });
 
-  testWidgets('a wider window regroups; stored values are clamped to 1–600', (
-    tester,
-  ) async {
-    _tallScreen(tester);
-    final app = await pumpApp(tester, files: _library());
-    await _openSameTime(tester);
-    final settings = app.container.read(settingsRepositoryProvider);
+  testWidgets(
+    'a wider window regroups; stored values are clamped to 1 s … 24 h',
+    (tester) async {
+      _tallScreen(tester);
+      final app = await pumpApp(tester, files: _library());
+      await _openSameTime(tester);
+      final settings = app.container.read(settingsRepositoryProvider);
 
-    await settings.write(AppSettings.sameTimeWindowSeconds, 60);
-    await tester.pumpAndSettle();
-    expect(app.container.read(sameTimeWindowProvider).value, 60);
-    expect(
-      find.text(_header(DateTime(2025, 6, 11), '1 group')),
-      findsOneWidget,
-    );
-    expect(find.textContaining('4 files ·'), findsOneWidget);
-    expect(find.textContaining('3 files ·'), findsOneWidget);
-    expect(find.textContaining('2 files ·'), findsNothing);
-    expect(_tile('lone.jpg'), findsNothing);
+      await settings.write(AppSettings.sameTimeWindowSeconds, 60);
+      await tester.pumpAndSettle();
+      expect(app.container.read(sameTimeWindowProvider).value, 60);
+      expect(
+        find.text(_header(DateTime(2025, 6, 11), '1 group')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('4 files ·'), findsOneWidget);
+      expect(find.textContaining('3 files ·'), findsOneWidget);
+      expect(find.textContaining('2 files ·'), findsNothing);
+      expect(_tile('lone.jpg'), findsNothing);
 
-    await settings.write(AppSettings.sameTimeWindowSeconds, 0);
-    await tester.pumpAndSettle();
-    expect(app.container.read(sameTimeWindowProvider).value, 1);
-    // Nothing is within 1 s of anything else.
-    expect(find.text('No photos taken at the same time'), findsOneWidget);
+      await settings.write(AppSettings.sameTimeWindowSeconds, 0);
+      await tester.pumpAndSettle();
+      expect(app.container.read(sameTimeWindowProvider).value, 1);
+      // Nothing is within 1 s of anything else.
+      expect(find.text('No photos taken at the same time'), findsOneWidget);
 
-    await settings.write(AppSettings.sameTimeWindowSeconds, 99999);
-    await tester.pumpAndSettle();
-    expect(app.container.read(sameTimeWindowProvider).value, 600);
-    // 600 s: d1 group and p+q group; lone is 6 h away.
-    expect(find.textContaining('4 files ·'), findsOneWidget);
-    expect(find.textContaining('3 files ·'), findsOneWidget);
-  });
+      await settings.write(AppSettings.sameTimeWindowSeconds, 99999);
+      await tester.pumpAndSettle();
+      expect(app.container.read(sameTimeWindowProvider).value, 86400);
+
+      await settings.write(AppSettings.sameTimeWindowSeconds, 600);
+      await tester.pumpAndSettle();
+      // 600 s: d1 group and p+q group; lone is 6 h away.
+      expect(find.textContaining('4 files ·'), findsOneWidget);
+      expect(find.textContaining('3 files ·'), findsOneWidget);
+    },
+  );
 
   testWidgets('a group spanning local midnight is listed under its first '
       "item's day", (tester) async {
@@ -277,24 +281,32 @@ void main() {
     expect(find.byType(PagedFileViewer), findsOneWidget);
   });
 
-  testWidgets('Settings → Browse has the Same time window dropdown', (
+  testWidgets('Settings → Files & display: Same time window in human units', (
     tester,
   ) async {
     _tallScreen(tester);
     final app = await pumpApp(tester);
     await tester.tap(find.text('Settings').last);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Same time window'), 200);
-    expect(find.byType(BrowseSettingsSection), findsOneWidget);
-    // The dropdown sits below the two-line help text: scroll it in too.
-    await tester.scrollUntilVisible(find.text('5 seconds'), 200);
-    expect(find.text('5 seconds'), findsOneWidget);
+    final row = find.byType(SameTimeWindowRow);
+    await tester.scrollUntilVisible(row, 200);
+    expect(
+      find.descendant(of: row, matching: find.text('5 s')),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('5 seconds'));
+    await tester.tap(row);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('60 seconds').last);
+    await tester.tap(find.byKey(const ValueKey('unit-preset-60')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('unit-input-save')));
+    await tester.pumpAndSettle();
+    await app.container.read(dbWriteQueueProvider).flush();
     await tester.pumpAndSettle();
     expect(app.container.read(sameTimeWindowProvider).value, 60);
-    expect(find.text('60 seconds'), findsOneWidget);
+    expect(
+      find.descendant(of: row, matching: find.text('1 min')),
+      findsOneWidget,
+    );
   });
 }

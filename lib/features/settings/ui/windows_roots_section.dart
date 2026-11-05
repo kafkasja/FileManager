@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/windows/windows_file_source.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/platform/windows/folder_picker.dart';
 import 'package:kfm/core/platform/windows/index_roots.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
+
+/// Where the Windows index looks (TASK-PL1; Privacy & access in E2).
+final windowsRootsEntry = SettingsEntry(
+  id: 'privacy.whereKfmLooks',
+  titleBuilder: (c) => c.l10n.windowsRootsTitle,
+  subtitleBuilder: (c) => c.l10n.windowsRootsHint,
+  formFactors: const {FormFactor.desktop},
+  builder: (_) => const WindowsRootsSection(),
+);
 
 /// Settings → "Folders KFM scans" (TASK-PL1, Windows only, order 450): the
 /// index roots, with Add, Remove and "Reset to defaults". Every change
