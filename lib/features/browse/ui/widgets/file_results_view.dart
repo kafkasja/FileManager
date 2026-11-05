@@ -266,10 +266,17 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
             !query.kinds.any(
               (k) => k == FileKind.image || k == FileKind.video,
             ));
+    // E4 (H3): a tile keyed by its file id keeps its element (and its
+    // shown thumbnail) when a reload moves it to another index.
+    int? indexOfKey(Key key) => switch (key) {
+      ValueKey<String>(:final value) => data.indexOfId(value),
+      _ => null,
+    };
     final body = asList
         ? SliverList.builder(
             key: _sliver,
             itemCount: total,
+            findChildIndexCallback: indexOfKey,
             itemBuilder: (context, i) {
               maybeLoadMore(i);
               if (i >= loaded) return const ResultsPlaceholder(listRow: true);
@@ -301,6 +308,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                 crossAxisSpacing: spacing / 4,
               ),
               itemCount: total,
+              findChildIndexCallback: indexOfKey,
               itemBuilder: (context, i) {
                 maybeLoadMore(i);
                 if (i >= loaded) return const ResultsPlaceholder();

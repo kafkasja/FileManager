@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -127,6 +128,33 @@ void main() {
       hasLength(1200),
     );
   });
+
+  testWidgets('tiles keep their elements when a reload removes the first '
+      'file (H3); an unchanged reload keeps the same list', (tester) async {
+    final (dao, _, container) = await pump(tester);
+    final second = find.byKey(const ValueKey('ms:1'));
+    final element = tester.element(second);
+    final state = tester.state(second);
+    final before = container.read(filePagesProvider(query)).value!.items;
+
+    // Unchanged: same list instance.
+    dao.changed();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(container.read(filePagesProvider(query)).value!.items, same(before));
+
+    // File 0 is gone: file 1 moves to index 0 and keeps its element.
+    dao.files = dao.files.sublist(1);
+    dao.changed();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    final after = container.read(filePagesProvider(query)).value!;
+    expect(after.items.first.id, 'ms:1');
+    expect(after.indexOfId('ms:1'), 0);
+    expect(find.byKey(const ValueKey('ms:0')), findsNothing);
+    expect(tester.element(second), same(element));
+    expect(tester.state(second), same(state));
+  });
 }
 
 FileRef _file(int i) => FileRef(
@@ -169,4 +197,14 @@ class _PagedDao extends MediaIndexDao {
 
   @override
   Future<int> count(IndexQuery q) async => files.length;
+
+  final changes = StreamController<int>.broadcast();
+  var _tick = 0;
+
+  /// The index changed (FilePages reloads, debounced).
+  void changed() => changes.add(++_tick);
+
+  @override
+  Stream<int> watchChanges({bool withTags = false, bool withGroups = false}) =>
+      changes.stream;
 }
