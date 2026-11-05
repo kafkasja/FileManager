@@ -17,6 +17,7 @@ import 'package:kfm/features/browse/ui/browse_settings_section.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
+import 'package:kfm/features/cloud/ui/cloud_badge_cache.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/drag_select_detector.dart';
 import 'package:kfm/features/selection/ui/selection_controller.dart';
@@ -242,6 +243,11 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
     final notifier = ref.read(filePagesProvider(query).notifier);
     final showSizes = ref.watch(browseShowSizesProvider).value ?? true;
     final highlightBig = ref.watch(browseHighlightBigProvider).value ?? false;
+    // E4 (H5): once for all tiles (no cloud badge Consumer per tile when
+    // nothing was ever uploaded or badges are off).
+    final showCloud =
+        (ref.watch(cloudHasUploadsProvider).value ?? false) &&
+        (ref.watch(cloudShowBadgeProvider).value ?? false);
     // B4: the ⋮ only in Normal mode (tiles select in the other modes).
     final normal =
         ref.watch(
@@ -327,6 +333,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                   onTap: onTap,
                   highlightBig: highlightBig,
                   highlight: widget.highlight,
+                  showCloud: showCloud,
                   menu: normal ? FileActionsMenuButton(file: f) : null,
                 ),
               );
@@ -360,6 +367,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                         showSizes || query.sort.field == FileSortField.size,
                     highlightBig: highlightBig,
                     highlight: widget.highlight,
+                    showCloud: showCloud,
                     menu: normal
                         ? FileActionsMenuButton(file: f, overlay: true)
                         : null,

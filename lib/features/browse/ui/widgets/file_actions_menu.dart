@@ -115,10 +115,11 @@ class FileActionsMenuButton extends ConsumerWidget {
         if (item.isAvailable(file)) item,
     ];
     if (items.isEmpty) return const SizedBox.shrink();
-    return PopupMenuButton<FileMenuItem>(
+    // E4 (H5): a plain IconButton that opens the menu on tap, so a tile
+    // keeps no PopupMenuButton state while scrolling.
+    return IconButton(
       tooltip: context.l10n.fileMenuTooltip,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 200),
       style: overlay
           ? IconButton.styleFrom(
               backgroundColor: Colors.black54,
@@ -130,8 +131,33 @@ class FileActionsMenuButton extends ConsumerWidget {
           : null,
       iconSize: overlay ? 18 : null,
       icon: const Icon(Icons.more_vert),
-      onSelected: (item) => unawaited(item.onSelected(context, ref, file)),
-      itemBuilder: (context) => [
+      onPressed: () => unawaited(_open(context, ref, items)),
+    );
+  }
+
+  Future<void> _open(
+    BuildContext context,
+    WidgetRef ref,
+    List<FileMenuItem> items,
+  ) async {
+    final button = context.findRenderObject()! as RenderBox;
+    final overlayBox =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlayBox),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlayBox,
+        ),
+      ),
+      Offset.zero & overlayBox.size,
+    );
+    final item = await showMenu<FileMenuItem>(
+      context: context,
+      position: position,
+      constraints: const BoxConstraints(minWidth: 200),
+      items: [
         for (final item in items)
           PopupMenuItem(
             value: item,
@@ -144,5 +170,7 @@ class FileActionsMenuButton extends ConsumerWidget {
           ),
       ],
     );
+    if (item == null || !context.mounted) return;
+    await item.onSelected(context, ref, file);
   }
 }
