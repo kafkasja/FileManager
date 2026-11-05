@@ -574,12 +574,6 @@ abstract class AppLocalizations {
   /// **'Move to trash (recommended)'**
   String get deleteModeTrash;
 
-  /// No description provided for @deleteModeTrashHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Swiped files go to the phone\'s trash and can be restored.'**
-  String get deleteModeTrashHelp;
-
   /// No description provided for @deleteModePermanent.
   ///
   /// In en, this message translates to:
@@ -3052,12 +3046,6 @@ abstract class AppLocalizations {
   /// **'Highlight big files'**
   String get settingsHighlightBig;
 
-  /// No description provided for @settingsHighlightBigHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Files of 100 MB or more get a red size label'**
-  String get settingsHighlightBigHelp;
-
   /// No description provided for @selectionCount.
   ///
   /// In en, this message translates to:
@@ -3279,18 +3267,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Same time window'**
   String get settingsSameTimeWindow;
-
-  /// No description provided for @settingsSameTimeWindowHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse → Same time groups photos and videos taken within this many seconds'**
-  String get settingsSameTimeWindowHelp;
-
-  /// No description provided for @seconds.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
-  String seconds(int count);
 
   /// No description provided for @fileMenuTooltip.
   ///
@@ -4377,12 +4353,6 @@ abstract class AppLocalizations {
   /// **'Find similar and blurry photos'**
   String get similarStartTitle;
 
-  /// No description provided for @similarStartBody.
-  ///
-  /// In en, this message translates to:
-  /// **'KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.'**
-  String get similarStartBody;
-
   /// No description provided for @similarStart.
   ///
   /// In en, this message translates to:
@@ -4713,12 +4683,6 @@ abstract class AppLocalizations {
   /// **'Photo labels (AI)'**
   String get aiLabelsTitle;
 
-  /// No description provided for @aiLabelsEnable.
-  ///
-  /// In en, this message translates to:
-  /// **'Label photos on this phone'**
-  String get aiLabelsEnable;
-
   /// No description provided for @aiLabelsEnableHint.
   ///
   /// In en, this message translates to:
@@ -4785,23 +4749,11 @@ abstract class AppLocalizations {
   /// **'Reset'**
   String get aiLabelsResetAction;
 
-  /// No description provided for @aiLabelsHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs on this phone only. No photo or result ever leaves it.'**
-  String get aiLabelsHelp;
-
   /// No description provided for @aiLabelsJobError.
   ///
   /// In en, this message translates to:
   /// **'The AI models are missing or changed, so labeling stopped. Download them again.'**
   String get aiLabelsJobError;
-
-  /// No description provided for @aiLabelsWorkerError.
-  ///
-  /// In en, this message translates to:
-  /// **'Labeling couldn\'t start on this phone.'**
-  String get aiLabelsWorkerError;
 
   /// No description provided for @aiLabelsCrashError.
   ///
@@ -4826,12 +4778,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Find photos by what\'s in them (cat, beach, food…)'**
   String get aiLabelsCardTitle;
-
-  /// No description provided for @aiLabelsCardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'KFM can label your photos on this phone. Nothing is uploaded.'**
-  String get aiLabelsCardBody;
 
   /// No description provided for @aiLabelsCardTurnOn.
   ///
@@ -5019,23 +4965,11 @@ abstract class AppLocalizations {
   /// **'How it works'**
   String get aiModelsHowTitle;
 
-  /// No description provided for @aiModelsHowBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.'**
-  String get aiModelsHowBody;
-
   /// No description provided for @aiModelsPrivacyTitle.
   ///
   /// In en, this message translates to:
   /// **'Privacy'**
   String get aiModelsPrivacyTitle;
-
-  /// No description provided for @aiModelsPrivacyBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs fully on this device. No photo, thumbnail or result ever leaves the phone. No account, no tracking. The only network use is this one download.'**
-  String get aiModelsPrivacyBody;
 
   /// No description provided for @aiModelsBatteryBody.
   ///
@@ -5372,12 +5306,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Modified'**
   String get detailsModified;
-
-  /// No description provided for @detailsAdded.
-  ///
-  /// In en, this message translates to:
-  /// **'Added to phone'**
-  String get detailsAdded;
 
   /// No description provided for @detailsTaken.
   ///
@@ -7281,12 +7209,6 @@ abstract class AppLocalizations {
   /// **'Share error log'**
   String get errorLogShare;
 
-  /// Settings → About (H5). Tag and preset names may still appear.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 error} other{{count} errors}}. Stays on this phone until you share it. Folder and file names are hidden.'**
-  String errorLogShareSubtitle(int count);
-
   /// No description provided for @errorLogEmpty.
   ///
   /// In en, this message translates to:
@@ -7388,12 +7310,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Left-handed'**
   String get leftHandedTitle;
-
-  /// L4 switch subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Moves Undo and bottom buttons to the other side. Swipe directions don\'t change.'**
-  String get leftHandedSubtitle;
 
   /// L5 picker title.
   ///
@@ -7689,12 +7605,6 @@ abstract class AppLocalizations {
   /// **'Location couldn\'t be removed, so it wasn\'t sent'**
   String get privacyTransferNotRemoved;
 
-  /// X2 note in the send-to-device folder picker while Remove location is on.
-  ///
-  /// In en, this message translates to:
-  /// **'Location info is removed (Settings → Privacy)'**
-  String get privacyTransferNote;
-
   /// X2 dialog before moving photos/videos to another device with Remove location on.
   ///
   /// In en, this message translates to:
@@ -7904,12 +7814,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No photos or videos in this folder'**
   String get externalSwipeFolderEmpty;
-
-  /// U2 Transfers tab: copies and moves between places on this device.
-  ///
-  /// In en, this message translates to:
-  /// **'On this phone'**
-  String get transfersLocalSection;
 
   /// U2 empty On this phone tab.
   ///
@@ -9723,12 +9627,6 @@ abstract class AppLocalizations {
   /// **'Show cloud icon'**
   String get cloudShowBadge;
 
-  /// X4 help text under the Show cloud icon switch.
-  ///
-  /// In en, this message translates to:
-  /// **'The cloud icon means KFM handed this file to your cloud app. It\'s saved on this phone, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.'**
-  String get cloudBadgeHelp;
-
   /// X4 viewer info line, one per cloud folder the file was uploaded to.
   ///
   /// In en, this message translates to:
@@ -9806,12 +9704,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This drive has no Recycle Bin. Delete {count, plural, =1{this file} other{these {count} files}} permanently?'**
   String deleteNoRecycleBin(int count);
-
-  /// PL1: Windows settings section listing the index roots.
-  ///
-  /// In en, this message translates to:
-  /// **'Folders KFM scans'**
-  String get windowsRootsTitle;
 
   /// PL1: explanation under the Windows index roots title.
   ///
@@ -10682,6 +10574,696 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Transfer failed} other{{count} transfers failed}}'**
   String jobsEndFailedTitle(int count);
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
+  /// E2 desktop title of the Swiping section (desktop sorts without swiping).
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting'**
+  String get settingsSorting;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Files & display'**
+  String get settingsFilesDisplay;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart features'**
+  String get settingsSmart;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage & cleanup'**
+  String get settingsStorageCleanup;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect & sharing'**
+  String get settingsConnectSharing;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & access'**
+  String get settingsPrivacyAccess;
+
+  /// E2 settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'About & advanced'**
+  String get settingsAboutAdvanced;
+
+  /// E2: description under Thumbnail cache.
+  ///
+  /// In en, this message translates to:
+  /// **'Small previews KFM saves so folders open fast. Clear frees the space; your files aren\'t touched and the previews come back when needed.'**
+  String get thumbCacheHelp;
+
+  /// E2: description of the error log entry (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Errors KFM ran into, without file names or paths. Share it to report a problem.'**
+  String get errorLogHelp;
+
+  /// E2: description of the Developer entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Index tools for checking KFM on a device (debug builds only).'**
+  String get devSettingsHelp;
+
+  /// E2: description under Show summary after Done.
+  ///
+  /// In en, this message translates to:
+  /// **'After Done, a short overview of what you kept, deleted and moved.'**
+  String get settingsShowSessionSummaryHelp;
+
+  /// E2: description under Reset reviewed labels.
+  ///
+  /// In en, this message translates to:
+  /// **'Files you already sorted show up as new again. Nothing is deleted.'**
+  String get reviewedResetHelp;
+
+  /// E2: description under Clear / fresh start.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what to clear: the current session, history, tags or everything.'**
+  String get settingsFreshStartHelp;
+
+  /// E2: description under Show tutorial again.
+  ///
+  /// In en, this message translates to:
+  /// **'The short swipe tutorial and the one-time tips once more.'**
+  String get tutorialShowAgainHelp;
+
+  /// E2: description under Dropping files on a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'What happens when you drag files onto a folder.'**
+  String get settingsDropActionHelp;
+
+  /// E2: description under Big files start at.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by the big-file highlight and Storage → Big files.'**
+  String get storageBigFileThresholdHelp;
+
+  /// E2: title of the delete mode entry (search result).
+  ///
+  /// In en, this message translates to:
+  /// **'When you delete'**
+  String get settingsDeleteMode;
+
+  /// E2: description of the delete mode entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Move deleted files to the trash, or delete them for good.'**
+  String get settingsDeleteModeHelp;
+
+  /// E2: description of the Android permissions entry (phone only).
+  ///
+  /// In en, this message translates to:
+  /// **'What KFM may read on this phone, and a button to change it.'**
+  String get settingsPermissionsHelp;
+
+  /// E2: title of the backup entry in About & advanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get backupRestoreTitle;
+
+  /// E2: description of Backup & restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves your tags, favorites, presets and settings to another device. Files are not copied.'**
+  String get backupRestoreHelp;
+
+  /// E2: description of the cloud destinations entry (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud apps on this device that KFM can send files to.'**
+  String get cloudDestinationsHelp;
+
+  /// E2: one Settings row for sharing and connecting (E1 adjusts the target).
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a device'**
+  String get connectADevice;
+
+  /// E2: description under Connect a device (mentions both device kinds on purpose).
+  ///
+  /// In en, this message translates to:
+  /// **'See and send files between your phone and PC over Wi-Fi.'**
+  String get connectADeviceHelp;
+
+  /// E2: description of the Transfers entry (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Every Wi-Fi transfer, running and finished.'**
+  String get transfersSettingHelp;
+
+  /// E2: Privacy & access row opening the remembered devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices that can see your files'**
+  String get privacyDevicesTitle;
+
+  /// E2: description under Devices that can see your files.
+  ///
+  /// In en, this message translates to:
+  /// **'Remembered devices and what they may do. Forget one to block it.'**
+  String get privacyDevicesHelp;
+
+  /// E2: privacy note title.
+  ///
+  /// In en, this message translates to:
+  /// **'What KFM never does'**
+  String get privacyNeverTitle;
+
+  /// E2: privacy note body.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads, no account, no tracking. KFM never uploads your files: only devices you connect and cloud apps you choose get them.'**
+  String get privacyNeverBody;
+
+  /// E2: Accessibility note title (TalkBack / Narrator).
+  ///
+  /// In en, this message translates to:
+  /// **'Screen readers'**
+  String get a11yScreenReaderTitle;
+
+  /// E2: Accessibility note body.
+  ///
+  /// In en, this message translates to:
+  /// **'File tiles read their name, type, size and date. Swipe cards offer their actions in the actions menu.'**
+  String get a11yScreenReaderBody;
+
+  /// E2 settings search words for Theme (comma-separated, not shown).
+  ///
+  /// In en, this message translates to:
+  /// **'dark,light,night,mode,appearance'**
+  String get settingsKeywordsTheme;
+
+  /// E2 settings search words for the color theme.
+  ///
+  /// In en, this message translates to:
+  /// **'colour,color,accent'**
+  String get settingsKeywordsAccent;
+
+  /// E2 settings search words for Text size.
+  ///
+  /// In en, this message translates to:
+  /// **'font,big text,zoom,larger'**
+  String get settingsKeywordsTextSize;
+
+  /// E2 settings search words for the thumbnail cache.
+  ///
+  /// In en, this message translates to:
+  /// **'cache,previews,space,free up'**
+  String get settingsKeywordsThumbCache;
+
+  /// E2 settings search words for the version row.
+  ///
+  /// In en, this message translates to:
+  /// **'version,about,app'**
+  String get settingsKeywordsVersion;
+
+  /// E2 settings search words for App permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'permission,access,allow,storage'**
+  String get settingsKeywordsPermissions;
+
+  /// E2 settings search words for Similar photos.
+  ///
+  /// In en, this message translates to:
+  /// **'duplicates,blurry,similar'**
+  String get settingsKeywordsSimilar;
+
+  /// E2 settings search words for Photo labels (AI).
+  ///
+  /// In en, this message translates to:
+  /// **'ai,labels,recognition,models,download'**
+  String get settingsKeywordsAiLabels;
+
+  /// E2 settings search words for location privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'location,gps,place,exif'**
+  String get settingsKeywordsLocation;
+
+  /// E2 settings search words for Backup & restore.
+  ///
+  /// In en, this message translates to:
+  /// **'export,import,restore,backup'**
+  String get settingsKeywordsBackup;
+
+  /// E2 settings search words for the cloud rows.
+  ///
+  /// In en, this message translates to:
+  /// **'cloud,drive,onedrive,upload'**
+  String get settingsKeywordsCloud;
+
+  /// E2 settings search words for Connect a device.
+  ///
+  /// In en, this message translates to:
+  /// **'share,wifi,pc,phone,qr,send'**
+  String get settingsKeywordsConnect;
+
+  /// E2 settings search words for the privacy note.
+  ///
+  /// In en, this message translates to:
+  /// **'privacy,tracking,ads,upload'**
+  String get settingsKeywordsPrivacy;
+
+  /// E2 settings search words for the screen reader note.
+  ///
+  /// In en, this message translates to:
+  /// **'talkback,narrator,blind,screen reader'**
+  String get settingsKeywordsScreenReader;
+
+  /// E2 settings search words for Big files start at.
+  ///
+  /// In en, this message translates to:
+  /// **'big,large,size,threshold'**
+  String get settingsKeywordsBigFiles;
+
+  /// E2: settings search field hint / button tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings'**
+  String get settingsSearchHint;
+
+  /// E2: clears the settings search.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get settingsSearchClear;
+
+  /// E2: settings search without results.
+  ///
+  /// In en, this message translates to:
+  /// **'No setting matches. Try another word.'**
+  String get settingsSearchEmpty;
+
+  /// X2 note in the send-to-device folder picker while Remove location is on (E2: new section name).
+  ///
+  /// In en, this message translates to:
+  /// **'Location info is removed (Settings → Privacy & access)'**
+  String get privacyTransferNote;
+
+  /// E2: short duration, seconds only ("45 s").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} s'**
+  String durationShortSeconds(int count);
+
+  /// E2: short duration, whole minutes ("2 min").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String durationShortMinutes(int count);
+
+  /// E2: short duration, minutes and seconds ("1 min 30 s").
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min {seconds} s'**
+  String durationShortMinutesSeconds(int minutes, int seconds);
+
+  /// E2: short duration, whole hours ("1 h").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h'**
+  String durationShortHours(int count);
+
+  /// E2: short duration, hours and minutes ("1 h 30 min").
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String durationShortHoursMinutes(int hours, int minutes);
+
+  /// E2: unit picker label for seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'s'**
+  String get unitSecondsShort;
+
+  /// E2: unit picker label for minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get unitMinutesShort;
+
+  /// E2: unit picker label for hours.
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get unitHoursShort;
+
+  /// E2: unit picker label for megabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'MB'**
+  String get unitMegabytesShort;
+
+  /// E2: unit picker label for gigabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'GB'**
+  String get unitGigabytesShort;
+
+  /// E2: label of the number field in the value sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get unitInputAmount;
+
+  /// E2: error under the number field.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value from {min} to {max}'**
+  String unitInputRange(String min, String max);
+
+  /// E2: saves the typed value.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get unitInputSave;
+
+  /// E2: row text under Big files start at, with the current value.
+  ///
+  /// In en, this message translates to:
+  /// **'Files of {size} or more count as big'**
+  String bigFileThresholdLine(String size);
+
+  /// E2: Highlight big files description (the size is set in Big files start at).
+  ///
+  /// In en, this message translates to:
+  /// **'Big files get a red size label, even with sizes off'**
+  String get settingsHighlightBigLine;
+
+  /// E2: Same time window description (search).
+  ///
+  /// In en, this message translates to:
+  /// **'Browse → Same time groups photos and videos taken this close together'**
+  String get settingsSameTimeWindowAbout;
+
+  /// E2: row text under Same time window, with the current value ("2 min").
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos taken within {time} of each other are grouped'**
+  String sameTimeWindowLine(String time);
+
+  /// D1/E2: trash delete mode help (no device noun).
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted files go to the trash and can be restored.'**
+  String get deleteModeTrashHelpDevice;
+
+  /// C2/E2: Similar photos start screen body. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{KFM checks your photos on this phone, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the phone and nothing is removed unless you choose it.} pc{KFM checks your photos on this PC, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the PC and nothing is removed unless you choose it.} other{KFM checks your photos on this device, groups look-alikes and suggests the sharpest one to keep. Nothing leaves the device and nothing is removed unless you choose it.}}'**
+  String similarStartBodyOn(String device);
+
+  /// C3/E2: AI labels switch. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Label photos on this phone} pc{Label photos on this PC} other{Label photos on this device}}'**
+  String aiLabelsEnableOn(String device);
+
+  /// C3/E2: AI labels privacy line in Settings. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Runs on this phone only. No photo or result ever leaves it.} pc{Runs on this PC only. No photo or result ever leaves it.} other{Runs on this device only. No photo or result ever leaves it.}}'**
+  String aiLabelsHelpOn(String device);
+
+  /// C3/E2: labeling worker failed. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Labeling couldn\'t start on this phone.} pc{Labeling couldn\'t start on this PC.} other{Labeling couldn\'t start on this device.}}'**
+  String aiLabelsWorkerErrorOn(String device);
+
+  /// C3/E2: Browse/Search card body. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{KFM can label your photos on this phone. Nothing is uploaded.} pc{KFM can label your photos on this PC. Nothing is uploaded.} other{KFM can label your photos on this device. Nothing is uploaded.}}'**
+  String aiLabelsCardBodyOn(String device);
+
+  /// C3/E2: AI models screen, how it works. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Each photo\'s small thumbnail is analysed on this phone, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.} pc{Each photo\'s small thumbnail is analysed on this PC, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.} other{Each photo\'s small thumbnail is analysed on this device, once, in the background. Only label words like \"cat\" are stored in KFM\'s database.}}'**
+  String aiModelsHowBodyOn(String device);
+
+  /// C3/E2: AI models screen, privacy. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Runs fully on this phone. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.} pc{Runs fully on this PC. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.} other{Runs fully on this device. No photo, thumbnail or result ever leaves it. No account, no tracking. The only network use is this one download.}}'**
+  String aiModelsPrivacyBodyOn(String device);
+
+  /// B10/E2: file details fact label. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{Added to phone} pc{Added to PC} other{Added to device}}'**
+  String detailsAddedOn(String device);
+
+  /// H5/E2: error log row subtitle. Tag and preset names may still appear. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{{count, plural, =1{1 error} other{{count} errors}}. Stays on this phone until you share it. Folder and file names are hidden.} pc{{count, plural, =1{1 error} other{{count} errors}}. Stays on this PC until you share it. Folder and file names are hidden.} other{{count, plural, =1{1 error} other{{count} errors}}. Stays on this device until you share it. Folder and file names are hidden.}}'**
+  String errorLogShareSubtitleOn(int count, String device);
+
+  /// U2/E2: Transfers section of local jobs. device: phone | pc | other (TASK-E2 deviceKind).
+  ///
+  /// In en, this message translates to:
+  /// **'{device, select, phone{On this phone} pc{On this PC} other{On this device}}'**
+  String transfersLocalSectionOn(String device);
+
+  /// X4/E2: help text under the Show cloud icon switch (no device noun).
+  ///
+  /// In en, this message translates to:
+  /// **'The cloud icon means KFM handed this file to your cloud app. KFM remembers that here, so it shows offline too. It isn\'t a live check: KFM can\'t see whether the upload finished or whether the copy was deleted later. If the file changes after upload, the icon changes too. Only files uploaded with KFM are marked.'**
+  String get cloudBadgeHelpDevice;
+
+  /// E2: Photo labels row on Windows (never hidden).
+  ///
+  /// In en, this message translates to:
+  /// **'Not available on Windows yet. On Android, KFM can find photos by what\'s in them.'**
+  String get aiLabelsUnsupportedWindows;
+
+  /// E2: inline button in Settings → Smart features → Photo labels; the size is in the row text.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get aiModelsDownloadInline;
+
+  /// E2: Photo labels row link to the models details screen.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get aiModelsHowItWorks;
+
+  /// E2: Privacy & access entry about the file index.
+  ///
+  /// In en, this message translates to:
+  /// **'Where KFM looks'**
+  String get whereKfmLooksTitle;
+
+  /// E2: description of Where KFM looks (search).
+  ///
+  /// In en, this message translates to:
+  /// **'The private list of your files that Search, Sort and Storage use. It never leaves this device.'**
+  String get whereKfmLooksHelp;
+
+  /// E2: phone explanation of the index (read-only row).
+  ///
+  /// In en, this message translates to:
+  /// **'KFM keeps a private list of the photos, videos and files Android shows it, so Search, Swipe and Storage cover your whole phone. The list stays on this phone and is never uploaded. KFM never changes or moves anything by looking.'**
+  String get whereKfmLooksPhoneBody;
+
+  /// E2: Windows switch that replaces 'Folders KFM scans' (on by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Look everywhere'**
+  String get lookEverywhereTitle;
+
+  /// E2: Look everywhere on.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM keeps a private list of your photos, videos and files on this PC so Search, Sort, Storage and Similar photos cover everything. The list stays on this PC. KFM never uploads, changes or moves anything by looking, and skips Windows and program folders.'**
+  String get lookEverywhereOnHelp;
+
+  /// E2: Look everywhere off.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM only looks in the folder you have open. Search and Sort cover that folder.'**
+  String get lookEverywhereOffHelp;
+
+  /// E2: Look everywhere off with chosen folders.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM only looks in the folders below. Turn this on to cover all your files.'**
+  String get lookEverywhereChosenHelp;
+
+  /// E2: link under Look everywhere to the chosen-folders list.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose folders instead…'**
+  String get lookEverywhereChoose;
+
+  /// E2: confirm before turning Look everywhere off.
+  ///
+  /// In en, this message translates to:
+  /// **'Only look where you are?'**
+  String get lookEverywhereOffConfirmTitle;
+
+  /// E2: confirm body.
+  ///
+  /// In en, this message translates to:
+  /// **'Search and Sort will only cover folders you open. Tags, favorites and reviewed marks are kept.'**
+  String get lookEverywhereOffConfirmBody;
+
+  /// E2: confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Only open folders'**
+  String get lookEverywhereOffConfirm;
+
+  /// E2 settings search words for Where KFM looks.
+  ///
+  /// In en, this message translates to:
+  /// **'index,scan,folders,look everywhere,search'**
+  String get settingsKeywordsIndex;
+
+  /// E2: first-launch language step title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get languageStepTitle;
+
+  /// E2: first-launch language step body.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change it later in Settings → General.'**
+  String get languageStepBody;
+
+  /// E2: the System choice with the language it resolves to.
+  ///
+  /// In en, this message translates to:
+  /// **'System ({language})'**
+  String languageSystemNamed(String language);
+
+  /// E2: first-launch language step button.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get languageStepContinue;
+
+  /// E2 §7: Left-handed switch description (thumb side).
+  ///
+  /// In en, this message translates to:
+  /// **'Puts Undo, the main buttons and the selection bar on the left, where your thumb is. Swipe directions don\'t change.'**
+  String get leftHandedThumbHelp;
+
+  /// E2: Accessibility switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get reduceMotionTitle;
+
+  /// E2: Reduce motion description.
+  ///
+  /// In en, this message translates to:
+  /// **'Swiped cards fade instead of flying away, and screens change without sliding. Also follows the system setting.'**
+  String get reduceMotionHelp;
+
+  /// E2: Accessibility switch.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get highContrastTitle;
+
+  /// E2: High contrast description.
+  ///
+  /// In en, this message translates to:
+  /// **'Stronger colors for text, buttons and outlines. Also follows the system setting.'**
+  String get highContrastHelp;
+
+  /// X6/E2: backup preview name of the Reduce motion setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get backupSettingReduceMotion;
+
+  /// X6/E2: backup preview name of the High contrast setting.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get backupSettingHighContrast;
+
+  /// E2 settings search words for Reduce motion.
+  ///
+  /// In en, this message translates to:
+  /// **'animation,motion,vestibular,fade'**
+  String get settingsKeywordsMotion;
+
+  /// E2 settings search words for High contrast.
+  ///
+  /// In en, this message translates to:
+  /// **'contrast,colors,low vision'**
+  String get settingsKeywordsContrast;
+
+  /// E2 §7: what screen readers say for a file tile/row.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {kind}, {size}, {date}'**
+  String a11yFileLabel(String name, String kind, String size, String date);
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get a11yKindAudio;
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get a11yKindDocument;
+
+  /// E2: spoken file kind with its extension (PDF document).
+  ///
+  /// In en, this message translates to:
+  /// **'{ext} document'**
+  String a11yKindDocumentExt(String ext);
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get a11yKindArchive;
+
+  /// E2: spoken file kind.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get a11yKindFile;
+
+  /// E2: spoken file kind with its extension.
+  ///
+  /// In en, this message translates to:
+  /// **'{ext} file'**
+  String a11yKindFileExt(String ext);
 
   /// E4: a folder with its place, e.g. 'Camera · Internal storage' (swipe folder line, viewer).
   ///

@@ -57,7 +57,7 @@ void main() {
     });
 
     test('empty setting = the known folders from the channel', () async {
-      expect(await roots.current(), ['D:/Pics', 'C:/Users/me/Documents']);
+      expect(await roots.chosen(), ['D:/Pics', 'C:/Users/me/Documents']);
     });
 
     test('no native side: the profile folders', () async {
@@ -66,7 +66,7 @@ void main() {
         channel: FakeWindowsChannel(missing: true),
         environment: const {'USERPROFILE': r'C:\Users\me'},
       );
-      expect(await fallback.current(), hasLength(4));
+      expect(await fallback.chosen(), hasLength(4));
     });
 
     test('add turns the defaults into a list; nested adds are no-ops; '
@@ -78,16 +78,16 @@ void main() {
         'E:/Photos',
       ]);
       await roots.add('d:/pics/2024');
-      expect(await roots.current(), hasLength(3));
+      expect(await roots.chosen(), hasLength(3));
 
       await roots.remove('d:/PICS');
       await roots.remove('C:/Users/me/Documents');
-      expect(await roots.current(), ['E:/Photos']);
+      expect(await roots.chosen(), ['E:/Photos']);
       await roots.remove('E:/Photos'); // the last one stays
-      expect(await roots.current(), ['E:/Photos']);
+      expect(await roots.chosen(), ['E:/Photos']);
 
       await roots.resetToDefaults();
-      expect(await roots.current(), ['D:/Pics', 'C:/Users/me/Documents']);
+      expect(await roots.chosen(), ['D:/Pics', 'C:/Users/me/Documents']);
     });
   });
 

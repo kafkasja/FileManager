@@ -5,6 +5,7 @@ import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'folders_settings_section.g.dart';
@@ -14,8 +15,15 @@ part 'folders_settings_section.g.dart';
 Stream<DropAction> foldersDropAction(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch(AppSettings.foldersDropAction);
 
-/// Settings → Files (TASK-B4 §11).
-class FoldersSettingsSection extends ConsumerWidget {
+/// Settings → Files & display (TASK-B4 §11, TASK-E2).
+final dropActionEntry = SettingsEntry(
+  id: 'files.dropAction',
+  titleBuilder: (c) => c.l10n.settingsDropAction,
+  subtitleBuilder: (c) => c.l10n.settingsDropActionHelp,
+  builder: (_) => const DropActionRow(),
+);
+
+class DropActionRow extends ConsumerWidget {
   const new({super.key});
 
   @override
@@ -25,6 +33,7 @@ class FoldersSettingsSection extends ConsumerWidget {
     return AdaptiveListTile(
       leading: const Icon(Icons.drive_file_move_outlined),
       title: Text(l10n.settingsDropAction),
+      subtitle: Text(l10n.settingsDropActionHelp),
       trailing: DropdownButton<DropAction>(
         value: value,
         onChanged: (v) {

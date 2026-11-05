@@ -8,6 +8,81 @@ part of 'theme_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// E2 §7: Reduce motion (the app also honours the system setting).
+
+@ProviderFor(reduceMotion)
+final reduceMotionProvider = ReduceMotionProvider._();
+
+/// E2 §7: Reduce motion (the app also honours the system setting).
+
+final class ReduceMotionProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// E2 §7: Reduce motion (the app also honours the system setting).
+  ReduceMotionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'reduceMotionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$reduceMotionHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return reduceMotion(ref);
+  }
+}
+
+String _$reduceMotionHash() => r'267548cc5ed8b72158cbc224759d5aa0da6a0892';
+
+/// E2 §7: High contrast.
+
+@ProviderFor(highContrast)
+final highContrastProvider = HighContrastProvider._();
+
+/// E2 §7: High contrast.
+
+final class HighContrastProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// E2 §7: High contrast.
+  HighContrastProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'highContrastProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$highContrastHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return highContrast(ref);
+  }
+}
+
+String _$highContrastHash() => r'e077e0f4129af1d6ca1719b8118e443efc78a6db';
 
 @ProviderFor(themeMode)
 final themeModeProvider = ThemeModeProvider._();

@@ -120,9 +120,9 @@ void main() {
     final s = await _pump(tester, files: files);
     await tester.tap(find.text('Browse'));
     await tester.pumpAndSettle();
-    await tester.longPress(find.bySemanticsLabel('c1.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^c1\.jpg, ')));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('c2.jpg'));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^c2\.jpg, ')));
     await tester.pumpAndSettle();
 
     await _tap(tester, find.byTooltip('More'));
@@ -151,7 +151,7 @@ void main() {
   Future<void> compressC1(WidgetTester tester) async {
     await tester.tap(find.text('Browse'));
     await tester.pumpAndSettle();
-    await tester.longPress(find.bySemanticsLabel('c1.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^c1\.jpg, ')));
     await tester.pumpAndSettle();
     await _tap(tester, find.byTooltip('More'));
     await _tapText(tester, 'Compress');
@@ -198,7 +198,7 @@ void main() {
     final s = await _pump(tester, files: files);
     await tester.tap(find.text('Browse'));
     await tester.pumpAndSettle();
-    await tester.longPress(find.bySemanticsLabel('a.zip'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^a\.zip, ')));
     await tester.pumpAndSettle();
     await _tap(tester, find.byTooltip('More'));
     await _tapText(tester, 'Compress');
@@ -243,7 +243,7 @@ void main() {
     s.archive.blockReason = 'remote';
     await tester.tap(find.text('Browse'));
     await tester.pumpAndSettle();
-    await tester.longPress(find.bySemanticsLabel('c1.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^c1\.jpg, ')));
     await tester.pumpAndSettle();
     await _tap(tester, find.byTooltip('More'));
     await _tapText(tester, 'Compress');

@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/platform/permissions/storage_access.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
+
+/// Settings → Privacy & access → App permissions (F4, TASK-E2). Android's
+/// media / All files access; Windows needs none.
+final permissionsEntry = SettingsEntry(
+  id: 'privacy.permissions',
+  titleBuilder: (c) => c.l10n.settingsPermissions,
+  subtitleBuilder: (c) => c.l10n.settingsPermissionsHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsPermissions,
+  formFactors: const {FormFactor.mobile},
+  builder: (_) => const PermissionsSection(),
+);
 
 /// Settings → Permissions (F4): current state of each access with a button
 /// to change it.

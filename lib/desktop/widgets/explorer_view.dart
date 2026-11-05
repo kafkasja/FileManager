@@ -70,6 +70,7 @@ class ExplorerView<T> extends StatefulWidget {
     this.onKey,
     this.onNearEnd,
     this.nameOf,
+    this.semanticLabelOf,
     this.focusNode,
     this.autofocus = false,
     this.scrollController,
@@ -112,6 +113,10 @@ class ExplorerView<T> extends StatefulWidget {
 
   /// Type-to-find: the name typed letters match (null = off).
   final String Function(T item)? nameOf;
+
+  /// E2 §7: what Narrator reads for an item (name, type, size, date);
+  /// null = the item's own texts.
+  final String Function(T item)? semanticLabelOf;
 
   final FocusNode? focusNode;
   final bool autofocus;
@@ -760,6 +765,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     final id = widget.idOf(item);
     final view = _ExplorerItem(
       key: ValueKey(id),
+      semanticLabel: widget.semanticLabelOf?.call(item),
       selected: _s.contains(id),
       focused: _s.focus == id,
       details: geo.details,
@@ -933,9 +939,11 @@ class _ExplorerItem extends StatefulWidget {
     required this.onUp,
     required this.onCancel,
     required this.child,
+    this.semanticLabel,
     super.key,
   });
 
+  final String? semanticLabel;
   final bool selected;
   final bool focused;
   final bool details;
@@ -963,6 +971,8 @@ class _ExplorerItemState extends State<_ExplorerItem> {
     final radius = BorderRadius.circular(widget.details ? 4 : 10);
     return Semantics(
       selected: widget.selected,
+      label: widget.semanticLabel,
+      excludeSemantics: widget.semanticLabel != null,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hover = true),
         onExit: (_) => setState(() => _hover = false),

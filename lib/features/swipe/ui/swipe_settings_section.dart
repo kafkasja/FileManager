@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/core/db/db_providers.dart';
-import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/onboarding/ui/onboarding_controller.dart';
 import 'package:kfm/features/reviewed/ui/reset_reviewed_dialog.dart';
 import 'package:kfm/features/session/ui/clear_sheet.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
+import 'package:kfm/features/settings/ui/widgets/settings_tiles.dart';
 import 'package:kfm/features/swipe/ui/swipe_deck_controller.dart';
-import 'package:kfm/features/swipe/ui/swipe_folder_line.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'swipe_settings_section.g.dart';
@@ -41,109 +42,150 @@ Stream<bool> sessionSummaryEnabled(Ref ref) => ref
 Stream<bool> actionBarEnabled(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch(AppSettings.actionBarEnabled);
 
-/// Settings → Swiping (S4; P1/P2 add their options here).
-class SwipeSettingsSection extends ConsumerWidget {
-  const new({super.key});
+// Settings → Swiping (S4; P1/P2/P7/P8/P9 rows) as entries (TASK-E2). Desktop
+// Sort has presets, the reviewed badge, stats and the summary, but no swipe
+// directions, buttons mode, vibration or tutorial.
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    return Column(
-      children: [
-        ListTile(
-          leading: const Icon(Icons.swipe_outlined),
-          title: Text(l10n.customizeSwipes),
-          subtitle: Text(l10n.customizeSwipesHelp),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go(AppRoutes.customizeSwipes),
-        ),
-        ListTile(
-          leading: const Icon(Icons.tune),
-          title: Text(l10n.settingsPresets),
-          subtitle: Text(l10n.settingsPresetsHelp),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go(AppRoutes.presets),
-        ),
-        SwitchListTile(
-          secondary: const Icon(Icons.touch_app_outlined),
-          title: Text(l10n.settingsSwipeButtons),
-          subtitle: Text(l10n.settingsSwipeButtonsHelp),
-          value: ref.watch(swipeButtonsModeProvider).value ?? false,
-          onChanged: (v) => ref
-              .read(settingsRepositoryProvider)
-              .write(AppSettings.swipeButtonsMode, v)
-              .fireAndForget(),
-        ),
-        SwitchListTile(
-          secondary: const Icon(Icons.vibration),
-          title: Text(l10n.settingsHaptics),
-          subtitle: Text(l10n.settingsHapticsHelp),
-          value: ref.watch(hapticsEnabledProvider).value ?? true,
-          onChanged: (v) => ref
-              .read(settingsRepositoryProvider)
-              .write(AppSettings.hapticsEnabled, v)
-              .fireAndForget(),
-        ),
-        // E4: provisional place; E2 moves it into its Swiping section.
-        SwitchListTile(
-          secondary: const Icon(Icons.folder_outlined),
-          title: Text(l10n.settingsSwipeShowFolder),
-          subtitle: Text(l10n.settingsSwipeShowFolderHelp),
-          value: ref.watch(swipeShowFolderProvider).value ?? true,
-          onChanged: (v) => ref
-              .read(settingsRepositoryProvider)
-              .write(AppSettings.swipeShowFolder, v)
-              .fireAndForget(),
-        ),
-        SwitchListTile(
-          secondary: const Icon(Icons.check_circle_outline),
-          title: Text(l10n.settingsShowReviewedBadge),
-          subtitle: Text(l10n.settingsShowReviewedBadgeHelp),
-          value: ref.watch(showReviewedBadgeProvider).value ?? true,
-          onChanged: (v) {
-            ref
-                .read(settingsRepositoryProvider)
-                .write(AppSettings.showReviewedBadge, v)
-                .then((_) => ref.invalidate(swipeDeckControllerProvider))
-                .ignore();
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.insights_outlined),
-          title: Text(l10n.settingsStats),
-          subtitle: Text(l10n.settingsStatsHelp),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go(AppRoutes.stats),
-        ),
-        SwitchListTile(
-          secondary: const Icon(Icons.summarize_outlined),
-          title: Text(l10n.settingsShowSessionSummary),
-          value: ref.watch(sessionSummaryEnabledProvider).value ?? true,
-          onChanged: (v) => ref
-              .read(settingsRepositoryProvider)
-              .write(AppSettings.statsShowSessionSummary, v)
-              .fireAndForget(),
-        ),
-        ListTile(
-          leading: const Icon(Icons.layers_clear_outlined),
-          title: Text(l10n.reviewedReset),
-          onTap: () => showResetReviewedDialog(context, ref),
-        ),
-        ListTile(
-          leading: const Icon(Icons.restart_alt),
-          title: Text(l10n.settingsFreshStart),
-          onTap: () => showClearSheet(context, ref),
-        ),
-        // L3: the tutorial and the one-time hints once more.
-        ListTile(
-          leading: const Icon(Icons.school_outlined),
-          title: Text(l10n.tutorialShowAgain),
-          onTap: () {
-            ref.read(onboardingControllerProvider.notifier).showAgain();
-            context.go(AppRoutes.swipe);
-          },
-        ),
-      ],
-    );
-  }
-}
+final swipeCustomizeEntry = SettingsEntry(
+  id: 'swipe.customize',
+  titleBuilder: (c) => c.l10n.customizeSwipes,
+  subtitleBuilder: (c) => c.l10n.customizeSwipesHelp,
+  formFactors: const {FormFactor.mobile},
+  builder: (c) => SettingsTile(
+    icon: Icons.swipe_outlined,
+    title: c.l10n.customizeSwipes,
+    subtitle: c.l10n.customizeSwipesHelp,
+    chevron: true,
+    onTap: () => c.go(AppRoutes.customizeSwipes),
+  ),
+);
+
+final swipePresetsEntry = SettingsEntry(
+  id: 'swipe.presets',
+  titleBuilder: (c) => c.l10n.settingsPresets,
+  subtitleBuilder: (c) => c.l10n.settingsPresetsHelp,
+  builder: (c) => SettingsTile(
+    icon: Icons.tune,
+    title: c.l10n.settingsPresets,
+    subtitle: c.l10n.settingsPresetsHelp,
+    chevron: true,
+    onTap: () => c.go(AppRoutes.presets),
+  ),
+);
+
+final swipeButtonsModeEntry = SettingsEntry(
+  id: 'swipe.buttonsMode',
+  titleBuilder: (c) => c.l10n.settingsSwipeButtons,
+  subtitleBuilder: (c) => c.l10n.settingsSwipeButtonsHelp,
+  formFactors: const {FormFactor.mobile},
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.touch_app_outlined,
+    title: (l10n) => l10n.settingsSwipeButtons,
+    subtitle: (l10n) => l10n.settingsSwipeButtonsHelp,
+    provider: swipeButtonsModeProvider,
+    setting: AppSettings.swipeButtonsMode,
+  ),
+);
+
+/// Vibration on swipes (S4): phones only, in Accessibility (TASK-E2).
+final hapticsEntry = SettingsEntry(
+  id: 'a11y.haptics',
+  titleBuilder: (c) => c.l10n.settingsHaptics,
+  subtitleBuilder: (c) => c.l10n.settingsHapticsHelp,
+  formFactors: const {FormFactor.mobile},
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.vibration,
+    title: (l10n) => l10n.settingsHaptics,
+    subtitle: (l10n) => l10n.settingsHapticsHelp,
+    provider: hapticsEnabledProvider,
+    setting: AppSettings.hapticsEnabled,
+  ),
+);
+
+final swipeReviewedBadgeEntry = SettingsEntry(
+  id: 'swipe.reviewedBadge',
+  titleBuilder: (c) => c.l10n.settingsShowReviewedBadge,
+  subtitleBuilder: (c) => c.l10n.settingsShowReviewedBadgeHelp,
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.check_circle_outline,
+    title: (l10n) => l10n.settingsShowReviewedBadge,
+    subtitle: (l10n) => l10n.settingsShowReviewedBadgeHelp,
+    provider: showReviewedBadgeProvider,
+    setting: AppSettings.showReviewedBadge,
+    afterWrite: (ref) => ref.invalidate(swipeDeckControllerProvider),
+  ),
+);
+
+final swipeStatsEntry = SettingsEntry(
+  id: 'swipe.stats',
+  titleBuilder: (c) => c.l10n.settingsStats,
+  subtitleBuilder: (c) => c.l10n.settingsStatsHelp,
+  builder: (c) => SettingsTile(
+    icon: Icons.insights_outlined,
+    title: c.l10n.settingsStats,
+    subtitle: c.l10n.settingsStatsHelp,
+    chevron: true,
+    onTap: () => c.go(AppRoutes.stats),
+  ),
+);
+
+final swipeSessionSummaryEntry = SettingsEntry(
+  id: 'swipe.sessionSummary',
+  titleBuilder: (c) => c.l10n.settingsShowSessionSummary,
+  subtitleBuilder: (c) => c.l10n.settingsShowSessionSummaryHelp,
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.summarize_outlined,
+    title: (l10n) => l10n.settingsShowSessionSummary,
+    subtitle: (l10n) => l10n.settingsShowSessionSummaryHelp,
+    provider: sessionSummaryEnabledProvider,
+    setting: AppSettings.statsShowSessionSummary,
+  ),
+);
+
+final swipeResetReviewedEntry = SettingsEntry(
+  id: 'swipe.resetReviewed',
+  titleBuilder: (c) => c.l10n.reviewedReset,
+  subtitleBuilder: (c) => c.l10n.reviewedResetHelp,
+  builder: (_) => Consumer(
+    builder: (c, ref, _) => SettingsTile(
+      icon: Icons.layers_clear_outlined,
+      title: c.l10n.reviewedReset,
+      subtitle: c.l10n.reviewedResetHelp,
+      onTap: () => showResetReviewedDialog(c, ref),
+    ),
+  ),
+);
+
+final swipeFreshStartEntry = SettingsEntry(
+  id: 'swipe.freshStart',
+  titleBuilder: (c) => c.l10n.settingsFreshStart,
+  subtitleBuilder: (c) => c.l10n.settingsFreshStartHelp,
+  builder: (_) => Consumer(
+    builder: (c, ref, _) => SettingsTile(
+      icon: Icons.restart_alt,
+      title: c.l10n.settingsFreshStart,
+      subtitle: c.l10n.settingsFreshStartHelp,
+      onTap: () => showClearSheet(c, ref),
+    ),
+  ),
+);
+
+/// L3: the tutorial and the one-time hints once more. Phones only: the
+/// tutorial is about swiping.
+final tutorialEntry = SettingsEntry(
+  id: 'general.tutorial',
+  titleBuilder: (c) => c.l10n.tutorialShowAgain,
+  subtitleBuilder: (c) => c.l10n.tutorialShowAgainHelp,
+  formFactors: const {FormFactor.mobile},
+  builder: (_) => Consumer(
+    builder: (c, ref, _) => SettingsTile(
+      icon: Icons.school_outlined,
+      title: c.l10n.tutorialShowAgain,
+      subtitle: c.l10n.tutorialShowAgainHelp,
+      onTap: () {
+        ref.read(onboardingControllerProvider.notifier).showAgain();
+        c.go(AppRoutes.swipe);
+      },
+    ),
+  ),
+);

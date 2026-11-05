@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/adaptive_sheet.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/haptics.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -13,6 +14,8 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/external_storage/data/places_repository.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
+import 'package:kfm/features/settings/ui/widgets/settings_tiles.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'swipe_folder_line.g.dart';
@@ -21,6 +24,21 @@ part 'swipe_folder_line.g.dart';
 @Riverpod(keepAlive: true)
 Stream<bool> swipeShowFolder(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch(AppSettings.swipeShowFolder);
+
+/// E4: Settings → Swiping, "Show the file's folder" (phones only).
+final swipeShowFolderEntry = SettingsEntry(
+  id: 'swipe.showFolder',
+  titleBuilder: (c) => c.l10n.settingsSwipeShowFolder,
+  subtitleBuilder: (c) => c.l10n.settingsSwipeShowFolderHelp,
+  formFactors: const {FormFactor.mobile},
+  builder: (_) => BoolSettingSwitch(
+    icon: Icons.folder_outlined,
+    title: (l10n) => l10n.settingsSwipeShowFolder,
+    subtitle: (l10n) => l10n.settingsSwipeShowFolderHelp,
+    provider: swipeShowFolderProvider,
+    setting: AppSettings.swipeShowFolder,
+  ),
+);
 
 /// E4: one line in the progress row with the current file's folder
 /// ("Camera · Internal storage"). Tap = a sheet with the full path, Copy

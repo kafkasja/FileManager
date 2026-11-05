@@ -20,7 +20,7 @@ Future<void> _pump(WidgetTester tester, AssetBundle bundle) async {
       child: const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: SearchSettingsSection()),
+        home: Scaffold(body: SearchLanguageRows()),
       ),
     ),
   );
@@ -67,12 +67,12 @@ void main() {
     expect(item.enabled, isFalse);
   });
 
-  test('the Search section is registered', () {
+  test('the search language entry is registered', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    expect(
-      container.read(settingsSectionsProvider).map((s) => s.order),
-      contains(260),
-    );
+    expect([
+      for (final s in container.read(settingsSectionsProvider))
+        for (final e in s.entries) e.id,
+    ], contains('general.searchLanguage'));
   });
 }

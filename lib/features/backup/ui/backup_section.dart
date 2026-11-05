@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/android/files_channel.dart';
 import 'package:kfm/core/utils/read_future.dart';
@@ -11,8 +12,30 @@ import 'package:kfm/features/backup/domain/backup_codec.dart';
 import 'package:kfm/features/backup/ui/backup_swipe_sync.dart';
 import 'package:kfm/features/backup/ui/import_preview_screen.dart';
 import 'package:kfm/features/presets/domain/preset.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:path/path.dart' as p;
+
+/// Settings → About & advanced → Backup & restore (TASK-X6, E2). Phones
+/// only (user decision 2026-11-05).
+final backupEntry = SettingsEntry(
+  id: 'about.backup',
+  titleBuilder: (c) => c.l10n.backupRestoreTitle,
+  subtitleBuilder: (c) => c.l10n.backupRestoreHelp,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsBackup,
+  formFactors: const {FormFactor.mobile},
+  builder: (c) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ListTile(
+        dense: true,
+        title: Text(c.l10n.backupRestoreTitle),
+        subtitle: Text(c.l10n.backupRestoreHelp),
+      ),
+      const BackupSection(),
+    ],
+  ),
+);
 
 /// Settings → Backup (TASK-X6): Export, Import, Undo last import.
 class BackupSection extends ConsumerStatefulWidget {

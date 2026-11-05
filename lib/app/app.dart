@@ -18,6 +18,7 @@ import 'package:kfm/features/cloud/data/cloud_providers.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/external_storage/data/places_watcher.dart';
+import 'package:kfm/features/onboarding/ui/language_step.dart';
 import 'package:kfm/features/privacy/data/privacy_providers.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/share_in/data/share_in_service.dart';
@@ -133,17 +134,43 @@ class _AppState extends ConsumerState<App> {
     final mono = accent == AppAccent.mono;
     // L5: System leaves the platform scaler untouched.
     final textSize = ref.watch(textSizeProvider).value ?? AppTextSize.system;
+    // E2 §7.
+    final reduceMotion = ref.watch(reduceMotionProvider).value ?? false;
+    final highContrast = ref.watch(highContrastProvider).value ?? false;
+    ThemeData theme(Brightness b, {required bool contrast}) => buildTheme(
+      b,
+      seed: seed,
+      monochrome: mono,
+      highContrast: contrast,
+      reduceMotion: reduceMotion,
+    );
     return MaterialApp.router(
       routerConfig: ref.watch(routerProvider),
       onGenerateTitle: (context) => context.l10n.appTitle,
-      theme: buildTheme(Brightness.light, seed: seed, monochrome: mono),
-      darkTheme: buildTheme(Brightness.dark, seed: seed, monochrome: mono),
+      theme: theme(Brightness.light, contrast: highContrast),
+      darkTheme: theme(Brightness.dark, contrast: highContrast),
+      // The system's high contrast setting picks these.
+      highContrastTheme: theme(Brightness.light, contrast: true),
+      highContrastDarkTheme: theme(Brightness.dark, contrast: true),
       themeMode: ref.watch(themeModeProvider).value ?? ThemeMode.system,
       locale: ref.watch(appLocaleProvider).value,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      builder: (context, child) =>
-          applyTextScale(context, child ?? const SizedBox.shrink(), textSize),
+      builder: (context, child) {
+        final scaled = applyTextScale(
+          context,
+          FirstLaunchLanguageGate(child: child ?? const SizedBox.shrink()),
+          textSize,
+        );
+        // E2 §7: Reduce motion = the system's "remove animations" flag, so
+        // every widget that honours it (and AppTokens.motion) calms down.
+        return reduceMotion
+            ? MediaQuery(
+                data: MediaQuery.of(context).copyWith(disableAnimations: true),
+                child: scaled,
+              )
+            : scaled;
+      },
     );
   }
 }

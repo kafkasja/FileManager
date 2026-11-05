@@ -34,8 +34,10 @@ class HidingHeaderSliver extends StatefulWidget {
   State<HidingHeaderSliver> createState() => _HidingHeaderSliverState();
 }
 
+// Not the single-ticker mixin: the sliver recreates its controller when
+// it is detached and attached again (monkey test, seed 2).
 class _HidingHeaderSliverState extends State<HidingHeaderSliver>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   ScrollPosition? _position;
   final GlobalKey _header = GlobalKey();
 

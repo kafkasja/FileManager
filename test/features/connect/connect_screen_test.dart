@@ -165,9 +165,9 @@ void main() {
   Future<void> openConnect(WidgetTester tester) async {
     await tester.tap(find.text('Settings').last);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Connect to a device'), 200);
+    await tester.scrollUntilVisible(find.text('Connect a device'), 200);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Connect to a device'));
+    await tester.tap(find.text('Connect a device'));
     await tester.pumpAndSettle();
   }
 
@@ -290,7 +290,7 @@ void main() {
     // N5: the connection outlives the screen.
     await tester.pageBack();
     await _settle(tester);
-    await tester.tap(find.text('Connect to a device'));
+    await tester.tap(find.text('Connect a device'));
     await _settle(tester);
     expect(find.text('Connected to Phone A'), findsOneWidget);
 

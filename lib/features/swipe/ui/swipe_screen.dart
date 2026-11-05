@@ -610,11 +610,11 @@ class _DeckState extends ConsumerState<_Deck> {
               spacing * 2,
               spacing * 2,
             ),
-            // L4: Undo sits on the side away from the swiping thumb
-            // (physical side, whatever the text direction).
+            // L4/E2: Undo sits on the thumb side (physical side, whatever
+            // the text direction), below the card so a swipe can't hit it.
             child: Row(
               textDirection: TextDirection.ltr,
-              mainAxisAlignment: secondarySide(handednessOf(ref)),
+              mainAxisAlignment: thumbSide(handednessOf(ref)),
               children: [
                 // Hidden while the viewer is on top, so ✕ and undo are never
                 // on screen together (S3).

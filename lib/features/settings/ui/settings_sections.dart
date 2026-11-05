@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
-import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/ai_labels/ui/ai_labels_settings_section.dart';
 import 'package:kfm/features/backup/ui/backup_section.dart';
 import 'package:kfm/features/browse/ui/browse_settings_section.dart';
@@ -10,17 +8,19 @@ import 'package:kfm/features/connect/ui/connect_settings_section.dart';
 import 'package:kfm/features/folders/ui/folders_settings_section.dart';
 import 'package:kfm/features/privacy/ui/privacy_settings_section.dart';
 import 'package:kfm/features/search/ui/search_settings_section.dart';
-import 'package:kfm/features/settings/ui/about_section.dart';
-import 'package:kfm/features/settings/ui/accessibility_section.dart';
-import 'package:kfm/features/settings/ui/appearance_section.dart';
+import 'package:kfm/features/settings/ui/about_advanced_entries.dart';
+import 'package:kfm/features/settings/ui/accessibility_entries.dart';
 import 'package:kfm/features/settings/ui/developer_section.dart';
+import 'package:kfm/features/settings/ui/general_entries.dart';
 import 'package:kfm/features/settings/ui/permissions_section.dart';
+import 'package:kfm/features/settings/ui/privacy_entries.dart';
 import 'package:kfm/features/settings/ui/settings_section.dart';
-import 'package:kfm/features/settings/ui/storage_cache_section.dart';
+import 'package:kfm/features/settings/ui/storage_cleanup_entries.dart';
 import 'package:kfm/features/settings/ui/windows_roots_section.dart';
 import 'package:kfm/features/similar/ui/similar_section.dart';
 import 'package:kfm/features/smart_groups/ui/smart_groups_settings_section.dart';
 import 'package:kfm/features/storage/ui/storage_overview_section.dart';
+import 'package:kfm/features/swipe/ui/swipe_folder_line.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/trash/ui/deleting_section.dart';
 import 'package:kfm/features/updates/ui/updates_section.dart';
@@ -28,125 +28,124 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'settings_sections.g.dart';
 
-/// Every Settings section, sorted by [SettingsSection.order]. Add one line
-/// per feature.
+/// The 9 Settings sections (TASK-E2 §2), sorted by [SettingsSection.order].
+/// Features own their [SettingsEntry]s; add an entry to its section here.
+/// Rules (`settings_structure_test.dart`, per form factor): ≥ 2 entries per
+/// shown section, unique ids, a description unless self-explanatory, no
+/// phone-only rows on desktop.
 @Riverpod(keepAlive: true)
 List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
   <SettingsSection>[
     SettingsSection(
       order: 100,
-      titleBuilder: (c) => c.l10n.settingsAppearance,
-      builder: (_) => const AppearanceSection(),
-    ),
-    SettingsSection(
-      order: 150,
-      titleBuilder: (c) => c.l10n.settingsAccessibility,
-      builder: (_) => const AccessibilitySection(),
+      id: 'general',
+      titleBuilder: (c) => c.l10n.settingsGeneral,
+      entries: [
+        themeEntry,
+        accentEntry,
+        // TODO(E3): `general.fileIcons` ("File icons: Windows / KFM", desktop
+        // only) goes here; E3 owns the key, the dialog and the entry.
+        languageEntry,
+        searchLanguageEntry,
+        updatesEntry,
+        updatesNowEntry,
+        tutorialEntry,
+      ],
     ),
     SettingsSection(
       order: 200,
+      id: 'swipe',
       titleBuilder: (c) => c.l10n.settingsSwipe,
-      builder: (_) => const SwipeSettingsSection(),
-    ),
-    SettingsSection(
-      order: 250,
-      titleBuilder: (c) => c.l10n.settingsBrowse,
-      builder: (_) => const BrowseSettingsSection(),
-    ),
-    SettingsSection(
-      order: 260,
-      titleBuilder: (c) => c.l10n.searchSettingsTitle,
-      builder: (_) => const SearchSettingsSection(),
+      desktopTitleBuilder: (c) => c.l10n.settingsSorting,
+      entries: [
+        swipeCustomizeEntry,
+        swipeButtonsModeEntry,
+        swipeShowFolderEntry,
+        swipePresetsEntry,
+        swipeReviewedBadgeEntry,
+        swipeSessionSummaryEntry,
+        swipeStatsEntry,
+        swipeResetReviewedEntry,
+        swipeFreshStartEntry,
+      ],
     ),
     SettingsSection(
       order: 300,
-      titleBuilder: (c) => c.l10n.settingsDeleting,
-      builder: (_) => const DeletingSection(),
-    ),
-    SettingsSection(
-      order: 350,
-      titleBuilder: (c) => c.l10n.settingsFiles,
-      builder: (_) => const FoldersSettingsSection(),
+      id: 'files',
+      titleBuilder: (c) => c.l10n.settingsFilesDisplay,
+      entries: [
+        showSizesEntry,
+        highlightBigEntry,
+        bigFileThresholdEntry,
+        sameTimeWindowEntry,
+        dropActionEntry,
+        cloudDestinationsEntry,
+        cloudBadgeEntry,
+      ],
     ),
     SettingsSection(
       order: 400,
-      titleBuilder: (c) => c.l10n.settingsPermissions,
-      builder: (_) => const PermissionsSection(),
-      // Android's media / All files access; Windows needs none.
-      formFactors: const {FormFactor.mobile},
+      id: 'smart',
+      titleBuilder: (c) => c.l10n.settingsSmart,
+      entries: [similarEntry, aiLabelsEntry, placeNamesEntry],
     ),
-    // PL1: what the Windows index scans (Android scans the whole storage).
-    if (isWindowsHost)
-      SettingsSection(
-        order: 450,
-        titleBuilder: (c) => c.l10n.windowsRootsTitle,
-        builder: (_) => const WindowsRootsSection(),
-      ),
     SettingsSection(
       order: 500,
-      titleBuilder: (c) => c.l10n.settingsStorage,
-      builder: (_) => const StorageCacheSection(),
-    ),
-    SettingsSection(
-      order: 560,
-      titleBuilder: (c) => c.l10n.similarTitle,
-      builder: (_) => const SimilarSection(),
-    ),
-    SettingsSection(
-      order: 550,
-      titleBuilder: (c) => c.l10n.storageOverviewTitle,
-      builder: (_) => const StorageOverviewSection(),
-    ),
-    // X3: hidden power feature; nothing runs until a folder is added.
-    SettingsSection(
-      order: 570,
-      titleBuilder: (c) => c.l10n.cloudSettingsTitle,
-      builder: (_) => const CloudSettingsSection(),
+      id: 'storage',
+      titleBuilder: (c) => c.l10n.settingsStorageCleanup,
+      entries: [deleteModeEntry, retentionEntry, thumbCacheEntry],
     ),
     SettingsSection(
       order: 600,
-      titleBuilder: (c) => c.l10n.aiLabelsTitle,
-      builder: (_) => const AiLabelsSettingsSection(),
+      id: 'connect',
+      titleBuilder: (c) => c.l10n.settingsConnectSharing,
+      entries: [
+        connectEntry,
+        // TODO(E1): `connect.receiveFolder` goes here.
+        rememberedDevicesEntry,
+        transfersEntry,
+        stopSharingOnCloseEntry,
+        resetIdentityEntry,
+      ],
     ),
-    SettingsSection(
-      order: 650,
-      titleBuilder: (c) => c.l10n.groupsTitle,
-      builder: (_) => const SmartGroupsSettingsSection(),
-    ),
-    // X2: next to the device-connect settings it applies to.
-    SettingsSection(
-      order: 690,
-      titleBuilder: (c) => c.l10n.privacySectionTitle,
-      builder: (_) => const PrivacySettingsSection(),
-    ),
-    // N1 planned order 600 ("after Storage"), but C3 took 600; 700 keeps
-    // every existing section in place.
     SettingsSection(
       order: 700,
-      titleBuilder: (c) => c.l10n.connectSettingsTitle,
-      builder: (_) => const ConnectSettingsSection(),
+      id: 'privacy',
+      titleBuilder: (c) => c.l10n.settingsPrivacyAccess,
+      entries: [
+        // E2 §6: Look everywhere (Windows) / Android's index explained.
+        whereKfmLooksEntry,
+        permissionsEntry,
+        stripLocationEntry,
+        privacyDevicesEntry,
+        privacyNeverEntry,
+      ],
     ),
     SettingsSection(
       order: 800,
-      titleBuilder: (c) => c.l10n.backupSectionTitle,
-      builder: (_) => const BackupSection(),
+      id: 'a11y',
+      titleBuilder: (c) => c.l10n.settingsAccessibility,
+      entries: [
+        textSizeEntry,
+        leftHandedEntry,
+        reduceMotionEntry,
+        highContrastEntry,
+        hapticsEntry,
+        screenReaderEntry,
+      ],
     ),
-    // X7: opt-in update check, right before About.
-    SettingsSection(
-      order: 850,
-      titleBuilder: (c) => c.l10n.updatesSectionTitle,
-      builder: (_) => const UpdatesSettingsSection(),
-    ),
-    if (kDebugMode)
-      SettingsSection(
-        order: 990,
-        titleBuilder: (c) => c.l10n.settingsDeveloper,
-        builder: (_) => const DeveloperSection(),
-      ),
     SettingsSection(
       order: 900,
-      titleBuilder: (c) => c.l10n.settingsAbout,
-      builder: (_) => const AboutSection(),
+      id: 'about',
+      titleBuilder: (c) => c.l10n.settingsAboutAdvanced,
+      entries: [
+        versionEntry,
+        promiseEntry,
+        licencesEntry,
+        backupEntry,
+        errorLogEntry,
+        if (kDebugMode) developerEntry,
+      ],
     ),
   ]..sort((a, b) => a.order.compareTo(b.order)),
 );

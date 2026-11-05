@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/core/db/db_providers.dart';
@@ -12,27 +13,36 @@ import 'package:kfm/core/files/pending_folder.dart';
 import 'package:kfm/core/platform/permissions/ensure_all_files_access.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
 import 'package:kfm/features/session/domain/session.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/trash/data/trash_providers.dart';
 import 'package:kfm/features/trash/domain/delete_mode.dart';
 
-/// Settings → Deleting: delete mode (D1) and pending-folder retention (D4).
-class DeletingSection extends ConsumerWidget {
+/// Settings → Storage & cleanup (TASK-E2): delete mode (D1) and, on phones,
+/// pending-folder retention (D4); Windows uses the Recycle Bin.
+final deleteModeEntry = SettingsEntry(
+  id: 'storage.deleteMode',
+  titleBuilder: (c) => c.l10n.settingsDeleteMode,
+  subtitleBuilder: (c) => c.l10n.settingsDeleteModeHelp,
+  builder: (_) => const DeleteModeRows(),
+);
+
+final retentionEntry = SettingsEntry(
+  id: 'storage.retention',
+  titleBuilder: (c) => c.l10n.pendingRetentionLabel,
+  subtitleBuilder: (c) => c.l10n.pendingRetentionHelp,
+  formFactors: const {FormFactor.mobile},
+  builder: (_) => const DeletingSection(),
+);
+
+/// Trash / Delete for good, with the warning and the next-session note.
+class DeleteModeRows extends ConsumerWidget {
   const new({super.key});
-
-  static const retentionPresets = [1, 3, 7, 14, 30];
-
-  /// Dropdown value of "Custom…" (never stored).
-  static const _custom = 0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final settings = ref.read(settingsRepositoryProvider);
     final mode = ref.watch(deleteModeSettingProvider).value ?? DeleteMode.trash;
-    final days = clampRetentionDays(
-      ref.watch(pendingRetentionDaysProvider).value ??
-          kPendingRetentionRange.fallback,
-    );
     final sessionActive = ref.watch(_activeSessionProvider).value != null;
     final scheme = Theme.of(context).colorScheme;
 
@@ -50,7 +60,7 @@ class DeletingSection extends ConsumerWidget {
           RadioListTile<DeleteMode>(
             value: DeleteMode.trash,
             title: Text(l10n.deleteModeTrash),
-            subtitle: Text(l10n.deleteModeTrashHelp),
+            subtitle: Text(l10n.deleteModeTrashHelpDevice),
           ),
           RadioListTile<DeleteMode>(
             value: DeleteMode.permanent,
@@ -71,66 +81,93 @@ class DeletingSection extends ConsumerWidget {
               leading: const Icon(Icons.info_outline),
               title: Text(l10n.deleteModeNextSession),
             ),
-          // The dropdown moves under the text in a narrow pane / big text.
-          AdaptiveListTile(
-            title: Text(l10n.pendingRetentionLabel),
-            subtitle: Text(l10n.pendingRetentionHelp),
-            isThreeLine: true,
-            trailing: DropdownButton<int>(
-              value: retentionPresets.contains(days) ? days : null,
-              hint: Text(l10n.pendingRetentionDays(days)),
-              onChanged: (v) async {
-                if (v == null) return;
-                final value = v == _custom
-                    ? await showDialog<int>(
-                        context: context,
-                        builder: (_) => _CustomRetentionDialog(initial: days),
-                      )
-                    : v;
-                if (value == null) return;
-                settings
-                    .write(AppSettings.pendingFolderRetentionDays, value)
-                    .fireAndForget();
-              },
-              items: [
-                for (final d in retentionPresets)
-                  DropdownMenuItem(
-                    value: d,
-                    child: Text(l10n.pendingRetentionDays(d)),
-                  ),
-                DropdownMenuItem(
-                  value: _custom,
-                  child: Text(l10n.pendingRetentionCustom),
-                ),
-              ],
-            ),
-          ),
-          // H2: the automatic cleanup failed (shown until a purge succeeds).
-          if (ref.watch(_purgeErrorProvider).value case final error?
-              when error.isNotEmpty)
-            ListTile(
-              leading: Icon(Icons.error_outline, color: scheme.error),
-              title: Text(
-                error == FileOpFailure.permissionDenied.name
-                    ? l10n.pendingPurgeFailedPermission
-                    : l10n.pendingPurgeFailed,
-                style: TextStyle(color: scheme.error),
-              ),
-              trailing: error == FileOpFailure.permissionDenied.name
-                  ? TextButton(
-                      onPressed: () => ensureAllFilesAccess(context, ref),
-                      child: Text(l10n.turnOn),
-                    )
-                  : null,
-            ),
-          if (ref.watch(pendingFolderProvider) != null)
-            ListTile(
-              leading: const Icon(Icons.delete_forever_outlined),
-              title: Text(l10n.pendingEmptyNow),
-              onTap: () => _emptyNow(context, ref),
-            ),
         ],
       ),
+    );
+  }
+}
+
+/// Pending-folder retention (D4/H2), its cleanup error and "Empty now".
+class DeletingSection extends ConsumerWidget {
+  const new({super.key});
+
+  static const retentionPresets = [1, 3, 7, 14, 30];
+
+  /// Dropdown value of "Custom…" (never stored).
+  static const _custom = 0;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final settings = ref.read(settingsRepositoryProvider);
+    final days = clampRetentionDays(
+      ref.watch(pendingRetentionDaysProvider).value ??
+          kPendingRetentionRange.fallback,
+    );
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // The dropdown moves under the text in a narrow pane / big text.
+        AdaptiveListTile(
+          title: Text(l10n.pendingRetentionLabel),
+          subtitle: Text(l10n.pendingRetentionHelp),
+          isThreeLine: true,
+          trailing: DropdownButton<int>(
+            value: retentionPresets.contains(days) ? days : null,
+            hint: Text(l10n.pendingRetentionDays(days)),
+            onChanged: (v) async {
+              if (v == null) return;
+              final value = v == _custom
+                  ? await showDialog<int>(
+                      context: context,
+                      builder: (_) => _CustomRetentionDialog(initial: days),
+                    )
+                  : v;
+              if (value == null) return;
+              settings
+                  .write(AppSettings.pendingFolderRetentionDays, value)
+                  .fireAndForget();
+            },
+            items: [
+              for (final d in retentionPresets)
+                DropdownMenuItem(
+                  value: d,
+                  child: Text(l10n.pendingRetentionDays(d)),
+                ),
+              DropdownMenuItem(
+                value: _custom,
+                child: Text(l10n.pendingRetentionCustom),
+              ),
+            ],
+          ),
+        ),
+        // H2: the automatic cleanup failed (shown until a purge succeeds).
+        if (ref.watch(_purgeErrorProvider).value case final error?
+            when error.isNotEmpty)
+          ListTile(
+            leading: Icon(Icons.error_outline, color: scheme.error),
+            title: Text(
+              error == FileOpFailure.permissionDenied.name
+                  ? l10n.pendingPurgeFailedPermission
+                  : l10n.pendingPurgeFailed,
+              style: TextStyle(color: scheme.error),
+            ),
+            trailing: error == FileOpFailure.permissionDenied.name
+                ? TextButton(
+                    onPressed: () => ensureAllFilesAccess(context, ref),
+                    child: Text(l10n.turnOn),
+                  )
+                : null,
+          ),
+        if (ref.watch(pendingFolderProvider) != null)
+          ListTile(
+            leading: const Icon(Icons.delete_forever_outlined),
+            title: Text(l10n.pendingEmptyNow),
+            onTap: () => _emptyNow(context, ref),
+          ),
+      ],
     );
   }
 

@@ -107,17 +107,18 @@ Future<void> _pumpRtlSwipe(WidgetTester tester, TestApp app) async {
 }
 
 void main() {
-  testWidgets('Undo: bottom-left by default, bottom-right left-handed', (
+  // E2 §7: thumb side. Right-handed → bottom-right, left-handed → left.
+  testWidgets('Undo: bottom-right by default, bottom-left left-handed', (
     tester,
   ) async {
     final app = await _pump(tester);
-    expect(_isLeft(tester, _undo), isTrue);
-
-    await _setLeft(tester, app, value: true);
     expect(_isLeft(tester, _undo), isFalse);
 
-    await _setLeft(tester, app, value: false);
+    await _setLeft(tester, app, value: true);
     expect(_isLeft(tester, _undo), isTrue);
+
+    await _setLeft(tester, app, value: false);
+    expect(_isLeft(tester, _undo), isFalse);
   });
 
   testWidgets('left-handed: swiping left still trashes', (tester) async {
@@ -145,7 +146,7 @@ void main() {
     expect(_isLeft(tester, arrow(Icons.arrow_forward)), isFalse);
   });
 
-  testWidgets('P4 bar starts at the physical left, or right left-handed', (
+  testWidgets('P4 bar starts at the thumb: right, or left left-handed', (
     tester,
   ) async {
     final app = await _pump(tester);
@@ -156,16 +157,16 @@ void main() {
     );
     expect(
       tester.getCenter(bar('Keep')).dx,
-      lessThan(tester.getCenter(bar('Favorite')).dx),
+      greaterThan(tester.getCenter(bar('Favorite')).dx),
     );
-    expect(_isLeft(tester, bar('Keep')), isTrue);
+    expect(_isLeft(tester, bar('Keep')), isFalse);
 
     await _setLeft(tester, app, value: true);
     expect(
       tester.getCenter(bar('Keep')).dx,
-      greaterThan(tester.getCenter(bar('Favorite')).dx),
+      lessThan(tester.getCenter(bar('Favorite')).dx),
     );
-    expect(_isLeft(tester, bar('Keep')), isFalse);
+    expect(_isLeft(tester, bar('Keep')), isTrue);
   });
 
   testWidgets('forced RTL: physical sides follow handedness, not direction', (
@@ -178,25 +179,23 @@ void main() {
       of: find.byType(SwipeActionBar),
       matching: find.text(label),
     );
-    expect(_isLeft(tester, _undo), isTrue);
-    expect(_isLeft(tester, bar('Keep')), isTrue);
-    expect(
-      tester.getCenter(bar('Keep')).dx,
-      lessThan(tester.getCenter(bar('Favorite')).dx),
-    );
-
-    await _setLeft(tester, app, value: true);
     expect(_isLeft(tester, _undo), isFalse);
     expect(_isLeft(tester, bar('Keep')), isFalse);
     expect(
       tester.getCenter(bar('Keep')).dx,
       greaterThan(tester.getCenter(bar('Favorite')).dx),
     );
+
+    await _setLeft(tester, app, value: true);
+    expect(_isLeft(tester, _undo), isTrue);
+    expect(_isLeft(tester, bar('Keep')), isTrue);
+    expect(
+      tester.getCenter(bar('Keep')).dx,
+      lessThan(tester.getCenter(bar('Favorite')).dx),
+    );
   });
 
-  testWidgets('Trash selection bar swaps Restore and Delete forever', (
-    tester,
-  ) async {
+  testWidgets('Trash selection bar: Restore at the thumb', (tester) async {
     final files = _PendingTrashSource();
     await files.trashBatch([files.addFile('/s/Download/a.pdf')]);
     final app = await pumpApp(tester, files: files);
@@ -206,13 +205,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.getCenter(find.text('Restore')).dx,
-      lessThan(tester.getCenter(find.text('Delete forever')).dx),
+      greaterThan(tester.getCenter(find.text('Delete forever')).dx),
     );
 
     await _setLeft(tester, app, value: true);
     expect(
       tester.getCenter(find.text('Restore')).dx,
-      greaterThan(tester.getCenter(find.text('Delete forever')).dx),
+      lessThan(tester.getCenter(find.text('Delete forever')).dx),
     );
   });
 

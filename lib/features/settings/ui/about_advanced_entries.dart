@@ -1,12 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app_info.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
 import 'package:kfm/core/utils/read_future.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 
-/// Version + the app's promises (F6), H5 error log share/clear.
-class AboutSection extends ConsumerWidget {
+/// Settings → About & advanced (TASK-E2): version, the promise, licences,
+/// H5 error log; backup (X6) and Developer (debug) live in their files.
+final versionEntry = SettingsEntry(
+  id: 'about.version',
+  titleBuilder: (c) => c.l10n.appTitle,
+  subtitleBuilder: (c) => c.l10n.aboutVersion(appVersion),
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsVersion,
+  builder: (c) => ListTile(
+    leading: const Icon(Icons.info_outline),
+    title: Text(c.l10n.appTitle),
+    subtitle: Text(c.l10n.aboutVersion(appVersion)),
+  ),
+);
+
+final promiseEntry = SettingsEntry(
+  id: 'about.promise',
+  titleBuilder: (c) => c.l10n.aboutPromise,
+  selfExplanatory: true,
+  builder: (c) => ListTile(
+    leading: const Icon(Icons.verified_user_outlined),
+    title: Text(c.l10n.aboutPromise),
+  ),
+);
+
+/// Packages + C3's model and COCO notices (LicenseRegistry).
+final licencesEntry = SettingsEntry(
+  id: 'about.licences',
+  titleBuilder: (c) => c.l10n.aboutLicences,
+  selfExplanatory: true,
+  builder: (c) => ListTile(
+    leading: const Icon(Icons.gavel_outlined),
+    title: Text(c.l10n.aboutLicences),
+    onTap: () => showLicensePage(
+      context: c,
+      applicationName: c.l10n.appTitle,
+      applicationVersion: appVersion,
+    ),
+  ),
+);
+
+final errorLogEntry = SettingsEntry(
+  id: 'about.errorLog',
+  titleBuilder: (c) => c.l10n.errorLogShare,
+  subtitleBuilder: (c) => c.l10n.errorLogHelp,
+  builder: (_) => const ErrorLogRows(),
+);
+
+/// H5: share / clear the on-device error log.
+class ErrorLogRows extends ConsumerWidget {
   const new({super.key});
 
   @override
@@ -16,19 +65,12 @@ class AboutSection extends ConsumerWidget {
     return Column(
       children: [
         ListTile(
-          leading: const Icon(Icons.info_outline),
-          title: Text(l10n.appTitle),
-          subtitle: Text(l10n.aboutVersion(appVersion)),
-        ),
-        ListTile(
-          leading: const Icon(Icons.verified_user_outlined),
-          title: Text(l10n.aboutPromise),
-        ),
-        ListTile(
           leading: const Icon(Icons.bug_report_outlined),
           title: Text(l10n.errorLogShare),
           subtitle: Text(
-            count == 0 ? l10n.errorLogEmpty : l10n.errorLogShareSubtitle(count),
+            count == 0
+                ? l10n.errorLogEmpty
+                : l10n.errorLogShareSubtitleOn(count, deviceKind(context)),
           ),
           enabled: count > 0,
           onTap: () => _share(context, ref),
@@ -38,16 +80,6 @@ class AboutSection extends ConsumerWidget {
           title: Text(l10n.errorLogClear),
           enabled: count > 0,
           onTap: () => _clear(context, ref),
-        ),
-        // Packages + C3's model and COCO notices (LicenseRegistry).
-        ListTile(
-          leading: const Icon(Icons.gavel_outlined),
-          title: Text(l10n.aboutLicences),
-          onTap: () => showLicensePage(
-            context: context,
-            applicationName: l10n.appTitle,
-            applicationVersion: appVersion,
-          ),
         ),
       ],
     );
