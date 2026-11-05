@@ -6,7 +6,18 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/db/settings/setting_key.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/similar/ui/similar_providers.dart';
+
+/// Settings → Smart features (TASK-C2, E2): one entry with How alike and
+/// screenshots inline.
+final similarEntry = SettingsEntry(
+  id: 'smart.similar',
+  titleBuilder: (c) => c.l10n.similarSettingEnabled,
+  subtitleBuilder: (c) => c.l10n.similarSettingEnabledHint,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsSimilar,
+  builder: (_) => const SimilarSection(),
+);
 
 /// Settings → Similar photos (TASK-C2): on/off, strictness, screenshots.
 class SimilarSection extends ConsumerWidget {

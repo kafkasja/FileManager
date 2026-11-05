@@ -83,6 +83,9 @@ class SwipeCard extends StatefulWidget {
   static const double maxRotation = 12 * math.pi / 180;
   static const flyOutDuration = Duration(milliseconds: 180);
 
+  /// Reduce motion: the card fades out in place (E2 §7).
+  static const fadeOutDuration = Duration(milliseconds: 120);
+
   /// With [verticalEnabled], the dominant axis must be this many times the
   /// other one; anything closer to diagonal springs back.
   static const dominance = 1.5;
@@ -140,6 +143,9 @@ class _SwipeCardState extends State<SwipeCard>
   Offset _from = Offset.zero;
   Offset _to = Offset.zero;
   bool _flying = false;
+
+  /// E2 §7: Reduce motion → the card fades in place instead of flying.
+  bool _fading = false;
 
   Size _lastSize = Size.zero;
 
@@ -218,19 +224,25 @@ class _SwipeCardState extends State<SwipeCard>
 
   Future<void> _flyOut(SwipeDirection direction, Size size) async {
     _flying = true;
+    final calm = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     _from = _offset.value;
-    _to = switch (direction) {
-      SwipeDirection.left => Offset(-size.width * 1.5, _from.dy),
-      SwipeDirection.right => Offset(size.width * 1.5, _from.dy),
-      SwipeDirection.up => Offset(_from.dx, -size.height * 1.5),
-      SwipeDirection.down => Offset(_from.dx, size.height * 1.5),
-    };
+    _to = calm
+        ? _from
+        : switch (direction) {
+            SwipeDirection.left => Offset(-size.width * 1.5, _from.dy),
+            SwipeDirection.right => Offset(size.width * 1.5, _from.dy),
+            SwipeDirection.up => Offset(_from.dx, -size.height * 1.5),
+            SwipeDirection.down => Offset(_from.dx, size.height * 1.5),
+          };
+    if (calm) setState(() => _fading = true);
     _controller.value = 0;
     try {
       await _controller
           .animateTo(
             1,
-            duration: SwipeCard.flyOutDuration,
+            duration: calm
+                ? SwipeCard.fadeOutDuration
+                : SwipeCard.flyOutDuration,
             curve: Curves.easeIn,
           )
           .orCancel;
@@ -312,6 +324,21 @@ class _SwipeCardState extends State<SwipeCard>
             },
           ),
         );
+        if (_fading) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) => Opacity(
+              opacity: (1 - _controller.value).clamp(0.0, 1.0),
+              child: child,
+            ),
+            child: widget.foreground == null
+                ? card
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [card, widget.foreground!],
+                  ),
+          );
+        }
         if (widget.foreground == null) return card;
         return Stack(
           fit: StackFit.expand,

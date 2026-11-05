@@ -369,10 +369,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteModeTrash => 'Çöp kutusuna taşı (önerilen)';
 
   @override
-  String get deleteModeTrashHelp =>
-      'Kaydırılan dosyalar telefonun çöp kutusuna gider ve geri yüklenebilir.';
-
-  @override
   String get deleteModePermanent => 'Kalıcı olarak sil';
 
   @override
@@ -2039,10 +2035,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsHighlightBig => 'Büyük dosyaları vurgula';
 
   @override
-  String get settingsHighlightBigHelp =>
-      '100 MB ve üzeri dosyalar kırmızı boyut etiketi alır';
-
-  @override
   String selectionCount(int count, String size) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2241,21 +2233,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsSameTimeWindow => 'Aynı an aralığı';
-
-  @override
-  String get settingsSameTimeWindowHelp =>
-      'Göz at → Aynı an, bu kadar saniye içinde çekilen fotoğraf ve videoları gruplar';
-
-  @override
-  String seconds(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count saniye',
-      one: '1 saniye',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get fileMenuTooltip => 'Dosya işlemleri';
@@ -3070,10 +3047,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get similarStartTitle => 'Benzer ve bulanık fotoğrafları bul';
 
   @override
-  String get similarStartBody =>
-      'KFM bu telefondaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey telefondan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.';
-
-  @override
   String get similarStart => 'Başlat';
 
   @override
@@ -3312,9 +3285,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiLabelsTitle => 'Fotoğraf otomatik etiketleri (yapay zekâ)';
 
   @override
-  String get aiLabelsEnable => 'Fotoğrafları bu telefonda otomatik etiketle';
-
-  @override
   String get aiLabelsEnableHint =>
       'Fotoğrafları içeriklerine göre bul: kedi, plaj veya yemek gibi';
 
@@ -3378,16 +3348,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiLabelsResetAction => 'Sıfırla';
 
   @override
-  String get aiLabelsHelp =>
-      'Yalnızca bu telefonda çalışır. Hiçbir fotoğraf veya sonuç telefondan çıkmaz.';
-
-  @override
   String get aiLabelsJobError =>
       'Yapay zekâ modelleri eksik veya değişmiş, bu yüzden otomatik etiketleme durdu. Modelleri yeniden indir.';
-
-  @override
-  String get aiLabelsWorkerError =>
-      'Otomatik etiketleme bu telefonda başlatılamadı.';
 
   @override
   String get aiLabelsCrashError =>
@@ -3402,10 +3364,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get aiLabelsCardTitle =>
       'Fotoğrafları içeriklerine göre bul (kedi, plaj, yemek…)';
-
-  @override
-  String get aiLabelsCardBody =>
-      'KFM fotoğraflarını bu telefonda otomatik etiketleyebilir. Hiçbir şey yüklenmez.';
 
   @override
   String get aiLabelsCardTurnOn => 'Aç';
@@ -3557,15 +3515,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelsHowTitle => 'Nasıl çalışır';
 
   @override
-  String get aiModelsHowBody =>
-      'Her fotoğrafın küçük resmi bu telefonda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.';
-
-  @override
   String get aiModelsPrivacyTitle => 'Gizlilik';
-
-  @override
-  String get aiModelsPrivacyBody =>
-      'Tamamen bu cihazda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç telefondan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.';
 
   @override
   String get aiModelsBatteryBody =>
@@ -3808,9 +3758,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get detailsModified => 'Değiştirilme';
-
-  @override
-  String get detailsAdded => 'Telefona eklenme';
 
   @override
   String get detailsTaken => 'Çekilme';
@@ -5198,17 +5145,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorLogShare => 'Hata kaydını paylaş';
 
   @override
-  String errorLogShareSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count hata',
-      one: '1 hata',
-    );
-    return '$_temp0. Sen paylaşana kadar bu telefonda kalır. Klasör ve dosya adları gizlenir.';
-  }
-
-  @override
   String get errorLogEmpty => 'Kaydedilmiş hata yok';
 
   @override
@@ -5259,10 +5195,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get leftHandedTitle => 'Solak';
-
-  @override
-  String get leftHandedSubtitle =>
-      'Geri al ve alttaki düğmeleri diğer tarafa taşır. Kaydırma yönleri değişmez.';
 
   @override
   String get textSizeLabel => 'Metin boyutu';
@@ -5457,10 +5389,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Konum kaldırılamadığı için gönderilmedi';
 
   @override
-  String get privacyTransferNote =>
-      'Konum bilgisi kaldırılır (Ayarlar → Gizlilik)';
-
-  @override
   String get privacyMoveWarningTitle => 'Konum olmadan taşınsın mı?';
 
   @override
@@ -5633,9 +5561,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get externalSwipeFolderEmpty => 'Bu klasörde fotoğraf veya video yok';
-
-  @override
-  String get transfersLocalSection => 'Bu telefonda';
 
   @override
   String get externalNoJobs =>
@@ -6941,10 +6866,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cloudShowBadge => 'Bulut simgesini göster';
 
   @override
-  String get cloudBadgeHelp =>
-      'Bulut simgesi, KFM\'nin bu dosyayı bulut uygulamana verdiği anlamına gelir. Bu bilgi bu telefonda saklanır, bu yüzden çevrimdışıyken de görünür. Anlık bir kontrol değildir: KFM yüklemenin bitip bitmediğini veya kopyanın sonradan silinip silinmediğini göremez. Dosya yüklendikten sonra değişirse simge de değişir. Yalnızca KFM ile yüklenen dosyalar işaretlenir.';
-
-  @override
   String cloudInfoUploaded(String destination, String date) {
     return 'KFM tarafından yüklendi: $destination · $date';
   }
@@ -6999,9 +6920,6 @@ class AppLocalizationsTr extends AppLocalizations {
     );
     return 'Bu sürücüde Geri Dönüşüm Kutusu yok. $_temp0 kalıcı olarak silinsin mi?';
   }
-
-  @override
-  String get windowsRootsTitle => 'KFM\'nin taradığı klasörler';
 
   @override
   String get windowsRootsHint =>
@@ -7684,5 +7602,502 @@ class AppLocalizationsTr extends AppLocalizations {
       one: 'Aktarım başarısız',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get settingsGeneral => 'Genel';
+
+  @override
+  String get settingsSorting => 'Sıralama';
+
+  @override
+  String get settingsFilesDisplay => 'Dosyalar ve görünüm';
+
+  @override
+  String get settingsSmart => 'Akıllı özellikler';
+
+  @override
+  String get settingsStorageCleanup => 'Depolama ve temizlik';
+
+  @override
+  String get settingsConnectSharing => 'Bağlanma ve paylaşma';
+
+  @override
+  String get settingsPrivacyAccess => 'Gizlilik ve erişim';
+
+  @override
+  String get settingsAboutAdvanced => 'Hakkında ve gelişmiş';
+
+  @override
+  String get thumbCacheHelp =>
+      'KFM\'nin klasörler hızlı açılsın diye kaydettiği küçük önizlemeler. Temizle yeri boşaltır; dosyalarına dokunulmaz ve önizlemeler gerektiğinde geri gelir.';
+
+  @override
+  String get errorLogHelp =>
+      'KFM\'nin karşılaştığı hatalar; dosya adları ve yollar olmadan. Bir sorunu bildirmek için paylaş.';
+
+  @override
+  String get devSettingsHelp =>
+      'KFM\'yi bir cihazda denetlemek için dizin araçları (yalnızca hata ayıklama sürümleri).';
+
+  @override
+  String get settingsShowSessionSummaryHelp =>
+      'Bitti\'den sonra neyi tuttuğunun, sildiğinin ve taşıdığının kısa bir özeti.';
+
+  @override
+  String get reviewedResetHelp =>
+      'Daha önce sıraladığın dosyalar yeniden yeni olarak görünür. Hiçbir şey silinmez.';
+
+  @override
+  String get settingsFreshStartHelp =>
+      'Neyin temizleneceğini seç: geçerli oturum, geçmiş, etiketler veya hepsi.';
+
+  @override
+  String get tutorialShowAgainHelp =>
+      'Kısa kaydırma öğreticisi ve tek seferlik ipuçları bir kez daha.';
+
+  @override
+  String get settingsDropActionHelp =>
+      'Dosyaları bir klasörün üstüne sürüklediğinde ne olacağı.';
+
+  @override
+  String get storageBigFileThresholdHelp =>
+      'Büyük dosya vurgusu ve Depolama → Büyük dosyalar bunu kullanır.';
+
+  @override
+  String get settingsDeleteMode => 'Silerken';
+
+  @override
+  String get settingsDeleteModeHelp =>
+      'Silinen dosyaları çöp kutusuna taşı ya da kalıcı olarak sil.';
+
+  @override
+  String get settingsPermissionsHelp =>
+      'KFM\'nin bu telefonda neleri okuyabileceği ve bunu değiştirme düğmesi.';
+
+  @override
+  String get backupRestoreTitle => 'Yedekle ve geri yükle';
+
+  @override
+  String get backupRestoreHelp =>
+      'Etiketlerini, favorilerini, ön ayarlarını ve ayarlarını başka bir cihaza taşır. Dosyalar kopyalanmaz.';
+
+  @override
+  String get cloudDestinationsHelp =>
+      'KFM\'nin dosya gönderebileceği, bu cihazdaki bulut uygulamaları.';
+
+  @override
+  String get connectADevice => 'Bir cihaz bağla';
+
+  @override
+  String get connectADeviceHelp =>
+      'Telefonun ile bilgisayarın arasında Wi-Fi üzerinden dosyaları gör ve gönder.';
+
+  @override
+  String get transfersSettingHelp => 'Süren ve biten tüm Wi-Fi aktarımları.';
+
+  @override
+  String get privacyDevicesTitle => 'Dosyalarını görebilen cihazlar';
+
+  @override
+  String get privacyDevicesHelp =>
+      'Hatırlanan cihazlar ve neler yapabilecekleri. Engellemek için birini unut.';
+
+  @override
+  String get privacyNeverTitle => 'KFM\'nin asla yapmadıkları';
+
+  @override
+  String get privacyNeverBody =>
+      'Reklam yok, hesap yok, izleme yok. KFM dosyalarını asla yüklemez: onları yalnızca bağladığın cihazlar ve seçtiğin bulut uygulamaları alır.';
+
+  @override
+  String get a11yScreenReaderTitle => 'Ekran okuyucular';
+
+  @override
+  String get a11yScreenReaderBody =>
+      'Dosya kutucukları adlarını, türlerini, boyutlarını ve tarihlerini okur. Kaydırma kartları eylemlerini eylemler menüsünde sunar.';
+
+  @override
+  String get settingsKeywordsTheme => 'koyu,açık,gece,mod,görünüm';
+
+  @override
+  String get settingsKeywordsAccent => 'renk,vurgu';
+
+  @override
+  String get settingsKeywordsTextSize =>
+      'yazı tipi,büyük yazı,yakınlaştır,daha büyük';
+
+  @override
+  String get settingsKeywordsThumbCache => 'önbellek,önizleme,alan,boşalt';
+
+  @override
+  String get settingsKeywordsVersion => 'sürüm,hakkında,uygulama';
+
+  @override
+  String get settingsKeywordsPermissions => 'izin,erişim,izin ver,depolama';
+
+  @override
+  String get settingsKeywordsSimilar => 'kopya,bulanık,benzer';
+
+  @override
+  String get settingsKeywordsAiLabels => 'yapay zeka,etiket,tanıma,model,indir';
+
+  @override
+  String get settingsKeywordsLocation => 'konum,gps,yer,exif';
+
+  @override
+  String get settingsKeywordsBackup => 'dışa aktar,içe aktar,geri yükle,yedek';
+
+  @override
+  String get settingsKeywordsCloud => 'bulut,drive,onedrive,yükle';
+
+  @override
+  String get settingsKeywordsConnect =>
+      'paylaş,wifi,bilgisayar,telefon,qr,gönder';
+
+  @override
+  String get settingsKeywordsPrivacy => 'gizlilik,izleme,reklam,yükleme';
+
+  @override
+  String get settingsKeywordsScreenReader =>
+      'talkback,ekran okuyucu,anlatıcı,görme engelli';
+
+  @override
+  String get settingsKeywordsBigFiles => 'büyük,boyut,sınır,eşik';
+
+  @override
+  String get settingsSearchHint => 'Ayarlarda ara';
+
+  @override
+  String get settingsSearchClear => 'Aramayı temizle';
+
+  @override
+  String get settingsSearchEmpty => 'Eşleşen ayar yok. Başka bir kelime dene.';
+
+  @override
+  String get privacyTransferNote =>
+      'Konum bilgisi kaldırılır (Ayarlar → Gizlilik ve erişim)';
+
+  @override
+  String durationShortSeconds(int count) {
+    return '$count sn';
+  }
+
+  @override
+  String durationShortMinutes(int count) {
+    return '$count dk';
+  }
+
+  @override
+  String durationShortMinutesSeconds(int minutes, int seconds) {
+    return '$minutes dk $seconds sn';
+  }
+
+  @override
+  String durationShortHours(int count) {
+    return '$count sa';
+  }
+
+  @override
+  String durationShortHoursMinutes(int hours, int minutes) {
+    return '$hours sa $minutes dk';
+  }
+
+  @override
+  String get unitSecondsShort => 'sn';
+
+  @override
+  String get unitMinutesShort => 'dk';
+
+  @override
+  String get unitHoursShort => 'sa';
+
+  @override
+  String get unitMegabytesShort => 'MB';
+
+  @override
+  String get unitGigabytesShort => 'GB';
+
+  @override
+  String get unitInputAmount => 'Miktar';
+
+  @override
+  String unitInputRange(String min, String max) {
+    return '$min ile $max arasında bir değer gir';
+  }
+
+  @override
+  String get unitInputSave => 'Kaydet';
+
+  @override
+  String bigFileThresholdLine(String size) {
+    return '$size ve üzeri dosyalar büyük sayılır';
+  }
+
+  @override
+  String get settingsHighlightBigLine =>
+      'Büyük dosyalar, boyutlar kapalı olsa bile kırmızı boyut etiketi alır';
+
+  @override
+  String get settingsSameTimeWindowAbout =>
+      'Göz at → Aynı an, bu kadar kısa arayla çekilen fotoğraf ve videoları gruplar';
+
+  @override
+  String sameTimeWindowLine(String time) {
+    return 'Birbirinden en fazla $time arayla çekilen fotoğraf ve videolar gruplanır';
+  }
+
+  @override
+  String get deleteModeTrashHelpDevice =>
+      'Silinen dosyalar çöp kutusuna gider ve geri yüklenebilir.';
+
+  @override
+  String similarStartBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM bu telefondaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey telefondan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.',
+      'pc': 'KFM bu bilgisayardaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey bilgisayardan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.',
+      'other': 'KFM bu cihazdaki fotoğraflarını kontrol eder, benzerlerini gruplar ve saklaman için en net olanı önerir. Hiçbir şey cihazdan çıkmaz ve sen seçmedikçe hiçbir şey kaldırılmaz.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsEnableOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Fotoğrafları bu telefonda otomatik etiketle',
+      'pc': 'Fotoğrafları bu bilgisayarda otomatik etiketle',
+      'other': 'Fotoğrafları bu cihazda otomatik etiketle',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsHelpOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Yalnızca bu telefonda çalışır. Hiçbir fotoğraf veya sonuç telefondan çıkmaz.',
+      'pc': 'Yalnızca bu bilgisayarda çalışır. Hiçbir fotoğraf veya sonuç bilgisayardan çıkmaz.',
+      'other': 'Yalnızca bu cihazda çalışır. Hiçbir fotoğraf veya sonuç cihazdan çıkmaz.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsWorkerErrorOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Otomatik etiketleme bu telefonda başlatılamadı.',
+      'pc': 'Otomatik etiketleme bu bilgisayarda başlatılamadı.',
+      'other': 'Otomatik etiketleme bu cihazda başlatılamadı.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsCardBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM fotoğraflarını bu telefonda otomatik etiketleyebilir. Hiçbir şey yüklenmez.',
+      'pc': 'KFM fotoğraflarını bu bilgisayarda otomatik etiketleyebilir. Hiçbir şey yüklenmez.',
+      'other': 'KFM fotoğraflarını bu cihazda otomatik etiketleyebilir. Hiçbir şey yüklenmez.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsHowBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Her fotoğrafın küçük resmi bu telefonda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.',
+      'pc': 'Her fotoğrafın küçük resmi bu bilgisayarda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.',
+      'other': 'Her fotoğrafın küçük resmi bu cihazda, arka planda, bir kez analiz edilir. KFM\'nin veritabanında yalnızca \"kedi\" gibi etiket sözcükleri saklanır.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsPrivacyBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Tamamen bu telefonda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç telefondan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.',
+      'pc': 'Tamamen bu bilgisayarda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç bilgisayardan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.',
+      'other': 'Tamamen bu cihazda çalışır. Hiçbir fotoğraf, küçük resim veya sonuç cihazdan çıkmaz. Hesap yok, izleme yok. Ağ yalnızca bu tek indirme için kullanılır.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String detailsAddedOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Telefona eklenme',
+      'pc': 'Bilgisayara eklenme',
+      'other': 'Cihaza eklenme',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String errorLogShareSubtitleOn(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hata',
+      one: '1 hata',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hata',
+      one: '1 hata',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hata',
+      one: '1 hata',
+    );
+    String _temp3 = intl.Intl.selectLogic(device, {
+      'phone':
+          '$_temp0. Sen paylaşana kadar bu telefonda kalır. Klasör ve dosya adları gizlenir.',
+      'pc':
+          '$_temp1. Sen paylaşana kadar bu bilgisayarda kalır. Klasör ve dosya adları gizlenir.',
+      'other':
+          '$_temp2. Sen paylaşana kadar bu cihazda kalır. Klasör ve dosya adları gizlenir.',
+    });
+    return '$_temp3';
+  }
+
+  @override
+  String transfersLocalSectionOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Bu telefonda',
+      'pc': 'Bu bilgisayarda',
+      'other': 'Bu cihazda',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudBadgeHelpDevice =>
+      'Bulut simgesi, KFM\'nin bu dosyayı bulut uygulamana verdiği anlamına gelir. KFM bunu burada hatırlar, bu yüzden çevrimdışıyken de görünür. Anlık bir kontrol değildir: KFM yüklemenin bitip bitmediğini veya kopyanın sonradan silinip silinmediğini göremez. Dosya yüklemeden sonra değişirse simge de değişir. Yalnızca KFM ile yüklenen dosyalar işaretlenir.';
+
+  @override
+  String get aiLabelsUnsupportedWindows =>
+      'Windows\'ta henüz kullanılamıyor. Android\'de KFM fotoğrafları içlerindekilere göre bulabilir.';
+
+  @override
+  String get aiModelsDownloadInline => 'İndir';
+
+  @override
+  String get aiModelsHowItWorks => 'Nasıl çalışır';
+
+  @override
+  String get whereKfmLooksTitle => 'KFM\'nin baktığı yerler';
+
+  @override
+  String get whereKfmLooksHelp =>
+      'Arama, Sıralama ve Depolama\'nın kullandığı, dosyalarının özel listesi. Bu cihazdan asla çıkmaz.';
+
+  @override
+  String get whereKfmLooksPhoneBody =>
+      'KFM, Android\'in ona gösterdiği fotoğrafların, videoların ve dosyaların özel bir listesini tutar; böylece Arama, Kaydırma ve Depolama tüm telefonunu kapsar. Liste bu telefonda kalır ve asla yüklenmez. KFM bakarak hiçbir şeyi değiştirmez veya taşımaz.';
+
+  @override
+  String get lookEverywhereTitle => 'Her yere bak';
+
+  @override
+  String get lookEverywhereOnHelp =>
+      'KFM bu bilgisayardaki fotoğraflarının, videolarının ve dosyalarının özel bir listesini tutar; böylece Arama, Sıralama, Depolama ve Benzer fotoğraflar her şeyi kapsar. Liste bu bilgisayarda kalır. KFM bakarak hiçbir şeyi yüklemez, değiştirmez veya taşımaz; Windows ve program klasörlerini atlar.';
+
+  @override
+  String get lookEverywhereOffHelp =>
+      'KFM yalnızca açık olan klasöre bakar. Arama ve Sıralama o klasörü kapsar.';
+
+  @override
+  String get lookEverywhereChosenHelp =>
+      'KFM yalnızca aşağıdaki klasörlere bakar. Tüm dosyalarını kapsamak için bunu aç.';
+
+  @override
+  String get lookEverywhereChoose => 'Bunun yerine klasör seç…';
+
+  @override
+  String get lookEverywhereOffConfirmTitle =>
+      'Yalnızca bulunduğun yere mi bakılsın?';
+
+  @override
+  String get lookEverywhereOffConfirmBody =>
+      'Arama ve Sıralama yalnızca açtığın klasörleri kapsar. Etiketler, favoriler ve incelendi işaretleri korunur.';
+
+  @override
+  String get lookEverywhereOffConfirm => 'Yalnızca açık klasörler';
+
+  @override
+  String get settingsKeywordsIndex => 'dizin,tara,klasörler,her yere bak,ara';
+
+  @override
+  String get languageStepTitle => 'Dilini seç';
+
+  @override
+  String get languageStepBody =>
+      'Bunu daha sonra Ayarlar → Genel\'den değiştirebilirsin.';
+
+  @override
+  String languageSystemNamed(String language) {
+    return 'Sistem ($language)';
+  }
+
+  @override
+  String get languageStepContinue => 'Devam';
+
+  @override
+  String get leftHandedThumbHelp =>
+      'Geri al\'ı, ana düğmeleri ve seçim çubuğunu başparmağının olduğu sola koyar. Kaydırma yönleri değişmez.';
+
+  @override
+  String get reduceMotionTitle => 'Hareketi azalt';
+
+  @override
+  String get reduceMotionHelp =>
+      'Kaydırılan kartlar uçup gitmek yerine kaybolur, ekranlar kaymadan değişir. Sistem ayarını da izler.';
+
+  @override
+  String get highContrastTitle => 'Yüksek karşıtlık';
+
+  @override
+  String get highContrastHelp =>
+      'Metin, düğme ve kenarlıklar için daha güçlü renkler. Sistem ayarını da izler.';
+
+  @override
+  String get backupSettingReduceMotion => 'Hareketi azalt';
+
+  @override
+  String get backupSettingHighContrast => 'Yüksek karşıtlık';
+
+  @override
+  String get settingsKeywordsMotion => 'animasyon,hareket,solma';
+
+  @override
+  String get settingsKeywordsContrast => 'karşıtlık,kontrast,renkler,az gören';
+
+  @override
+  String a11yFileLabel(String name, String kind, String size, String date) {
+    return '$name, $kind, $size, $date';
+  }
+
+  @override
+  String get a11yKindAudio => 'Ses';
+
+  @override
+  String get a11yKindDocument => 'Belge';
+
+  @override
+  String a11yKindDocumentExt(String ext) {
+    return '$ext belgesi';
+  }
+
+  @override
+  String get a11yKindArchive => 'Arşiv';
+
+  @override
+  String get a11yKindFile => 'Dosya';
+
+  @override
+  String a11yKindFileExt(String ext) {
+    return '$ext dosyası';
   }
 }

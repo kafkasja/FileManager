@@ -68,12 +68,13 @@ void main() {
     expect(() => clusters.first.fileIds.add('x'), throwsUnsupportedError);
   });
 
-  test('clampWindow keeps 1..600', () {
+  test('clampWindow keeps 1 s … 24 h', () {
     expect(clampWindow(0), 1);
     expect(clampWindow(-3), 1);
     expect(clampWindow(5), 5);
     expect(clampWindow(600), 600);
-    expect(clampWindow(99999), 600);
+    expect(clampWindow(3600), 3600);
+    expect(clampWindow(99999), 86400);
   });
 
   test('50,000 items cluster in under 50 ms', () {

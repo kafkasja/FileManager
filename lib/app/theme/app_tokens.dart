@@ -68,4 +68,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
 extension AppTokensContext on BuildContext {
   AppTokens get tokens => Theme.of(this).extension<AppTokens>()!;
+
+  /// [d] for a decorative animation, or zero with Reduce motion / the
+  /// system's "remove animations" (TASK-E2 §7).
+  Duration motion(Duration d) =>
+      (MediaQuery.maybeDisableAnimationsOf(this) ?? false) ? Duration.zero : d;
 }

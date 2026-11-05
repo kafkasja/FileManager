@@ -52,7 +52,9 @@ class WalkOptions {
   final bool readExif;
 
   /// PL3: skip developer build output (`isBuildOutputFolder`), so a project
-  /// under Documents doesn't fill the index with generated images.
+  /// under Documents doesn't fill the index with generated images. E2: also
+  /// Windows system folders (`isWindowsSystemFolder`); desktop index scans
+  /// set it.
   final bool skipBuildOutput;
 }
 
@@ -162,10 +164,11 @@ Future<void> _walk(WalkOptions o, void Function(Object?) send) async {
 
       if (entity is Directory) {
         if (o.skipBuildOutput &&
-            isBuildOutputFolder(
-              name,
-              siblings ??= [for (final e in entries) _nameOf(e.path)],
-            )) {
+            (isWindowsSystemFolder(path) ||
+                isBuildOutputFolder(
+                  name,
+                  siblings ??= [for (final e in entries) _nameOf(e.path)],
+                ))) {
           continue;
         }
         if (o.recursive && !isExcludedFolderPath(path)) {

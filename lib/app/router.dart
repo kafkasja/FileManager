@@ -90,6 +90,11 @@ abstract final class AppRoutes {
   static const trash = '/trash';
   static const settings = '/settings';
 
+  /// TASK-E2 §3: Settings scrolled to entry [id] (`'smart.aiLabels'`),
+  /// flashing it.
+  static String settingsEntry(String id) =>
+      Uri(path: settings, queryParameters: {'entry': id}).toString();
+
   /// PL3: the desktop sidebar's Devices section (desktop only).
   static const devices = '/devices';
   static const customizeSwipes = '/settings/swipes';
@@ -383,8 +388,12 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.settings,
-                builder: (context, state) =>
-                    desktop ? desktopSettingsScreen() : const SettingsScreen(),
+                builder: (context, state) {
+                  final entry = state.uri.queryParameters['entry'];
+                  return desktop
+                      ? desktopSettingsScreen(entry: entry)
+                      : SettingsScreen(entry: entry);
+                },
                 routes: [
                   GoRoute(
                     path: 'swipes',

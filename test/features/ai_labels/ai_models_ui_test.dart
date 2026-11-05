@@ -125,8 +125,15 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // Turn on → the details screen (models not installed).
+    // Turn on → Settings → Smart features → Photo labels (E2 §5: the
+    // download lives there); its "How it works" opens the details screen.
     await tester.tap(find.text(_l10n.aiLabelsCardTurnOn));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('setting-smart.aiLabels')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(_l10n.aiModelsHowItWorks));
     await tester.pumpAndSettle();
     expect(find.byType(AiModelsDetailsScreen), findsOneWidget);
     Future<void> sees(Finder f) async {
@@ -146,15 +153,16 @@ void main() {
     expect(find.textContaining(_l10n.aiModelsRemovableBody), findsOneWidget);
     expect(store.downloads, 0);
     expect(await setting(app, 'enabled'), isFalse);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
 
-    final download = find.text(_l10n.aiModelsDownloadButton(10));
+    // The inline Download in Settings is the consent.
+    final download = find.byKey(const ValueKey('ai-models-download-inline'));
     await tester.scrollUntilVisible(download, 200);
     await tester.tap(download);
     await tester.pumpAndSettle();
     expect(store.downloads, 1);
     expect(await setting(app, 'enabled'), isTrue);
-    expect(find.text(_l10n.aiModelsInstalledDone), findsOneWidget);
-    expect(find.byType(AiModelsDetailsScreen), findsNothing);
   });
 
   testWidgets('models installed: Turn on enables at once; Not now hides the '
@@ -192,7 +200,10 @@ void main() {
     final line = find.text(_l10n.aiLabelsNeedsAndroid8);
     await tester.scrollUntilVisible(line, 200);
     expect(line, findsOneWidget);
-    expect(find.text(_l10n.aiModelsAbout), findsNothing);
+    expect(
+      find.byKey(const ValueKey('ai-models-download-inline')),
+      findsNothing,
+    );
     expect(store.downloads, 0);
     // A turn-on attempt is refused.
     expect(
@@ -215,7 +226,7 @@ void main() {
     final installedLine = find.text(_l10n.aiModelsInstalled(10));
     await tester.scrollUntilVisible(installedLine, 200);
     expect(installedLine, findsOneWidget);
-    final toggle = find.text(_l10n.aiLabelsEnable);
+    final toggle = find.text(_l10n.aiLabelsEnableOn('phone'));
     await tester.scrollUntilVisible(toggle, 100);
     await tester.tap(toggle);
     await tester.pumpAndSettle();

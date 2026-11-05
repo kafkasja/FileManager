@@ -235,11 +235,11 @@ void main() {
     Navigator.of(tester.element(find.byType(FileDetailsView))).pop();
     await tester.pumpAndSettle();
 
-    await tester.longPress(find.bySemanticsLabel('c1.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^c1\.jpg, ')));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('c2.jpg'));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^c2\.jpg, ')));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('c3.jpg'));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^c3\.jpg, ')));
     await tester.pumpAndSettle();
     tester
         .state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger))

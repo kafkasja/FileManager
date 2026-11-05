@@ -13,7 +13,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'same_time_controller.g.dart';
 
-/// B3: the stored "taken within N seconds" window, clamped to 1–600.
+/// B3: the stored "taken within N seconds" window, clamped to 1 s … 24 h.
 @Riverpod(keepAlive: true)
 Stream<int> sameTimeWindow(Ref ref) => ref
     .watch(settingsRepositoryProvider)

@@ -3,15 +3,28 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/ai_labels/data/ai_model_store.dart';
 import 'package:kfm/features/ai_labels/data/labeling_job.dart';
 import 'package:kfm/features/ai_labels/ui/ai_model_state_text.dart';
 import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
+import 'package:kfm/features/settings/ui/settings_section.dart';
 
-/// Settings → Photo labels (AI) (TASK-C3 §7, order 600).
+/// Settings → Smart features → Photo labels (AI) (TASK-C3 §7, E2 §5).
+/// Never hidden: where labels can't run, the row says why.
+final aiLabelsEntry = SettingsEntry(
+  id: 'smart.aiLabels',
+  titleBuilder: (c) => c.l10n.aiLabelsTitle,
+  subtitleBuilder: (c) => c.l10n.aiLabelsEnableHint,
+  keywordsBuilder: (c) => c.l10n.settingsKeywordsAiLabels,
+  builder: (_) => const AiLabelsSettingsSection(),
+);
+
+/// Settings → Photo labels (AI) (TASK-C3 §7).
 class AiLabelsSettingsSection extends ConsumerWidget {
   const new({super.key});
 
@@ -21,12 +34,16 @@ class AiLabelsSettingsSection extends ConsumerWidget {
     final support = ref.watch(aiSupportProvider).value;
     if (support == null) return const SizedBox.shrink();
     if (support != AiSupport.supported) {
+      // E2 §5: visible and honest where labels can't run, never "phone".
       return ListTile(
+        key: const ValueKey('ai-labels-unsupported'),
         leading: const Icon(Icons.auto_awesome_outlined),
-        title: Text(l10n.aiLabelsEnable),
+        title: Text(l10n.aiLabelsTitle),
         subtitle: Text(
           support == AiSupport.needsAndroid8
               ? l10n.aiLabelsNeedsAndroid8
+              : isWindowsHost
+              ? l10n.aiLabelsUnsupportedWindows
               : l10n.aiLabelsUnsupported,
         ),
         enabled: false,
@@ -79,14 +96,22 @@ class _Supported extends ConsumerWidget {
               ),
             AiModelsInstalled() => null,
             _ when downloading => null,
-            _ => Text(l10n.aiModelsAbout),
+            _ => Text(l10n.aiModelsHowItWorks),
           },
+          // E2 §5: the download is right here, not behind the details
+          // screen (which stays as "How it works").
           trailing: downloading
               ? TextButton(
                   onPressed: () => unawaited(controller.cancelDownload()),
                   child: Text(l10n.aiModelsCancel),
                 )
-              : null,
+              : installed
+              ? null
+              : FilledButton.tonal(
+                  key: const ValueKey('ai-models-download-inline'),
+                  onPressed: () => unawaited(controller.download()),
+                  child: Text(l10n.aiModelsDownloadInline),
+                ),
           onTap: installed || downloading
               ? null
               : () => unawaited(context.push(AppRoutes.aiModels)),
@@ -99,7 +124,7 @@ class _Supported extends ConsumerWidget {
         ),
         SwitchListTile(
           secondary: const Icon(Icons.auto_awesome_outlined),
-          title: Text(l10n.aiLabelsEnable),
+          title: Text(l10n.aiLabelsEnableOn(deviceKind(context))),
           subtitle: Text(
             installed
                 ? l10n.aiLabelsEnableHint
@@ -139,7 +164,9 @@ class _Supported extends ConsumerWidget {
             leading: Icon(Icons.error_outline, color: theme.colorScheme.error),
             title: Text(switch (jobError) {
               LabelingJobError.modelsMissing => l10n.aiLabelsJobError,
-              LabelingJobError.workerFailed => l10n.aiLabelsWorkerError,
+              LabelingJobError.workerFailed => l10n.aiLabelsWorkerErrorOn(
+                deviceKind(context),
+              ),
               LabelingJobError.workerCrashed => l10n.aiLabelsCrashError,
             }, style: errorStyle),
             onTap: jobError == LabelingJobError.modelsMissing
@@ -161,7 +188,7 @@ class _Supported extends ConsumerWidget {
         ListTile(
           dense: true,
           leading: const Icon(Icons.lock_outline),
-          title: Text(l10n.aiLabelsHelp),
+          title: Text(l10n.aiLabelsHelpOn(deviceKind(context))),
         ),
       ],
     );

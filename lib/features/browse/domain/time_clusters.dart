@@ -35,8 +35,11 @@ class TimeCluster {
   String toString() => 'TimeCluster($startMs-$endMs, $fileIds)';
 }
 
-/// The stored window setting clamped to 1..600 seconds.
-int clampWindow(int seconds) => seconds.clamp(1, 600);
+/// The stored window setting clamped to 1 s … 24 h (TASK-E2: any value).
+int clampWindow(int seconds) => seconds.clamp(1, maxSameTimeWindowSeconds);
+
+/// 24 h.
+const int maxSameTimeWindowSeconds = 86400;
 
 /// Groups [items] `(id, captureMs)` into clusters: a new cluster starts when
 /// the gap to the previous item is greater than [window] (a gap equal to the

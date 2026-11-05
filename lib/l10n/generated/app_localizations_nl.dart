@@ -370,10 +370,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteModeTrash => 'Naar de prullenbak (aanbevolen)';
 
   @override
-  String get deleteModeTrashHelp =>
-      'Geswipete bestanden gaan naar de prullenbak van de telefoon en kunnen worden hersteld.';
-
-  @override
   String get deleteModePermanent => 'Definitief verwijderen';
 
   @override
@@ -2051,10 +2047,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsHighlightBig => 'Grote bestanden markeren';
 
   @override
-  String get settingsHighlightBigHelp =>
-      'Bestanden van 100 MB of meer krijgen een rood groottelabel';
-
-  @override
   String selectionCount(int count, String size) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2253,21 +2245,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get settingsSameTimeWindow => 'Tijdvenster voor zelfde moment';
-
-  @override
-  String get settingsSameTimeWindowHelp =>
-      'Bladeren → Zelfde moment groepeert foto\'s en video\'s die binnen zoveel seconden zijn gemaakt';
-
-  @override
-  String seconds(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count seconden',
-      one: '1 seconde',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get fileMenuTooltip => 'Bestandsacties';
@@ -3087,10 +3064,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get similarStartTitle => 'Vergelijkbare en wazige foto\'s zoeken';
 
   @override
-  String get similarStartBody =>
-      'KFM controleert je foto\'s op deze telefoon, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets de telefoon en er wordt niets verwijderd tenzij jij dat kiest.';
-
-  @override
   String get similarStart => 'Starten';
 
   @override
@@ -3329,9 +3302,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiLabelsTitle => 'Fotolabels (AI)';
 
   @override
-  String get aiLabelsEnable => 'Foto\'s labelen op deze telefoon';
-
-  @override
   String get aiLabelsEnableHint =>
       'Vind foto\'s op wat erop staat, zoals kat, strand of eten';
 
@@ -3394,16 +3364,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiLabelsResetAction => 'Resetten';
 
   @override
-  String get aiLabelsHelp =>
-      'Werkt alleen op deze telefoon. Geen enkele foto of uitkomst verlaat het apparaat.';
-
-  @override
   String get aiLabelsJobError =>
       'De AI-modellen ontbreken of zijn gewijzigd, dus het labelen is gestopt. Download ze opnieuw.';
-
-  @override
-  String get aiLabelsWorkerError =>
-      'Labelen kan niet starten op deze telefoon.';
 
   @override
   String get aiLabelsCrashError =>
@@ -3418,10 +3380,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get aiLabelsCardTitle =>
       'Vind foto\'s op wat erop staat (kat, strand, eten…)';
-
-  @override
-  String get aiLabelsCardBody =>
-      'KFM kan je foto\'s labelen op deze telefoon. Er wordt niets geüpload.';
 
   @override
   String get aiLabelsCardTurnOn => 'Aanzetten';
@@ -3572,15 +3530,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiModelsHowTitle => 'Hoe het werkt';
 
   @override
-  String get aiModelsHowBody =>
-      'De kleine miniatuur van elke foto wordt één keer op deze telefoon geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.';
-
-  @override
   String get aiModelsPrivacyTitle => 'Privacy';
-
-  @override
-  String get aiModelsPrivacyBody =>
-      'Werkt volledig op dit apparaat. Geen enkele foto, miniatuur of uitkomst verlaat de telefoon. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.';
 
   @override
   String get aiModelsBatteryBody =>
@@ -3823,9 +3773,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get detailsModified => 'Gewijzigd';
-
-  @override
-  String get detailsAdded => 'Toegevoegd aan telefoon';
 
   @override
   String get detailsTaken => 'Gemaakt';
@@ -5226,17 +5173,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get errorLogShare => 'Foutenlogboek delen';
 
   @override
-  String errorLogShareSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fouten',
-      one: '1 fout',
-    );
-    return '$_temp0. Blijft op deze telefoon tot je het deelt. Map- en bestandsnamen worden verborgen.';
-  }
-
-  @override
   String get errorLogEmpty => 'Geen fouten gelogd';
 
   @override
@@ -5287,10 +5223,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get leftHandedTitle => 'Linkshandig';
-
-  @override
-  String get leftHandedSubtitle =>
-      'Zet Ongedaan maken en de knoppen onderaan aan de andere kant. Swiperichtingen blijven hetzelfde.';
 
   @override
   String get textSizeLabel => 'Tekstgrootte';
@@ -5489,10 +5421,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Locatie kon niet worden verwijderd, dus het is niet verstuurd';
 
   @override
-  String get privacyTransferNote =>
-      'Locatie-informatie wordt verwijderd (Instellingen → Privacy)';
-
-  @override
   String get privacyMoveWarningTitle => 'Verplaatsen zonder locatie?';
 
   @override
@@ -5665,9 +5593,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get externalSwipeFolderEmpty => 'Geen foto\'s of video\'s in deze map';
-
-  @override
-  String get transfersLocalSection => 'Op deze telefoon';
 
   @override
   String get externalNoJobs =>
@@ -6982,10 +6907,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get cloudShowBadge => 'Cloudpictogram tonen';
 
   @override
-  String get cloudBadgeHelp =>
-      'Het cloudpictogram betekent dat KFM dit bestand aan je cloud-app heeft gegeven. Dit wordt op deze telefoon bewaard, dus het is ook offline zichtbaar. Het is geen live controle: KFM kan niet zien of het uploaden klaar is of dat de kopie later is verwijderd. Verandert het bestand na het uploaden, dan verandert het pictogram ook. Alleen bestanden die met KFM zijn geüpload, krijgen een markering.';
-
-  @override
   String cloudInfoUploaded(String destination, String date) {
     return 'Door KFM geüpload naar $destination · $date';
   }
@@ -7040,9 +6961,6 @@ class AppLocalizationsNl extends AppLocalizations {
     );
     return 'Dit station heeft geen Prullenbak. $_temp0 definitief verwijderen?';
   }
-
-  @override
-  String get windowsRootsTitle => 'Mappen die KFM doorzoekt';
 
   @override
   String get windowsRootsHint =>
@@ -7740,5 +7658,505 @@ class AppLocalizationsNl extends AppLocalizations {
       one: 'Overdracht mislukt',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get settingsGeneral => 'Algemeen';
+
+  @override
+  String get settingsSorting => 'Sorteren';
+
+  @override
+  String get settingsFilesDisplay => 'Bestanden en weergave';
+
+  @override
+  String get settingsSmart => 'Slimme functies';
+
+  @override
+  String get settingsStorageCleanup => 'Opslag en opruimen';
+
+  @override
+  String get settingsConnectSharing => 'Verbinden en delen';
+
+  @override
+  String get settingsPrivacyAccess => 'Privacy en toegang';
+
+  @override
+  String get settingsAboutAdvanced => 'Over en geavanceerd';
+
+  @override
+  String get thumbCacheHelp =>
+      'Kleine voorbeelden die KFM bewaart zodat mappen snel openen. Wissen maakt de ruimte vrij; je bestanden blijven onaangeroerd en de voorbeelden komen terug wanneer nodig.';
+
+  @override
+  String get errorLogHelp =>
+      'Fouten die KFM tegenkwam, zonder bestandsnamen of paden. Deel het om een probleem te melden.';
+
+  @override
+  String get devSettingsHelp =>
+      'Indexhulpmiddelen om KFM op een apparaat te controleren (alleen debug-builds).';
+
+  @override
+  String get settingsShowSessionSummaryHelp =>
+      'Na Klaar een kort overzicht van wat je hebt bewaard, verwijderd en verplaatst.';
+
+  @override
+  String get reviewedResetHelp =>
+      'Bestanden die je al hebt gesorteerd, verschijnen weer als nieuw. Er wordt niets verwijderd.';
+
+  @override
+  String get settingsFreshStartHelp =>
+      'Kies wat je wist: de huidige sessie, geschiedenis, tags of alles.';
+
+  @override
+  String get tutorialShowAgainHelp =>
+      'De korte swipe-uitleg en de eenmalige tips nog een keer.';
+
+  @override
+  String get settingsDropActionHelp =>
+      'Wat er gebeurt als je bestanden naar een map sleept.';
+
+  @override
+  String get storageBigFileThresholdHelp =>
+      'Gebruikt door de markering van grote bestanden en Opslag → Grote bestanden.';
+
+  @override
+  String get settingsDeleteMode => 'Bij verwijderen';
+
+  @override
+  String get settingsDeleteModeHelp =>
+      'Verwijderde bestanden naar de prullenbak, of definitief verwijderen.';
+
+  @override
+  String get settingsPermissionsHelp =>
+      'Wat KFM op deze telefoon mag lezen, en een knop om dat te wijzigen.';
+
+  @override
+  String get backupRestoreTitle => 'Back-up en herstellen';
+
+  @override
+  String get backupRestoreHelp =>
+      'Zet je tags, favorieten, presets en instellingen over naar een ander apparaat. Bestanden worden niet gekopieerd.';
+
+  @override
+  String get cloudDestinationsHelp =>
+      'Cloud-apps op dit apparaat waar KFM bestanden naartoe kan sturen.';
+
+  @override
+  String get connectADevice => 'Een apparaat verbinden';
+
+  @override
+  String get connectADeviceHelp =>
+      'Bekijk en stuur bestanden tussen je telefoon en pc via wifi.';
+
+  @override
+  String get transfersSettingHelp => 'Alle wifi-overdrachten, lopend en klaar.';
+
+  @override
+  String get privacyDevicesTitle => 'Apparaten die je bestanden kunnen zien';
+
+  @override
+  String get privacyDevicesHelp =>
+      'Onthouden apparaten en wat ze mogen. Vergeet er een om het te blokkeren.';
+
+  @override
+  String get privacyNeverTitle => 'Wat KFM nooit doet';
+
+  @override
+  String get privacyNeverBody =>
+      'Geen advertenties, geen account, geen tracking. KFM uploadt je bestanden nooit: alleen apparaten die je verbindt en cloud-apps die je kiest krijgen ze.';
+
+  @override
+  String get a11yScreenReaderTitle => 'Schermlezers';
+
+  @override
+  String get a11yScreenReaderBody =>
+      'Bestandstegels lezen hun naam, type, grootte en datum voor. Swipekaarten bieden hun acties aan in het actiemenu.';
+
+  @override
+  String get settingsKeywordsTheme => 'donker,licht,nacht,modus,uiterlijk';
+
+  @override
+  String get settingsKeywordsAccent => 'kleur,accent';
+
+  @override
+  String get settingsKeywordsTextSize => 'lettertype,grote tekst,zoom,groter';
+
+  @override
+  String get settingsKeywordsThumbCache => 'cache,voorbeelden,ruimte,vrijmaken';
+
+  @override
+  String get settingsKeywordsVersion => 'versie,over,app';
+
+  @override
+  String get settingsKeywordsPermissions =>
+      'toestemming,toegang,toestaan,opslag';
+
+  @override
+  String get settingsKeywordsSimilar => 'dubbele,wazig,vergelijkbaar';
+
+  @override
+  String get settingsKeywordsAiLabels =>
+      'ai,labels,herkenning,modellen,downloaden';
+
+  @override
+  String get settingsKeywordsLocation => 'locatie,gps,plaats,exif';
+
+  @override
+  String get settingsKeywordsBackup =>
+      'exporteren,importeren,herstellen,back-up';
+
+  @override
+  String get settingsKeywordsCloud => 'cloud,drive,onedrive,uploaden';
+
+  @override
+  String get settingsKeywordsConnect => 'delen,wifi,pc,telefoon,qr,sturen';
+
+  @override
+  String get settingsKeywordsPrivacy =>
+      'privacy,tracking,advertenties,uploaden';
+
+  @override
+  String get settingsKeywordsScreenReader =>
+      'talkback,verteller,blind,schermlezer';
+
+  @override
+  String get settingsKeywordsBigFiles => 'groot,grote,grootte,drempel';
+
+  @override
+  String get settingsSearchHint => 'Instellingen zoeken';
+
+  @override
+  String get settingsSearchClear => 'Zoekopdracht wissen';
+
+  @override
+  String get settingsSearchEmpty =>
+      'Geen instelling gevonden. Probeer een ander woord.';
+
+  @override
+  String get privacyTransferNote =>
+      'Locatie-informatie wordt verwijderd (Instellingen → Privacy en toegang)';
+
+  @override
+  String durationShortSeconds(int count) {
+    return '$count s';
+  }
+
+  @override
+  String durationShortMinutes(int count) {
+    return '$count min';
+  }
+
+  @override
+  String durationShortMinutesSeconds(int minutes, int seconds) {
+    return '$minutes min $seconds s';
+  }
+
+  @override
+  String durationShortHours(int count) {
+    return '$count u';
+  }
+
+  @override
+  String durationShortHoursMinutes(int hours, int minutes) {
+    return '$hours u $minutes min';
+  }
+
+  @override
+  String get unitSecondsShort => 's';
+
+  @override
+  String get unitMinutesShort => 'min';
+
+  @override
+  String get unitHoursShort => 'u';
+
+  @override
+  String get unitMegabytesShort => 'MB';
+
+  @override
+  String get unitGigabytesShort => 'GB';
+
+  @override
+  String get unitInputAmount => 'Hoeveelheid';
+
+  @override
+  String unitInputRange(String min, String max) {
+    return 'Voer een waarde in van $min tot $max';
+  }
+
+  @override
+  String get unitInputSave => 'Opslaan';
+
+  @override
+  String bigFileThresholdLine(String size) {
+    return 'Bestanden van $size of meer tellen als groot';
+  }
+
+  @override
+  String get settingsHighlightBigLine =>
+      'Grote bestanden krijgen een rood groottelabel, ook als groottes uit staan';
+
+  @override
+  String get settingsSameTimeWindowAbout =>
+      'Bladeren → Zelfde moment groepeert foto\'s en video\'s die zo kort na elkaar zijn gemaakt';
+
+  @override
+  String sameTimeWindowLine(String time) {
+    return 'Foto\'s en video\'s die binnen $time na elkaar zijn gemaakt, worden gegroepeerd';
+  }
+
+  @override
+  String get deleteModeTrashHelpDevice =>
+      'Verwijderde bestanden gaan naar de prullenbak en kunnen worden hersteld.';
+
+  @override
+  String similarStartBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM controleert je foto\'s op deze telefoon, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets de telefoon en er wordt niets verwijderd tenzij jij dat kiest.',
+      'pc': 'KFM controleert je foto\'s op deze pc, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets de pc en er wordt niets verwijderd tenzij jij dat kiest.',
+      'other': 'KFM controleert je foto\'s op dit apparaat, groepeert gelijkende foto\'s en stelt de scherpste voor om te bewaren. Er verlaat niets het apparaat en er wordt niets verwijderd tenzij jij dat kiest.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsEnableOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Foto\'s labelen op deze telefoon',
+      'pc': 'Foto\'s labelen op deze pc',
+      'other': 'Foto\'s labelen op dit apparaat',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsHelpOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Werkt alleen op deze telefoon. Geen enkele foto of uitkomst verlaat het apparaat.',
+      'pc': 'Werkt alleen op deze pc. Geen enkele foto of uitkomst verlaat het apparaat.',
+      'other': 'Werkt alleen op dit apparaat. Geen enkele foto of uitkomst verlaat het.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsWorkerErrorOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Labelen kan niet starten op deze telefoon.',
+      'pc': 'Labelen kan niet starten op deze pc.',
+      'other': 'Labelen kan niet starten op dit apparaat.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiLabelsCardBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'KFM kan je foto\'s labelen op deze telefoon. Er wordt niets geüpload.',
+      'pc': 'KFM kan je foto\'s labelen op deze pc. Er wordt niets geüpload.',
+      'other': 'KFM kan je foto\'s labelen op dit apparaat. Er wordt niets geüpload.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsHowBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'De kleine miniatuur van elke foto wordt één keer op deze telefoon geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.',
+      'pc': 'De kleine miniatuur van elke foto wordt één keer op deze pc geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.',
+      'other': 'De kleine miniatuur van elke foto wordt één keer op dit apparaat geanalyseerd, op de achtergrond. Alleen labelwoorden zoals \"kat\" worden opgeslagen in de database van KFM.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelsPrivacyBodyOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Werkt volledig op deze telefoon. Geen enkele foto, miniatuur of uitkomst verlaat hem. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.',
+      'pc': 'Werkt volledig op deze pc. Geen enkele foto, miniatuur of uitkomst verlaat hem. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.',
+      'other': 'Werkt volledig op dit apparaat. Geen enkele foto, miniatuur of uitkomst verlaat het. Geen account, geen tracking. Het enige netwerkgebruik is deze ene download.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String detailsAddedOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Toegevoegd aan telefoon',
+      'pc': 'Toegevoegd aan pc',
+      'other': 'Toegevoegd aan apparaat',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String errorLogShareSubtitleOn(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fouten',
+      one: '1 fout',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fouten',
+      one: '1 fout',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fouten',
+      one: '1 fout',
+    );
+    String _temp3 = intl.Intl.selectLogic(device, {
+      'phone':
+          '$_temp0. Blijft op deze telefoon tot je het deelt. Map- en bestandsnamen worden verborgen.',
+      'pc':
+          '$_temp1. Blijft op deze pc tot je het deelt. Map- en bestandsnamen worden verborgen.',
+      'other':
+          '$_temp2. Blijft op dit apparaat tot je het deelt. Map- en bestandsnamen worden verborgen.',
+    });
+    return '$_temp3';
+  }
+
+  @override
+  String transfersLocalSectionOn(String device) {
+    String _temp0 = intl.Intl.selectLogic(device, {
+      'phone': 'Op deze telefoon',
+      'pc': 'Op deze pc',
+      'other': 'Op dit apparaat',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cloudBadgeHelpDevice =>
+      'Het cloudpictogram betekent dat KFM dit bestand aan je cloud-app heeft gegeven. KFM onthoudt dat hier, dus het is ook offline zichtbaar. Het is geen live controle: KFM kan niet zien of het uploaden klaar is of dat de kopie later is verwijderd. Verandert het bestand na het uploaden, dan verandert het pictogram ook. Alleen bestanden die met KFM zijn geüpload worden gemarkeerd.';
+
+  @override
+  String get aiLabelsUnsupportedWindows =>
+      'Nog niet beschikbaar op Windows. Op Android kan KFM foto\'s vinden op wat erop staat.';
+
+  @override
+  String get aiModelsDownloadInline => 'Downloaden';
+
+  @override
+  String get aiModelsHowItWorks => 'Hoe het werkt';
+
+  @override
+  String get whereKfmLooksTitle => 'Waar KFM kijkt';
+
+  @override
+  String get whereKfmLooksHelp =>
+      'De privélijst van je bestanden die Zoeken, Sorteren en Opslag gebruiken. Die verlaat dit apparaat nooit.';
+
+  @override
+  String get whereKfmLooksPhoneBody =>
+      'KFM houdt een privélijst bij van de foto\'s, video\'s en bestanden die Android laat zien, zodat Zoeken, Swipen en Opslag je hele telefoon dekken. De lijst blijft op deze telefoon en wordt nooit geüpload. KFM wijzigt of verplaatst niets door te kijken.';
+
+  @override
+  String get lookEverywhereTitle => 'Overal kijken';
+
+  @override
+  String get lookEverywhereOnHelp =>
+      'KFM houdt een privélijst bij van je foto\'s, video\'s en bestanden op deze pc, zodat Zoeken, Sorteren, Opslag en Vergelijkbare foto\'s alles dekken. De lijst blijft op deze pc. KFM uploadt, wijzigt of verplaatst niets door te kijken en slaat Windows- en programmamappen over.';
+
+  @override
+  String get lookEverywhereOffHelp =>
+      'KFM kijkt alleen in de map die je open hebt. Zoeken en Sorteren dekken die map.';
+
+  @override
+  String get lookEverywhereChosenHelp =>
+      'KFM kijkt alleen in de mappen hieronder. Zet dit aan om al je bestanden te dekken.';
+
+  @override
+  String get lookEverywhereChoose => 'Liever mappen kiezen…';
+
+  @override
+  String get lookEverywhereOffConfirmTitle => 'Alleen kijken waar je bent?';
+
+  @override
+  String get lookEverywhereOffConfirmBody =>
+      'Zoeken en Sorteren dekken dan alleen mappen die je opent. Tags, favorieten en bekeken-markeringen blijven bewaard.';
+
+  @override
+  String get lookEverywhereOffConfirm => 'Alleen open mappen';
+
+  @override
+  String get settingsKeywordsIndex =>
+      'index,scannen,mappen,overal kijken,zoeken';
+
+  @override
+  String get languageStepTitle => 'Kies je taal';
+
+  @override
+  String get languageStepBody =>
+      'Je kunt dit later wijzigen in Instellingen → Algemeen.';
+
+  @override
+  String languageSystemNamed(String language) {
+    return 'Systeem ($language)';
+  }
+
+  @override
+  String get languageStepContinue => 'Doorgaan';
+
+  @override
+  String get leftHandedThumbHelp =>
+      'Zet Ongedaan maken, de hoofdknoppen en de selectiebalk links, waar je duim is. Swipe-richtingen veranderen niet.';
+
+  @override
+  String get reduceMotionTitle => 'Minder beweging';
+
+  @override
+  String get reduceMotionHelp =>
+      'Geswipete kaarten vervagen in plaats van weg te vliegen en schermen wisselen zonder te schuiven. Volgt ook de systeeminstelling.';
+
+  @override
+  String get highContrastTitle => 'Hoog contrast';
+
+  @override
+  String get highContrastHelp =>
+      'Sterkere kleuren voor tekst, knoppen en randen. Volgt ook de systeeminstelling.';
+
+  @override
+  String get backupSettingReduceMotion => 'Minder beweging';
+
+  @override
+  String get backupSettingHighContrast => 'Hoog contrast';
+
+  @override
+  String get settingsKeywordsMotion => 'animatie,beweging,vervagen';
+
+  @override
+  String get settingsKeywordsContrast => 'contrast,kleuren,slechtziend';
+
+  @override
+  String a11yFileLabel(String name, String kind, String size, String date) {
+    return '$name, $kind, $size, $date';
+  }
+
+  @override
+  String get a11yKindAudio => 'Audio';
+
+  @override
+  String get a11yKindDocument => 'Document';
+
+  @override
+  String a11yKindDocumentExt(String ext) {
+    return '$ext-document';
+  }
+
+  @override
+  String get a11yKindArchive => 'Archief';
+
+  @override
+  String get a11yKindFile => 'Bestand';
+
+  @override
+  String a11yKindFileExt(String ext) {
+    return '$ext-bestand';
   }
 }

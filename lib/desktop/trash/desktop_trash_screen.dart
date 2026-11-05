@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/a11y/file_semantics.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/trash_types.dart';
 import 'package:kfm/core/platform/host_platform.dart';
@@ -360,6 +361,11 @@ class _DesktopTrashScreenState extends ConsumerState<DesktopTrashScreen> {
               ),
             ),
             _ => ExplorerView<TrashedItem>(
+              semanticLabelOf: (t) => fileSemanticsLabel(
+                context.l10n,
+                t.original,
+                date: t.trashedAt,
+              ),
               autofocus: true,
               items: items,
               idOf: (i) => i.trashId,

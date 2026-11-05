@@ -13,6 +13,36 @@ bool isExcludedFolderPath(String path) =>
     path.endsWith('/.KFMTrash') ||
     path.endsWith('/.thumbnails');
 
+/// TASK-E2 §6: Windows folders a desktop index scan ("Look everywhere")
+/// never walks into: the OS, programs, app data, the Recycle Bin. [path] is
+/// '/'-separated (`C:/Windows`, `C:/Users/me/AppData`).
+bool isWindowsSystemFolder(String path) {
+  final lower = path.toLowerCase();
+  final slash = lower.lastIndexOf('/');
+  final name = lower.substring(slash + 1);
+  if (_anywhere.contains(name)) return true;
+  // Directly under a drive root (`c:/windows`).
+  return slash == 2 && lower[1] == ':' && _atDriveRoot.contains(name);
+}
+
+const Set<String> _atDriveRoot = {
+  'windows',
+  'program files',
+  'program files (x86)',
+  'programdata',
+  'recovery',
+  'perflogs',
+  r'$windows.~bt',
+  r'$windows.~ws',
+};
+
+const Set<String> _anywhere = {
+  'appdata',
+  r'$recycle.bin',
+  'system volume information',
+  '.kfmtrash',
+};
+
 /// MediaStore's trashed/pending files (Android 11+) and KFM's unfinished
 /// copies ([tempFilePrefix]): never shown, never zipped.
 bool isSystemTempName(String name) =>
