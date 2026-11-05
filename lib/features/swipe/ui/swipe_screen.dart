@@ -1023,8 +1023,8 @@ class _RenamePill extends ConsumerWidget {
     if (count == 0) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsetsDirectional.only(start: 8),
+      // E4 (A3): default density, a 48 dp tap target.
       child: ActionChip(
-        visualDensity: VisualDensity.compact,
         label: Text(context.l10n.renamePill(count)),
         onPressed: () => context.go(AppRoutes.renameBatch),
       ),

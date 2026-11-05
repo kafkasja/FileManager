@@ -261,10 +261,11 @@ class _FileViewerState extends ConsumerState<FileViewer> {
                 alignment: AlignmentDirectional.bottomEnd,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(16),
-                  // Shrinks instead of overflowing on narrow screens.
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerEnd,
+                  // Scrolls sideways instead of overflowing on narrow
+                  // screens; never shrinks the 48 dp buttons (E4, A3).
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       spacing: 8,
@@ -503,11 +504,11 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
                 alignment: AlignmentDirectional.bottomEnd,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(16),
-                  // Shrinks instead of overflowing on narrow screens (S22:
-                  // ⓘ + 4 actions + Select overflowed by 34 px).
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerEnd,
+                  // Scrolls sideways instead of overflowing on narrow
+                  // screens; never shrinks the 48 dp buttons (E4, A3).
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       spacing: 8,

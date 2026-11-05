@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:kfm/app/a11y/file_semantics.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/scroll_to_top.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/app/widgets/empty_state.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
@@ -64,7 +66,6 @@ class _SameTimeViewState extends ConsumerState<SameTimeView> {
       });
     }
     final l10n = context.l10n;
-    final spacing = context.tokens.spacing;
     final window = ref.watch(sameTimeWindowProvider).value;
     // The sort doesn't change the groups: one key per filter.
     final key = query.copyWith(sort: FileSort.newestFirst);
@@ -95,12 +96,15 @@ class _SameTimeViewState extends ConsumerState<SameTimeView> {
               child: Center(child: CircularProgressIndicator()),
             );
     } else if (value.isEmpty) {
+      // E4 (A11): the window may be too short; Settings sets it.
       body = SliverFillRemaining(
         hasScrollBody: false,
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(spacing * 3),
-            child: Text(l10n.sameTimeEmpty, textAlign: TextAlign.center),
+        child: EmptyState(
+          icon: Icons.burst_mode_outlined,
+          text: l10n.sameTimeEmpty,
+          action: TextButton(
+            onPressed: () => context.go(AppRoutes.settings),
+            child: Text(l10n.sameTimeChangeWindow),
           ),
         ),
       );

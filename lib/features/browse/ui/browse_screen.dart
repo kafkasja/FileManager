@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/haptics.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/segment_label.dart';
 import 'package:kfm/app/router.dart';
@@ -11,6 +12,7 @@ import 'package:kfm/app/widgets/hiding_header.dart';
 import 'package:kfm/core/files/file_query.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
+import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/index_query.dart';
 import 'package:kfm/core/index/source_rule.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
@@ -382,6 +384,7 @@ class _Body extends ConsumerWidget {
         query: view.query,
         showFiles: view.folder != null,
         scrollToTopTab: AppTab.browse,
+        onRefresh: () => _refresh(context, ref),
         leading: [
           ...banner,
           SliverToBoxAdapter(child: _Breadcrumb(folder: view.folder)),
@@ -394,6 +397,7 @@ class _Body extends ConsumerWidget {
     return FileResultsView(
       query: view.query,
       scrollToTopTab: AppTab.browse,
+      onRefresh: () => _refresh(context, ref),
       leading: [
         ...banner,
         // U1: SD cards, USB drives and cameras (hidden without them).
@@ -401,6 +405,30 @@ class _Body extends ConsumerWidget {
         const SliverToBoxAdapter(child: SourcesCarousel()),
       ],
     );
+  }
+
+  /// E4 (A5): pull to refresh. A folder rescans just that folder, All
+  /// runs an incremental scan; the results reload; a failure says so
+  /// (rule 8).
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final failed = context.l10n.browseRefreshFailed;
+    lightHaptic(ref);
+    try {
+      final indexer = ref.read(mediaIndexerProvider);
+      if (view.folder case final folder? when view.folderMode) {
+        await indexer.refreshFolder(folder, recursive: false);
+      } else {
+        await indexer.incremental();
+      }
+      ref
+        ..invalidate(filePagesProvider(view.query))
+        ..invalidate(browseCountProvider(view.query));
+    } on Object {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(failed)));
+    }
   }
 }
 

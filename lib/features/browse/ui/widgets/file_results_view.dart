@@ -110,6 +110,10 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
       // One scroll position per view; kept while the tab is switched away.
       key: PageStorageKey<IndexQuery>(query),
       controller: _scroll,
+      // Pull to refresh works on a short list too.
+      physics: widget.onRefresh == null
+          ? null
+          : const AlwaysScrollableScrollPhysics(),
       slivers: [...widget.leading, if (widget.showFiles) _results(context)],
     );
     // E4 (H7): the extent is stable, so the thumb can be dragged through
@@ -247,6 +251,19 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
     );
   }
 
+  /// List rows instead of the grid (non-visual kinds, or asked for).
+  bool get _asList =>
+      widget.asList ??
+      (query.kinds.isNotEmpty &&
+          !query.kinds.any((k) => k == FileKind.image || k == FileKind.video));
+
+  static SliverGridDelegate _gridDelegate(double spacing) =>
+      SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 128,
+        mainAxisSpacing: spacing / 4,
+        crossAxisSpacing: spacing / 4,
+      );
+
   Widget _results(BuildContext context) {
     final l10n = context.l10n;
     final spacing = context.tokens.spacing;
@@ -261,10 +278,21 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
           ),
         );
       }
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      // E4 (A1): placeholder tiles while the first page loads (same tile
+      // colour, no layout jump when the files arrive).
+      return _asList
+          ? SliverList.builder(
+              itemCount: 12,
+              itemBuilder: (_, _) => const ResultsPlaceholder(listRow: true),
+            )
+          : SliverPadding(
+              padding: EdgeInsets.all(spacing / 4),
+              sliver: SliverGrid.builder(
+                gridDelegate: _gridDelegate(spacing),
+                itemCount: 30,
+                itemBuilder: (_, _) => const ResultsPlaceholder(),
+              ),
+            );
     }
     if (data.unavailable || data.items.isEmpty) {
       if (widget.empty case final empty?) {
@@ -343,12 +371,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
       }
     }
 
-    final asList =
-        widget.asList ??
-        (query.kinds.isNotEmpty &&
-            !query.kinds.any(
-              (k) => k == FileKind.image || k == FileKind.video,
-            ));
+    final asList = _asList;
     // E4 (H3): a tile keyed by its file id keeps its element (and its
     // shown thumbnail) when a reload moves it to another index.
     int? indexOfKey(Key key) => switch (key) {
@@ -387,11 +410,7 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
             padding: EdgeInsets.all(spacing / 4),
             sliver: SliverGrid.builder(
               key: _sliver,
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 128,
-                mainAxisSpacing: spacing / 4,
-                crossAxisSpacing: spacing / 4,
-              ),
+              gridDelegate: _gridDelegate(spacing),
               itemCount: total,
               findChildIndexCallback: indexOfKey,
               itemBuilder: (context, i) {
