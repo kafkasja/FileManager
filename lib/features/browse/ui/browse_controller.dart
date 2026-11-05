@@ -117,7 +117,12 @@ class FilePagesState {
 /// rows as were loaded so the scroll position holds.
 @riverpod
 class FilePages extends _$FilePages {
+  /// The first page: enough for the first screens, quick to show.
   static const pageSize = 200;
+
+  /// Later pages (E4): bigger, so a fast fling rarely outruns the loaded
+  /// rows (one keyset query per 1,000 rows).
+  static const morePageSize = 1000;
 
   int _generation = 0;
   IndexQuery? _visible;
@@ -161,7 +166,7 @@ class FilePages extends _$FilePages {
     try {
       final page = await ref
           .read(mediaIndexDaoProvider)
-          .page(visible, after: current.next);
+          .page(visible, after: current.next, limit: morePageSize);
       if (_stale(generation)) return;
       final latest = state.value!;
       state = AsyncData(
@@ -189,7 +194,11 @@ class FilePages extends _$FilePages {
       final items = <FileRef>[];
       IndexCursor? next;
       do {
-        final page = await dao.page(visible, after: next);
+        final page = await dao.page(
+          visible,
+          after: next,
+          limit: next == null ? pageSize : morePageSize,
+        );
         if (_stale(generation)) return;
         items.addAll(page.items);
         next = page.next;

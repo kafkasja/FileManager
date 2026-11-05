@@ -37,6 +37,8 @@ import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/thumbs/thumbnail_cache.dart';
 import 'package:kfm/features/browse/domain/browse_source_chip.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
+import 'package:kfm/features/browse/ui/same_time_view.dart';
+import 'package:kfm/features/browse/ui/widgets/file_results_view.dart';
 import 'package:path_provider/path_provider.dart';
 
 const _mode = String.fromEnvironment('KFM_PERF_MODE');
@@ -72,6 +74,8 @@ void main() {
     }, timeout: const Duration(minutes: 20));
     results['firstIndexMs'] = indexClock.elapsedMilliseconds;
 
+    // Browse's view state is auto-disposed without a listener.
+    final keep = c.listen(browseViewControllerProvider, (_, _) {});
     final nav = c.read(browseViewControllerProvider.notifier);
     c.read(routerProvider).go(AppRoutes.browse);
     await _settle();
@@ -123,7 +127,13 @@ void main() {
       results['thumbWarmupMs'] = warm.elapsedMilliseconds;
     }
 
-    final scrollable = find.byType(Scrollable).hitTestable().first;
+    // The results' own vertical scroll view (not the chips or carousel).
+    final scrollable = find
+        .descendant(
+          of: find.byType(_mode == 'sametime' ? SameTimeView : FileResultsView),
+          matching: find.byType(Scrollable),
+        )
+        .first;
     final position = tester.state<ScrollableState>(scrollable).position
       ..jumpTo(0);
     await _settle(1000);
@@ -167,6 +177,7 @@ void main() {
       ...frames,
     };
 
+    keep.close();
     final json = const JsonEncoder.withIndent('  ').convert(results);
     _log('PERF ${jsonEncode(results)}');
     File('${dir.path}/$_mode.json').writeAsStringSync(json);

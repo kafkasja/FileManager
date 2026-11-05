@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -54,7 +55,8 @@ class FileResultsView extends ConsumerStatefulWidget {
 }
 
 class _FileResultsViewState extends ConsumerState<FileResultsView> {
-  /// Load the next page this many tiles before the end.
+  /// Load the next page this many tiles before the loaded end (a backstop
+  /// for [_onScroll]: placeholders being built always load).
   static const _prefetch = 60;
 
   /// The grid / list sliver: where a file sits for [_reveal].
@@ -62,12 +64,64 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
 
   IndexQuery get query => widget.query;
 
+  /// The item count of the last build (E4: count changes relayout).
+  int? _lastTotal;
+
   @override
-  Widget build(BuildContext context) => CustomScrollView(
-    // One scroll position per view; kept while the tab is switched away.
-    key: PageStorageKey<IndexQuery>(query),
-    slivers: [...widget.leading, if (widget.showFiles) _results(context)],
-  );
+  Widget build(BuildContext context) =>
+      NotificationListener<ScrollUpdateNotification>(
+        onNotification: _onScroll,
+        child: CustomScrollView(
+          // One scroll position per view; kept while the tab is switched
+          // away.
+          key: PageStorageKey<IndexQuery>(query),
+          slivers: [...widget.leading, if (widget.showFiles) _results(context)],
+        ),
+      );
+
+  /// E4 (H1): loads the next page by pixels, not by built tiles: once the
+  /// loaded rows end less than [prefetchViewports] screens ahead, so a
+  /// fast fling never reaches them.
+  bool _onScroll(ScrollUpdateNotification n) {
+    if (n.depth != 0 || !widget.showFiles) return false;
+    final data = ref.read(filePagesProvider(query)).value;
+    if (data == null || !data.hasMore || data.loadingMore) return false;
+    if (data.loadMoreError != null) return false;
+    final end = _loadedEnd(data.items.length);
+    final m = n.metrics;
+    if (end == null ||
+        m.pixels + m.viewportDimension * (1 + prefetchViewports) >= end) {
+      unawaited(ref.read(filePagesProvider(query).notifier).loadMore());
+    }
+    return false;
+  }
+
+  /// Load ahead this many screens past the visible one.
+  static const prefetchViewports = 3;
+
+  /// Scroll offset where the loaded rows end (placeholders follow), or null
+  /// before the results sliver has laid out.
+  double? _loadedEnd(int loaded) {
+    final render = _sliver.currentContext?.findRenderObject();
+    if (render is! RenderSliver || render.geometry == null || loaded == 0) {
+      return null;
+    }
+    final constraints = render.constraints;
+    switch (render) {
+      case RenderSliverGrid(:final gridDelegate):
+        final g = gridDelegate
+            .getLayout(constraints)
+            .getGeometryForChildIndex(loaded - 1);
+        return constraints.precedingScrollExtent +
+            g.scrollOffset +
+            g.mainAxisExtent;
+      case RenderSliverMultiBoxAdaptor(:final firstChild?):
+        return constraints.precedingScrollExtent +
+            loaded * firstChild.size.height;
+      default:
+        return null;
+    }
+  }
 
   Future<void> _preview(int index) async {
     final last = await openResultsPreview(context, query: query, index: index);
@@ -172,6 +226,29 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
       }
     }
 
+    // E4 (H1): a stable scroll extent. While more pages exist the list is
+    // as long as the whole result (its count), with neutral placeholders
+    // for rows not loaded yet, so a fling never stops dead at a page end
+    // and the scrollbar doesn't jump. Without more pages (or after a
+    // failed load) it is exactly the loaded rows.
+    final loaded = data.items.length;
+    final total = data.hasMore && data.loadMoreError == null
+        ? math.max(
+            loaded,
+            ref.watch(browseCountProvider(query)).value ?? loaded,
+          )
+        : loaded;
+    if (total != _lastTotal) {
+      _lastTotal = total;
+      // A new count with the same tiles on screen doesn't relayout the
+      // sliver by itself: the scroll extent would stay the old one until
+      // the next scroll.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _sliver.currentContext?.findRenderObject()?.markNeedsLayout();
+      });
+    }
+
     void open(int i) {
       final f = data.items[i];
       if (opensInPreview(f)) {
@@ -192,9 +269,10 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
     final body = asList
         ? SliverList.builder(
             key: _sliver,
-            itemCount: data.items.length,
+            itemCount: total,
             itemBuilder: (context, i) {
               maybeLoadMore(i);
+              if (i >= loaded) return const ResultsPlaceholder(listRow: true);
               final f = data.items[i];
               return SelectableFile(
                 listRow: true,
@@ -222,9 +300,10 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
                 mainAxisSpacing: spacing / 4,
                 crossAxisSpacing: spacing / 4,
               ),
-              itemCount: data.items.length,
+              itemCount: total,
               itemBuilder: (context, i) {
                 maybeLoadMore(i);
+                if (i >= loaded) return const ResultsPlaceholder();
                 final f = data.items[i];
                 return SelectableFile(
                   key: ValueKey(f.id),
@@ -247,21 +326,55 @@ class _FileResultsViewState extends ConsumerState<FileResultsView> {
               },
             ),
           );
+    // No spinner sliver at the end: placeholders stand in for what loads.
     return SliverMainAxisGroup(
       slivers: [
         body,
-        if (data.loadingMore)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(spacing * 2),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-          ),
         if (data.loadMoreError != null)
           SliverToBoxAdapter(
             child: _ErrorBox(onRetry: () => unawaited(notifier.loadMore())),
           ),
       ],
+    );
+  }
+}
+
+/// A tile (or list row) for a result not loaded yet: the thumbnail
+/// placeholder colour, same size, not tappable (E4).
+class ResultsPlaceholder extends StatelessWidget {
+  const new({this.listRow = false})
+    : super(key: const ValueKey('results-placeholder'));
+
+  final bool listRow;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final box = ColoredBox(color: scheme.surfaceContainerHighest);
+    if (!listRow) return ExcludeSemantics(child: box);
+    final text = Theme.of(context).textTheme;
+    final scaler = MediaQuery.textScalerOf(context);
+    // The text line's height (font size × line height), a thinner bar in it.
+    Widget bar(TextStyle? style, double width) {
+      final size = scaler.scale(style?.fontSize ?? 14);
+      return SizedBox(
+        height: size * (style?.height ?? 1.2),
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: SizedBox(width: width, height: size * 0.7, child: box),
+        ),
+      );
+    }
+
+    // A ListTile with the row's leading, title and subtitle sizes, so the
+    // row keeps its height when the file arrives.
+    return ExcludeSemantics(
+      child: ListTile(
+        enabled: false,
+        leading: SizedBox.square(dimension: 48, child: box),
+        title: bar(text.bodyLarge, 160),
+        subtitle: bar(text.bodyMedium, 96),
+      ),
     );
   }
 }
