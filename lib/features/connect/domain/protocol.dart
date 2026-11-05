@@ -112,6 +112,21 @@ abstract final class ApiRoutes {
       '$inbox/${Uri.encodeComponent(offerId)}/decline';
   static String inboxFinished(String offerId) =>
       '$inbox/${Uri.encodeComponent(offerId)}/finished';
+
+  // ---- E1 two-way link (DTOs in link.dart) ----
+
+  /// `POST /v1/link` (`LinkRequestDto` → `LinkResponseDto`): connect back.
+  static const link = '/v1/link';
+
+  /// `POST /v1/link/join` (unauthenticated; invite + identity proof →
+  /// `PairAcceptedDto`).
+  static const linkJoin = '/v1/link/join';
+
+  /// `POST /v1/link/close`: the peer ends both halves of the link.
+  static const linkClose = '/v1/link/close';
+
+  /// `POST /v1/take` (`TakeRequestDto` → `{granted}`): the take prompt.
+  static const take = '/v1/take';
 }
 
 /// Routes that skip `authenticate` (exact method + path).
@@ -122,6 +137,8 @@ const Set<RouteKey> kUnauthenticatedRoutes = {
   'POST /v1/pair',
   'POST /v1/pair/known',
   'POST /v1/pair/cancel',
+  // E1: issues the back-link's token (invite + identity proof, limited).
+  'POST /v1/link/join',
 };
 
 /// Authenticated routes that touch no file or folder (N4's route-coverage
@@ -139,6 +156,9 @@ const Set<RouteKey> kNoFileAccessRoutes = {
   'POST /v1/inbox/<id>/accept',
   'POST /v1/inbox/<id>/decline',
   'POST /v1/inbox/<id>/finished',
+  // E1: the link itself touches no file.
+  'POST /v1/link',
+  'POST /v1/link/close',
 };
 
 /// Max JSON request body (`requestSizeLimit`); N10's chunk route has its own.
@@ -157,6 +177,7 @@ abstract final class ProofLabels {
   static const pairQr = 'kfm-v1/pair-qr';
   static const pairCode = 'kfm-v1/pair-code';
   static const pairKnown = 'kfm-v1/pair-known';
+  static const linkJoin = 'kfm-v1/link-join';
 }
 
 /// Discovery identifiers (can't change after release).
@@ -186,6 +207,9 @@ enum ApiErrorCode {
   pendingFolderUnavailable(409, 'pending_folder_unavailable'),
   invalidName(400, 'invalid_name'),
   verificationFailed(409, 'verification_failed'),
+
+  /// E1: the owner asks before this peer takes a file (`POST /v1/take`).
+  takeNeedsApproval(403, 'take_needs_approval'),
   internal(500);
 
   new(this.status, [this._wire]);

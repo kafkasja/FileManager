@@ -135,11 +135,12 @@ class _Start extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        // E1: whoever shows the code, both devices see each other's files.
         card(
           const ValueKey('devices-share'),
           Icons.qr_code_2,
-          l10n.shareTitle,
-          l10n.desktopDevicesShareHint,
+          l10n.linkShowCode,
+          l10n.linkShowCodeHint,
           DevicesPane.share,
         ),
         card(

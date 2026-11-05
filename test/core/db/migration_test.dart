@@ -24,6 +24,7 @@ import 'generated/schema_v20.dart' as v20;
 import 'generated/schema_v21.dart' as v21;
 import 'generated/schema_v22.dart' as v22;
 import 'generated/schema_v23.dart' as v23;
+import 'generated/schema_v24.dart' as v24;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
@@ -62,7 +63,7 @@ void main() {
     expect(await db.select(db.mediaIndex).get(), isEmpty);
   });
 
-  for (var from = 1; from < 24; from++) {
+  for (var from = 1; from < 25; from++) {
     test('upgrade v$from -> current validates', () async {
       final db = AppDatabase(DatabaseConnection(await verifier.startAt(from)));
       addTearDown(db.close);
@@ -1172,5 +1173,52 @@ void main() {
         throwsA(anything),
       );
     });
+  });
+
+  test('v24 -> v25: devices with folders keep them and may see; devices '
+      'without get let_see = 0; all take freely', () async {
+    final schema = await verifier.schemaAt(24);
+    final raw = v24.DatabaseAtV24(schema.newConnection());
+    Future<void> device(String id, String fp, String roots) =>
+        raw.customStatement(
+          'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+          'public_key_fingerprint, last_seen_at_ms, allowed_roots_json) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, 'peer', id, 'windows', fp * 32, 1, roots],
+        );
+    await device(
+      'folders',
+      'ab',
+      '[{"path":"/s/DCIM","label":"DCIM",'
+          '"readOnly":true}]',
+    );
+    await device('none', 'cd', '[]');
+    await raw.close();
+
+    final db = AppDatabase(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    final rows = {
+      for (final r in await db.select(db.knownDevices).get()) r.id: r,
+    };
+    expect(rows['folders']!.letSee, isTrue);
+    expect(rows['folders']!.allowedRootsJson, contains('/s/DCIM'));
+    expect(rows['none']!.letSee, isFalse);
+    expect(rows.values.every((r) => r.letTakeFreely), isTrue);
+  });
+
+  test('v18 -> v25 creates known_devices with the E1 columns (no '
+      'addColumn on the from < 19 path)', () async {
+    final db = AppDatabase(DatabaseConnection(await verifier.startAt(18)));
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+    await db.customStatement(
+      'INSERT INTO known_devices (id, peer_device_id, name, platform, '
+      'public_key_fingerprint, last_seen_at_ms) VALUES (?, ?, ?, ?, ?, ?)',
+      ['n', 'peer', 'PC', 'windows', 'ef' * 32, 1],
+    );
+    final row = await db.select(db.knownDevices).getSingle();
+    expect(row.letSee, isTrue);
+    expect(row.letTakeFreely, isTrue);
   });
 }

@@ -148,15 +148,26 @@ List<ServerRoute> fileRoutes(FileRoutesEnv env) {
       '${ApiRoutes.fileIdPattern}/preview',
       read((r) => _preview(env, r), fileId),
     ),
+    // E1: full bytes (downloads, video) are a "take".
     ServerRoute(
       'GET',
       '${ApiRoutes.fileIdPattern}/content',
-      read((r) => _content(env, r), fileId),
+      g.guarded(
+        (r) => _content(env, r),
+        extract: fileId,
+        write: false,
+        take: true,
+      ),
     ),
     ServerRoute(
       'GET',
       '${ApiRoutes.fileIdPattern}/sha256',
-      read((r) => _sha256(env, r), fileId),
+      g.guarded(
+        (r) => _sha256(env, r),
+        extract: fileId,
+        write: false,
+        take: true,
+      ),
     ),
     ServerRoute(
       'POST',
@@ -732,6 +743,20 @@ Handler _trashRoute(FileRoutesEnv env) => env.guard.guarded(
       jsonDecode(await r.readAsString()) as Map<String, Object?>,
     );
     if (body.reason == TrashReason.verifiedMove) {
+      // E1: a take-prompted peer needs a move grant for every original.
+      final fp = sessionOf(r)?.clientFingerprint;
+      final takes = env.guard.takes;
+      if (fp == null ||
+          (takes != null &&
+              targets.any(
+                (t) => !takes.allows(
+                  fp,
+                  (t.target as FileIdTarget).id,
+                  move: true,
+                ),
+              ))) {
+        return apiError(ApiErrorCode.takeNeedsApproval);
+      }
       // N11: only files whose bytes are still what the client verified.
       final keep = <FileRef>[];
       for (final t in targets) {

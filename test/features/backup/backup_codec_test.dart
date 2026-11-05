@@ -190,8 +190,12 @@ void main() {
       {'name': ''},
       {'name': 12},
       {'tags': 'Holiday'},
-      {'tags': <Object?>[null]},
-      {'reviewed': <Object?>[<String, Object?>{}]},
+      {
+        'tags': <Object?>[null],
+      },
+      {
+        'reviewed': <Object?>[<String, Object?>{}],
+      },
       {'takenAt': 'yesterday'},
     ]) {
       final bad = {

@@ -20,7 +20,7 @@ import 'package:kfm/features/connect/data/shared_folder_fs.dart';
 import 'package:kfm/features/connect/data/upload_store.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/offer_protocol.dart';
-import 'package:kfm/features/connect/ui/accept_dialog.dart';
+import 'package:kfm/features/connect/ui/link_dialog.dart';
 import 'package:kfm/features/connect/ui/offer_dialog.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/connect/ui/share_screen.dart';
@@ -168,9 +168,9 @@ void main() {
       ),
     );
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byType(AcceptDialog), findsOneWidget);
+    expect(find.byType(LinkDialog), findsOneWidget);
     // Something else opens above the prompt (a sheet, the close dialog).
-    final context = tester.element(find.byType(AcceptDialog));
+    final context = tester.element(find.byType(LinkDialog));
     unawaited(
       showDialog<void>(
         context: context,
@@ -185,7 +185,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byType(AcceptDialog), findsNothing);
+    expect(find.byType(LinkDialog), findsNothing);
     expect(find.byKey(const ValueKey('above')), findsOneWidget);
     expect(find.byType(DesktopDevicesScreen), findsOneWidget);
   });

@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
@@ -12,17 +11,14 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
 import 'package:kfm/core/platform/screen_awake.dart';
-import 'package:kfm/features/connect/data/accept_gate.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/pairing_secret_store.dart';
 import 'package:kfm/features/connect/data/remote_trash_service.dart';
 import 'package:kfm/features/connect/data/share_change_tracker.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/windows_share_check.dart';
-import 'package:kfm/features/connect/domain/connection_request.dart';
-import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
-import 'package:kfm/features/connect/ui/accept_dialog.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -56,25 +52,20 @@ class ShareScreen extends ConsumerStatefulWidget {
 class _ShareScreenState extends ConsumerState<ShareScreen> {
   // Read once: `ref` can't be used in dispose.
   late final ShareServerController _controller;
+  // E1: the link keeps sharing running after this screen closes.
+  late final LinkController _link;
   late final ScreenAwake _awake;
-  late final AcceptGate _gate;
   late final ShareChangeTracker _tracker;
   WindowsShareCheck? _windowsCheck;
-  StreamSubscription<AcceptGateEvent>? _gateSub;
   ProviderSubscription<ShareServerState>? _statusSub;
   ProviderSubscription<RemoteRequestOutcome?>? _outcomeSub;
-
-  /// The request whose accept dialog is open.
-  String? _dialogFor;
-  final DialogHandle<AcceptAnswer> _dialog = DialogHandle();
 
   @override
   void initState() {
     super.initState();
     _controller = ref.read(shareServerControllerProvider.notifier);
+    _link = ref.read(linkControllerProvider.notifier)..holdServer();
     _awake = ref.read(screenAwakeProvider);
-    _gate = ref.read(acceptGateProvider);
-    _gateSub = _gate.events.listen(_onGateEvent);
     _tracker = ref.read(shareChangeTrackerProvider);
     // PL1: "Allow on private networks only" before the firewall prompt.
     _windowsCheck = ref.read(windowsShareCheckProvider)
@@ -128,43 +119,13 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     if (_windowsCheck?.explainFirewall == _explainFirewall) {
       _windowsCheck?.explainFirewall = null;
     }
-    _gateSub?.cancel().ignore();
     _statusSub?.close();
     _outcomeSub?.close();
     unawaited(_tracker.stop());
-    _controller.stopSharing().ignore();
+    // E1: stops sharing unless a device is linked (the link owns it then).
+    _link.releaseServer();
     _keepAwake(on: false);
     super.dispose();
-  }
-
-  void _onGateEvent(AcceptGateEvent e) {
-    if (!mounted) return;
-    switch (e) {
-      case AcceptRequested(:final request):
-        unawaited(_showAcceptDialog(request));
-      case AutoAccepted(:final request):
-        // N6 "Always allow": no prompt, just a note.
-        _snack(
-          context.l10n.shareAutoAccepted(request.clientName),
-          change: request,
-        );
-      case AcceptClosed(:final request, :final decision):
-        if (_dialogFor != request.requestId) return;
-        // Ended elsewhere (timeout, the client's cancel): close the dialog.
-        _dialogFor = null;
-        _dialog.close();
-        final l10n = context.l10n;
-        final text = switch (decision) {
-          ConnectionDecision.cancelled => l10n.acceptRequestCancelled,
-          ConnectionDecision.timedOut => l10n.acceptTimedOut,
-          _ => null,
-        };
-        if (text != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(text)));
-        }
-    }
   }
 
   /// N7: "<B> moved N files to trash" / "You declined <B>'s request".
@@ -175,105 +136,6 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(content: Text(remoteOutcomeText(context.l10n, o))),
-      );
-  }
-
-  Future<void> _showAcceptDialog(ConnectionRequest request) async {
-    // Respects the system's silent mode; best effort.
-    unawaited(HapticFeedback.mediumImpact().catchError((Object _) {}));
-    unawaited(
-      SystemSound.play(SystemSoundType.alert).catchError((Object _) {}),
-    );
-    _dialogFor = request.requestId;
-    final answer = await _dialog.show(
-      context,
-      barrierDismissible: false,
-      builder: (_) => AcceptDialog(
-        request: request,
-        deadline: request.receivedAt.add(_gate.timeout),
-      ),
-    );
-    if (_dialogFor == request.requestId) _dialogFor = null;
-    if (answer == null) return;
-    // The token is issued here; the client's root list follows the picker.
-    if (!_gate.decide(request.requestId, answer.decision) ||
-        answer.decision != ConnectionDecision.accepted ||
-        !mounted) {
-      return;
-    }
-    if (answer.remember) {
-      // N6. Queued before any picker save, so the folders land on the row.
-      ref
-          .read(knownDevicesRepositoryProvider)
-          .saveAfterPairing(
-            PairedPeer(
-              fingerprint: request.clientFingerprint,
-              peerDeviceId: request.clientDeviceId,
-              name: request.clientName,
-              platform: request.clientPlatform,
-              autoAccept: answer.alwaysAllow,
-            ),
-            temporary: false,
-          )
-          // A failure shows through the write queue's error stream.
-          .then<void>((_) {}, onError: (Object _) {})
-          .ignore();
-    }
-    var stored = StoredScope.empty;
-    if (request.remembered) {
-      try {
-        stored = await ref.read(storedScopeLoaderProvider)(
-          request.clientFingerprint,
-        );
-      } on Object {
-        // The picker opens instead; nothing was seeded either.
-      }
-      if (!mounted) return;
-    }
-    final l10n = context.l10n;
-    if (stored.roots.isNotEmpty) {
-      // N6: a remembered device keeps its folders; no picker.
-      _snack(
-        stored.dropped
-            ? l10n.shareFoldersMissing
-            : l10n.shareRememberedFolders(stored.roots.length),
-        change: request,
-      );
-      return;
-    }
-    if (stored.dropped) _snack(l10n.shareFoldersMissing);
-    await showSharedFoldersPicker(
-      context,
-      clientFingerprint: request.clientFingerprint,
-      clientName: request.clientName,
-    );
-  }
-
-  /// A snackbar; with [change], a "Change" action opens that client's
-  /// folder picker.
-  void _snack(String text, {ConnectionRequest? change}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          persist: false,
-          content: Text(text),
-          action: change == null
-              ? null
-              : SnackBarAction(
-                  label: context.l10n.shareFoldersChange,
-                  onPressed: () {
-                    if (!mounted) return;
-                    unawaited(
-                      showSharedFoldersPicker(
-                        context,
-                        clientFingerprint: change.clientFingerprint,
-                        clientName: change.clientName,
-                      ),
-                    );
-                  },
-                ),
-        ),
       );
   }
 
@@ -352,6 +214,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       );
       if (stop != true || !mounted) return;
     }
+    // Stop means stop, also while linked (the link ends with it).
+    unawaited(_controller.stopSharing());
     if (widget.onStop case final onStop?) {
       onStop();
     } else {

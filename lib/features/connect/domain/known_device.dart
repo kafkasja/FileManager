@@ -81,6 +81,8 @@ class KnownDevice {
     required this.isTemporary,
     required this.autoAccept,
     this.autoAcceptFiles = false,
+    this.letSee = true,
+    this.letTakeFreely = true,
   });
 
   /// Local id.
@@ -103,6 +105,10 @@ class KnownDevice {
   /// N12 "Accept files without asking".
   final bool autoAcceptFiles;
 
+  /// E1: this device's link choices for the peer.
+  final bool letSee;
+  final bool letTakeFreely;
+
   @override
   bool operator ==(Object other) =>
       other is KnownDevice &&
@@ -117,7 +123,9 @@ class KnownDevice {
       other.canShareToUs == canShareToUs &&
       other.isTemporary == isTemporary &&
       other.autoAccept == autoAccept &&
-      other.autoAcceptFiles == autoAcceptFiles;
+      other.autoAcceptFiles == autoAcceptFiles &&
+      other.letSee == letSee &&
+      other.letTakeFreely == letTakeFreely;
 
   @override
   int get hashCode => Object.hash(
@@ -133,6 +141,8 @@ class KnownDevice {
     isTemporary,
     autoAccept,
     autoAcceptFiles,
+    letSee,
+    letTakeFreely,
   );
 }
 

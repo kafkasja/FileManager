@@ -16,6 +16,7 @@ import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
+import 'package:kfm/features/connect/domain/link.dart';
 import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
@@ -190,6 +191,11 @@ class TransferEngine {
   bool _pumping = false;
   bool _pumpAgain = false;
   bool _disposed = false;
+
+  /// E1: the `POST /v1/take` of each download job (asked once; a decline
+  /// or no answer stays, so its other files fail the same way without a
+  /// second prompt; a connection error asks again on the retry).
+  final Map<String, Future<void>> _takes = {};
 
   static bool _always() => true;
 
@@ -739,6 +745,12 @@ class TransferEngine {
       final http =
           _http(job.deviceFingerprint) ??
           (throw const TransferFailure(TransferErrors.unavailable));
+      // E1: a linked device may ask its owner before its files leave. The
+      // fresh row: the queued snapshot has no file list.
+      if (now.direction == TransferDirection.download &&
+          now.inboxOfferId == null) {
+        await _ensureTake(now, http);
+      }
       final (
         :target,
         :receiverSha256,
@@ -767,6 +779,52 @@ class TransferEngine {
       );
     } on Object catch (e, st) {
       await _onFailure(run, e, st);
+    }
+  }
+
+  Future<void> _ensureTake(TransferJob job, RemoteHttp http) =>
+      _takes[job.id] ??= _askOnce(job, http);
+
+  Future<void> _askOnce(TransferJob job, RemoteHttp http) async {
+    try {
+      await _askTake(job, http);
+    } on TransferFailure {
+      // A decline or no answer stays for the job.
+      rethrow;
+    } on Object {
+      // Anything else (the link dropped) asks again on the retry.
+      _takes.remove(job.id)?.ignore();
+      rethrow;
+    }
+  }
+
+  /// `POST /v1/take` for the job's files that aren't done (≤ 500 a call).
+  /// An older device without the route (404) never asks.
+  Future<void> _askTake(TransferJob job, RemoteHttp http) async {
+    final ids = [
+      for (final f in job.files)
+        if (f.status != TransferFileStatus.done)
+          parseRemoteFileId(f.sourceFileId).serverId,
+    ];
+    for (var i = 0; i < ids.length; i += kMaxTakeIdsPerCall) {
+      final chunk = ids.sublist(i, min(ids.length, i + kMaxTakeIdsPerCall));
+      try {
+        await http.postJson<void>(
+          ApiRoutes.take,
+          TakeRequestDto(ids: chunk, move: job.isMove).toJson(),
+          decode: (_) {},
+          timeout: kTakeClientWait,
+        );
+      } on RemoteApiException catch (e) {
+        if (e.code == ApiErrorCode.notFound) return;
+        if (e.code == ApiErrorCode.declined) {
+          throw const TransferFailure(TransferErrors.takeDeclined);
+        }
+        if (e.code == ApiErrorCode.timedOut) {
+          throw const TransferFailure(TransferErrors.takeNoAnswer);
+        }
+        rethrow;
+      }
     }
   }
 

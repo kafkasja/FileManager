@@ -8443,4 +8443,163 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get receiveFolderHelp =>
       'Bestanden die andere apparaten je sturen komen hier, in een map per apparaat.';
+
+  @override
+  String linkSendTo(String device) {
+    return 'Stuur naar $device';
+  }
+
+  @override
+  String linkSending(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden worden naar $device gestuurd',
+      one: '1 bestand wordt naar $device gestuurd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String linkSendFailed(String device) {
+    return 'Versturen naar $device is mislukt. Probeer het opnieuw.';
+  }
+
+  @override
+  String linkConnectedTo(String device) {
+    return 'Verbonden met $device';
+  }
+
+  @override
+  String get linkOpen => 'Openen';
+
+  @override
+  String get linkNearbyDevices => 'Apparaten in de buurt';
+
+  @override
+  String get linkNearbyDevicesHint => 'Verbind een telefoon of pc';
+
+  @override
+  String linkReconnectTo(String device) {
+    return 'Verbinden met $device';
+  }
+
+  @override
+  String linkReconnecting(String device) {
+    return 'Verbinden met $device…';
+  }
+
+  @override
+  String linkLetSee(String device) {
+    return '$device mijn bestanden laten zien';
+  }
+
+  @override
+  String get linkLetSeeHint =>
+      'Het kan door al je bestanden op dit apparaat bladeren. Bestanden sturen kan altijd.';
+
+  @override
+  String linkLetTake(String device) {
+    return '$device bestanden laten nemen zonder te vragen';
+  }
+
+  @override
+  String get linkLetTakeHint =>
+      'Anders word je eerst gevraagd en zie je van elk bestand de naam, grootte en het type.';
+
+  @override
+  String linkYourChoices(String device) {
+    return 'Wat $device met je bestanden mag doen:';
+  }
+
+  @override
+  String takePromptTitle(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden',
+      one: '1 bestand',
+    );
+    return '$device wil $_temp0 nemen ($size)';
+  }
+
+  @override
+  String takePromptMoveTitle(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bestanden',
+      one: '1 bestand',
+    );
+    return '$device wil $_temp0 verplaatsen ($size)';
+  }
+
+  @override
+  String get takePromptMoveNote =>
+      'De originelen gaan hier naar de prullenbak zodra de kopieën zijn gecontroleerd.';
+
+  @override
+  String takePromptFileLine(String size, String type) {
+    return '$size · $type';
+  }
+
+  @override
+  String takePromptAlways(String device) {
+    return '$device altijd toestaan';
+  }
+
+  @override
+  String get takePromptAllow => 'Toestaan';
+
+  @override
+  String takePromptTimedOut(String device) {
+    return 'Het verzoek van $device is verlopen: geen antwoord';
+  }
+
+  @override
+  String transferErrorTakeDeclined(String device) {
+    return 'Geweigerd door $device';
+  }
+
+  @override
+  String transferErrorTakeNoAnswer(String device) {
+    return 'Geen antwoord van $device';
+  }
+
+  @override
+  String linkOneWay(String device) {
+    return '$device is van hieruit niet bereikbaar: je kunt het nog wel bestanden sturen.';
+  }
+
+  @override
+  String linkTheySeeYours(String device) {
+    return '$device kan je bestanden zien';
+  }
+
+  @override
+  String linkTheyDontSeeYours(String device) {
+    return '$device kan je bestanden niet zien';
+  }
+
+  @override
+  String get linkLimitFolders => 'Beperken tot mappen…';
+
+  @override
+  String linkSeeTheirFiles(String device) {
+    return 'Blader door $device';
+  }
+
+  @override
+  String get linkShowMyCode =>
+      'Of verbind vanaf het andere apparaat met deze code';
+
+  @override
+  String get linkTitle => 'Een apparaat verbinden';
+
+  @override
+  String get linkShowCode => 'Mijn code tonen';
+
+  @override
+  String get linkShowCodeHint =>
+      'Het andere apparaat scant of typt hem. Daarna zien jullie elkaars bestanden.';
 }

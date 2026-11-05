@@ -39,16 +39,18 @@ void main() {
     expect(sharing, isFalse);
   });
 
-  test('sleep without sharing only flushes; wake-up runs the resume work',
-      () async {
-    final f = flow();
-    addTearDown(f.dispose);
-    events
-      ..add(PowerState.suspend)
-      ..add(PowerState.resume);
-    await pumpEventQueue();
-    expect(log, ['flush', 'resume']);
-  });
+  test(
+    'sleep without sharing only flushes; wake-up runs the resume work',
+    () async {
+      final f = flow();
+      addTearDown(f.dispose);
+      events
+        ..add(PowerState.suspend)
+        ..add(PowerState.resume);
+      await pumpEventQueue();
+      expect(log, ['flush', 'resume']);
+    },
+  );
 
   test('a failing stop is reported and the flush still runs', () async {
     sharing = true;

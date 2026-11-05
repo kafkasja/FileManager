@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:kfm/core/files/file_op_exception.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/utils/random_id.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/domain/link.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
 
@@ -63,6 +65,28 @@ class LoopbackMediaProxy {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     _server = server;
     _requests = server.listen((req) => unawaited(_serve(req)));
+  }
+
+  /// E1: asks the other device before [f] streams (a video is a "take"
+  /// when its owner wants to be asked). Older devices (404) never ask.
+  /// Throws [FileOpException] (`permissionDenied`) when declined or not
+  /// answered.
+  Future<void> prepare(FileRef f) async {
+    final serverId = parseRemoteFileId(f.id).serverId;
+    try {
+      await _http().postJson<void>(
+        ApiRoutes.take,
+        {
+          'ids': [serverId],
+        },
+        decode: (_) {},
+        timeout: kTakeClientWait,
+      );
+    } on RemoteApiException catch (e) {
+      if (e.code == ApiErrorCode.notFound) return;
+      if (e.code == ApiErrorCode.unauthorized) _onUnauthorized?.call();
+      throw FileOpException(FileOpFailure.permissionDenied, 'take ${e.code}');
+    }
   }
 
   /// A fresh URL for [f] (a `remote:<fp>:<serverId>` file). Throws

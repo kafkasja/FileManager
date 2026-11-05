@@ -6,6 +6,7 @@ import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/offer_service.dart';
 import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
+import 'package:kfm/features/connect/data/take_gate.dart';
 import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
@@ -115,6 +116,9 @@ final RegExp _badPercent = RegExp('%(?![0-9A-Fa-f]{2})');
 
 const String _kGuardContextKey = 'kfm.guard';
 
+/// The pseudo root of an N12b file this device offered to the caller.
+const String _offeredRootId = 'offered';
+
 /// The targets the guard resolved for [request] (empty outside `guarded`).
 List<ResolvedTarget> guardedTargetsOf(Request request) {
   final t = request.context[_kGuardContextKey];
@@ -147,6 +151,7 @@ class AllowListGuard {
     required this.source,
     required this.paths,
     this.grants = const NoOfferGrants(),
+    this.takes,
   });
 
   /// The client's scope by fingerprint (read per request: edits apply to
@@ -158,6 +163,9 @@ class AllowListGuard {
   /// N12: accepted send-files offers (upload roots `offer:<id>`).
   final OfferGrants grants;
 
+  /// E1: the take prompt's grants (null: never asks, as before E1).
+  final TakeGate? takes;
+
   /// Wraps [inner]: every target [extract] returns must be inside the
   /// session's scope, outside the excluded locations, and (when written:
   /// [write] or the target's own flag) under a writable root. Otherwise
@@ -166,11 +174,15 @@ class AllowListGuard {
   /// checked; a move or trash *source* is a write target too. An empty
   /// target list is refused unless [allowEmpty]. Route bodies read ids and
   /// paths only from [guardedTargetsOf], never from the request again.
+  /// E1 [take]: the route hands out a file's full bytes (content, sha256,
+  /// video): a linked peer that may not take files without asking needs a
+  /// take grant for every file id, else 403 `take_needs_approval`.
   Handler guarded(
     Handler inner, {
     required Future<List<GuardTarget>> Function(GuardInput input) extract,
     required bool write,
     bool allowEmpty = false,
+    bool take = false,
   }) {
     Future<Response> handler(Request request) async {
       final session = sessionOf(request);
@@ -190,7 +202,15 @@ class AllowListGuard {
           return apiError(ApiErrorCode.forbiddenPath);
         }
         for (final t in targets) {
-          resolved.add(await _check(scope, fp, t, write: write || t.write));
+          final r = await _check(scope, fp, t, write: write || t.write);
+          // N12b offered files are this device's own offer: no prompt.
+          if (take &&
+              t is FileIdTarget &&
+              r.root.id != _offeredRootId &&
+              !(takes?.allows(fp, t.id) ?? true)) {
+            throw const GuardRejection(ApiErrorCode.takeNeedsApproval, 'take');
+          }
+          resolved.add(r);
         }
       } on GuardRejection catch (e) {
         return apiError(e.code);
@@ -250,7 +270,7 @@ class AllowListGuard {
           target: target,
           canonicalPath: offered.canonicalPath,
           root: SharedRoot(
-            id: 'offered',
+            id: _offeredRootId,
             path: offered.canonicalPath,
             label: '',
             readOnly: true,

@@ -25,6 +25,7 @@ import 'package:kfm/desktop/tabs/desktop_tabs_controller.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
+import 'package:kfm/features/connect/ui/link_prompter.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
 import 'package:kfm/features/share_in/ui/share_in_prompter.dart';
@@ -169,6 +170,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
         const DbStartupBanner(),
         const ExternalNotices(),
         const IncomingOfferPrompter(),
+        const LinkPrompter(),
         const ShareInPrompter(),
         const NoTrashPrompter(),
         const DesktopIconChoicePrompter(),

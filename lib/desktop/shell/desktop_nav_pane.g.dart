@@ -10,21 +10,21 @@ part of 'desktop_nav_pane.dart';
 // ignore_for_file: type=lint, type=warning
 /// E1 hook: the device rows of the nav pane's Devices group (linked and
 /// remembered devices: status dot, "Send to `name`" drop, click = remote
-/// browse). Empty until E1c fills it.
+/// browse); E1c's [DesktopDeviceRows].
 
 @ProviderFor(desktopNavDeviceRows)
 final desktopNavDeviceRowsProvider = DesktopNavDeviceRowsProvider._();
 
 /// E1 hook: the device rows of the nav pane's Devices group (linked and
 /// remembered devices: status dot, "Send to `name`" drop, click = remote
-/// browse). Empty until E1c fills it.
+/// browse); E1c's [DesktopDeviceRows].
 
 final class DesktopNavDeviceRowsProvider
     extends $FunctionalProvider<List<Widget>, List<Widget>, List<Widget>>
     with $Provider<List<Widget>> {
   /// E1 hook: the device rows of the nav pane's Devices group (linked and
   /// remembered devices: status dot, "Send to `name`" drop, click = remote
-  /// browse). Empty until E1c fills it.
+  /// browse); E1c's [DesktopDeviceRows].
   DesktopNavDeviceRowsProvider._()
     : super(
         from: null,
@@ -59,7 +59,7 @@ final class DesktopNavDeviceRowsProvider
 }
 
 String _$desktopNavDeviceRowsHash() =>
-    r'6e2ea881b1ce19b7ac5d3f586f130bc789e93334';
+    r'0614de703ba41d13b3a5fabec83d547e230356b1';
 
 /// Nav pane width (`desktop.navWidth`, 160–360 px).
 

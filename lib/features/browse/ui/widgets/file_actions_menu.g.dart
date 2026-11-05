@@ -8,12 +8,14 @@ part of 'file_actions_menu.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Sorted by [FileMenuItem.order].
+/// Sorted by [FileMenuItem.order]. E1: while linked, "Send to `name`"
+/// comes first.
 
 @ProviderFor(fileMenuItems)
 final fileMenuItemsProvider = FileMenuItemsProvider._();
 
-/// Sorted by [FileMenuItem.order].
+/// Sorted by [FileMenuItem.order]. E1: while linked, "Send to `name`"
+/// comes first.
 
 final class FileMenuItemsProvider
     extends
@@ -23,7 +25,8 @@ final class FileMenuItemsProvider
           List<FileMenuItem>
         >
     with $Provider<List<FileMenuItem>> {
-  /// Sorted by [FileMenuItem.order].
+  /// Sorted by [FileMenuItem.order]. E1: while linked, "Send to `name`"
+  /// comes first.
   FileMenuItemsProvider._()
     : super(
         from: null,
@@ -58,4 +61,4 @@ final class FileMenuItemsProvider
   }
 }
 
-String _$fileMenuItemsHash() => r'2954fb987ec811ef8673b06ab9e470c2e8a3d0db';
+String _$fileMenuItemsHash() => r'570a69b7b6579444ac3c9897e9b921d265cbf066';

@@ -69,6 +69,8 @@ KnownDevice knownDeviceFromRow(KnownDeviceRow r) => KnownDevice(
   isTemporary: r.isTemporary,
   autoAccept: r.autoAccept,
   autoAcceptFiles: r.autoAcceptFiles,
+  letSee: r.letSee,
+  letTakeFreely: r.letTakeFreely,
 );
 
 /// Remembered devices (TASK-N6). Reads go straight to the DAO; every write
@@ -197,6 +199,22 @@ class KnownDevicesRepository {
           KnownDevicesCompanion(autoAcceptFiles: Value(enabled)),
         ),
       );
+
+  /// E1: the link choices for [fp] (no-op for an unknown device).
+  Future<void> setLinkPerms(
+    String fp, {
+    required bool see,
+    required bool takeFreely,
+  }) => _queue.enqueue(
+    null,
+    () => _dao.updateByFingerprint(
+      fp,
+      KnownDevicesCompanion(
+        letSee: Value(see),
+        letTakeFreely: Value(takeFreely),
+      ),
+    ),
+  );
 
   /// A successful reconnect: lastSeenAt = now, [addresses] merged in front.
   Future<void> touch(String fp, List<String> addresses) =>

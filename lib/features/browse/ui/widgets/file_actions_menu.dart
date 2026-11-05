@@ -6,10 +6,12 @@ import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
+import 'package:kfm/features/connect/ui/link_providers.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/privacy/ui/share_flow.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
+import 'package:kfm/features/transfers/ui/link_send.dart';
 import 'package:kfm/features/transfers/ui/send_flow.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -45,10 +47,13 @@ class FileMenuItem {
   static bool _always(FileRef _) => true;
 }
 
-/// Sorted by [FileMenuItem.order].
+/// Sorted by [FileMenuItem.order]. E1: while linked, "Send to `name`"
+/// comes first.
 @Riverpod(keepAlive: true)
 List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
   <FileMenuItem>[
+    if (ref.watch(currentLinkProvider) case final link?)
+      sendToLinkFileMenuItem(link),
     FileMenuItem(
       order: 10,
       label: (c) => c.l10n.openWith,

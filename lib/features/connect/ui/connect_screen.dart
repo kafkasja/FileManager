@@ -11,11 +11,15 @@ import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
+import 'package:kfm/features/connect/domain/link.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_controller.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
+import 'package:kfm/features/connect/ui/link_dialog.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/connect/ui/remote_swipe_screen.dart';
+import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:kfm/features/transfers/ui/transfer_badge.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -73,12 +77,14 @@ class ConnectScreen extends ConsumerWidget {
                 :final words,
                 :final remember,
                 :final showRemember,
+                :final perms,
               ) =>
                 _Progress(
                   title: l10n.connectWaiting(name),
                   name: name,
                   words: words,
                   remember: showRemember ? remember : null,
+                  perms: perms,
                 ),
               ConnectConnected(
                 :final peerName,
@@ -95,6 +101,7 @@ class ConnectScreen extends ConsumerWidget {
                         : roots.isEmpty
                         ? l10n.connectNoFoldersYet(peerName)
                         : l10n.connectFoldersShared(roots.length),
+                    extra: sendOnly ? null : const LinkDetails(),
                     actions: [
                       OutlinedButton(
                         onPressed: () => unawaited(controller.disconnect()),
@@ -198,6 +205,16 @@ class _Choose extends ConsumerWidget {
       children: [
         Text(l10n.connectChooseHint, style: theme.textTheme.bodyLarge),
         SizedBox(height: spacing * 3),
+        // E1: one link both ways, whoever shows the code.
+        Card(
+          child: ListTile(
+            key: const ValueKey('connect-show-code'),
+            leading: const Icon(Icons.qr_code_2),
+            title: Text(l10n.linkShowCode),
+            subtitle: Text(l10n.linkShowCodeHint),
+            onTap: () => unawaited(context.push(AppRoutes.connectShare)),
+          ),
+        ),
         if (canScan)
           Card(
             child: ListTile(
@@ -658,7 +675,11 @@ class _Progress extends ConsumerWidget {
     required this.name,
     this.words = const [],
     this.remember,
+    this.perms,
   });
+
+  /// E1: this side's "Let `B` see / take" checkboxes; null hides them.
+  final LinkPerms? perms;
 
   final String title;
   final String? name;
@@ -673,21 +694,42 @@ class _Progress extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final remember = this.remember;
+    final perms = this.perms;
+    final controller = ref.read(connectControllerProvider.notifier);
+    final device = name ?? l10n.connectOtherDevice;
     return _Message(
       icon: null,
       title: title,
       body: words.isEmpty ? null : l10n.pairCompareWords,
       words: words,
-      extra: remember == null
+      extra: remember == null && perms == null
           ? null
-          : CheckboxListTile(
-              key: const ValueKey('connect-remember'),
-              controlAffinity: ListTileControlAffinity.leading,
-              value: remember,
-              title: Text(l10n.rememberThisDevice),
-              onChanged: (v) => ref
-                  .read(connectControllerProvider.notifier)
-                  .setRemember(remember: v ?? false),
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (perms != null) ...[
+                  Text(
+                    l10n.linkYourChoices(device),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  LinkPermsChoice(
+                    device: device,
+                    perms: perms,
+                    onChanged: controller.setPerms,
+                  ),
+                ],
+                if (remember != null)
+                  CheckboxListTile(
+                    key: const ValueKey('connect-remember'),
+                    contentPadding: EdgeInsetsDirectional.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: remember,
+                    title: Text(l10n.rememberThisDevice),
+                    onChanged: (v) =>
+                        controller.setRemember(remember: v ?? false),
+                  ),
+              ],
             ),
       actions: [
         OutlinedButton(
@@ -794,6 +836,64 @@ class _Message extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// TASK-E1 link details on the Connected screen: what this side lets the
+/// other do, a one-way note when the reverse half failed, and the
+/// advanced "Limit to folders…" (the old N4 picker, for this device's
+/// files).
+class LinkDetails extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final link = ref.watch(linkControllerProvider);
+    if (link == null) return const SizedBox.shrink();
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final name = link.peerName;
+    return Column(
+      key: const ValueKey('link-details'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          link.mine.see
+              ? l10n.linkTheySeeYours(name)
+              : l10n.linkTheyDontSeeYours(name),
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        if (!link.mine.takeFreely)
+          Text(
+            l10n.linkLetTakeHint,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        if (!link.reverseReachable && link.initiator)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(top: 8),
+            child: Text(
+              l10n.linkOneWay(name),
+              key: const ValueKey('link-one-way'),
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        if (link.mine.see)
+          TextButton(
+            key: const ValueKey('link-limit-folders'),
+            onPressed: () => unawaited(
+              showSharedFoldersPicker(
+                context,
+                clientFingerprint: link.peerFingerprint,
+                clientName: name,
+              ),
+            ),
+            child: Text(l10n.linkLimitFolders),
+          ),
+      ],
     );
   }
 }

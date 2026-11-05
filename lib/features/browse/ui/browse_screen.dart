@@ -120,6 +120,15 @@ class BrowseScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+            // E1: Connect is one tap away (phone or PC).
+            if (!selecting)
+              IconButton(
+                key: const ValueKey('browse-devices'),
+                tooltip: l10n.connectADevice,
+                icon: const Icon(Icons.devices_outlined),
+                onPressed: () =>
+                    unawaited(context.push<void>(AppRoutes.connect)),
+              ),
             if (!selecting)
               IconButton(
                 tooltip: l10n.collectionsOpen,

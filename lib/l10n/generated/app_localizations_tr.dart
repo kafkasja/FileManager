@@ -8381,4 +8381,162 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get receiveFolderHelp =>
       'Diğer cihazların gönderdiği dosyalar buraya, her cihaz için ayrı bir klasöre gelir.';
+
+  @override
+  String linkSendTo(String device) {
+    return '$device cihazına gönder';
+  }
+
+  @override
+  String linkSending(int count, String device) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dosya $device cihazına gönderiliyor',
+      one: '1 dosya $device cihazına gönderiliyor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String linkSendFailed(String device) {
+    return '$device cihazına gönderilemedi. Tekrar deneyin.';
+  }
+
+  @override
+  String linkConnectedTo(String device) {
+    return '$device cihazına bağlı';
+  }
+
+  @override
+  String get linkOpen => 'Aç';
+
+  @override
+  String get linkNearbyDevices => 'Yakındaki cihazlar';
+
+  @override
+  String get linkNearbyDevicesHint => 'Bir telefon veya bilgisayar bağlayın';
+
+  @override
+  String linkReconnectTo(String device) {
+    return '$device cihazına bağlan';
+  }
+
+  @override
+  String linkReconnecting(String device) {
+    return '$device cihazına bağlanılıyor…';
+  }
+
+  @override
+  String linkLetSee(String device) {
+    return '$device dosyalarımı görebilsin';
+  }
+
+  @override
+  String get linkLetSeeHint =>
+      'Bu cihazdaki tüm dosyalarınıza göz atabilir. Dosya göndermek her durumda mümkün.';
+
+  @override
+  String linkLetTake(String device) {
+    return '$device sormadan dosya alabilsin';
+  }
+
+  @override
+  String get linkLetTakeHint =>
+      'Aksi halde önce size sorulur ve her dosyanın adını, boyutunu ve türünü görürsünüz.';
+
+  @override
+  String linkYourChoices(String device) {
+    return '$device dosyalarınızla neler yapabilir:';
+  }
+
+  @override
+  String takePromptTitle(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dosya',
+      one: '1 dosya',
+    );
+    return '$device $_temp0 almak istiyor ($size)';
+  }
+
+  @override
+  String takePromptMoveTitle(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dosya',
+      one: '1 dosya',
+    );
+    return '$device $_temp0 taşımak istiyor ($size)';
+  }
+
+  @override
+  String get takePromptMoveNote =>
+      'Kopyalar doğrulandıktan sonra buradaki orijinaller çöp kutusuna gider.';
+
+  @override
+  String takePromptFileLine(String size, String type) {
+    return '$size · $type';
+  }
+
+  @override
+  String takePromptAlways(String device) {
+    return '$device için her zaman izin ver';
+  }
+
+  @override
+  String get takePromptAllow => 'İzin ver';
+
+  @override
+  String takePromptTimedOut(String device) {
+    return '$device isteği sona erdi: yanıt yok';
+  }
+
+  @override
+  String transferErrorTakeDeclined(String device) {
+    return '$device reddetti';
+  }
+
+  @override
+  String transferErrorTakeNoAnswer(String device) {
+    return '$device yanıt vermedi';
+  }
+
+  @override
+  String linkOneWay(String device) {
+    return '$device cihazına buradan ulaşılamıyor: yine de dosya gönderebilirsiniz.';
+  }
+
+  @override
+  String linkTheySeeYours(String device) {
+    return '$device dosyalarınızı görebilir';
+  }
+
+  @override
+  String linkTheyDontSeeYours(String device) {
+    return '$device dosyalarınızı göremez';
+  }
+
+  @override
+  String get linkLimitFolders => 'Klasörlerle sınırla…';
+
+  @override
+  String linkSeeTheirFiles(String device) {
+    return '$device cihazına göz at';
+  }
+
+  @override
+  String get linkShowMyCode => 'Ya da diğer cihazdan bu kodla bağlanın';
+
+  @override
+  String get linkTitle => 'Bir cihaz bağla';
+
+  @override
+  String get linkShowCode => 'Kodumu göster';
+
+  @override
+  String get linkShowCodeHint =>
+      'Diğer cihaz tarar veya yazar. Sonra ikiniz de birbirinizin dosyalarını görürsünüz.';
 }

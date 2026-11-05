@@ -92,7 +92,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump by exactly 1 per task that changes the schema, and add a step below.
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -287,6 +287,18 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(cloudItems);
         await m.createIndex(ciStatus);
         await m.createIndex(ciOnCloudFile);
+      }
+      if (from < 25) {
+        // TASK-E1. From < 19 the v19 createTable already has both columns.
+        if (from >= 19) {
+          await m.addColumn(knownDevices, knownDevices.letSee);
+          await m.addColumn(knownDevices, knownDevices.letTakeFreely);
+        }
+        // Old devices keep exactly what they had: folders → see (limited
+        // to them); none → nothing.
+        await customStatement(
+          "UPDATE known_devices SET let_see = (allowed_roots_json != '[]')",
+        );
       }
       await customStatement('PRAGMA user_version = $to');
     }),

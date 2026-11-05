@@ -10,6 +10,8 @@ import 'package:kfm/app/widgets/indexing_chip.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/background_jobs/ui/jobs_indicator.dart';
 import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
+import 'package:kfm/features/connect/ui/link_chip.dart';
+import 'package:kfm/features/connect/ui/link_prompter.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/external_storage/ui/external_notices.dart';
 import 'package:kfm/features/onboarding/ui/limited_access_banner.dart';
@@ -64,6 +66,8 @@ class AppScaffold extends ConsumerWidget {
           const ExternalNotices(),
           // N12: send-files offer prompts and their snackbars.
           const IncomingOfferPrompter(),
+          // E1: the link dialog and the take prompt.
+          const LinkPrompter(),
           // X1: files shared into KFM from other apps.
           const ShareInPrompter(),
           // PL1: "This drive has no Recycle Bin. Delete permanently?"
@@ -113,6 +117,8 @@ class AppScaffold extends ConsumerWidget {
               child: Column(
                 children: [
                   Expanded(child: content),
+                  // E1: "Connected to <device> · Open".
+                  const LinkChip(),
                   // X8: transfers and copies on every tab.
                   const JobsIndicator(),
                 ],
@@ -127,6 +133,8 @@ class AppScaffold extends ConsumerWidget {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // E1: "Connected to <device> · Open", stacked with X8's bar.
+          const LinkChip(),
           // X8: transfers and copies on every tab, above the tabs.
           const JobsIndicator(),
           NavigationBar(

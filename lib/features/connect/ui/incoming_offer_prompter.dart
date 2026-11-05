@@ -23,6 +23,7 @@ import 'package:kfm/features/connect/domain/offer_protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/connect/domain/share_offer.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/connect/ui/offer_dialog.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
@@ -350,7 +351,10 @@ class _IncomingOfferPrompterState extends ConsumerState<IncomingOfferPrompter>
       return;
     }
     OfferAnswer? answer;
-    if (known != null && !known.isTemporary && known.autoAcceptFiles) {
+    // E1: files from the linked device need no prompt.
+    final linked = ref.read(linkControllerProvider)?.peerFingerprint == fp;
+    if (linked ||
+        (known != null && !known.isTemporary && known.autoAcceptFiles)) {
       // Trusted: no prompt.
       answer = (
         accept: true,

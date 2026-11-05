@@ -16,6 +16,7 @@ import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
 import 'package:kfm/features/connect/domain/files_protocol.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
+import 'package:kfm/features/connect/domain/link.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
 import 'package:kfm/features/session/domain/session.dart';
@@ -612,6 +613,80 @@ void main() {
       connected = http;
       engine.onConnection(_fp);
       await until(id, (j) => j.status == TransferStatus.done);
+    });
+  });
+
+  group('E1 take prompt', () {
+    test('one /v1/take per download job (ids, move flag); granted → the '
+        'files come', () async {
+      http.contents['ms:0'] = [1, 2, 3];
+      http.contents['ms:1'] = [4, 5, 6];
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0'), _remote('ms:1')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      await until(id, (j) => j.status == TransferStatus.done);
+      final takes = [
+        for (final c in http.calls)
+          if (c.path == ApiRoutes.take) c,
+      ];
+      expect(takes, hasLength(1));
+      expect(takes.single.body, {
+        'ids': ['ms:0', 'ms:1'],
+      });
+      expect(http.postTimeouts[ApiRoutes.take], kTakeClientWait);
+    });
+
+    test('declined → every file fails "take_declined", asked once', () async {
+      http
+        ..contents['ms:0'] = [1, 2, 3]
+        ..contents['ms:1'] = [4, 5, 6]
+        ..json = (c) {
+          if (c.path == ApiRoutes.take) {
+            throw RemoteApiException(
+              403,
+              ApiErrorDto(ApiErrorCode.declined.wire, ''),
+            );
+          }
+          return const {};
+        };
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0'), _remote('ms:1')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      final job = await until(id, (j) => j.isFinished);
+      expect(
+        job.files.map((f) => f.error),
+        everyElement(TransferErrors.takeDeclined),
+      );
+      expect(http.calls.where((c) => c.path == ApiRoutes.take), hasLength(1));
+      expect(contentCalls(), isEmpty);
+    });
+
+    test('an older device without /v1/take (404) never asks', () async {
+      http
+        ..contents['ms:0'] = [1, 2, 3]
+        ..json = (c) {
+          if (c.path == ApiRoutes.take) {
+            throw RemoteApiException(
+              404,
+              ApiErrorDto(ApiErrorCode.notFound.wire, ''),
+            );
+          }
+          return const {};
+        };
+      final id = await engine.enqueueDownload(
+        [_remote('ms:0')],
+        peerFingerprint: _fp,
+        peerName: 'Phone',
+        localFolder: _dl,
+      );
+      final job = await until(id, (j) => j.status == TransferStatus.done);
+      expect(job.files.single.status, TransferFileStatus.done);
     });
   });
 

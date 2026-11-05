@@ -12456,6 +12456,34 @@ class $KnownDevicesTable extends KnownDevices
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _letSeeMeta = const VerificationMeta('letSee');
+  @override
+  late final GeneratedColumn<bool> letSee = GeneratedColumn<bool>(
+    'let_see',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("let_see" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _letTakeFreelyMeta = const VerificationMeta(
+    'letTakeFreely',
+  );
+  @override
+  late final GeneratedColumn<bool> letTakeFreely = GeneratedColumn<bool>(
+    'let_take_freely',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("let_take_freely" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -12470,6 +12498,8 @@ class $KnownDevicesTable extends KnownDevices
     isTemporary,
     autoAccept,
     autoAcceptFiles,
+    letSee,
+    letTakeFreely,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -12588,6 +12618,21 @@ class $KnownDevicesTable extends KnownDevices
         ),
       );
     }
+    if (data.containsKey('let_see')) {
+      context.handle(
+        _letSeeMeta,
+        letSee.isAcceptableOrUnknown(data['let_see']!, _letSeeMeta),
+      );
+    }
+    if (data.containsKey('let_take_freely')) {
+      context.handle(
+        _letTakeFreelyMeta,
+        letTakeFreely.isAcceptableOrUnknown(
+          data['let_take_freely']!,
+          _letTakeFreelyMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -12645,6 +12690,14 @@ class $KnownDevicesTable extends KnownDevices
         DriftSqlType.bool,
         data['${effectivePrefix}auto_accept_files'],
       )!,
+      letSee: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}let_see'],
+      )!,
+      letTakeFreely: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}let_take_freely'],
+      )!,
     );
   }
 
@@ -12692,6 +12745,14 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
   /// "Accept files without asking" (TASK-N12): a verified, non-temporary
   /// peer's send-files offers are accepted without the offer prompt.
   final bool autoAcceptFiles;
+
+  /// E1: "Let this peer see my files" (false → empty scope; sending still
+  /// works).
+  final bool letSee;
+
+  /// E1: "Let this peer take files without asking" (false → the take
+  /// prompt asks first).
+  final bool letTakeFreely;
   const KnownDeviceRow({
     required this.id,
     required this.peerDeviceId,
@@ -12705,6 +12766,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     required this.isTemporary,
     required this.autoAccept,
     required this.autoAcceptFiles,
+    required this.letSee,
+    required this.letTakeFreely,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -12721,6 +12784,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     map['is_temporary'] = Variable<bool>(isTemporary);
     map['auto_accept'] = Variable<bool>(autoAccept);
     map['auto_accept_files'] = Variable<bool>(autoAcceptFiles);
+    map['let_see'] = Variable<bool>(letSee);
+    map['let_take_freely'] = Variable<bool>(letTakeFreely);
     return map;
   }
 
@@ -12738,6 +12803,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       isTemporary: Value(isTemporary),
       autoAccept: Value(autoAccept),
       autoAcceptFiles: Value(autoAcceptFiles),
+      letSee: Value(letSee),
+      letTakeFreely: Value(letTakeFreely),
     );
   }
 
@@ -12761,6 +12828,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       isTemporary: serializer.fromJson<bool>(json['isTemporary']),
       autoAccept: serializer.fromJson<bool>(json['autoAccept']),
       autoAcceptFiles: serializer.fromJson<bool>(json['autoAcceptFiles']),
+      letSee: serializer.fromJson<bool>(json['letSee']),
+      letTakeFreely: serializer.fromJson<bool>(json['letTakeFreely']),
     );
   }
   @override
@@ -12779,6 +12848,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       'isTemporary': serializer.toJson<bool>(isTemporary),
       'autoAccept': serializer.toJson<bool>(autoAccept),
       'autoAcceptFiles': serializer.toJson<bool>(autoAcceptFiles),
+      'letSee': serializer.toJson<bool>(letSee),
+      'letTakeFreely': serializer.toJson<bool>(letTakeFreely),
     };
   }
 
@@ -12795,6 +12866,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     bool? isTemporary,
     bool? autoAccept,
     bool? autoAcceptFiles,
+    bool? letSee,
+    bool? letTakeFreely,
   }) => KnownDeviceRow(
     id: id ?? this.id,
     peerDeviceId: peerDeviceId ?? this.peerDeviceId,
@@ -12808,6 +12881,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     isTemporary: isTemporary ?? this.isTemporary,
     autoAccept: autoAccept ?? this.autoAccept,
     autoAcceptFiles: autoAcceptFiles ?? this.autoAcceptFiles,
+    letSee: letSee ?? this.letSee,
+    letTakeFreely: letTakeFreely ?? this.letTakeFreely,
   );
   KnownDeviceRow copyWithCompanion(KnownDevicesCompanion data) {
     return KnownDeviceRow(
@@ -12841,6 +12916,10 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
       autoAcceptFiles: data.autoAcceptFiles.present
           ? data.autoAcceptFiles.value
           : this.autoAcceptFiles,
+      letSee: data.letSee.present ? data.letSee.value : this.letSee,
+      letTakeFreely: data.letTakeFreely.present
+          ? data.letTakeFreely.value
+          : this.letTakeFreely,
     );
   }
 
@@ -12858,7 +12937,9 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
           ..write('canShareToUs: $canShareToUs, ')
           ..write('isTemporary: $isTemporary, ')
           ..write('autoAccept: $autoAccept, ')
-          ..write('autoAcceptFiles: $autoAcceptFiles')
+          ..write('autoAcceptFiles: $autoAcceptFiles, ')
+          ..write('letSee: $letSee, ')
+          ..write('letTakeFreely: $letTakeFreely')
           ..write(')'))
         .toString();
   }
@@ -12877,6 +12958,8 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
     isTemporary,
     autoAccept,
     autoAcceptFiles,
+    letSee,
+    letTakeFreely,
   );
   @override
   bool operator ==(Object other) =>
@@ -12893,7 +12976,9 @@ class KnownDeviceRow extends DataClass implements Insertable<KnownDeviceRow> {
           other.canShareToUs == this.canShareToUs &&
           other.isTemporary == this.isTemporary &&
           other.autoAccept == this.autoAccept &&
-          other.autoAcceptFiles == this.autoAcceptFiles);
+          other.autoAcceptFiles == this.autoAcceptFiles &&
+          other.letSee == this.letSee &&
+          other.letTakeFreely == this.letTakeFreely);
 }
 
 class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
@@ -12909,6 +12994,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
   final Value<bool> isTemporary;
   final Value<bool> autoAccept;
   final Value<bool> autoAcceptFiles;
+  final Value<bool> letSee;
+  final Value<bool> letTakeFreely;
   final Value<int> rowid;
   const KnownDevicesCompanion({
     this.id = const Value.absent(),
@@ -12923,6 +13010,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     this.isTemporary = const Value.absent(),
     this.autoAccept = const Value.absent(),
     this.autoAcceptFiles = const Value.absent(),
+    this.letSee = const Value.absent(),
+    this.letTakeFreely = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnownDevicesCompanion.insert({
@@ -12938,6 +13027,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     this.isTemporary = const Value.absent(),
     this.autoAccept = const Value.absent(),
     this.autoAcceptFiles = const Value.absent(),
+    this.letSee = const Value.absent(),
+    this.letTakeFreely = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        peerDeviceId = Value(peerDeviceId),
@@ -12958,6 +13049,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     Expression<bool>? isTemporary,
     Expression<bool>? autoAccept,
     Expression<bool>? autoAcceptFiles,
+    Expression<bool>? letSee,
+    Expression<bool>? letTakeFreely,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -12974,6 +13067,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
       if (isTemporary != null) 'is_temporary': isTemporary,
       if (autoAccept != null) 'auto_accept': autoAccept,
       if (autoAcceptFiles != null) 'auto_accept_files': autoAcceptFiles,
+      if (letSee != null) 'let_see': letSee,
+      if (letTakeFreely != null) 'let_take_freely': letTakeFreely,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -12991,6 +13086,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     Value<bool>? isTemporary,
     Value<bool>? autoAccept,
     Value<bool>? autoAcceptFiles,
+    Value<bool>? letSee,
+    Value<bool>? letTakeFreely,
     Value<int>? rowid,
   }) {
     return KnownDevicesCompanion(
@@ -13006,6 +13103,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
       isTemporary: isTemporary ?? this.isTemporary,
       autoAccept: autoAccept ?? this.autoAccept,
       autoAcceptFiles: autoAcceptFiles ?? this.autoAcceptFiles,
+      letSee: letSee ?? this.letSee,
+      letTakeFreely: letTakeFreely ?? this.letTakeFreely,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -13051,6 +13150,12 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
     if (autoAcceptFiles.present) {
       map['auto_accept_files'] = Variable<bool>(autoAcceptFiles.value);
     }
+    if (letSee.present) {
+      map['let_see'] = Variable<bool>(letSee.value);
+    }
+    if (letTakeFreely.present) {
+      map['let_take_freely'] = Variable<bool>(letTakeFreely.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -13072,6 +13177,8 @@ class KnownDevicesCompanion extends UpdateCompanion<KnownDeviceRow> {
           ..write('isTemporary: $isTemporary, ')
           ..write('autoAccept: $autoAccept, ')
           ..write('autoAcceptFiles: $autoAcceptFiles, ')
+          ..write('letSee: $letSee, ')
+          ..write('letTakeFreely: $letTakeFreely, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -28343,6 +28450,8 @@ typedef $$KnownDevicesTableCreateCompanionBuilder =
       Value<bool> isTemporary,
       Value<bool> autoAccept,
       Value<bool> autoAcceptFiles,
+      Value<bool> letSee,
+      Value<bool> letTakeFreely,
       Value<int> rowid,
     });
 typedef $$KnownDevicesTableUpdateCompanionBuilder =
@@ -28359,6 +28468,8 @@ typedef $$KnownDevicesTableUpdateCompanionBuilder =
       Value<bool> isTemporary,
       Value<bool> autoAccept,
       Value<bool> autoAcceptFiles,
+      Value<bool> letSee,
+      Value<bool> letTakeFreely,
       Value<int> rowid,
     });
 
@@ -28451,6 +28562,16 @@ class $$KnownDevicesTableFilterComposer
 
   ColumnFilters<bool> get autoAcceptFiles => $composableBuilder(
     column: $table.autoAcceptFiles,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get letSee => $composableBuilder(
+    column: $table.letSee,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get letTakeFreely => $composableBuilder(
+    column: $table.letTakeFreely,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -28548,6 +28669,16 @@ class $$KnownDevicesTableOrderingComposer
     column: $table.autoAcceptFiles,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get letSee => $composableBuilder(
+    column: $table.letSee,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get letTakeFreely => $composableBuilder(
+    column: $table.letTakeFreely,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnownDevicesTableAnnotationComposer
@@ -28610,6 +28741,14 @@ class $$KnownDevicesTableAnnotationComposer
 
   GeneratedColumn<bool> get autoAcceptFiles => $composableBuilder(
     column: $table.autoAcceptFiles,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get letSee =>
+      $composableBuilder(column: $table.letSee, builder: (column) => column);
+
+  GeneratedColumn<bool> get letTakeFreely => $composableBuilder(
+    column: $table.letTakeFreely,
     builder: (column) => column,
   );
 
@@ -28679,6 +28818,8 @@ class $$KnownDevicesTableTableManager
                 Value<bool> isTemporary = const Value.absent(),
                 Value<bool> autoAccept = const Value.absent(),
                 Value<bool> autoAcceptFiles = const Value.absent(),
+                Value<bool> letSee = const Value.absent(),
+                Value<bool> letTakeFreely = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnownDevicesCompanion(
                 id: id,
@@ -28693,6 +28834,8 @@ class $$KnownDevicesTableTableManager
                 isTemporary: isTemporary,
                 autoAccept: autoAccept,
                 autoAcceptFiles: autoAcceptFiles,
+                letSee: letSee,
+                letTakeFreely: letTakeFreely,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -28709,6 +28852,8 @@ class $$KnownDevicesTableTableManager
                 Value<bool> isTemporary = const Value.absent(),
                 Value<bool> autoAccept = const Value.absent(),
                 Value<bool> autoAcceptFiles = const Value.absent(),
+                Value<bool> letSee = const Value.absent(),
+                Value<bool> letTakeFreely = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnownDevicesCompanion.insert(
                 id: id,
@@ -28723,6 +28868,8 @@ class $$KnownDevicesTableTableManager
                 isTemporary: isTemporary,
                 autoAccept: autoAccept,
                 autoAcceptFiles: autoAcceptFiles,
+                letSee: letSee,
+                letTakeFreely: letTakeFreely,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

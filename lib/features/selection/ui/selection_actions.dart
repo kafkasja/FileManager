@@ -1,12 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/features/archive/ui/archive_actions.dart';
+import 'package:kfm/features/connect/ui/link_providers.dart';
 import 'package:kfm/features/details/ui/selection_summary_sheet.dart';
 import 'package:kfm/features/folders/ui/folder_selection_actions.dart';
 import 'package:kfm/features/privacy/ui/share_flow.dart';
 import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/swipe/ui/swipe_these.dart';
 import 'package:kfm/features/tags/ui/tag_actions.dart';
+import 'package:kfm/features/transfers/ui/link_send.dart';
 import 'package:kfm/features/transfers/ui/transfer_flows.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -55,6 +57,9 @@ class SelectionAction {
 @Riverpod(keepAlive: true)
 List<SelectionAction> selectionActions(Ref ref) => List.unmodifiable(
   <SelectionAction>[
+    // E1: one tap to the linked device, first.
+    if (ref.watch(currentLinkProvider) case final link?)
+      sendToLinkSelectionAction(link),
     ...folderSelectionActions,
     compressSelectionAction,
     ...tagSelectionActions,

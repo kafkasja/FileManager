@@ -78,6 +78,9 @@ class PlayerHandle implements VideoHandle {
           ));
       final proxy = await mediaProxy();
       if (_disposed) throw StateError('disposed');
+      // E1: the owner may want to be asked before a video streams.
+      await proxy.prepare(_file);
+      if (_disposed) throw StateError('disposed');
       c = _c = VideoPlayerController.networkUrl(
         proxy.urlFor(_file),
         videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
