@@ -11588,6 +11588,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'How files and folders look in the lists: Windows\' own icons or KFM\'s.'**
   String get desktopFileIconsHint;
+
+  /// E3: a folder outside the index has more files than KFM lists from disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first {count} files of this folder.'**
+  String desktopDiskCapped(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -8303,4 +8303,9 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get desktopFileIconsHint =>
       'Dosya ve klasörlerin listelerde nasıl görüneceği: Windows\'un kendi simgeleri veya KFM\'ninkiler.';
+
+  @override
+  String desktopDiskCapped(int count) {
+    return 'Bu klasördeki ilk $count dosya gösteriliyor.';
+  }
 }

@@ -8293,4 +8293,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get desktopFileIconsHint =>
       'How files and folders look in the lists: Windows\' own icons or KFM\'s.';
+
+  @override
+  String desktopDiskCapped(int count) {
+    return 'Showing the first $count files of this folder.';
+  }
 }

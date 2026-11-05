@@ -4681,5 +4681,7 @@
   "a11yKindFileExt": "{ext} file",
   "@a11yKindFileExt": {"description": "E2: spoken file kind with its extension.", "placeholders": {"ext": {"type": "String"}}},
   "desktopFileIconsHint": "How files and folders look in the lists: Windows' own icons or KFM's.",
-  "@desktopFileIconsHint": {"description": "E3: description of the desktop File icons setting."}
+  "@desktopFileIconsHint": {"description": "E3: description of the desktop File icons setting."},
+  "desktopDiskCapped": "Showing the first {count} files of this folder.",
+  "@desktopDiskCapped": {"description": "E3: a folder outside the index has more files than KFM lists from disk.", "placeholders": {"count": {"type": "int"}}}
 }

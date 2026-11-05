@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
+import 'package:kfm/desktop/browse/desktop_disk_files.dart';
 import 'package:kfm/desktop/shell/desktop_address_bar.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
@@ -117,6 +119,74 @@ void main() {
       for (final f in app.files.files) f.path,
     }, contains('/s/Other/a.jpg'));
     tabs.activate(1);
+  });
+
+  testWidgets('middle-click on a folder opens it in a new background tab', (
+    tester,
+  ) async {
+    final app = await pumpDesktopApp(tester, files: _library());
+    app.container
+        .read(desktopTabsControllerProvider.notifier)
+        .navigate(const FolderLocation('/s/DCIM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trip'), buttons: kMiddleMouseButton);
+    await tester.pumpAndSettle();
+    expect(_tabs(app).tabs.map((t) => t.location), const [
+      FolderLocation('/s/DCIM'),
+      FolderLocation('/s/DCIM/Trip'),
+    ]);
+    expect(_tabs(app).active, 0);
+  });
+
+  testWidgets('a folder gone from disk shows Go up / Home', (tester) async {
+    final app = await pumpDesktopApp(
+      tester,
+      files: _library(),
+      overrides: [
+        desktopFolderExistsProvider.overrideWithValue((p) async => false),
+      ],
+    );
+    app.container
+        .read(desktopTabsControllerProvider.notifier)
+        .navigate(const FolderLocation('/s/Gone'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('browse-folder-gone')), findsOneWidget);
+    expect(find.text('This folder no longer exists.'), findsOneWidget);
+    await tester.tap(find.text('Up one level'));
+    await tester.pumpAndSettle();
+    expect(_tabs(app).current.location, const FolderLocation('/s'));
+  });
+
+  testWidgets('a capped disk listing says so', (tester) async {
+    final app = await pumpDesktopApp(
+      tester,
+      files: _library(),
+      diskFiles: (folder) async => DiskFiles([
+        for (var i = 0; i < 3; i++)
+          FileRef(
+            id: 'path:$folder/d$i.txt',
+            uri: '$folder/d$i.txt',
+            name: 'd$i.txt',
+            kind: FileKind.document,
+            sizeBytes: 1,
+            modifiedAt: DateTime.utc(2025),
+            folderPath: folder,
+            origin: FileOrigin.local,
+          ),
+      ], capped: true),
+      overrides: [
+        desktopFolderIndexedProvider(
+          '/s/Other',
+        ).overrideWith((ref) async => false),
+      ],
+    );
+    app.container
+        .read(desktopTabsControllerProvider.notifier)
+        .navigate(const FolderLocation('/s/Other'));
+    await tester.pumpAndSettle();
+    expect(find.text('d0.txt'), findsOneWidget);
+    expect(find.text('o.jpg'), findsOneWidget);
+    expect(find.byKey(const ValueKey('browse-disk-capped')), findsOneWidget);
   });
 
   group('address bar', () {

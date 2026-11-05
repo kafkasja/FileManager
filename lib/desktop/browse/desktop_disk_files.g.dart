@@ -50,6 +50,85 @@ final class DiskFileListerProvider
 
 String _$diskFileListerHash() => r'c6dfd9da1beff1143ecc1acb2e5c29546a89a3a1';
 
+/// [folder] exists on disk (re-checked when the index or drives change).
+
+@ProviderFor(desktopFolderPresent)
+final desktopFolderPresentProvider = DesktopFolderPresentFamily._();
+
+/// [folder] exists on disk (re-checked when the index or drives change).
+
+final class DesktopFolderPresentProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// [folder] exists on disk (re-checked when the index or drives change).
+  DesktopFolderPresentProvider._({
+    required DesktopFolderPresentFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'desktopFolderPresentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$desktopFolderPresentHash();
+
+  @override
+  String toString() {
+    return r'desktopFolderPresentProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return desktopFolderPresent(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DesktopFolderPresentProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$desktopFolderPresentHash() =>
+    r'90c1402970ea95ff999bf1fd3953d0f1b7b55bab';
+
+/// [folder] exists on disk (re-checked when the index or drives change).
+
+final class DesktopFolderPresentFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  DesktopFolderPresentFamily._()
+    : super(
+        retry: null,
+        name: r'desktopFolderPresentProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// [folder] exists on disk (re-checked when the index or drives change).
+
+  DesktopFolderPresentProvider call(String folder) =>
+      DesktopFolderPresentProvider._(argument: folder, from: this);
+
+  @override
+  String toString() => r'desktopFolderPresentProvider';
+}
+
 /// The index covers [folder]: under an index root, and the first full scan
 /// is done. Else Browse lists its files from disk too.
 
@@ -108,7 +187,7 @@ final class DesktopFolderIndexedProvider
 }
 
 String _$desktopFolderIndexedHash() =>
-    r'840590e2efcba104e5be6fd1c324c5a0029a6c9f';
+    r'fe602178feb3007f8b51e9b27edbc9326f27fe0e';
 
 /// The index covers [folder]: under an index root, and the first full scan
 /// is done. Else Browse lists its files from disk too.

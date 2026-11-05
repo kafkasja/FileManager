@@ -1913,5 +1913,6 @@
   "a11yKindArchive": "Archief",
   "a11yKindFile": "Bestand",
   "a11yKindFileExt": "{ext}-bestand",
-  "desktopFileIconsHint": "Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM."
+  "desktopFileIconsHint": "Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM.",
+  "desktopDiskCapped": "De eerste {count} bestanden van deze map worden getoond."
 }

@@ -8363,4 +8363,9 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get desktopFileIconsHint =>
       'Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM.';
+
+  @override
+  String desktopDiskCapped(int count) {
+    return 'De eerste $count bestanden van deze map worden getoond.';
+  }
 }

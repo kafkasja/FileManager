@@ -592,6 +592,20 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
     return [...folders, for (final f in merged) FileBrowseEntry(f)];
   }
 
+  /// More files than the disk listing shows.
+  bool _capped(DesktopBrowseState st) => switch (st.folder) {
+    final f? when _location is! SearchLocation =>
+      ref.watch(desktopDiskFilesProvider(f)).value?.capped ?? false,
+    _ => false,
+  };
+
+  /// The open folder is gone from disk (deleted, drive ejected).
+  bool _gone(DesktopBrowseState st) => switch (st.folder) {
+    final f? when _location is! SearchLocation =>
+      ref.watch(desktopFolderPresentProvider(f)).value == false,
+    _ => false,
+  };
+
   static int Function(FileRef, FileRef) _fileOrder(DesktopBrowseState st) {
     int base(FileRef a, FileRef b) => switch (st.sortColumn) {
       FileColumns.date => a.sortDate.compareTo(b.sortDate),
@@ -884,8 +898,20 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
         : null;
     return Column(
       children: [
+        if (_capped(st))
+          MaterialBanner(
+            key: const ValueKey('browse-disk-capped'),
+            content: Text(l10n.desktopDiskCapped(diskFilesCap)),
+            leading: const Icon(Icons.info_outline),
+            actions: const [SizedBox.shrink()],
+          ),
         Expanded(
-          child: entries.isEmpty
+          child: entries.isEmpty && _gone(st)
+              ? _FolderGone(
+                  onUp: () => _nav.up(),
+                  onHome: () => _nav.open(null),
+                )
+              : entries.isEmpty
               ? Center(
                   child: Text(
                     search != null
@@ -946,6 +972,18 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                     onKey: _onKey,
                     onContextMenu: (item, at) =>
                         unawaited(_contextMenu(item, at)),
+                    onMiddleClick: (e) {
+                      if (e
+                          case FolderBrowseEntry(:final path, :final available)
+                          when available) {
+                        ref
+                            .read(desktopTabsControllerProvider.notifier)
+                            .openInNewTab(
+                              FolderLocation(path),
+                              activate: false,
+                            );
+                      }
+                    },
                     itemHoverHold: (e) {
                       if (e case FolderBrowseEntry(:final available)
                           when available) {
@@ -1060,6 +1098,52 @@ class _FolderTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A tab's folder that no longer exists: Go up / Home.
+class _FolderGone extends StatelessWidget {
+  const new({required this.onUp, required this.onHome});
+
+  final VoidCallback onUp;
+  final VoidCallback onHome;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Center(
+      key: const ValueKey('browse-folder-gone'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.folder_off_outlined,
+            size: 48,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.desktopFolderGone, style: theme.textTheme.titleSmall),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onUp,
+                icon: const Icon(Icons.arrow_upward, size: 18),
+                label: Text(l10n.desktopBrowseUp),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonalIcon(
+                onPressed: onHome,
+                icon: const Icon(Icons.home_outlined, size: 18),
+                label: Text(l10n.desktopHome),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

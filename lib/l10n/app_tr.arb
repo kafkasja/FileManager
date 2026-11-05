@@ -1913,5 +1913,6 @@
   "a11yKindArchive": "Arşiv",
   "a11yKindFile": "Dosya",
   "a11yKindFileExt": "{ext} dosyası",
-  "desktopFileIconsHint": "Dosya ve klasörlerin listelerde nasıl görüneceği: Windows'un kendi simgeleri veya KFM'ninkiler."
+  "desktopFileIconsHint": "Dosya ve klasörlerin listelerde nasıl görüneceği: Windows'un kendi simgeleri veya KFM'ninkiler.",
+  "desktopDiskCapped": "Bu klasördeki ilk {count} dosya gösteriliyor."
 }
