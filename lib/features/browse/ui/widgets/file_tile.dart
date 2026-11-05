@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kfm/app/a11y/file_semantics.dart';
+import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -61,9 +63,10 @@ class FileGridTile extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // E2 §7: name, type, size and date, not just the name.
         Semantics(
           button: true,
-          label: file.name,
+          label: fileSemanticsLabel(context.l10n, file),
           excludeSemantics: true,
           child: InkWell(
             onTap: onTap,
@@ -221,18 +224,26 @@ class FileListRow extends StatelessWidget {
           ],
         ),
       ),
-      title: HighlightedName(name: file.name, words: highlight),
-      subtitle: Text(
-        [
-          formatBytes(file.sizeBytes, locale: locale),
-          formatDate(file.sortDate, locale: locale),
-        ].join(' · '),
-        style: highlightBig && file.sizeBytes >= bigFileBytes
-            ? TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontWeight: FontWeight.bold,
-              )
-            : null,
+      // E2 §7: the row reads name, type, size and date once (the ⋮ stays
+      // reachable as the trailing button).
+      title: Semantics(
+        label: fileSemanticsLabel(context.l10n, file),
+        excludeSemantics: true,
+        child: HighlightedName(name: file.name, words: highlight),
+      ),
+      subtitle: ExcludeSemantics(
+        child: Text(
+          [
+            formatBytes(file.sizeBytes, locale: locale),
+            formatDate(file.sortDate, locale: locale),
+          ].join(' · '),
+          style: highlightBig && file.sizeBytes >= bigFileBytes
+              ? TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                )
+              : null,
+        ),
       ),
     );
   }

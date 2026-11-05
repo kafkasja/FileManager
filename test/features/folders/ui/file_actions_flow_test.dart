@@ -169,9 +169,9 @@ void main() {
       'and keep the selection', (tester) async {
     final app = await pumpApp(tester, files: _library());
     await _openBrowse(tester);
-    await tester.longPress(find.bySemanticsLabel('c1.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^c1\.jpg, ')));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('c2.jpg'));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^c2\.jpg, ')));
     await tester.pumpAndSettle();
     hideSnackBars(tester);
 
@@ -282,13 +282,13 @@ void main() {
     await _tapText(tester, 'Internal storage');
     await _tapText(tester, 'DCIM');
     // DCIM shows the Camera / Holiday rows and d1.jpg.
-    await tester.longPress(find.bySemanticsLabel('d1.jpg'));
+    await tester.longPress(find.bySemanticsLabel(RegExp(r'^d1\.jpg, ')));
     await tester.pumpAndSettle();
     expect(app.container.read(selectionControllerProvider).value!.count, 1);
     hideSnackBars(tester);
 
     final gesture = await tester.startGesture(
-      tester.getCenter(find.bySemanticsLabel('d1.jpg')),
+      tester.getCenter(find.bySemanticsLabel(RegExp(r'^d1\.jpg, '))),
     );
     await tester.pump(const Duration(milliseconds: 700));
     await gesture.moveTo(tester.getCenter(find.text('Holiday')));

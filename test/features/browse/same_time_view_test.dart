@@ -47,7 +47,8 @@ Finder _card(String titleStart) => find.ancestor(
   matching: find.byType(Card),
 );
 
-Finder _tile(String name) => find.bySemanticsLabel(name);
+Finder _tile(String name) =>
+    find.bySemanticsLabel(RegExp('^${RegExp.escape(name)}, '));
 
 /// Room for every day header and card without scrolling.
 void _tallScreen(WidgetTester tester) {

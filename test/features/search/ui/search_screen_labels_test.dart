@@ -126,7 +126,9 @@ void main() {
   Finder file(String name) => find.byWidgetPredicate(
     (w) =>
         (w is Text && (w.data == name || w.textSpan?.toPlainText() == name)) ||
-        (w is Semantics && w.properties.label == name),
+        (w is Semantics &&
+            w.properties.button == true &&
+            (w.properties.label?.startsWith('$name, ') ?? false)),
   );
 
   Finder chip(String label) => find.widgetWithText(InputChip, label);

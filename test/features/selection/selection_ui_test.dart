@@ -22,7 +22,8 @@ FakeFileSource _library() {
   return files;
 }
 
-Finder _tile(String name) => find.bySemanticsLabel(name);
+Finder _tile(String name) =>
+    find.bySemanticsLabel(RegExp('^${RegExp.escape(name)}, '));
 
 void main() {
   testWidgets('select adds only, edit removes only, clear all can be undone', (

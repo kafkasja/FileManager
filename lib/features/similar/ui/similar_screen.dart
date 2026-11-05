@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kfm/app/a11y/file_semantics.dart';
 import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
@@ -427,7 +428,7 @@ class _BlurryTabState extends ConsumerState<_BlurryTab> {
               final picked = _picked.contains(f.id);
               return Semantics(
                 selected: picked,
-                label: f.name,
+                label: fileSemanticsLabel(context.l10n, f),
                 child: GestureDetector(
                   onTap: () => setState(
                     () => picked ? _picked.remove(f.id) : _picked.add(f.id),

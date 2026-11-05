@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/a11y/file_semantics.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
@@ -434,6 +435,7 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
             );
     }
     return ExplorerView<FileRef>(
+      semanticLabelOf: (f) => fileSemanticsLabel(context.l10n, f),
       key: _explorer,
       autofocus: true,
       items: deck.upcoming,
