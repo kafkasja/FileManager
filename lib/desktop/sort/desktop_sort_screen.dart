@@ -8,20 +8,24 @@ import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
+import 'package:kfm/desktop/shell/desktop_command_bar.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
+import 'package:kfm/desktop/shell/desktop_status_bar.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
 import 'package:kfm/desktop/sort/sort_history.dart';
 import 'package:kfm/desktop/sort/sort_setup_bar.dart';
 import 'package:kfm/desktop/widgets/column_widths.dart';
+import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
 import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
-import 'package:kfm/desktop/widgets/layout_switch.dart';
+import 'package:kfm/desktop/widgets/file_location_actions.dart';
 import 'package:kfm/desktop/widgets/quick_look.dart';
+import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/connect/ui/known_device_names.dart';
 import 'package:kfm/features/filters/domain/file_filter.dart';
 import 'package:kfm/features/session/data/session_providers.dart';
@@ -74,15 +78,6 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
   ExplorerSelection _sel = ExplorerSelection.empty;
   bool _history = false;
   bool _undoing = false;
-  String? _flash;
-  Color? _flashColor;
-  Timer? _flashTimer;
-
-  @override
-  void dispose() {
-    _flashTimer?.cancel();
-    super.dispose();
-  }
 
   SwipeDeckController get _deck =>
       ref.read(swipeDeckControllerProvider.notifier);
@@ -106,9 +101,10 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
           .read(desktopStatusLineProvider(DesktopSection.sort).notifier)
           .set(
             DesktopStatus(
-              items: deck.remaining,
               selected: _sel.count,
               selectedBytes: bytes,
+              left: deck.remaining,
+              driveHint: (focused ?? deck.current)?.path,
             ),
           );
       ref
@@ -198,13 +194,103 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
       tagName: ref.read(tagsByIdProvider).value?[entry.action.tagId]?.name,
       deviceName: knownDeviceName(ref, entry.action.deviceId),
     );
-    _flashTimer?.cancel();
-    setState(() {
-      _flash = l10n.desktopSortActed(label, count);
-      _flashColor = sortActionColor(context, entry.action);
-    });
-    _flashTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _flash = null);
+    // E3: the last action goes to the status bar (the toolbar stays still).
+    ref
+        .read(desktopStatusMessageProvider.notifier)
+        .show(l10n.desktopSortActed(label, count));
+  }
+
+  List<FileRef> _selectedFiles(SwipeDeckState deck) => [
+    for (final f in deck.upcoming)
+      if (_sel.contains(f.id)) f,
+  ];
+
+  /// E3: right-click on Sort files: the sort actions, then where the file
+  /// is (Open file location, Show in Explorer, Copy as path, Properties).
+  Future<void> _contextMenu(
+    FileRef? item,
+    Offset at,
+    SwipeDeckState deck,
+    List<SortActionEntry> entries,
+  ) async {
+    if (item == null) return;
+    final l10n = context.l10n;
+    final tags = ref.read(tagsByIdProvider).value ?? const {};
+    final mode = deck.session.deleteMode;
+    final files = _sel.contains(item.id) ? _selectedFiles(deck) : [item];
+    if (!_sel.contains(item.id)) {
+      _setSelection(
+        ExplorerSelection(ids: {item.id}, anchor: item.id, focus: item.id),
+        deck,
+      );
+    }
+    await showDesktopContextMenu(context, at, [
+      for (final e in entries)
+        DesktopMenuEntry(
+          label: swipeActionName(l10n, e.action, mode, tags: tags),
+          icon: swipeActionIcon(e.action.type),
+          shortcut: DesktopKeys.label(e.key),
+          onSelected: () => _applyFiles(e, deck, files),
+        ),
+      DesktopMenuEntry(
+        label: l10n.desktopSortFavorite,
+        icon: Icons.star_outline,
+        shortcut: DesktopKeys.label(DesktopKeys.favorite),
+        onSelected: () => _favorite(deck),
+      ),
+      DesktopMenuEntry(
+        label: l10n.desktopBrowseOpen,
+        icon: Icons.open_in_new,
+        divider: true,
+        onSelected: () => unawaited(openOrExplain(context, ref, files.first)),
+      ),
+      ...fileLocationMenuEntries(context, ref, files),
+    ]);
+  }
+
+  void _publishCommands(SwipeDeckState deck) {
+    final l10n = context.l10n;
+    final files = _selectedFiles(deck);
+    final focus = files.length == 1
+        ? files.single
+        : deck.upcoming.where((f) => f.id == _sel.focus).firstOrNull;
+    final commands = [
+      DesktopCommand(
+        id: 'sort-open-location',
+        label: l10n.desktopOpenFileLocation,
+        icon: Icons.folder_open_outlined,
+        onPressed: focus == null ? null : () => openFileLocation(ref, focus),
+      ),
+      DesktopCommand(
+        id: 'sort-copy-path',
+        label: l10n.desktopCopyAsPath,
+        icon: Icons.content_paste_go,
+        shortcut: DesktopKeys.label(DesktopKeys.copyAsPath),
+        onPressed: files.isEmpty && focus == null
+            ? null
+            : () => unawaited(
+                copyPathsAsText(ref, [
+                  for (final f in files.isEmpty ? [focus!] : files) f.path,
+                ]),
+              ),
+      ),
+    ];
+    final layout = ref.read(desktopSortLayoutProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(desktopCommandsProvider(DesktopSection.sort).notifier)
+          .set(commands);
+      ref
+          .read(desktopViewTogglesProvider(DesktopSection.sort).notifier)
+          .set(
+            DesktopViewToggle(
+              details: layout == ExplorerLayout.details,
+              onChanged: (d) => ref
+                  .read(desktopSortLayoutProvider.notifier)
+                  .set(d ? ExplorerLayout.details : ExplorerLayout.largeIcons),
+            ),
+          );
     });
   }
 
@@ -311,6 +397,20 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
       unawaited(_tag(deck));
       return KeyEventResult.handled;
     }
+    if (keys.isControlPressed &&
+        keys.isShiftPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyC) {
+      final files = _selectedFiles(deck);
+      unawaited(copyPathsAsText(ref, [for (final f in files) f.path]));
+      return KeyEventResult.handled;
+    }
+    if (keys.isAltPressed && event.logicalKey == LogicalKeyboardKey.enter) {
+      final files = _selectedFiles(deck);
+      if (files.length == 1) {
+        unawaited(showFileProperties(context, ref, files.single));
+      }
+      return KeyEventResult.handled;
+    }
     if (event.logicalKey == LogicalKeyboardKey.space &&
         !keys.isControlPressed) {
       unawaited(_quickLook(deck, entries));
@@ -350,6 +450,7 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
     final layout = ref.watch(desktopSortLayoutProvider);
     final undoable =
         ref.watch(undoableCountProvider(deck.session.id)).value ?? 0;
+    _publishCommands(deck);
     return CallbackShortcuts(
       bindings: {
         DesktopKeys.undo: () => unawaited(_undoSteps(1)),
@@ -367,16 +468,12 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
             undoable: undoable,
             undoing: _undoing,
             history: _history,
-            flash: _flash,
-            flashColor: _flashColor,
-            layout: layout,
             onApply: (e) => _apply(e, deck),
             onDropApply: (e, files) => _applyFiles(e, deck, files),
             onFavorite: () => _favorite(deck),
             onTag: () => unawaited(_tag(deck)),
             onUndo: () => unawaited(_undoSteps(1)),
             onHistory: () => setState(() => _history = !_history),
-            onLayout: ref.read(desktopSortLayoutProvider.notifier).set,
             onDone: () => unawaited(finishSwipeSession(context, ref, deck)),
           ),
           const Divider(height: 1),
@@ -461,8 +558,12 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
         context,
         fileOf: (f) => f,
         sortable: false,
+        // E3: files come from many folders.
+        folderColumn: true,
         nameCell: (context, f) => FileNameCell(name: f.name, file: f),
       ),
+      onContextMenu: (item, at) =>
+          unawaited(_contextMenu(item, at, deck, entries)),
       onOpen: (_) => unawaited(_quickLook(deck, entries)),
       onKey: (e) => _onGridKey(e, deck, entries),
       onNearEnd: () => unawaited(_deck.loadMore()),
@@ -478,16 +579,12 @@ class _Toolbar extends ConsumerWidget {
     required this.undoable,
     required this.undoing,
     required this.history,
-    required this.flash,
-    required this.flashColor,
-    required this.layout,
     required this.onApply,
     required this.onDropApply,
     required this.onFavorite,
     required this.onTag,
     required this.onUndo,
     required this.onHistory,
-    required this.onLayout,
     required this.onDone,
   });
 
@@ -497,9 +594,6 @@ class _Toolbar extends ConsumerWidget {
   final int undoable;
   final bool undoing;
   final bool history;
-  final String? flash;
-  final Color? flashColor;
-  final ExplorerLayout layout;
   final ValueChanged<SortActionEntry> onApply;
 
   /// Sort files dragged onto an action button.
@@ -510,7 +604,6 @@ class _Toolbar extends ConsumerWidget {
   final VoidCallback onTag;
   final VoidCallback onUndo;
   final VoidCallback onHistory;
-  final ValueChanged<ExplorerLayout> onLayout;
   final VoidCallback onDone;
 
   @override
@@ -607,36 +700,8 @@ class _Toolbar extends ConsumerWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                         onPressed: hasSelection ? onTag : null,
                       ),
-                      const SizedBox(width: 8),
-                      if (!hasSelection)
-                        Text(
-                          l10n.desktopSortSelectHint,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      if (flash case final text?)
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(start: 8),
-                          child: Text(
-                            text,
-                            key: const ValueKey('sort-flash'),
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: flashColor,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  l10n.desktopSortLeft(deck.remaining),
-                  style: theme.textTheme.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 12),
@@ -680,7 +745,6 @@ class _Toolbar extends ConsumerWidget {
                 icon: const Icon(Icons.history),
                 onPressed: onHistory,
               ),
-              LayoutSwitch(layout: layout, onChanged: onLayout),
               if (deck.swiped > 0) ...[
                 const SizedBox(width: 4),
                 TextButton(

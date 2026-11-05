@@ -196,7 +196,7 @@ final class DesktopDiskFilesProvider
   }
 }
 
-String _$desktopDiskFilesHash() => r'f40d6857d6bd14b208c32377e58b314af478e3fe';
+String _$desktopDiskFilesHash() => r'c411db5eb062a1b00cdffe03519409f82839f209';
 
 /// [folder]'s files from disk when the index doesn't cover it; empty
 /// otherwise.

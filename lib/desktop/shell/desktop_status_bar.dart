@@ -87,10 +87,19 @@ class DesktopStatusBar extends ConsumerStatefulWidget {
 
 class _DesktopStatusBarState extends ConsumerState<DesktopStatusBar> {
   Timer? _refresh;
+  Timer? _messageTimer;
+  String? _message;
 
   @override
   void initState() {
     super.initState();
+    ref.listenManual(desktopStatusMessageProvider, (_, next) {
+      _messageTimer?.cancel();
+      setState(() => _message = next?.$1);
+      _messageTimer = Timer(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _message = null);
+      });
+    });
     // Free space changes as files are written: every 30 s while shown.
     _refresh = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) ref.invalidate(placesProvider);
@@ -100,6 +109,7 @@ class _DesktopStatusBarState extends ConsumerState<DesktopStatusBar> {
   @override
   void dispose() {
     _refresh?.cancel();
+    _messageTimer?.cancel();
     super.dispose();
   }
 
@@ -148,8 +158,7 @@ class _DesktopStatusBarState extends ConsumerState<DesktopStatusBar> {
           key: const ValueKey('desktop-status-left'),
         ),
       if (status.totalBytes case final b?) Text(formatBytes(b, locale: locale)),
-      if (status.message ?? ref.watch(desktopStatusMessageProvider)
-          case final m?)
+      if (status.message ?? _message case final m?)
         Text(m, key: const ValueKey('desktop-status-message')),
     ];
     return Container(

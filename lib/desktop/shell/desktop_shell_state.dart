@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -111,23 +109,14 @@ class DesktopStatusLine extends _$DesktopStatusLine {
   }
 }
 
-/// E3: the status bar's last action ("Path copied", "Trashed 3"), cleared
-/// after a few seconds.
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds (the number tells repeats apart).
 @Riverpod(keepAlive: true)
 class DesktopStatusMessage extends _$DesktopStatusMessage {
-  Timer? _clear;
+  var _seq = 0;
 
   @override
-  String? build() {
-    ref.onDispose(() => _clear?.cancel());
-    return null;
-  }
+  (String, int)? build() => null;
 
-  void show(String message, {Duration duration = const Duration(seconds: 4)}) {
-    _clear?.cancel();
-    state = message;
-    _clear = Timer(duration, () {
-      if (ref.mounted) state = null;
-    });
-  }
+  void show(String message) => state = (message, ++_seq);
 }

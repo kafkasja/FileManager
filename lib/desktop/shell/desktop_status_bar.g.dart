@@ -8,19 +8,19 @@ part of 'desktop_status_bar.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// E1 hook: "Connected to <phone>" in the status bar (a link widget);
+/// E1 hook: "Connected to `phone`" in the status bar (a link widget);
 /// null until E1c fills it.
 
 @ProviderFor(desktopStatusConnection)
 final desktopStatusConnectionProvider = DesktopStatusConnectionProvider._();
 
-/// E1 hook: "Connected to <phone>" in the status bar (a link widget);
+/// E1 hook: "Connected to `phone`" in the status bar (a link widget);
 /// null until E1c fills it.
 
 final class DesktopStatusConnectionProvider
     extends $FunctionalProvider<Widget?, Widget?, Widget?>
     with $Provider<Widget?> {
-  /// E1 hook: "Connected to <phone>" in the status bar (a link widget);
+  /// E1 hook: "Connected to `phone`" in the status bar (a link widget);
   /// null until E1c fills it.
   DesktopStatusConnectionProvider._()
     : super(
@@ -108,7 +108,7 @@ final class DesktopViewTogglesProvider
 }
 
 String _$desktopViewTogglesHash() =>
-    r'35a4f6b4fa3b65bfdb3c257a14392beaa20f1e5f';
+    r'99655ea2e0563fa15d5501505d7c1c06dd25c796';
 
 final class DesktopViewTogglesFamily extends $Family
     with

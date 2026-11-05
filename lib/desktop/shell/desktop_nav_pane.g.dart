@@ -9,21 +9,21 @@ part of 'desktop_nav_pane.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// E1 hook: the device rows of the nav pane's Devices group (linked and
-/// remembered devices: status dot, "Send to <name>" drop, click = remote
+/// remembered devices: status dot, "Send to `name`" drop, click = remote
 /// browse). Empty until E1c fills it.
 
 @ProviderFor(desktopNavDeviceRows)
 final desktopNavDeviceRowsProvider = DesktopNavDeviceRowsProvider._();
 
 /// E1 hook: the device rows of the nav pane's Devices group (linked and
-/// remembered devices: status dot, "Send to <name>" drop, click = remote
+/// remembered devices: status dot, "Send to `name`" drop, click = remote
 /// browse). Empty until E1c fills it.
 
 final class DesktopNavDeviceRowsProvider
     extends $FunctionalProvider<List<Widget>, List<Widget>, List<Widget>>
     with $Provider<List<Widget>> {
   /// E1 hook: the device rows of the nav pane's Devices group (linked and
-  /// remembered devices: status dot, "Send to <name>" drop, click = remote
+  /// remembered devices: status dot, "Send to `name`" drop, click = remote
   /// browse). Empty until E1c fills it.
   DesktopNavDeviceRowsProvider._()
     : super(

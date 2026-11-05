@@ -88,7 +88,7 @@ final class DesktopQuickAccessProvider
 }
 
 String _$desktopQuickAccessHash() =>
-    r'2898403f8f2b5763843d828008eaf58ce50ec038';
+    r'a1d500a0b5acdbf0469ab4f04803155de481a331';
 
 /// Quick access pins (TASK-E3, `desktop.quickAccess`): pinned folder paths
 /// in order; until the user changes them, the defaults.

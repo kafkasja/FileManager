@@ -288,18 +288,18 @@ abstract class _$DesktopStatusLine extends $Notifier<DesktopStatus> {
   }
 }
 
-/// E3: the status bar's last action ("Path copied", "Trashed 3"), cleared
-/// after a few seconds.
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds ([seq] tells repeats apart).
 
 @ProviderFor(DesktopStatusMessage)
 final desktopStatusMessageProvider = DesktopStatusMessageProvider._();
 
-/// E3: the status bar's last action ("Path copied", "Trashed 3"), cleared
-/// after a few seconds.
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds ([seq] tells repeats apart).
 final class DesktopStatusMessageProvider
-    extends $NotifierProvider<DesktopStatusMessage, String?> {
-  /// E3: the status bar's last action ("Path copied", "Trashed 3"), cleared
-  /// after a few seconds.
+    extends $NotifierProvider<DesktopStatusMessage, (String, int)?> {
+  /// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+  /// bar shows it for a few seconds ([seq] tells repeats apart).
   DesktopStatusMessageProvider._()
     : super(
         from: null,
@@ -319,31 +319,31 @@ final class DesktopStatusMessageProvider
   DesktopStatusMessage create() => DesktopStatusMessage();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String? value) {
+  Override overrideWithValue((String, int)? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<String?>(value),
+      providerOverride: $SyncValueProvider<(String, int)?>(value),
     );
   }
 }
 
 String _$desktopStatusMessageHash() =>
-    r'aab68f8ba2a1f34422fddb2fd077588a7819e888';
+    r'7603eade73040ad0ab21aa3d5313dbaef84b39f0';
 
-/// E3: the status bar's last action ("Path copied", "Trashed 3"), cleared
-/// after a few seconds.
+/// E3: the status bar's last action ("Path copied", "Trashed 3"). The
+/// bar shows it for a few seconds ([seq] tells repeats apart).
 
-abstract class _$DesktopStatusMessage extends $Notifier<String?> {
-  String? build();
+abstract class _$DesktopStatusMessage extends $Notifier<(String, int)?> {
+  (String, int)? build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<String?, String?>;
+    final ref = this.ref as $Ref<(String, int)?, (String, int)?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<String?, String?>,
-              String?,
+              AnyNotifier<(String, int)?, (String, int)?>,
+              (String, int)?,
               Object?,
               Object?
             >;
