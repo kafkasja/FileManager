@@ -1921,5 +1921,12 @@
   "settingsSwipeShowFolderHelp": "Kartın üstünde tek satır. Yolu kopyalamak veya klasörü açmak için dokunun.",
   "backupSettingSwipeShowFolder": "Dosyanın klasörünü göster",
   "browseRefreshFailed": "Yenilenemedi. Tekrar deneyin.",
-  "sameTimeChangeWindow": "Aralığı değiştir"
+  "sameTimeChangeWindow": "Aralığı değiştir",
+  "shareInfoTooltip": "Paylaşım hakkında",
+  "receivedSavedOne": "{name}, {folder} konumuna kaydedildi",
+  "receivedSavedMany": "{count, plural, =1{1 dosya {folder} konumuna kaydedildi} other{{count} dosya {folder} konumuna kaydedildi}}",
+  "showInFolder": "Klasörde göster",
+  "receiveFolderTitle": "Alınan dosyaların gideceği yer",
+  "receiveFolderReset": "Varsayılan klasörü kullan",
+  "receiveFolderHelp": "Diğer cihazların gönderdiği dosyalar buraya, her cihaz için ayrı bir klasöre gelir."
 }

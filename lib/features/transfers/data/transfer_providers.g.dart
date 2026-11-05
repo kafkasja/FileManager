@@ -168,20 +168,20 @@ final class TransferStagingProvider
 
 String _$transferStagingHash() => r'341c67255374c35a076ab573c544372843ee2ead';
 
-/// The folder downloads go under by default: Android
-/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+/// The folder downloads go under by default (E1: the receive folder
+/// setting, else `Downloads/KFM`).
 
 @ProviderFor(downloadsRoot)
 final downloadsRootProvider = DownloadsRootProvider._();
 
-/// The folder downloads go under by default: Android
-/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+/// The folder downloads go under by default (E1: the receive folder
+/// setting, else `Downloads/KFM`).
 
 final class DownloadsRootProvider
     extends $FunctionalProvider<String, String, String>
     with $Provider<String> {
-  /// The folder downloads go under by default: Android
-  /// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+  /// The folder downloads go under by default (E1: the receive folder
+  /// setting, else `Downloads/KFM`).
   DownloadsRootProvider._()
     : super(
         from: null,
@@ -215,7 +215,7 @@ final class DownloadsRootProvider
   }
 }
 
-String _$downloadsRootHash() => r'293e3e8949ac1942965decfeafa047f6fa842907';
+String _$downloadsRootHash() => r'4ce264c13add36e57a628e9c0d91cafcfc4fc844';
 
 /// Deletes the originals of verified moves on this device (TASK-N11; U2
 /// and X3 reuse it): under the history lock, deleted files leave the

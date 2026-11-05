@@ -734,46 +734,63 @@ class _Message extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
+        // Full width too: a Column only as wide as its content sits at the
+        // start (E1 issue 5: "the connected screen isn't centered").
         child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: constraints.maxHeight),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon case final i?)
-                Icon(i, size: 48, color: theme.colorScheme.onSurfaceVariant)
-              else
-                const CircularProgressIndicator(),
-              SizedBox(height: spacing * 2),
-              Text(
-                title,
-                style: theme.textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
-              if (words.isNotEmpty) ...[
-                SizedBox(height: spacing * 2),
-                Text(
-                  words.join(' '),
-                  key: const ValueKey('connect-words'),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+          constraints: BoxConstraints(
+            minHeight: constraints.maxHeight,
+            minWidth: constraints.maxWidth,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              key: const ValueKey('connect-message'),
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon case final i?)
+                    Icon(i, size: 48, color: theme.colorScheme.onSurfaceVariant)
+                  else
+                    const CircularProgressIndicator(),
+                  SizedBox(height: spacing * 2),
+                  Text(
+                    title,
+                    style: theme.textTheme.titleLarge,
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              if (body case final b?) ...[
-                SizedBox(height: spacing),
-                Text(b, textAlign: TextAlign.center),
-              ],
-              if (extra case final e?) ...[SizedBox(height: spacing * 2), e],
-              SizedBox(height: spacing * 3),
-              Wrap(
-                spacing: spacing * 2,
-                runSpacing: spacing,
-                alignment: WrapAlignment.center,
-                children: actions,
+                  if (words.isNotEmpty) ...[
+                    SizedBox(height: spacing * 2),
+                    Text(
+                      words.join(' '),
+                      key: const ValueKey('connect-words'),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  if (body case final b?) ...[
+                    SizedBox(height: spacing),
+                    Text(b, textAlign: TextAlign.center),
+                  ],
+                  if (extra case final e?) ...[
+                    SizedBox(height: spacing * 2),
+                    e,
+                  ],
+                  SizedBox(height: spacing * 3),
+                  Wrap(
+                    spacing: spacing * 2,
+                    runSpacing: spacing,
+                    alignment: WrapAlignment.center,
+                    children: actions,
+                  ),
+                  if (footer case final f?) ...[
+                    SizedBox(height: spacing * 3),
+                    f,
+                  ],
+                ],
               ),
-              if (footer case final f?) ...[SizedBox(height: spacing * 3), f],
-            ],
+            ),
           ),
         ),
       ),

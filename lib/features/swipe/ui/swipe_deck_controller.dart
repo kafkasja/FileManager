@@ -112,7 +112,9 @@ SwipeActionDispatcher swipeActionDispatcher(Ref ref) => SwipeActionDispatcher(
   // N9: sends queue a transfer in the undo row's transaction.
   sends: swipeSendQueue(
     ref.watch(transfersRepositoryProvider).dao,
-    downloadsRoot: ref.watch(downloadsRootProvider),
+    downloadsRoot: ref.read(downloadsRootProvider),
+    // E1: read when the send is queued (the setting may change).
+    currentDownloadsRoot: () => ref.read(downloadsRootProvider),
   ),
 );
 

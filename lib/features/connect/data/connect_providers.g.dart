@@ -608,7 +608,7 @@ final class PathGuardProvider
   }
 }
 
-String _$pathGuardHash() => r'7500812feb4c69d7ec2e86eeefb4ab8ae72a6bde';
+String _$pathGuardHash() => r'8ef5bed0e094802afb107aa1b33f3ad14668fec9';
 
 /// The per-route allow-list wrapper every file route uses (N4; N7/N10/N11
 /// wrap their handlers with `guarded`).
@@ -706,20 +706,87 @@ final class OfferRepositoryProvider
 
 String _$offerRepositoryHash() => r'92a969653c583509f1667cb713f1f8fe9de1930a';
 
-/// Where received files go by default: Android
-/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+/// E1: the user's receive folder setting ('' = default). Loaded once;
+/// [set] writes it (only the settings row changes it; it is never part of
+/// a backup).
+
+@ProviderFor(ReceiveFolderSetting)
+final receiveFolderSettingProvider = ReceiveFolderSettingProvider._();
+
+/// E1: the user's receive folder setting ('' = default). Loaded once;
+/// [set] writes it (only the settings row changes it; it is never part of
+/// a backup).
+final class ReceiveFolderSettingProvider
+    extends $NotifierProvider<ReceiveFolderSetting, String> {
+  /// E1: the user's receive folder setting ('' = default). Loaded once;
+  /// [set] writes it (only the settings row changes it; it is never part of
+  /// a backup).
+  ReceiveFolderSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'receiveFolderSettingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$receiveFolderSettingHash();
+
+  @$internal
+  @override
+  ReceiveFolderSetting create() => ReceiveFolderSetting();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$receiveFolderSettingHash() =>
+    r'cee71d6a3dd4834fb2492e3fdf954dd982308093';
+
+/// E1: the user's receive folder setting ('' = default). Loaded once;
+/// [set] writes it (only the settings row changes it; it is never part of
+/// a backup).
+
+abstract class _$ReceiveFolderSetting extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Where received files go (both directions; one folder per sender below
+/// it): the receive folder setting, else [defaultReceiveFolder].
 
 @ProviderFor(receiveDownloadsRoot)
 final receiveDownloadsRootProvider = ReceiveDownloadsRootProvider._();
 
-/// Where received files go by default: Android
-/// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+/// Where received files go (both directions; one folder per sender below
+/// it): the receive folder setting, else [defaultReceiveFolder].
 
 final class ReceiveDownloadsRootProvider
     extends $FunctionalProvider<String, String, String>
     with $Provider<String> {
-  /// Where received files go by default: Android
-  /// `/storage/emulated/0/Download`, elsewhere `~/Downloads` (PL1).
+  /// Where received files go (both directions; one folder per sender below
+  /// it): the receive folder setting, else [defaultReceiveFolder].
   ReceiveDownloadsRootProvider._()
     : super(
         from: null,
@@ -754,7 +821,7 @@ final class ReceiveDownloadsRootProvider
 }
 
 String _$receiveDownloadsRootHash() =>
-    r'efcdc492d79ebab5dd7d84c3a6f19edea00f3291';
+    r'eb43ec232643ea8b70074f3962f93a74c1fe6356';
 
 /// The receiving side of send files (N12): offers, prompts, grants.
 
@@ -800,7 +867,7 @@ final class OfferServiceProvider
   }
 }
 
-String _$offerServiceHash() => r'e45f229d4b8af44130a62048099d69ec9969b9ea';
+String _$offerServiceHash() => r'b0c5174735edebc1f88c5288c181e852a2b19a7e';
 
 /// Every offer this device's server holds, newest first (Transfers
 /// Received / Offered cards).

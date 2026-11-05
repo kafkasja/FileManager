@@ -30,127 +30,29 @@ import 'package:shelf/shelf.dart';
 
 import '../../helpers/pump_app.dart';
 import 'fake_discovery.dart';
+import 'share_fakes.dart';
 
-class _FakeAwake implements ScreenAwake {
-  final List<bool> calls = [];
-
-  @override
-  Future<void> keepOn({required bool on}) async => calls.add(on);
-}
-
-class _FakeServer extends ShareServer {
-  new(DeviceIdentityRepository identity)
-    : super(
-        identity,
-        (_) =>
-            (_) => Response.ok(''),
-      );
-
-  ShareServerState next = ShareServerState(
-    status: ShareServerStatus.running,
-    addresses: [LocalAddress(InternetAddress('192.168.1.23'), 24, 'wlan0')],
-    port: 45123,
-    fingerprint: 'ab' * 32,
-  );
-  int starts = 0;
-  int stops = 0;
-  bool _running = false;
-
-  @override
-  bool get isRunning => _running;
-
-  @override
-  Future<ShareServerState> start() async {
-    starts++;
-    _running = next.status == ShareServerStatus.running;
-    return next;
+/// E1: the share screen fits without scrolling; notes that don't fit sit
+/// behind the (i) button. Opens it when [note] isn't shown, checks [note]
+/// and closes the dialog again.
+Future<void> expectNote(WidgetTester tester, Finder note) async {
+  if (note.evaluate().isEmpty) {
+    await tester.tap(find.byKey(const ValueKey('share-info')));
+    await tester.pumpAndSettle();
   }
-
-  @override
-  Future<void> stop() async {
-    if (_running) stops++;
-    _running = false;
+  expect(note, findsOneWidget);
+  final dialog = find.byKey(const ValueKey('share-info-dialog'));
+  if (dialog.evaluate().isNotEmpty) {
+    await tester.tap(
+      find.descendant(of: dialog, matching: find.byType(TextButton)),
+    );
+    await tester.pumpAndSettle();
   }
-}
-
-class _FakeFolderFs implements SharedFolderFs {
-  static const r = '/storage/emulated/0';
-  static const Map<String, List<String>> folders = {
-    r: ['$r/Android', '$r/DCIM', '$r/Download', '$r/Music'],
-    '$r/DCIM': ['$r/DCIM/Camera'],
-  };
-
-  @override
-  String get primaryRoot => r;
-
-  @override
-  Future<bool> exists(String path) async =>
-      folders.containsKey(path) || folders.values.any((l) => l.contains(path));
-
-  @override
-  Future<List<String>> listSubfolders(String path) async =>
-      folders[path] ?? const [];
-}
-
-class _FakeIdentity implements DeviceIdentityRepository {
-  @override
-  Future<DeviceIdentity> loadOrCreate() async => const DeviceIdentity(
-    deviceId: '00',
-    displayName: 'Kaf phone',
-    platform: 'android',
-    certPem: '',
-    fingerprint: 'ab',
-  );
-
-  @override
-  Future<String> privateKeyPem() async => '';
-
-  @override
-  Future<Uint8List> rootIdSalt() async => Uint8List(32);
-
-  @override
-  Future<Uint8List> sign(Uint8List message) async => Uint8List(0);
-
-  @override
-  Future<DeviceIdentity> reset() => loadOrCreate();
-}
-
-class _FakeBackground implements ShareBackground {
-  final List<ShareNotificationTexts> shown = [];
-  int stops = 0;
-  bool refuse = false;
-  final StreamController<void> requests = StreamController.broadcast();
-
-  @override
-  bool get supported => true;
-
-  @override
-  Future<void> show(ShareNotificationTexts texts) async {
-    if (refuse) throw StateError('ForegroundServiceStartNotAllowed');
-    shown.add(texts);
-  }
-
-  @override
-  Future<void> stop() async => stops++;
-
-  @override
-  Stream<void> get stopRequests => requests.stream;
-
-  @override
-  Future<void> showOffer(OfferNotificationTexts texts) async {}
-
-  @override
-  Future<void> cancelOffer() async {}
-
-  bool notifications = true;
-
-  @override
-  Future<bool> notificationsAllowed() async => notifications;
 }
 
 void main() {
-  late _FakeAwake awake;
-  late _FakeServer server;
+  late FakeAwake awake;
+  late FakeServer server;
   late FakeDiscovery discovery;
   var now = DateTime(2026, 11);
 
@@ -160,9 +62,9 @@ void main() {
     ShareBackground background = const NoShareBackground(),
     ClientSessionStore? sessions,
   }) {
-    awake = _FakeAwake();
-    final identity = _FakeIdentity();
-    server = _FakeServer(identity);
+    awake = FakeAwake();
+    final identity = FakeIdentity();
+    server = FakeServer(identity);
     discovery = FakeDiscovery();
     return pumpApp(
       tester,
@@ -172,7 +74,7 @@ void main() {
         deviceIdentityRepositoryProvider.overrideWithValue(identity),
         shareServerProvider.overrideWithValue(server),
         shareDiscoveryProvider.overrideWithValue(discovery),
-        sharedFolderFsProvider.overrideWithValue(_FakeFolderFs()),
+        sharedFolderFsProvider.overrideWithValue(FakeFolderFs()),
         lifecycleStopsSharingProvider.overrideWithValue(stopsInBackground),
         shareBackgroundProvider.overrideWithValue(background),
         if (sessions != null)
@@ -230,17 +132,7 @@ void main() {
       'fp': 'ab',
     });
     // Debug build: address + port.
-    await tester.scrollUntilVisible(
-      find.text('192.168.1.23:45123'),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(find.text('192.168.1.23:45123'), findsOneWidget);
+    await expectNote(tester, find.text('192.168.1.23:45123'));
     expect(server.starts, 1);
     expect(awake.calls, [true]);
     expect(
@@ -251,17 +143,7 @@ void main() {
     // The tab bar is covered (top-level route).
     expect(find.byType(NavigationBar), findsNothing);
 
-    await tester.scrollUntilVisible(
-      find.text('Stop sharing'),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.tap(find.text('Stop sharing'));
+    await tester.tap(find.byKey(const ValueKey('share-stop')));
     await tester.pumpAndSettle();
     expect(find.text('Sharing'), findsNothing);
     expect(server.stops, 1);
@@ -318,16 +200,6 @@ void main() {
     expect(
       app.container.read(shareServerControllerProvider).status,
       ShareServerStatus.running,
-    );
-    await tester.scrollUntilVisible(
-      find.textContaining('Nearby devices can’t list'),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
     );
     expect(
       find.text(
@@ -501,7 +373,7 @@ void main() {
   test('a start failure lands in the error state (rule 8)', () async {
     final container = ProviderContainer(
       overrides: [
-        shareServerProvider.overrideWithValue(_ThrowingServer(_FakeIdentity())),
+        shareServerProvider.overrideWithValue(_ThrowingServer(FakeIdentity())),
         appDatabaseProvider.overrideWithValue(
           AppDatabase(NativeDatabase.memory()),
         ),
@@ -546,12 +418,7 @@ void main() {
     await pump(tester);
     await openShare(tester);
     final hint = find.text('Sharing stops when you leave this screen.');
-    await tester.scrollUntilVisible(
-      hint,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(hint, findsOneWidget);
+    await expectNote(tester, hint);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     await tester.pumpAndSettle();
@@ -565,7 +432,7 @@ void main() {
       'notification naming the connected devices; its Stop ends sharing', (
     tester,
   ) async {
-    final bg = _FakeBackground();
+    final bg = FakeBackground();
     final app = await pump(tester, stopsInBackground: true, background: bg);
     await openShare(tester);
     expect(bg.shown.single.title, 'Sharing this device');
@@ -574,12 +441,7 @@ void main() {
       'Sharing keeps running when you leave the app. Stop it here or from '
       'the notification.',
     );
-    await tester.scrollUntilVisible(
-      hint,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(hint, findsOneWidget);
+    await expectNote(tester, hint);
 
     final sessions = app.container.read(clientSessionStoreProvider)
       ..issue(
@@ -685,26 +547,21 @@ void main() {
 
   testWidgets('Q8: with notifications denied the share screen does not '
       'promise a notification', (tester) async {
-    final bg = _FakeBackground()..notifications = false;
+    final bg = FakeBackground()..notifications = false;
     await pump(tester, stopsInBackground: true, background: bg);
     await openShare(tester);
     final hint = find.text(
       'Sharing keeps running when you leave the app. Notifications are off '
       'for KFM, so come back here to stop it.',
     );
-    await tester.scrollUntilVisible(
-      hint,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(hint, findsOneWidget);
+    await expectNote(tester, hint);
     expect(find.textContaining('from the notification'), findsNothing);
   });
 
   testWidgets('N5b: leaving the share screen stops the service', (
     tester,
   ) async {
-    final bg = _FakeBackground();
+    final bg = FakeBackground();
     await pump(tester, stopsInBackground: true, background: bg);
     await openShare(tester);
     await tester.pageBack();
@@ -715,18 +572,14 @@ void main() {
 
   testWidgets('N5b: when the system refuses the service, going to the '
       'background stops sharing (N5 rule)', (tester) async {
-    final bg = _FakeBackground()..refuse = true;
+    final bg = FakeBackground()..refuse = true;
     await pump(tester, stopsInBackground: true, background: bg);
     await openShare(tester);
     expect(server.isRunning, isTrue);
     final hint = find.text(
       'Sharing stops when you leave this screen or the app.',
     );
-    await tester.scrollUntilVisible(
-      hint,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await expectNote(tester, hint);
     tester.binding
       ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
       ..handleAppLifecycleStateChanged(AppLifecycleState.hidden);
@@ -739,7 +592,7 @@ void main() {
   });
 
   test('a stop while starting shuts the late server down', () async {
-    final server = _FakeServer(_FakeIdentity());
+    final server = FakeServer(FakeIdentity());
     final container = ProviderContainer(
       overrides: [
         shareServerProvider.overrideWithValue(server),

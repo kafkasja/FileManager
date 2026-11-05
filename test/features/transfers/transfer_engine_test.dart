@@ -1015,7 +1015,9 @@ void main() {
       expect(puts().map((c) => c.query['offset']), ['0', '4']);
       expect(server.completes, hasLength(2));
       expect(server.uploads, hasLength(1), reason: 'never re-uploaded');
-      expect(hashes, 1, reason: 'the stored sender hash is reused');
+      // E1: hashed while sending, never read again; the retry reuses the
+      // stored hash.
+      expect(hashes, 0, reason: 'the stored sender hash is reused');
       final uploadId = file.uploadId!;
       expect(
         http.calls

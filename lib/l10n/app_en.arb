@@ -4697,5 +4697,19 @@
   "browseRefreshFailed": "Couldn't refresh. Try again.",
   "@browseRefreshFailed": {"description": "E4: pull to refresh in Browse failed."},
   "sameTimeChangeWindow": "Change window",
-  "@sameTimeChangeWindow": {"description": "E4: button on Same time's empty state; opens Settings where the time window is set."}
+  "@sameTimeChangeWindow": {"description": "E4: button on Same time's empty state; opens Settings where the time window is set."},
+  "shareInfoTooltip": "About sharing",
+  "@shareInfoTooltip": {"description": "E1: tooltip of the (i) button on the share screen that shows the privacy and keep-running notes when they don't fit."},
+  "receivedSavedOne": "{name} saved to {folder}",
+  "@receivedSavedOne": {"description": "E1: snackbar after one received file. folder is like 'Downloads › KFM › Phone'.", "placeholders": {"name": {"type": "String"}, "folder": {"type": "String"}}},
+  "receivedSavedMany": "{count, plural, =1{1 file saved to {folder}} other{{count} files saved to {folder}}}",
+  "@receivedSavedMany": {"description": "E1: snackbar after several received files.", "placeholders": {"count": {"type": "int"}, "folder": {"type": "String"}}},
+  "showInFolder": "Show in folder",
+  "@showInFolder": {"description": "E1: opens the folder of a received file (Explorer with the file selected on Windows)."},
+  "receiveFolderTitle": "Received files go to",
+  "@receiveFolderTitle": {"description": "E1: settings row title; the subtitle is the folder (like 'Downloads › KFM'). Also the folder picker's title."},
+  "receiveFolderReset": "Use the default folder",
+  "@receiveFolderReset": {"description": "E1: tooltip of the reset button on the receive folder row (back to Downloads › KFM)."},
+  "receiveFolderHelp": "Files other devices send you land here, in a folder per device.",
+  "@receiveFolderHelp": {"description": "E1: description under the 'Received files go to' settings row (E2 settings search)."}
 }

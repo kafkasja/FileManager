@@ -41,21 +41,29 @@ class _DesktopDevicesScreenState extends ConsumerState<DesktopDevicesScreen> {
     final l10n = context.l10n;
     final left = switch (_pane) {
       DevicesPane.start => _Start(onPick: _show),
-      DevicesPane.share => const ShareScreen(),
-      DevicesPane.receive => const ShareScreen(receive: true),
+      // Embedded, not routes: Stop goes back to the start pane (E1 H1).
+      DevicesPane.share => ShareScreen(onStop: () => _show(DevicesPane.start)),
+      DevicesPane.receive => ShareScreen(
+        receive: true,
+        onStop: () => _show(DevicesPane.start),
+      ),
       DevicesPane.connect => const ConnectScreen(),
     };
+    // E1: the QR pane gets the whole width and most of the height while
+    // sharing (it must fit without scrolling, even at 800 × 600); its own
+    // Stop button replaces the back button.
+    final sharing = _pane == DevicesPane.share || _pane == DevicesPane.receive;
     return Column(
       children: [
         Expanded(
-          flex: 3,
+          flex: sharing ? 4 : 3,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: Column(
                   children: [
-                    if (_pane != DevicesPane.start)
+                    if (_pane == DevicesPane.connect)
                       Align(
                         alignment: AlignmentDirectional.centerStart,
                         child: Padding(
@@ -69,11 +77,7 @@ class _DesktopDevicesScreenState extends ConsumerState<DesktopDevicesScreen> {
                             key: const ValueKey('devices-back'),
                             onPressed: () => _show(DevicesPane.start),
                             icon: const Icon(Icons.arrow_back, size: 18),
-                            label: Text(
-                              _pane == DevicesPane.connect
-                                  ? l10n.desktopBrowseBack
-                                  : l10n.shareStop,
-                            ),
+                            label: Text(l10n.desktopBrowseBack),
                           ),
                         ),
                       ),
@@ -81,13 +85,15 @@ class _DesktopDevicesScreenState extends ConsumerState<DesktopDevicesScreen> {
                   ],
                 ),
               ),
-              const VerticalDivider(width: 1),
-              const Expanded(child: RememberedDevicesScreen()),
+              if (!sharing) ...[
+                const VerticalDivider(width: 1),
+                const Expanded(child: RememberedDevicesScreen()),
+              ],
             ],
           ),
         ),
         const Divider(height: 1),
-        const Expanded(flex: 2, child: TransfersScreen()),
+        Expanded(flex: sharing ? 1 : 2, child: const TransfersScreen()),
       ],
     );
   }

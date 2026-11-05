@@ -8322,4 +8322,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sameTimeChangeWindow => 'Change window';
+
+  @override
+  String get shareInfoTooltip => 'About sharing';
+
+  @override
+  String receivedSavedOne(String name, String folder) {
+    return '$name saved to $folder';
+  }
+
+  @override
+  String receivedSavedMany(int count, String folder) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files saved to $folder',
+      one: '1 file saved to $folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get showInFolder => 'Show in folder';
+
+  @override
+  String get receiveFolderTitle => 'Received files go to';
+
+  @override
+  String get receiveFolderReset => 'Use the default folder';
+
+  @override
+  String get receiveFolderHelp =>
+      'Files other devices send you land here, in a folder per device.';
 }

@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/router.dart';
+import 'package:kfm/app/safe_nav.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/permissions/storage_access_provider.dart';
@@ -34,11 +37,17 @@ const Duration kShareActivityWindow = Duration(seconds: 15);
 /// (N5b notification). The QR area is
 /// filled by N2. The screen stays on while open.
 class ShareScreen extends ConsumerStatefulWidget {
-  const new({this.receive = false, super.key});
+  const new({this.receive = false, this.onStop, super.key});
 
   /// N12 "Receive files": the same server, headed "Ready to receive files".
   /// Send pairings never open the folder picker either way.
   final bool receive;
+
+  /// Embedded mode (desktop Devices pane, TASK-E1): Stop sharing calls this
+  /// instead of popping, and Back/Esc are left alone. The screen is not a
+  /// route there, so a pop would remove the Devices branch's only page and
+  /// leave a black pane.
+  final VoidCallback? onStop;
 
   @override
   ConsumerState<ShareScreen> createState() => _ShareScreenState();
@@ -57,6 +66,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   /// The request whose accept dialog is open.
   String? _dialogFor;
+  final DialogHandle<AcceptAnswer> _dialog = DialogHandle();
 
   @override
   void initState() {
@@ -142,7 +152,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
         if (_dialogFor != request.requestId) return;
         // Ended elsewhere (timeout, the client's cancel): close the dialog.
         _dialogFor = null;
-        Navigator.of(context, rootNavigator: true).pop();
+        _dialog.close();
         final l10n = context.l10n;
         final text = switch (decision) {
           ConnectionDecision.cancelled => l10n.acceptRequestCancelled,
@@ -175,8 +185,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       SystemSound.play(SystemSoundType.alert).catchError((Object _) {}),
     );
     _dialogFor = request.requestId;
-    final answer = await showDialog<AcceptAnswer>(
-      context: context,
+    final answer = await _dialog.show(
+      context,
       barrierDismissible: false,
       builder: (_) => AcceptDialog(
         request: request,
@@ -277,25 +287,35 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     final l10n = context.l10n;
     final state = ref.watch(shareServerControllerProvider);
     final spacing = context.tokens.spacing;
+    final embedded = widget.onStop != null;
+    final scaffold = Scaffold(
+      // Embedded: the Devices pane is the context, the title is the
+      // heading below (E1: room for the QR).
+      appBar: embedded
+          ? null
+          : AppBar(
+              title: Text(widget.receive ? l10n.receiveFiles : l10n.shareTitle),
+            ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const RemoteRequestBanner(),
+            Expanded(
+              child: _body(context, state, spacing, padding: spacing * 2),
+            ),
+          ],
+        ),
+      ),
+    );
+    // Embedded: not a route, nothing to pop (E1 H1).
+    if (embedded) return scaffold;
     return PopScope(
       // Q8: leaving stops sharing; running transfers are asked about first.
       canPop: state.status != ShareServerStatus.running,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) unawaited(_leave());
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.receive ? l10n.receiveFiles : l10n.shareTitle),
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              const RemoteRequestBanner(),
-              Expanded(child: _body(context, state, spacing)),
-            ],
-          ),
-        ),
-      ),
+      child: scaffold,
     );
   }
 
@@ -309,7 +329,6 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   /// Back / Stop sharing while sharing runs: asks first when transfers
   /// would be cut.
   Future<void> _leave() async {
-    final navigator = Navigator.of(context);
     if (_transfersActive()) {
       final l10n = context.l10n;
       final stop = await showDialog<bool>(
@@ -333,13 +352,23 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       );
       if (stop != true || !mounted) return;
     }
-    navigator.pop();
+    if (widget.onStop case final onStop?) {
+      onStop();
+    } else {
+      // A restored `/connect/share` may be the only page (E1 H3).
+      safePop(context, fallback: AppRoutes.swipe);
+    }
   }
 
-  Widget _body(BuildContext context, ShareServerState state, double spacing) {
+  Widget _body(
+    BuildContext context,
+    ShareServerState state,
+    double spacing, {
+    required double padding,
+  }) {
     final l10n = context.l10n;
     return Padding(
-      padding: EdgeInsetsDirectional.all(spacing * 3),
+      padding: EdgeInsetsDirectional.all(padding),
       child: switch (state.status) {
         ShareServerStatus.starting => _Centered(
           icon: null,
@@ -348,6 +377,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
         ShareServerStatus.running => _Running(
           state: state,
           receive: widget.receive,
+          onStop: () => unawaited(_leave()),
         ),
         ShareServerStatus.error when state.error is PublicNetworkException =>
           _Centered(
@@ -424,11 +454,25 @@ class RemoteRequestBanner extends ConsumerWidget {
   }
 }
 
+/// Below this width the QR and the text stack (one column).
+const double kShareWideMinWidth = 720;
+
+/// The QR's side stays between these (smaller only when the screen is
+/// smaller still).
+const double kShareQrMin = 140;
+const double kShareQrMax = 360;
+
+/// Running: everything fits on screen without scrolling (E1 issue 1: "dont
+/// make it scrollable, it should all be on screen"). Wide (≥ 720 dp, or a
+/// short landscape pane): QR at the start, the rest at the end. Narrow: one
+/// column with the QR taking the space left. Notes collapse into an (i)
+/// button when height is short. Only big text (L5, ≥ 1.5) scrolls.
 class _Running extends ConsumerWidget {
-  const new({required this.state, this.receive = false});
+  const new({required this.state, required this.onStop, this.receive = false});
 
   final ShareServerState state;
   final bool receive;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -436,71 +480,139 @@ class _Running extends ConsumerWidget {
     final theme = Theme.of(context);
     final spacing = context.tokens.spacing;
     final name = ref.watch(deviceIdentityProvider).value?.displayName ?? '';
-    return ListView(
-      children: [
-        Text(
-          receive ? l10n.receiveReadyTitle : l10n.shareSharing,
-          style: theme.textTheme.headlineSmall,
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: spacing),
-        Text(
-          receive ? l10n.receiveReadyHint(name) : l10n.shareSharingAs(name),
-          style: theme.textTheme.bodyLarge,
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: spacing * 2),
-        const ConnectedClientsList(),
-        if (!(ref
-                .watch(storageAccessControllerProvider)
-                .value
-                ?.canSeeAllFiles ??
-            true)) ...[
-          // N7: non-media files aren't indexed, so clients can't see them.
+    final mediaOnly =
+        !(ref.watch(storageAccessControllerProvider).value?.canSeeAllFiles ??
+            true);
+    final bigText = MediaQuery.textScalerOf(context).scale(10) >= 15;
+    return LayoutBuilder(
+      builder: (context, c) {
+        final wide =
+            c.maxWidth >= kShareWideMinWidth ||
+            (c.maxWidth >= 480 && c.maxWidth > c.maxHeight * 1.2);
+        // Room for the notes under everything else.
+        final notesInline = !bigText && c.maxHeight >= (wide ? 560 : 780);
+        final header = <Widget>[
           Text(
-            l10n.shareMediaOnlyHint,
-            key: const ValueKey('share-media-only'),
-            style: theme.textTheme.bodySmall,
+            receive ? l10n.receiveReadyTitle : l10n.shareSharing,
+            style: theme.textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: spacing * 2),
-        ],
-        const PairingPanel(),
-        if (state.discoveryError != null) ...[
+          SizedBox(height: spacing / 2),
+          Text(
+            receive ? l10n.receiveReadyHint(name) : l10n.shareSharingAs(name),
+            style: theme.textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
           SizedBox(height: spacing),
-          Text(
-            l10n.shareDiscoveryFailed,
-            style: theme.textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
-        SizedBox(height: spacing * 2),
-        _KeepAliveNote(keepAlive: state.keepAlive),
-        if (kDebugMode) ...[
-          SizedBox(height: spacing * 3),
-          for (final a in state.addresses)
-            SelectableText(
-              l10n.shareDebugAddress(a.address.address, state.port ?? 0),
-              key: ValueKey('share-address-${a.address.address}'),
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-          if (state.fingerprint case final fp?)
-            SelectableText(
-              l10n.shareDebugFingerprint(fp),
+          const ConnectedClientsList(),
+          if (mediaOnly) ...[
+            // N7: non-media files aren't indexed, so clients can't see them.
+            Text(
+              l10n.shareMediaOnlyHint,
+              key: const ValueKey('share-media-only'),
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
-        ],
-        SizedBox(height: spacing * 4),
-        Center(
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.stop_circle_outlined),
-            label: Text(l10n.shareStop),
+            SizedBox(height: spacing),
+          ],
+        ];
+        final footer = <Widget>[
+          if (state.discoveryError != null) ...[
+            SizedBox(height: spacing),
+            Text(
+              l10n.shareDiscoveryFailed,
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
+          if (notesInline) ...[
+            SizedBox(height: spacing),
+            Text(
+              l10n.sharePrivacyNote,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: spacing),
+            _KeepAliveNote(keepAlive: state.keepAlive),
+          ],
+          SizedBox(height: spacing),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: spacing,
+            children: [
+              OutlinedButton.icon(
+                key: const ValueKey('share-stop'),
+                onPressed: onStop,
+                icon: const Icon(Icons.stop_circle_outlined),
+                label: Text(l10n.shareStop),
+              ),
+              if (!notesInline || kDebugMode)
+                IconButton(
+                  key: const ValueKey('share-info'),
+                  tooltip: l10n.shareInfoTooltip,
+                  icon: const Icon(Icons.info_outline),
+                  onPressed: () => unawaited(_showInfo(context, state)),
+                ),
+            ],
           ),
+        ];
+        return PairingPanel(
+          header: header,
+          footer: footer,
+          wide: wide,
+          scroll: bigText,
+          // A short phone screen: the QR's own hint and countdown go.
+          compact: !wide && c.maxHeight < 600,
+        );
+      },
+    );
+  }
+
+  /// The notes that don't fit, plus (debug builds) addresses and the
+  /// certificate fingerprint.
+  static Future<void> _showInfo(BuildContext context, ShareServerState state) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final spacing = context.tokens.spacing;
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const ValueKey('share-info-dialog'),
+        scrollable: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sharePrivacyNote),
+            SizedBox(height: spacing * 2),
+            _KeepAliveNote(keepAlive: state.keepAlive),
+            if (kDebugMode) ...[
+              SizedBox(height: spacing * 2),
+              for (final a in state.addresses)
+                SelectableText(
+                  l10n.shareDebugAddress(a.address.address, state.port ?? 0),
+                  key: ValueKey('share-address-${a.address.address}'),
+                  style: theme.textTheme.titleMedium,
+                ),
+              if (state.fingerprint case final fp?)
+                SelectableText(
+                  l10n.shareDebugFingerprint(fp),
+                  style: theme.textTheme.bodySmall,
+                ),
+            ],
+          ],
         ),
-      ],
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.ok),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -637,10 +749,32 @@ class ConnectedClientsList extends ConsumerWidget {
   }
 }
 
-/// QR + typed code + address + countdown (TASK-N2). Listens to the
-/// [PairingSecretStore] directly so every rotation hint is shown.
+/// QR + typed code + address + countdown (TASK-N2), laid out to fit
+/// (E1): [header] above, [footer] below, the QR sized by what is left.
+/// Listens to the [PairingSecretStore] directly so every rotation hint is
+/// shown.
 class PairingPanel extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({
+    this.header = const [],
+    this.footer = const [],
+    this.wide = false,
+    this.scroll = false,
+    this.compact = false,
+    super.key,
+  });
+
+  final List<Widget> header;
+  final List<Widget> footer;
+
+  /// Two columns: QR at the start, everything else at the end.
+  final bool wide;
+
+  /// Big text (L5): one scrolling column with a fixed-size QR.
+  final bool scroll;
+
+  /// Short screens: no hint above the QR, no QR countdown (the code's
+  /// stays).
+  final bool compact;
 
   @override
   ConsumerState<PairingPanel> createState() => _PairingPanelState();
@@ -687,94 +821,190 @@ class _PairingPanelState extends ConsumerState<PairingPanel> {
     return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _qr(SecretActive state, double side) {
+    final spacing = context.tokens.spacing;
+    return Semantics(
+      label: context.l10n.shareQrSemantics,
+      image: true,
+      child: ExcludeSemantics(
+        child: QrImageView(
+          key: const ValueKey('share-qr'),
+          data: state.offer.toUri(),
+          size: side,
+          // White quiet zone also in dark mode, or scanners fail.
+          backgroundColor: Colors.white,
+          padding: EdgeInsets.all(side < 200 ? spacing : spacing * 2),
+          errorCorrectionLevel: QrErrorCorrectLevel.M,
+        ),
+      ),
+    );
+  }
+
+  /// The hint above the QR and the QR, sized to the space given.
+  Widget _qrArea(SecretActive state) => LayoutBuilder(
+    builder: (context, c) {
+      final spacing = context.tokens.spacing;
+      final hint = widget.compact ? 0.0 : 24.0;
+      final gap = widget.compact ? 0.0 : spacing;
+      final room = math.min(c.maxWidth, c.maxHeight - hint - gap);
+      final side = room < kShareQrMin
+          ? math.max(0, room).toDouble()
+          : math.min(room, kShareQrMax);
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (!widget.compact) ...[
+            SizedBox(
+              height: hint,
+              child: Text(
+                context.l10n.shareQrHint,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(height: gap),
+          ],
+          _qr(state, side),
+        ],
+      );
+    },
+  );
+
+  List<Widget> _codeBlock(SecretActive state) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final spacing = context.tokens.spacing;
-    final state = _store.state;
-    if (state is! SecretActive) {
-      return const Center(child: CircularProgressIndicator());
-    }
     final now = _store.now();
     final address = state.offer.addresses.firstOrNull;
     final cooldown = state.codeCooldownUntil;
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
-    return Column(
-      children: [
-        Text(l10n.shareQrHint, textAlign: TextAlign.center),
-        SizedBox(height: spacing),
-        Center(
-          child: Semantics(
-            label: l10n.shareQrSemantics,
-            image: true,
-            child: ExcludeSemantics(
-              child: QrImageView(
-                key: const ValueKey('share-qr'),
-                data: state.offer.toUri(),
-                size: 260,
-                // White quiet zone also in dark mode, or scanners fail.
-                backgroundColor: Colors.white,
-                padding: EdgeInsets.all(spacing * 2),
-                errorCorrectionLevel: QrErrorCorrectLevel.M,
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: spacing),
+    return [
+      if (!widget.compact) ...[
         Text(
           l10n.shareExpiresIn(_mmss(state.expiresAt.difference(now))),
           style: muted,
-        ),
-        SizedBox(height: spacing * 3),
-        Text(l10n.shareTypeCodeTitle, style: theme.textTheme.titleMedium),
-        SizedBox(height: spacing),
-        if (!state.typedCodesEnabled)
-          Text(
-            l10n.shareTypedCodesOff,
-            key: const ValueKey('share-typed-off'),
-            textAlign: TextAlign.center,
-          )
-        else ...[
-          SelectableText(
-            state.code.display,
-            key: const ValueKey('share-code'),
-            style: theme.textTheme.displaySmall?.copyWith(
-              fontFamily: 'monospace',
-              letterSpacing: 4,
-            ),
-          ),
-          if (cooldown != null)
-            Text(
-              l10n.shareCodeCooldown(
-                cooldown.difference(now).inSeconds.clamp(1, 30),
-              ),
-              textAlign: TextAlign.center,
-            )
-          else
-            Text(
-              l10n.shareExpiresIn(_mmss(state.codeExpiresAt.difference(now))),
-              style: muted,
-            ),
-        ],
-        if (address != null) ...[
-          SizedBox(height: spacing),
-          SelectableText(
-            l10n.shareAddress('${address.host}:${address.port}'),
-            key: const ValueKey('share-address'),
-            style: theme.textTheme.titleSmall,
-          ),
-        ],
-        SizedBox(height: spacing),
-        Text(
-          l10n.sharePrivacyNote,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
           textAlign: TextAlign.center,
         ),
+        SizedBox(height: spacing),
+      ],
+      Text(
+        l10n.shareTypeCodeTitle,
+        style: theme.textTheme.titleMedium,
+        textAlign: TextAlign.center,
+      ),
+      if (!state.typedCodesEnabled)
+        Text(
+          l10n.shareTypedCodesOff,
+          key: const ValueKey('share-typed-off'),
+          textAlign: TextAlign.center,
+        )
+      else ...[
+        SelectableText(
+          state.code.display,
+          key: const ValueKey('share-code'),
+          textAlign: TextAlign.center,
+          style:
+              (widget.compact
+                      ? theme.textTheme.titleLarge
+                      : theme.textTheme.headlineMedium)
+                  ?.copyWith(fontFamily: 'monospace', letterSpacing: 4),
+        ),
+        if (cooldown != null)
+          Text(
+            l10n.shareCodeCooldown(
+              cooldown.difference(now).inSeconds.clamp(1, 30),
+            ),
+            textAlign: TextAlign.center,
+          )
+        else
+          Text(
+            l10n.shareExpiresIn(_mmss(state.codeExpiresAt.difference(now))),
+            style: muted,
+            textAlign: TextAlign.center,
+          ),
+      ],
+      if (address != null) ...[
+        if (!widget.compact) SizedBox(height: spacing),
+        SelectableText(
+          l10n.shareAddress('${address.host}:${address.port}'),
+          key: const ValueKey('share-address'),
+          style: theme.textTheme.titleSmall,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.tokens.spacing;
+    final state = _store.state;
+    if (state is! SecretActive) {
+      // Between codes: the heading and Stop stay.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...widget.header,
+          const Expanded(child: Center(child: CircularProgressIndicator())),
+          ...widget.footer,
+        ],
+      );
+    }
+    final code = _codeBlock(state);
+    if (widget.scroll) {
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ...widget.header,
+            Text(context.l10n.shareQrHint, textAlign: TextAlign.center),
+            SizedBox(height: spacing),
+            Center(child: _qr(state, 240)),
+            SizedBox(height: spacing),
+            ...code,
+            ...widget.footer,
+          ],
+        ),
+      );
+    }
+    if (widget.wide) {
+      return Row(
+        children: [
+          Expanded(child: _qrArea(state)),
+          SizedBox(width: spacing * 3),
+          Expanded(
+            // A connected device's card or a hint may not fit a short
+            // window: the text column then shrinks, it never scrolls.
+            child: LayoutBuilder(
+              builder: (context, c) => Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                    width: c.maxWidth,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [...widget.header, ...code, ...widget.footer],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...widget.header,
+        Expanded(child: _qrArea(state)),
+        SizedBox(height: spacing),
+        ...code,
+        ...widget.footer,
       ],
     );
   }

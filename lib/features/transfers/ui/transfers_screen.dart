@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/device_kind.dart';
+import 'package:kfm/app/file_reveal.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/app/widgets/empty_state.dart';
@@ -15,6 +16,7 @@ import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/connect_screen.dart'
     show pairingFailureMessage;
+import 'package:kfm/features/connect/ui/incoming_offer_prompter.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/folders/ui/local_jobs_section.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart';
@@ -483,7 +485,7 @@ class _FileRow extends ConsumerWidget {
         transferErrorText(l10n, f.error, job),
       TransferFileStatus.cancelled => l10n.transferStatusCancelled,
     };
-    final Widget? trailing = switch (f.status) {
+    final trailing = switch (f.status) {
       TransferFileStatus.queued || TransferFileStatus.running => IconButton(
         tooltip: l10n.transferCancel,
         icon: const Icon(Icons.close),
@@ -495,6 +497,14 @@ class _FileRow extends ConsumerWidget {
         icon: const Icon(Icons.refresh),
         onPressed: () => unawaited(engine.retry(job.id, fileId: f.id)),
       ),
+      // E1: where a received file landed.
+      TransferFileStatus.done
+          when job.direction == TransferDirection.download =>
+        ReceivedFileMenu(
+          key: ValueKey('transfer-file-menu-${f.id}'),
+          folder: job.targetPath,
+          path: () => localPathOfReceived(ref, f.targetFileId),
+        ),
       _ => null,
     };
     return ListTile(

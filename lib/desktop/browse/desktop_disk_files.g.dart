@@ -108,7 +108,7 @@ final class DesktopFolderIndexedProvider
 }
 
 String _$desktopFolderIndexedHash() =>
-    r'840590e2efcba104e5be6fd1c324c5a0029a6c9f';
+    r'fe602178feb3007f8b51e9b27edbc9326f27fe0e';
 
 /// The index covers [folder]: under an index root, and the first full scan
 /// is done. Else Browse lists its files from disk too.

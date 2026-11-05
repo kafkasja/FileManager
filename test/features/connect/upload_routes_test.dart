@@ -60,12 +60,16 @@ void main() {
       sizeLimitExempt: isUploadChunkRequest,
       routes: uploadRoutes(
         UploadRoutesEnv(
+          // These check the read-back hash (E1: copies skip it).
+          streamingHash: false,
           guard: guard,
           sessions: sessions,
           uploads: store,
           source: () => files,
           addToIndex: (f) async => indexed.add(f),
           stagingFreeBytes: () async => null,
+          // Free space on every chunk (E1 checks every 256 MiB).
+          spaceCheckBytes: 0,
         ),
       ),
     );
@@ -426,7 +430,7 @@ void main() {
       expect(staging.listSync(), isEmpty);
     });
 
-    test('free space is checked per chunk (507)', () async {
+    test('free space is checked again during the upload (507)', () async {
       await call('POST', ApiRoutes.uploads, json: create());
       files.freeBytesValue = 10;
       final r = await call(
@@ -506,6 +510,9 @@ void main() {
           sizeLimitExempt: isUploadChunkRequest,
           routes: uploadRoutes(
             UploadRoutesEnv(
+              // These check the read-back hash (E1: copies skip it).
+              streamingHash: false,
+              spaceCheckBytes: 0,
               guard: AllowListGuard(
                 scopeOf: scopes.scopeOf,
                 source: () => files,
@@ -553,6 +560,9 @@ void main() {
       sizeLimitExempt: isUploadChunkRequest,
       routes: uploadRoutes(
         UploadRoutesEnv(
+          // These check the read-back hash (E1: copies skip it).
+          streamingHash: false,
+          spaceCheckBytes: 0,
           guard: AllowListGuard(
             scopeOf: scopes.scopeOf,
             source: () => files,
@@ -661,6 +671,9 @@ void main() {
           sizeLimitExempt: isUploadChunkRequest,
           routes: uploadRoutes(
             UploadRoutesEnv(
+              // These check the read-back hash (E1: copies skip it).
+              streamingHash: false,
+              spaceCheckBytes: 0,
               guard: AllowListGuard(
                 scopeOf: scopes.scopeOf,
                 source: () => files,

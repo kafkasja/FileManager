@@ -11636,6 +11636,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change window'**
   String get sameTimeChangeWindow;
+
+  /// E1: tooltip of the (i) button on the share screen that shows the privacy and keep-running notes when they don't fit.
+  ///
+  /// In en, this message translates to:
+  /// **'About sharing'**
+  String get shareInfoTooltip;
+
+  /// E1: snackbar after one received file. folder is like 'Downloads › KFM › Phone'.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} saved to {folder}'**
+  String receivedSavedOne(String name, String folder);
+
+  /// E1: snackbar after several received files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file saved to {folder}} other{{count} files saved to {folder}}}'**
+  String receivedSavedMany(int count, String folder);
+
+  /// E1: opens the folder of a received file (Explorer with the file selected on Windows).
+  ///
+  /// In en, this message translates to:
+  /// **'Show in folder'**
+  String get showInFolder;
+
+  /// E1: settings row title; the subtitle is the folder (like 'Downloads › KFM'). Also the folder picker's title.
+  ///
+  /// In en, this message translates to:
+  /// **'Received files go to'**
+  String get receiveFolderTitle;
+
+  /// E1: tooltip of the reset button on the receive folder row (back to Downloads › KFM).
+  ///
+  /// In en, this message translates to:
+  /// **'Use the default folder'**
+  String get receiveFolderReset;
+
+  /// E1: description under the 'Received files go to' settings row (E2 settings search).
+  ///
+  /// In en, this message translates to:
+  /// **'Files other devices send you land here, in a folder per device.'**
+  String get receiveFolderHelp;
 }
 
 class _AppLocalizationsDelegate

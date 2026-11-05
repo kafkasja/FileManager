@@ -101,7 +101,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       titleBuilder: (c) => c.l10n.settingsConnectSharing,
       entries: [
         connectEntry,
-        // TODO(E1): `connect.receiveFolder` goes here.
+        receiveFolderEntry,
         rememberedDevicesEntry,
         transfersEntry,
         stopSharingOnCloseEntry,

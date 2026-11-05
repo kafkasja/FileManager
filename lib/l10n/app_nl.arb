@@ -1921,5 +1921,12 @@
   "settingsSwipeShowFolderHelp": "Eén regel boven de kaart. Tik erop om het pad te kopiëren of de map te openen.",
   "backupSettingSwipeShowFolder": "Map van het bestand tonen",
   "browseRefreshFailed": "Vernieuwen lukte niet. Probeer het opnieuw.",
-  "sameTimeChangeWindow": "Venster wijzigen"
+  "sameTimeChangeWindow": "Venster wijzigen",
+  "shareInfoTooltip": "Over delen",
+  "receivedSavedOne": "{name} opgeslagen in {folder}",
+  "receivedSavedMany": "{count, plural, =1{1 bestand opgeslagen in {folder}} other{{count} bestanden opgeslagen in {folder}}}",
+  "showInFolder": "Toon in map",
+  "receiveFolderTitle": "Ontvangen bestanden gaan naar",
+  "receiveFolderReset": "Standaardmap gebruiken",
+  "receiveFolderHelp": "Bestanden die andere apparaten je sturen komen hier, in een map per apparaat."
 }

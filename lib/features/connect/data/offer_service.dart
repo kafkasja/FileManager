@@ -186,7 +186,8 @@ class OfferService implements OfferGrants {
     required this._sessions,
     required this._uploads,
     required this._freeBytes,
-    required this.downloadsRoot,
+    required this._downloadsRoot,
+    this._currentDownloadsRoot,
     OfferLimiter? limiter,
     DateTime Function()? clock,
     this._serverFingerprint,
@@ -205,7 +206,12 @@ class OfferService implements OfferGrants {
   final Future<int?> Function(String path) _freeBytes;
 
   /// Where received files go by default (`<root>/<sender>`).
-  final String downloadsRoot;
+  final String _downloadsRoot;
+  final String Function()? _currentDownloadsRoot;
+
+  /// Where accepted offers land by default (E1: follows the receive folder
+  /// setting).
+  String get downloadsRoot => _currentDownloadsRoot?.call() ?? _downloadsRoot;
   final OfferLimiter limiter;
   final DateTime Function() _clock;
 

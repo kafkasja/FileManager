@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/app/safe_nav.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -219,10 +220,12 @@ Future<bool> _reconnectToSend(
   KnownDevice device,
 ) async {
   final l10n = context.l10n;
-  final navigator = Navigator.of(context, rootNavigator: true);
+  // Closed by handle: a blind root pop after the await could remove a
+  // page instead (E1 H3).
+  final progress = DialogHandle<void>();
   unawaited(
-    showDialog<void>(
-      context: context,
+    progress.show(
+      context,
       barrierDismissible: false,
       builder: (context) => PopScope(
         canPop: false,
@@ -242,10 +245,10 @@ Future<bool> _reconnectToSend(
     await ref
         .read(knownDeviceConnectorProvider)
         .reconnect(device.fingerprint, purpose: SessionPurpose.send);
-    navigator.pop();
+    progress.close();
     return true;
   } on PairingException catch (e) {
-    navigator.pop();
+    progress.close();
     if (context.mounted) {
       _snack(
         context,
@@ -548,7 +551,8 @@ class _ConnectSendScreenState extends ConsumerState<ConnectSendScreen> {
     if (!mounted) return;
     final pending = ref.read(pendingSendProvider);
     if (pending == null) {
-      context.pop();
+      // Restored as the only page (process death): nothing to pop (E1 H3).
+      safePop(context, fallback: AppRoutes.swipe);
       return;
     }
     final controller = ref.read(connectControllerProvider.notifier)
@@ -574,7 +578,7 @@ class _ConnectSendScreenState extends ConsumerState<ConnectSendScreen> {
       c.peerName,
     );
     _pending.set(null);
-    if (mounted) context.pop();
+    if (mounted) safePop(context, fallback: AppRoutes.swipe);
   }
 
   @override

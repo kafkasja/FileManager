@@ -195,4 +195,30 @@ void main() {
     expect(a, isNot(PathGuard.rootId([1, 2, 3], '$_root/Download')));
     expect(a, isNot(contains('DCIM')));
   });
+
+  group('E1 Windows paths', () {
+    final win = PathGuard(
+      windows: true,
+      resolver: (path) async =>
+          {'C:', 'C:/Users', 'C:/Users/kaf'}.contains(path) ? path : null,
+    );
+
+    test('drive paths are absolute only with windows: true', () async {
+      expect(await win.canonicalise('C:/Users/kaf/'), 'C:/Users/kaf');
+      expect(await win.canonicalise('C:/Users/kaf/new'), 'C:/Users/kaf/new');
+      expect(await win.canonicalise('C:/'), 'C:');
+      expect(() => win.canonicalise('C:/..'), _rejected());
+      expect(() => win.canonicalise('Users/kaf'), _rejected());
+      expect(() => win.canonicalise(r'C:\Users'), _rejected());
+      expect(() => guard.canonicalise('C:/Users'), _rejected());
+    });
+
+    test('AppData, the Recycle Bin and System Volume Information are '
+        'excluded', () {
+      expect(PathGuard.isExcluded('C:/Users/kaf/AppData/Local'), isTrue);
+      expect(PathGuard.isExcluded(r'D:/$RECYCLE.BIN/x'), isTrue);
+      expect(PathGuard.isExcluded('E:/System Volume Information'), isTrue);
+      expect(PathGuard.isExcluded('C:/Users/kaf/Pictures'), isFalse);
+    });
+  });
 }

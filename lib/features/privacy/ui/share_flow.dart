@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/safe_nav.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -90,10 +91,10 @@ Future<void> shareFiles(
     final stripper = ref.read(locationStripperProvider);
     final sendId = 'share-${randomHexId()}';
     final progress = ValueNotifier<int>(0);
-    final navigator = Navigator.of(context, rootNavigator: true);
+    final dialog = DialogHandle<void>();
     unawaited(
-      showDialog<void>(
-        context: context,
+      dialog.show(
+        context,
         barrierDismissible: false,
         builder: (_) =>
             _ProgressDialog(progress: progress, total: media.length),
@@ -110,7 +111,7 @@ Future<void> shareFiles(
       }
     } finally {
       // The notifier isn't disposed: the dialog may still be closing.
-      navigator.pop();
+      dialog.close();
     }
     if (!context.mounted) return;
   }

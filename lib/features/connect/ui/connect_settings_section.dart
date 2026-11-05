@@ -9,6 +9,7 @@ import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/connect/ui/receive_folder_tile.dart';
 import 'package:kfm/features/connect/ui/windows_close_host.dart';
 import 'package:kfm/features/settings/ui/settings_section.dart';
 import 'package:kfm/features/settings/ui/widgets/settings_tiles.dart';
@@ -32,9 +33,13 @@ final connectEntry = SettingsEntry(
   ),
 );
 
-// TODO(E1): `connect.receiveFolder` ("Received files go to") goes here, right
-// after [connectEntry]: E1 declares the key + row widget, the entry joins
-// `settingsSectionsProvider` → Connect & sharing.
+/// E1: where received files go (`connect.receiveFolder`).
+final receiveFolderEntry = SettingsEntry(
+  id: 'connect.receiveFolder',
+  titleBuilder: (c) => c.l10n.receiveFolderTitle,
+  subtitleBuilder: (c) => c.l10n.receiveFolderHelp,
+  builder: (_) => const ReceiveFolderTile(),
+);
 
 final rememberedDevicesEntry = SettingsEntry(
   id: 'connect.devices',

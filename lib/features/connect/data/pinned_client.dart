@@ -224,30 +224,31 @@ final class PinnedClient implements FirstContactHttp {
     req.contentLength = length;
     // Q7/Q8: no fixed timeout (a chunk on slow Wi-Fi takes a while), but
     // one that stops moving for [putStallTimeout] (a dead-but-open link)
-    // is aborted instead of waiting for the heartbeat's teardown.
-    Timer? stall;
-    void arm() {
-      stall?.cancel();
-      stall = Timer(
-        putStallTimeout,
-        () => req.abort(TimeoutException('chunk stalled', putStallTimeout)),
-      );
-    }
-
-    arm();
+    // is aborted instead of waiting for the heartbeat's teardown. E1: one
+    // periodic check instead of a new Timer per 64 KiB.
+    final quiet = Stopwatch()..start();
+    final limit = putStallTimeout;
+    final tick = limit ~/ 4 < const Duration(seconds: 1)
+        ? limit ~/ 4
+        : const Duration(seconds: 1);
+    final stall = Timer.periodic(tick, (t) {
+      if (quiet.elapsed < limit) return;
+      t.cancel();
+      req.abort(TimeoutException('chunk stalled', limit));
+    });
     try {
       await req.addStream(
         body.map((b) {
-          arm();
+          quiet.reset();
           return b;
         }),
       );
-      arm(); // now waiting for the answer
+      quiet.reset(); // now waiting for the answer
       final res = await req.close();
-      arm();
+      quiet.reset();
       return await _finish(res, decode);
     } finally {
-      stall?.cancel();
+      stall.cancel();
     }
   });
 

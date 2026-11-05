@@ -1,9 +1,24 @@
 import 'package:meta/meta.dart';
 
-/// Max body of one `PUT /v1/uploads/<id>/chunk` (N9 sends, N10 resumes).
-/// N1's 64 KB request limit exempts the chunk route, which enforces this
-/// itself (413 `too_large`).
-const int kTransferChunkBytes = 4 * 1024 * 1024;
+/// Bytes one `PUT /v1/uploads/<id>/chunk` carries (N9 sends, N10
+/// resumes). E1: 32 MiB instead of 4 (each chunk is a stop-and-wait round
+/// trip).
+const int kTransferChunkBytes = 32 * 1024 * 1024;
+
+/// Max body of one chunk the server takes (older clients send 4 MiB). N1's
+/// 64 KB request limit exempts the chunk route, which enforces this itself
+/// (413 `too_large`).
+const int kMaxTransferChunkBytes = 32 * 1024 * 1024;
+
+/// E1: the receiver makes received bytes durable (fsync + `.json`) at
+/// least every this many bytes or [kUploadCheckpointInterval], and at the
+/// end; a crash re-sends at most that much (the `.json` never claims more
+/// than was synced).
+const int kUploadCheckpointBytes = 64 * 1024 * 1024;
+const Duration kUploadCheckpointInterval = Duration(seconds: 5);
+
+/// E1: free space is checked at create and then every this many bytes.
+const int kUploadSpaceCheckBytes = 256 * 1024 * 1024;
 
 /// Free space a receiver keeps on top of the file (507 below it).
 const int kTransferSpaceMarginBytes = 64 * 1024 * 1024;
@@ -111,18 +126,30 @@ class UploadStatusDto {
 /// makes the server check it).
 @immutable
 class CompleteUploadDto {
-  const new({this.sha256});
+  const new({this.sha256, this.readBack = false});
 
   /// Throws [FormatException] when `sha256` is there but not a string.
   factory fromJson(Map<String, Object?> json) => switch (json['sha256']) {
     null => const CompleteUploadDto(),
-    final String sha => CompleteUploadDto(sha256: sha),
+    final String sha => CompleteUploadDto(
+      sha256: sha,
+      readBack: json['readBack'] == true,
+    ),
     _ => throw const FormatException('sha256'),
   };
 
   final String? sha256;
 
-  Map<String, Object?> toJson() => {'sha256': ?sha256};
+  /// E1: a move (N11, the original is deleted afterwards). The receiver
+  /// reads the part back from disk instead of trusting the hash it made
+  /// while receiving (rule 10: copy → verify). Older servers ignore it and
+  /// always read back.
+  final bool readBack;
+
+  Map<String, Object?> toJson() => {
+    'sha256': ?sha256,
+    if (readBack) 'readBack': true,
+  };
 }
 
 /// `GET /v1/files/<id>/sha256` answer (N10: the sender hash of a
