@@ -8515,4 +8515,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get linkTitle => 'Bir cihaz bağla';
+
+  @override
+  String get linkShowCode => 'Kodumu göster';
+
+  @override
+  String get linkShowCodeHint =>
+      'Diğer cihaz tarar veya yazar. Sonra ikiniz de birbirinizin dosyalarını görürsünüz.';
 }

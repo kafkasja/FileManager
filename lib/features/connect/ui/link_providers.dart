@@ -3,6 +3,7 @@ import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/link.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -18,6 +19,12 @@ DeviceLink? currentLink(Ref ref) {
   final clients =
       ref.watch(connectedClientsProvider).value ?? const <ClientSession>[];
   final store = ref.read(clientSessionStoreProvider);
+  // E1d: this side's perms and the reverse half, from the link itself.
+  final info = ref.watch(linkControllerProvider);
+  LinkPerms mineFor(String fp) =>
+      info?.peerFingerprint == fp ? info!.mine : const LinkPerms();
+  bool reverseFor(String fp) =>
+      info?.peerFingerprint != fp || info!.reverseReachable;
   final live = [
     for (final s in clients)
       if (!s.sendOnly && store.isResponsive(s)) s,
@@ -36,6 +43,8 @@ DeviceLink? currentLink(Ref ref) {
       connectedToThem: true,
       iSeeTheirs: roots.isNotEmpty,
       theyAreConnected: live.any((s) => s.clientFingerprint == peerFingerprint),
+      mine: mineFor(peerFingerprint),
+      reverseReachable: reverseFor(peerFingerprint),
     );
   }
   // Only a peer connected to this device (it shares; N12b sends back).
@@ -45,6 +54,8 @@ DeviceLink? currentLink(Ref ref) {
       peerFingerprint: s.clientFingerprint,
       peerName: s.clientName,
       theyAreConnected: true,
+      mine: mineFor(s.clientFingerprint),
+      reverseReachable: reverseFor(s.clientFingerprint),
     );
   }
   return null;

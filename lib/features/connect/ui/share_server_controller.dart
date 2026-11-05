@@ -9,6 +9,7 @@ import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/share_background.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -258,6 +259,10 @@ class ShareServerController extends _$ShareServerController {
     ref.read(pairNonceStoreProvider).clear();
     ref.read(pairingSecretStoreProvider).clear();
     ref.read(knownPairLimiterProvider).clear();
+    // E1: a link can't outlive this device's server.
+    if (ref.exists(linkControllerProvider)) {
+      ref.read(linkControllerProvider.notifier).onSharingStopped();
+    }
     final discovery = ref.read(shareDiscoveryProvider);
     try {
       await discovery.stopAdvertising();

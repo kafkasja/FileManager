@@ -487,6 +487,9 @@ void main() {
     final app = await pump(tester);
     await openConnect(tester);
     await codeToWaiting(tester);
+    // E1: the link checkboxes come first.
+    expect(find.byKey(const ValueKey('link-let-see')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('connect-remember')));
     await tester.tap(find.byKey(const ValueKey('connect-remember')));
     await _settle(tester);
     expect(
@@ -502,6 +505,10 @@ void main() {
     );
     await _settle(tester);
     expect(find.text('Connected to Phone A'), findsOneWidget);
+    // E1: the link details (what this side lets Phone A do).
+    expect(find.byKey(const ValueKey('link-details')), findsOneWidget);
+    expect(find.text('Phone A can see your files'), findsOneWidget);
+    expect(find.byKey(const ValueKey('link-limit-folders')), findsOneWidget);
     await tester.runAsync(
       () => app.container.read(dbWriteQueueProvider).flush(),
     );

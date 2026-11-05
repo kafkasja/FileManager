@@ -29,7 +29,6 @@ part 'link_controller.g.dart';
 /// Timeout of `POST /v1/link` (the peer connects back meanwhile).
 const Duration kLinkRequestTimeout = Duration(seconds: 20);
 
-
 /// The link this device is part of (TASK-E1), beyond what the two
 /// sessions show: this side's own perms, the peer's (shown only) and
 /// whether the reverse half works.
@@ -86,29 +85,28 @@ class LinkController extends _$LinkController {
 
   @override
   LinkInfo? build() {
-    ref
-      ..listen(remoteConnectionControllerProvider, (prev, next) {
-        switch (next) {
-          case RemoteConnected(:final peerFingerprint):
-            _connectedPeer = peerFingerprint;
-          case RemoteDisconnected(:final reason):
-            final fp = _connectedPeer;
-            _connectedPeer = null;
-            if (fp != null && state?.peerFingerprint == fp) {
-              _end(fp, closedByUser: reason == DisconnectReason.userClosed);
-            }
-          case RemoteIdle():
-            _connectedPeer = null;
-        }
-      })
-      // Sharing stopped elsewhere (Stop, the notification): the link ends.
-      ..listen(shareServerControllerProvider, (prev, next) {
-        if (next.status == ShareServerStatus.stopped &&
-            prev?.status == ShareServerStatus.running) {
-          if (state case final s?) _end(s.peerFingerprint, closedByUser: true);
-        }
-      });
+    ref.listen(remoteConnectionControllerProvider, (prev, next) {
+      switch (next) {
+        case RemoteConnected(:final peerFingerprint):
+          _connectedPeer = peerFingerprint;
+        case RemoteDisconnected(:final reason):
+          final fp = _connectedPeer;
+          _connectedPeer = null;
+          if (fp != null && state?.peerFingerprint == fp) {
+            _end(fp, closedByUser: reason == DisconnectReason.userClosed);
+          }
+        case RemoteIdle():
+          _connectedPeer = null;
+      }
+    });
     return null;
+  }
+
+  /// Sharing stopped (Stop, the notification, the tray): the link ends.
+  /// `ShareServerController` calls it (no listener here, so reading the
+  /// menus doesn't start the sharing machinery).
+  void onSharingStopped() {
+    if (state case final s?) _end(s.peerFingerprint, closedByUser: true);
   }
 
   // ---- server lifetime --------------------------------------------------

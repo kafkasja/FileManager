@@ -4771,5 +4771,9 @@
   "linkShowMyCode": "Or connect from the other device with this code",
   "@linkShowMyCode": {"description": "E1: line above this device's QR on the Connect screen."},
   "linkTitle": "Connect a device",
-  "@linkTitle": {"description": "E1: title of the unified Connect screen."}
+  "@linkTitle": {"description": "E1: title of the unified Connect screen."},
+  "linkShowCode": "Show my code",
+  "@linkShowCode": {"description": "E1: Connect screen and desktop Devices choice; shows this device's QR and code for the other device.", "placeholders": {}},
+  "linkShowCodeHint": "The other device scans or types it. Then you both see each other's files.",
+  "@linkShowCodeHint": {"description": "E1: subtitle of 'Show my code'.", "placeholders": {}}
 }

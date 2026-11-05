@@ -56,7 +56,7 @@ final class LinkControllerProvider
   }
 }
 
-String _$linkControllerHash() => r'd5b2d788ddd627738ec5f04837564d87a0f08384';
+String _$linkControllerHash() => r'6c5ce9eee8c89ab8d8bf9fb3fc025f6f3ecc9534';
 
 /// TASK-E1 two-way link: both devices run a server and each is the
 /// other's client. Owns the server's lifetime while a link is active (not

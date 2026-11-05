@@ -1958,5 +1958,7 @@
   "linkLimitFolders": "Klasörlerle sınırla…",
   "linkSeeTheirFiles": "{device} cihazına göz at",
   "linkShowMyCode": "Ya da diğer cihazdan bu kodla bağlanın",
-  "linkTitle": "Bir cihaz bağla"
+  "linkTitle": "Bir cihaz bağla",
+  "linkShowCode": "Kodumu göster",
+  "linkShowCodeHint": "Diğer cihaz tarar veya yazar. Sonra ikiniz de birbirinizin dosyalarını görürsünüz."
 }

@@ -11858,6 +11858,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect a device'**
   String get linkTitle;
+
+  /// E1: Connect screen and desktop Devices choice; shows this device's QR and code for the other device.
+  ///
+  /// In en, this message translates to:
+  /// **'Show my code'**
+  String get linkShowCode;
+
+  /// E1: subtitle of 'Show my code'.
+  ///
+  /// In en, this message translates to:
+  /// **'The other device scans or types it. Then you both see each other\'s files.'**
+  String get linkShowCodeHint;
 }
 
 class _AppLocalizationsDelegate

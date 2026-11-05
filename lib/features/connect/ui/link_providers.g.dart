@@ -61,7 +61,7 @@ final class CurrentLinkProvider
   }
 }
 
-String _$currentLinkHash() => r'a834c0480fcac1a29b3c98cef26aeecb90b4dd83';
+String _$currentLinkHash() => r'1a695d03ca8fed4c8b94656453762829d5c81aac';
 
 /// The Devices rows (desktop nav pane): the linked device first, then the
 /// remembered devices (temporary rows hidden) with their status.

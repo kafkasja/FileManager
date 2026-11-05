@@ -8506,4 +8506,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkTitle => 'Connect a device';
+
+  @override
+  String get linkShowCode => 'Show my code';
+
+  @override
+  String get linkShowCodeHint =>
+      'The other device scans or types it. Then you both see each other\'s files.';
 }

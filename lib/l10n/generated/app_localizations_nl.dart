@@ -8577,4 +8577,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get linkTitle => 'Een apparaat verbinden';
+
+  @override
+  String get linkShowCode => 'Mijn code tonen';
+
+  @override
+  String get linkShowCodeHint =>
+      'Het andere apparaat scant of typt hem. Daarna zien jullie elkaars bestanden.';
 }

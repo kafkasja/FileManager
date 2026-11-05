@@ -1958,5 +1958,7 @@
   "linkLimitFolders": "Beperken tot mappen…",
   "linkSeeTheirFiles": "Blader door {device}",
   "linkShowMyCode": "Of verbind vanaf het andere apparaat met deze code",
-  "linkTitle": "Een apparaat verbinden"
+  "linkTitle": "Een apparaat verbinden",
+  "linkShowCode": "Mijn code tonen",
+  "linkShowCodeHint": "Het andere apparaat scant of typt hem. Daarna zien jullie elkaars bestanden."
 }
