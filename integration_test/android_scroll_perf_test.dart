@@ -20,6 +20,7 @@ import 'dart:math' as math;
 
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -141,6 +142,9 @@ void main() {
     var deadStops = 0;
     var blankAfterSettle = 0;
     var tilesSeen = 0;
+    var blankWarm = 0;
+    var seenWarm = 0;
+    final warmIds = {for (final f in warmFiles) f.id};
     var atEnd = false;
     void watchEnd() {
       final hasMore = c.read(filePagesProvider(query)).value?.hasMore ?? false;
@@ -164,15 +168,44 @@ void main() {
           timeout: const Duration(seconds: 20),
         );
         await _settle(300);
-        final (blank, seen) = _blankTiles();
-        blankAfterSettle += blank;
-        tilesSeen += seen;
+        final b = _blankTiles(warmIds);
+        blankAfterSettle += b.blank;
+        tilesSeen += b.seen;
+        blankWarm += b.blankWarm;
+        seenWarm += b.seenWarm;
       }
     });
+
+    // Flings that start just before the end of the loaded rows (where a
+    // dead stop happens if the extent ends there).
+    var endStops = 0;
+    if (_mode != 'sametime') {
+      for (var i = 0; i < 5; i++) {
+        final end = _loadedEnd(tester, c, query);
+        if (end == null) break;
+        position.jumpTo(
+          (end - position.viewportDimension * 1.5).clamp(
+            0,
+            position.maxScrollExtent,
+          ),
+        );
+        await SchedulerBinding.instance.endOfFrame;
+        final before = deadStops;
+        await tester.fling(scrollable, const Offset(0, -2500), 8000);
+        await _waitFor(
+          () => !position.isScrollingNotifier.value,
+          timeout: const Duration(seconds: 20),
+        );
+        endStops += deadStops - before;
+        await _settle(500);
+      }
+    }
+    results['endFlingDeadStops'] = endStops;
     position.removeListener(watchEnd);
     results['flings'] = {
       'deadStops': deadStops,
       'blankAfterSettle': '$blankAfterSettle of $tilesSeen',
+      'blankAfterSettleWarm': '$blankWarm of $seenWarm',
       'loaded': c.read(filePagesProvider(query)).value?.items.length,
       ...frames,
     };
@@ -299,28 +332,70 @@ Map<String, Object?> _summary(List<FrameTiming> t) {
   };
 }
 
-/// Tiles on screen still blank: thumbnails fading in or not loaded, plus
-/// placeholder tiles of rows not loaded yet. (blank, all).
-(int, int) _blankTiles() {
+/// Tiles on screen still blank: thumbnails (of files that have one) not
+/// shown yet, plus placeholder tiles of rows not loaded yet; also counted
+/// for the files whose thumbnails were warmed ([warm]).
+({int blank, int seen, int blankWarm, int seenWarm}) _blankTiles(
+  Set<String> warm,
+) {
   var blank = 0;
   var seen = 0;
-  for (final e
-      in find
-          .descendant(
-            of: find.byType(Thumbnail),
-            matching: find.byType(AnimatedOpacity),
-          )
-          .evaluate()) {
-    if (!_onScreen(e)) continue;
+  var blankWarm = 0;
+  var seenWarm = 0;
+  for (final e in find.byType(Thumbnail).evaluate()) {
+    final file = (e.widget as Thumbnail).file;
+    if (!DiskThumbnailCache.hasThumbnail(file) || !_onScreen(e)) continue;
+    final fades = find
+        .descendant(
+          of: find.byElementPredicate((x) => x == e),
+          matching: find.byType(AnimatedOpacity),
+        )
+        .evaluate();
+    if (fades.isEmpty) continue;
+    final isBlank = (fades.first.widget as AnimatedOpacity).opacity < 1;
     seen++;
-    if ((e.widget as AnimatedOpacity).opacity < 1) blank++;
+    if (isBlank) blank++;
+    if (warm.contains(file.id)) {
+      seenWarm++;
+      if (isBlank) blankWarm++;
+    }
   }
   for (final e in find.byKey(placeholderKey).evaluate()) {
     if (!_onScreen(e)) continue;
     seen++;
     blank++;
   }
-  return (blank, seen);
+  return (blank: blank, seen: seen, blankWarm: blankWarm, seenWarm: seenWarm);
+}
+
+/// Where the loaded rows end in the results' scroll view (grid or list).
+double? _loadedEnd(WidgetTester tester, ProviderContainer c, IndexQuery q) {
+  final loaded = c.read(filePagesProvider(q)).value?.items.length ?? 0;
+  if (loaded == 0) return null;
+  final slivers = find
+      .descendant(
+        of: find.byType(FileResultsView),
+        matching: find.byWidgetPredicate(
+          (w) => w is SliverGrid || w is SliverList,
+        ),
+      )
+      .evaluate();
+  if (slivers.isEmpty) return null;
+  final render = slivers.first.renderObject;
+  switch (render) {
+    case RenderSliverGrid(:final gridDelegate, :final constraints):
+      final g = gridDelegate
+          .getLayout(constraints)
+          .getGeometryForChildIndex(loaded - 1);
+      return constraints.precedingScrollExtent +
+          g.scrollOffset +
+          g.mainAxisExtent;
+    case RenderSliverList(:final firstChild?, :final constraints):
+      return constraints.precedingScrollExtent +
+          loaded * firstChild.size.height;
+    default:
+      return null;
+  }
 }
 
 /// Built inside the viewport (slivers build a cache extent past it).
