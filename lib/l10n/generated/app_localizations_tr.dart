@@ -7685,4 +7685,32 @@ class AppLocalizationsTr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopFileIcons => 'Dosya simgeleri';
+
+  @override
+  String get desktopFileIconsWindows => 'Windows';
+
+  @override
+  String get desktopFileIconsKfm => 'KFM';
+
+  @override
+  String get desktopIconChoiceTitle => 'Hangi dosya simgeleri?';
+
+  @override
+  String get desktopIconChoiceBody =>
+      'Dosya ve klasörlerin nasıl görüneceğini seçin. Bunu daha sonra Ayarlar\'dan değiştirebilirsiniz.';
+
+  @override
+  String get desktopIconChoiceWindowsHint => 'Dosya Gezgini ile aynı simgeler';
+
+  @override
+  String get desktopIconChoiceKfmHint => 'KFM\'nin kendi basit simgeleri';
+
+  @override
+  String get desktopIconChoiceDone => 'Tamam';
+
+  @override
+  String get backupSettingFileIcons => 'Dosya simgeleri (masaüstü)';
 }

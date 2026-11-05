@@ -1762,5 +1762,14 @@
   "jobsQuitKeep": "Çalışmaya devam et",
   "trayNoticeTransfersTitle": "KFM aktarmaya devam ediyor",
   "trayNoticeTransfersBody": "Aktarımlar arka planda sürer. KFM'yi sistem tepsisindeki simgeden yeniden açın.",
-  "jobsEndFailedTitle": "{count, plural, =1{Aktarım başarısız} other{{count} aktarım başarısız}}"
+  "jobsEndFailedTitle": "{count, plural, =1{Aktarım başarısız} other{{count} aktarım başarısız}}",
+  "desktopFileIcons": "Dosya simgeleri",
+  "desktopFileIconsWindows": "Windows",
+  "desktopFileIconsKfm": "KFM",
+  "desktopIconChoiceTitle": "Hangi dosya simgeleri?",
+  "desktopIconChoiceBody": "Dosya ve klasörlerin nasıl görüneceğini seçin. Bunu daha sonra Ayarlar'dan değiştirebilirsiniz.",
+  "desktopIconChoiceWindowsHint": "Dosya Gezgini ile aynı simgeler",
+  "desktopIconChoiceKfmHint": "KFM'nin kendi basit simgeleri",
+  "desktopIconChoiceDone": "Tamam",
+  "backupSettingFileIcons": "Dosya simgeleri (masaüstü)"
 }

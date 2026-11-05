@@ -23,6 +23,7 @@ import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
+import 'package:kfm/desktop/widgets/file_type_icon.dart';
 import 'package:kfm/desktop/widgets/layout_switch.dart';
 import 'package:kfm/desktop/widgets/quick_look.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
@@ -705,6 +706,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                         ),
                         FolderBrowseEntry() => FileNameCell(
                           name: e.name,
+                          folderPath: e.path,
                           icon: st.folder == null
                               ? placeIcon(e.name)
                               : Icons.folder,
@@ -746,14 +748,16 @@ class _FolderTile extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: FittedBox(
-            child: Icon(
-              placeIcon(entry.name) == Icons.folder_outlined
-                  ? Icons.folder
-                  : placeIcon(entry.name),
-              color: entry.available
-                  ? theme.colorScheme.primary
-                  : theme.disabledColor,
+          child: LayoutBuilder(
+            builder: (context, c) => Center(
+              child: FileTypeIcon.folder(
+                entry.path,
+                size: c.biggest.shortestSide.clamp(16, 128),
+                color: entry.available ? null : theme.disabledColor,
+                fallback: placeIcon(entry.name) == Icons.folder_outlined
+                    ? Icons.folder
+                    : placeIcon(entry.name),
+              ),
             ),
           ),
         ),

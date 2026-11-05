@@ -7741,4 +7741,34 @@ class AppLocalizationsNl extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopFileIcons => 'Bestandspictogrammen';
+
+  @override
+  String get desktopFileIconsWindows => 'Windows';
+
+  @override
+  String get desktopFileIconsKfm => 'KFM';
+
+  @override
+  String get desktopIconChoiceTitle => 'Welke bestandspictogrammen?';
+
+  @override
+  String get desktopIconChoiceBody =>
+      'Kies hoe bestanden en mappen eruitzien. Je kunt dit later wijzigen in Instellingen.';
+
+  @override
+  String get desktopIconChoiceWindowsHint =>
+      'Dezelfde pictogrammen als Verkenner';
+
+  @override
+  String get desktopIconChoiceKfmHint =>
+      'De eigen eenvoudige pictogrammen van KFM';
+
+  @override
+  String get desktopIconChoiceDone => 'Klaar';
+
+  @override
+  String get backupSettingFileIcons => 'Bestandspictogrammen (desktop)';
 }

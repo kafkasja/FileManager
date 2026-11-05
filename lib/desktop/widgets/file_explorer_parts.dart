@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -6,11 +7,13 @@ import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
+import 'package:kfm/desktop/widgets/file_type_icon.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 /// A file tile for the icon layouts: rounded thumbnail (the phone's tile
-/// look), name below; a small video badge.
-class FileTileBody extends StatelessWidget {
+/// look), name below; a small video badge. E3: files that aren't photos or
+/// videos show Windows' big shell icon (with the Windows icon style).
+class FileTileBody extends ConsumerWidget {
   const new({required this.file, this.badge, super.key});
 
   final FileRef file;
@@ -19,28 +22,38 @@ class FileTileBody extends StatelessWidget {
   final Widget? badge;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final shellIcon = !file.isMedia && useShellIcons(ref);
     return Column(
       children: [
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Thumbnail(file: file),
-                if (file.kind == FileKind.video)
-                  const PositionedDirectional(
-                    end: 4,
-                    bottom: 4,
-                    child: _Badge(icon: Icons.play_arrow),
+          child: shellIcon
+              ? LayoutBuilder(
+                  builder: (context, c) => Center(
+                    child: FileTypeIcon.file(
+                      file,
+                      size: (c.biggest.shortestSide * 0.8).clamp(16, 96),
+                    ),
                   ),
-                if (badge case final b?)
-                  PositionedDirectional(start: 4, top: 4, child: b),
-              ],
-            ),
-          ),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Thumbnail(file: file),
+                      if (file.kind == FileKind.video)
+                        const PositionedDirectional(
+                          end: 4,
+                          bottom: 4,
+                          child: _Badge(icon: Icons.play_arrow),
+                        ),
+                      if (badge case final b?)
+                        PositionedDirectional(start: 4, top: 4, child: b),
+                    ],
+                  ),
+                ),
         ),
         const SizedBox(height: 4),
         SizedBox(
@@ -76,11 +89,41 @@ class _Badge extends StatelessWidget {
   );
 }
 
-/// "JPG file" (Explorer's Type column).
+/// "JPG file" (Explorer's Type column without the shell).
 String fileTypeLabel(AppLocalizations l10n, String name) {
   final dot = name.lastIndexOf('.');
   if (dot <= 0 || dot == name.length - 1) return l10n.desktopTypeUnknown;
   return l10n.desktopTypeFile(name.substring(dot + 1).toUpperCase());
+}
+
+/// `.jpg` of [name] (lower case), '' without one.
+String fileExtensionOf(String name) {
+  final dot = name.lastIndexOf('.');
+  if (dot <= 0 || dot == name.length - 1) return '';
+  return name.substring(dot).toLowerCase();
+}
+
+/// E3: the Type column text: Windows' type name ("JPEG image") when the
+/// shell knows one, else [fileTypeLabel].
+class FileTypeText extends ConsumerWidget {
+  const new(this.name, {this.style, super.key});
+
+  final String name;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = fileExtensionOf(name);
+    final shell = ext.isEmpty
+        ? null
+        : ref.watch(shellTypeNameProvider(ext)).value;
+    return Text(
+      shell ?? fileTypeLabel(context.l10n, name),
+      style: style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
 }
 
 /// Ids of the Details columns (sorting).
@@ -127,13 +170,11 @@ List<ExplorerColumn<T>> fileColumns<T>(
       id: FileColumns.type,
       label: l10n.detailsType,
       width: 130,
-      cell: (context, item) => text(
-        typeOf?.call(item) ??
-            switch (fileOf(item)) {
-              final f? => fileTypeLabel(l10n, f.name),
-              null => '',
-            },
-      ),
+      cell: (context, item) => switch ((typeOf?.call(item), fileOf(item))) {
+        (final String t, _) => text(t),
+        (null, final f?) => FileTypeText(f.name, style: small),
+        (null, null) => const SizedBox.shrink(),
+      },
     ),
     ExplorerColumn<T>(
       id: FileColumns.size,
@@ -149,25 +190,46 @@ List<ExplorerColumn<T>> fileColumns<T>(
   ];
 }
 
-/// A Details row's name cell: small thumbnail (or [icon]) + name.
-class FileNameCell extends StatelessWidget {
-  const new({required this.name, this.file, this.icon, super.key});
+/// A Details row's name cell: small thumbnail (or [icon]) + name. E3: with
+/// the Windows icon style every row shows its 16 px shell icon, like
+/// Explorer's Details view ([folderPath] for folders).
+class FileNameCell extends ConsumerWidget {
+  const new({
+    required this.name,
+    this.file,
+    this.icon,
+    this.folderPath,
+    super.key,
+  });
 
   final String name;
   final FileRef? file;
   final IconData? icon;
 
+  /// A folder row's path (its shell icon).
+  final String? folderPath;
+
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context, WidgetRef ref) => Row(
     children: [
       SizedBox.square(
         dimension: 22,
-        child: switch (file) {
-          final f? => ClipRRect(
+        child: switch ((file, folderPath)) {
+          (final f?, _) when useShellIcons(ref) => Center(
+            child: FileTypeIcon.file(f),
+          ),
+          (final f?, _) => ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: Thumbnail(file: f),
           ),
-          null => Icon(
+          (null, final p?) => Center(
+            child: FileTypeIcon.folder(
+              p,
+              size: useShellIcons(ref) ? 16 : 20,
+              fallback: icon,
+            ),
+          ),
+          (null, null) => Icon(
             icon ?? Icons.folder,
             size: 20,
             color: Theme.of(context).colorScheme.primary,

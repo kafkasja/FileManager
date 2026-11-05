@@ -10,6 +10,7 @@ import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/desktop_shell_provider.dart';
 import 'package:kfm/core/platform/windows/drag_drop_channel.dart';
 import 'package:kfm/core/platform/windows/startup_hints.dart';
+import 'package:kfm/desktop/settings/desktop_icon_choice_dialog.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
 import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
@@ -178,6 +179,7 @@ class _DesktopAppShellState extends ConsumerState<DesktopAppShell>
         const IncomingOfferPrompter(),
         const ShareInPrompter(),
         const NoTrashPrompter(),
+        const DesktopIconChoicePrompter(),
         if (isWindowsHost) const WindowsCloseHost(),
         if (section != DesktopSection.sort) const UpdateBanner(),
         if (onMedia) const LimitedAccessBanner(),

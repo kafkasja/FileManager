@@ -152,6 +152,45 @@ abstract final class AppSettings {
     '',
   );
 
+  /// E3. The desktop window's tabs, JSON
+  /// `{"v":1,"active":0,"tabs":[{"k":"folder","path":"C:/x"}]}`; empty =
+  /// one Home tab.
+  static final SettingKey<String> desktopTabs = SettingKey.string(
+    'desktop.tabs',
+    '',
+  );
+
+  /// E3. Quick access pins, JSON list of folder paths; empty = the
+  /// defaults from Windows' known folders.
+  static final SettingKey<String> desktopQuickAccess = SettingKey.string(
+    'desktop.quickAccess',
+    '',
+  );
+
+  /// E3. File icons on the desktop: `windows` (shell icons) or `kfm`.
+  static final SettingKey<String> desktopIconStyle = SettingKey.string(
+    'desktop.iconStyle',
+    'windows',
+  );
+
+  /// E3. The first-run "Which file icons?" question was answered.
+  static final SettingKey<bool> desktopIconsAsked = SettingKey.boolean(
+    'desktop.iconsAsked',
+    defaultValue: false,
+  );
+
+  /// E3. Navigation pane width (logical px, 160–360); 0 = default.
+  static final SettingKey<int> desktopNavWidth = SettingKey.integer(
+    'desktop.navWidth',
+    0,
+  );
+
+  /// E3. Right pane: `none`, `preview` or `details`.
+  static final SettingKey<String> desktopSidePane = SettingKey.string(
+    'desktop.sidePane',
+    'none',
+  );
+
   /// B2. Browse sort direction.
   static final SettingKey<bool> browseSortDescending = SettingKey.boolean(
     'browse.sort.descending',

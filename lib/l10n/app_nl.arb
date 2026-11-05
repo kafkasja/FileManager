@@ -1762,5 +1762,14 @@
   "jobsQuitKeep": "Laten doorlopen",
   "trayNoticeTransfersTitle": "KFM gaat door met overdragen",
   "trayNoticeTransfersBody": "Overdrachten gaan op de achtergrond door. Open KFM weer via het pictogram in het systeemvak.",
-  "jobsEndFailedTitle": "{count, plural, =1{Overdracht mislukt} other{{count} overdrachten mislukt}}"
+  "jobsEndFailedTitle": "{count, plural, =1{Overdracht mislukt} other{{count} overdrachten mislukt}}",
+  "desktopFileIcons": "Bestandspictogrammen",
+  "desktopFileIconsWindows": "Windows",
+  "desktopFileIconsKfm": "KFM",
+  "desktopIconChoiceTitle": "Welke bestandspictogrammen?",
+  "desktopIconChoiceBody": "Kies hoe bestanden en mappen eruitzien. Je kunt dit later wijzigen in Instellingen.",
+  "desktopIconChoiceWindowsHint": "Dezelfde pictogrammen als Verkenner",
+  "desktopIconChoiceKfmHint": "De eigen eenvoudige pictogrammen van KFM",
+  "desktopIconChoiceDone": "Klaar",
+  "backupSettingFileIcons": "Bestandspictogrammen (desktop)"
 }

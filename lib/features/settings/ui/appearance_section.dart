@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/app_info.dart';
+import 'package:kfm/app/form_factor.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
 import 'package:kfm/app/layout/segment_label.dart';
@@ -9,6 +10,7 @@ import 'package:kfm/app/theme/theme_providers.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/desktop/settings/desktop_icon_choice_dialog.dart';
 import 'package:kfm/features/settings/ui/accent_swatches.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
@@ -84,6 +86,9 @@ class AppearanceSection extends ConsumerWidget {
             ],
           ),
         ),
+        // E3: until E2's General section lands (E2 moves it there).
+        if (ref.watch(formFactorProvider).isDesktop)
+          const DesktopFileIconsRow(),
       ],
     );
   }

@@ -7675,4 +7675,32 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopFileIcons => 'File icons';
+
+  @override
+  String get desktopFileIconsWindows => 'Windows';
+
+  @override
+  String get desktopFileIconsKfm => 'KFM';
+
+  @override
+  String get desktopIconChoiceTitle => 'Which file icons?';
+
+  @override
+  String get desktopIconChoiceBody =>
+      'Pick how files and folders look. You can change this later in Settings.';
+
+  @override
+  String get desktopIconChoiceWindowsHint => 'The same icons as File Explorer';
+
+  @override
+  String get desktopIconChoiceKfmHint => 'KFM\'s own simple icons';
+
+  @override
+  String get desktopIconChoiceDone => 'Done';
+
+  @override
+  String get backupSettingFileIcons => 'File icons (desktop)';
 }

@@ -59,6 +59,7 @@ final List<BackupSetting> backupSettings = List.unmodifiable(<BackupSetting>[
   BackupSetting.of(AppSettings.browseSortDescending),
   BackupSetting.of(AppSettings.desktopBrowseLayout),
   BackupSetting.of(AppSettings.desktopBrowseSort),
+  BackupSetting.of(AppSettings.desktopIconStyle),
   BackupSetting.of(AppSettings.browseShowSizes),
   BackupSetting.of(AppSettings.browseHighlightBig),
   BackupSetting.of(AppSettings.searchSecondaryLanguage),
@@ -99,6 +100,12 @@ const Set<String> excludedBackupSettings = {
   'desktop.window.bounds',
   // PL3: column widths fit this PC's screen.
   'desktop.columnWidths',
+  // E3: this PC's paths, layout and first-run state.
+  'desktop.tabs',
+  'desktop.quickAccess',
+  'desktop.iconsAsked',
+  'desktop.navWidth',
+  'desktop.sidePane',
   'indexGeneration',
   'index.hiddenScanned',
   'browse.recentSearches',

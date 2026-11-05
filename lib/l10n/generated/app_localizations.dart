@@ -10682,6 +10682,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Transfer failed} other{{count} transfers failed}}'**
   String jobsEndFailedTitle(int count);
+
+  /// E3: desktop settings row and dialog: which icons files and folders show.
+  ///
+  /// In en, this message translates to:
+  /// **'File icons'**
+  String get desktopFileIcons;
+
+  /// E3: file icon style option: Windows' own shell icons.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows'**
+  String get desktopFileIconsWindows;
+
+  /// E3: file icon style option: KFM's own icons.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM'**
+  String get desktopFileIconsKfm;
+
+  /// E3: first-run desktop dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Which file icons?'**
+  String get desktopIconChoiceTitle;
+
+  /// E3: first-run desktop dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick how files and folders look. You can change this later in Settings.'**
+  String get desktopIconChoiceBody;
+
+  /// E3: first-run dialog: what the Windows option means.
+  ///
+  /// In en, this message translates to:
+  /// **'The same icons as File Explorer'**
+  String get desktopIconChoiceWindowsHint;
+
+  /// E3: first-run dialog: what the KFM option means.
+  ///
+  /// In en, this message translates to:
+  /// **'KFM\'s own simple icons'**
+  String get desktopIconChoiceKfmHint;
+
+  /// E3: first-run icon dialog: confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get desktopIconChoiceDone;
+
+  /// E3: backup import preview label for the desktop file icon style.
+  ///
+  /// In en, this message translates to:
+  /// **'File icons (desktop)'**
+  String get backupSettingFileIcons;
 }
 
 class _AppLocalizationsDelegate
