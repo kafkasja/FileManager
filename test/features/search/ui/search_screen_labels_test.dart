@@ -7,7 +7,6 @@ import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
 import 'package:kfm/features/ai_labels/domain/label_map.dart';
-import 'package:kfm/features/ai_labels/ui/ai_models_details_screen.dart';
 import 'package:kfm/features/browse/data/recent_searches.dart';
 import 'package:kfm/features/search/data/label_keywords.dart';
 import 'package:kfm/features/search/data/search_vocabulary.dart';
@@ -127,7 +126,9 @@ void main() {
   Finder file(String name) => find.byWidgetPredicate(
     (w) =>
         (w is Text && (w.data == name || w.textSpan?.toPlainText() == name)) ||
-        (w is Semantics && w.properties.label == name),
+        (w is Semantics &&
+            w.properties.button == true &&
+            (w.properties.label?.startsWith('$name, ') ?? false)),
   );
 
   Finder chip(String label) => find.widgetWithText(InputChip, label);
@@ -203,9 +204,8 @@ void main() {
   });
 
   testWidgets('labeling off, nothing labeled: "turn on" hint, the word is '
-      'searched as a name (no ai_labels term); Turn on opens C3 details', (
-    tester,
-  ) async {
+      'searched as a name (no ai_labels term); Turn on opens Settings → '
+      'Photo labels', (tester) async {
     final app = await open(tester, labeled: false);
     await type(tester, 'cat');
     expect(chip('Content: cat'), findsOneWidget);
@@ -216,9 +216,11 @@ void main() {
 
     await tester.tap(find.text(_l10n.searchLabelingOffTurnOn));
     await tester.pumpAndSettle();
-    expect(find.byType(AiModelsDetailsScreen), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('setting-smart.aiLabels')),
+      findsOneWidget,
+    );
     expect(store.downloads, 0);
-    await tester.pageBack();
     await settle(tester, app);
   });
 

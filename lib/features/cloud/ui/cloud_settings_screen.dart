@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
+import 'package:kfm/app/layout/handed.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_write_queue.dart';
@@ -193,6 +194,10 @@ class _CloudSettingsScreenState extends ConsumerState<CloudSettingsScreen> {
     final canAdd = ref.watch(cloudTreePlatformProvider) != null;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.cloudDestinations)),
+      floatingActionButtonLocation: thumbFabLocation(
+        handednessOf(ref),
+        Directionality.of(context),
+      ),
       floatingActionButton: canAdd
           ? FloatingActionButton.extended(
               key: const ValueKey('cloud-add'),

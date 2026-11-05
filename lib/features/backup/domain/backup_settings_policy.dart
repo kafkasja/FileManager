@@ -51,6 +51,8 @@ final List<BackupSetting> backupSettings = List.unmodifiable(<BackupSetting>[
   BackupSetting.of(AppSettings.themeAccent),
   BackupSetting.of(AppSettings.leftHanded),
   BackupSetting.of(AppSettings.textSize),
+  BackupSetting.of(AppSettings.reduceMotion),
+  BackupSetting.of(AppSettings.highContrast),
   BackupSetting.of(AppSettings.localeTag),
   BackupSetting.of(AppSettings.storageBigFileThresholdBytes),
   BackupSetting.of(AppSettings.pendingFolderRetentionDays),
@@ -59,6 +61,7 @@ final List<BackupSetting> backupSettings = List.unmodifiable(<BackupSetting>[
   BackupSetting.of(AppSettings.browseSortDescending),
   BackupSetting.of(AppSettings.desktopBrowseLayout),
   BackupSetting.of(AppSettings.desktopBrowseSort),
+  BackupSetting.of(AppSettings.desktopIconStyle),
   BackupSetting.of(AppSettings.browseShowSizes),
   BackupSetting.of(AppSettings.browseHighlightBig),
   BackupSetting.of(AppSettings.searchSecondaryLanguage),
@@ -101,6 +104,12 @@ const Set<String> excludedBackupSettings = {
   'desktop.window.bounds',
   // PL3: column widths fit this PC's screen.
   'desktop.columnWidths',
+  // E3: this PC's paths, layout and first-run state.
+  'desktop.tabs',
+  'desktop.quickAccess',
+  'desktop.iconsAsked',
+  'desktop.navWidth',
+  'desktop.sidePane',
   'indexGeneration',
   'index.hiddenScanned',
   'browse.recentSearches',
@@ -128,6 +137,8 @@ const Set<String> excludedBackupSettings = {
   'onboarding.existingChecked',
   // PL1: folder paths of this PC; this PC's close/tray choices.
   'windows.indexRoots',
+  'windows.indexScope',
+  'onboarding.languageAsked',
   'windows.stopSharingOnClose',
   'windows.trayNoticeShown',
   'windows.firewallExplained',

@@ -116,10 +116,10 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     expect(
-      container
-          .read(settingsSectionsProvider)
-          .where((s) => s.order == 690)
-          .length,
+      [
+        for (final s in container.read(settingsSectionsProvider))
+          for (final e in s.entries) e.id,
+      ].where((id) => id == 'privacy.location').length,
       1,
     );
     expect(container.read(fileMenuItemsProvider), contains(shareFileMenuItem));

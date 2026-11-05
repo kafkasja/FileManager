@@ -34,13 +34,15 @@ void main() {
     // Nothing selected: the buttons are off.
     expect(
       tester
-          .widget<FilledButton>(find.byKey(const ValueKey('trash-restore')))
+          .widget<ButtonStyleButton>(
+            find.byKey(const ValueKey('cmd-trash-restore')),
+          )
           .onPressed,
       isNull,
     );
     await tester.tap(find.text('p0.jpg'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('trash-restore')));
+    await tester.tap(find.byKey(const ValueKey('cmd-trash-restore')));
     await _settle(tester);
     expect(files.files.map((f) => f.name), contains('p0.jpg'));
     expect(find.text('p0.jpg'), findsNothing);
@@ -58,18 +60,90 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
   });
 
+  testWidgets('Trash: double-click shows Properties; Restore restores, '
+      'Delete forever asks; Empty trash empties', (tester) async {
+    final files = desktopLibrary(3);
+    final app = await pumpDesktopApp(tester, files: files);
+    files
+      ..trashExternally('path:/s/DCIM/p0.jpg')
+      ..trashExternally('path:/s/DCIM/p1.jpg')
+      ..trashExternally('path:/s/DCIM/p2.jpg');
+    await tester.tap(find.byKey(const ValueKey('desktop-nav-trash')));
+    await tester.pumpAndSettle();
+    app.container.invalidate(trashControllerProvider);
+    await _settle(tester);
+    Future<void> doubleClick(String name) async {
+      await tester.tap(find.text(name));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text(name));
+      await tester.pumpAndSettle();
+    }
+
+    await doubleClick('p0.jpg');
+    expect(find.byKey(const ValueKey('trash-properties')), findsOneWidget);
+    for (final k in [
+      'trash-props-name',
+      'trash-props-location',
+      'trash-props-deleted',
+      'trash-props-size',
+      'trash-props-type',
+    ]) {
+      expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
+    }
+    expect(find.text(r'\s\DCIM'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('trash-props-restore')));
+    await _settle(tester);
+    expect(files.files.map((f) => f.name), contains('p0.jpg'));
+
+    await doubleClick('p1.jpg');
+    await tester.tap(find.byKey(const ValueKey('trash-props-delete')));
+    await tester.pumpAndSettle();
+    // The existing confirm.
+    expect(
+      find.byKey(const ValueKey('trash-delete-forever-confirm')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(files.trash, hasLength(2));
+
+    await tester.tap(find.byKey(const ValueKey('cmd-trash-empty')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('trash-empty-confirm')));
+    await _settle(tester);
+    expect(files.trash, isEmpty);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('Settings: categories left, content right, phone-only '
       'sections hidden', (tester) async {
     await pumpDesktopApp(tester);
     await tester.tap(find.byKey(const ValueKey('desktop-nav-settings')));
     await tester.pumpAndSettle();
     expect(find.byType(DesktopSettingsScreen), findsOneWidget);
-    // Appearance (100) is open first; Permissions (400) is phone-only.
-    expect(find.byKey(const ValueKey('settings-pane-100')), findsOneWidget);
-    expect(find.byKey(const ValueKey('settings-cat-400')), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('settings-cat-300')));
+    // General is open first, Swiping is called Sorting, and phone-only rows
+    // (vibration, swipe directions, permissions) are hidden.
+    expect(find.byKey(const ValueKey('settings-pane-general')), findsOneWidget);
+    expect(find.text('Sorting'), findsOneWidget);
+    expect(find.text('Swiping'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-cat-a11y')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('settings-pane-300')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-pane-a11y')), findsOneWidget);
+    expect(find.byKey(const ValueKey('setting-a11y.textSize')), findsOneWidget);
+    expect(find.byKey(const ValueKey('setting-a11y.haptics')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-cat-swipe')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('setting-swipe.presets')), findsOneWidget);
+    expect(find.byKey(const ValueKey('setting-swipe.customize')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('settings-cat-privacy')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('setting-privacy.permissions')),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const ValueKey('settings-cat-about')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('setting-about.backup')), findsNothing);
   });
 
   testWidgets('Devices: start choices, remembered devices and transfers', (

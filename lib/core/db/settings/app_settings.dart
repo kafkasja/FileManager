@@ -160,6 +160,45 @@ abstract final class AppSettings {
     '',
   );
 
+  /// E3. The desktop window's tabs, JSON
+  /// `{"v":1,"active":0,"tabs":[{"k":"folder","path":"C:/x"}]}`; empty =
+  /// one Home tab.
+  static final SettingKey<String> desktopTabs = SettingKey.string(
+    'desktop.tabs',
+    '',
+  );
+
+  /// E3. Quick access pins, JSON list of folder paths; empty = the
+  /// defaults from Windows' known folders.
+  static final SettingKey<String> desktopQuickAccess = SettingKey.string(
+    'desktop.quickAccess',
+    '',
+  );
+
+  /// E3. File icons on the desktop: `windows` (shell icons) or `kfm`.
+  static final SettingKey<String> desktopIconStyle = SettingKey.string(
+    'desktop.iconStyle',
+    'windows',
+  );
+
+  /// E3. The first-run "Which file icons?" question was answered.
+  static final SettingKey<bool> desktopIconsAsked = SettingKey.boolean(
+    'desktop.iconsAsked',
+    defaultValue: false,
+  );
+
+  /// E3. Navigation pane width (logical px, 160–360); 0 = default.
+  static final SettingKey<int> desktopNavWidth = SettingKey.integer(
+    'desktop.navWidth',
+    0,
+  );
+
+  /// E3. Right pane: `none`, `preview` or `details`.
+  static final SettingKey<String> desktopSidePane = SettingKey.string(
+    'desktop.sidePane',
+    'none',
+  );
+
   /// B2. Browse sort direction.
   static final SettingKey<bool> browseSortDescending = SettingKey.boolean(
     'browse.sort.descending',
@@ -441,6 +480,35 @@ abstract final class AppSettings {
             j is List ? List.unmodifiable(j.whereType<String>()) : const [],
         encode: (v) => v,
       );
+
+  /// TASK-E2 §7. Fades instead of flights, no page slides; the system's
+  /// "remove animations" counts too.
+  static final SettingKey<bool> reduceMotion = SettingKey.boolean(
+    'a11y.reduceMotion',
+    defaultValue: false,
+  );
+
+  /// TASK-E2 §7. The high-contrast color scheme (the system's setting counts
+  /// too).
+  static final SettingKey<bool> highContrast = SettingKey.boolean(
+    'a11y.highContrast',
+    defaultValue: false,
+  );
+
+  /// TASK-E2. The first-launch language question was answered (or skipped
+  /// for an existing install). Device state: not backed up.
+  static final SettingKey<bool> onboardingLanguageAsked = SettingKey.boolean(
+    'onboarding.languageAsked',
+    defaultValue: false,
+  );
+
+  /// TASK-E2 §6. What the Windows index covers: an `IndexScope` name, or ''
+  /// (never chosen) = derived from [windowsIndexRoots] by
+  /// `effectiveIndexScope` (custom roots → chosen folders, else everywhere).
+  static final SettingKey<String> windowsIndexScope = SettingKey.string(
+    'windows.indexScope',
+    '',
+  );
 
   /// PL1. Closing the window while sharing stops sharing and quits,
   /// instead of hiding KFM to the tray.

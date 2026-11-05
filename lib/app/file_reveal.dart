@@ -1,33 +1,58 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/platform/host_platform.dart';
-import 'package:kfm/core/platform/windows/windows_channel.dart';
+import 'package:kfm/core/platform/windows/index_roots.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/details/ui/file_details_sheet.dart';
 import 'package:path/path.dart' as p;
 
-/// Windows: Explorer at [path]'s folder with the file selected
-/// (`SHOpenFolderAndSelectItems`). Shared by E1 ("Saved to …") and E3
-/// (Sort's "Go to file location"). Throws `WindowsChannelException`.
-Future<void> revealInExplorer(String path) =>
-    WindowsChannel().revealInExplorer(path);
+/// Shows [path] in the system file manager with it selected (TASK-E3 /
+/// E1 shared): Windows Explorer via `SHOpenFolderAndSelectItems`; macOS
+/// Finder `open -R`; Linux opens the folder. Throws when it couldn't.
+Future<void> revealInFolder(WidgetRef ref, String path) =>
+    revealInFolderWith(ref.read(fileRevealerProvider), path);
 
-/// "Show in folder" for the file at [path] (TASK-E1): Windows opens
-/// Explorer with it selected; elsewhere (or when Explorer fails) KFM's
-/// Browse opens its folder.
-Future<void> revealInFolder(
+/// Same as [revealInFolder] for code that holds a [Ref].
+Future<void> revealInFolderWith(FileRevealer revealer, String path) =>
+    revealer(path);
+
+/// Reveals one path; replaced in tests.
+typedef FileRevealer = Future<void> Function(String path);
+
+final fileRevealerProvider = Provider<FileRevealer>((ref) {
+  if (isWindowsHost) {
+    final channel = ref.watch(windowsChannelProvider);
+    return channel.revealInExplorer;
+  }
+  return (path) async {
+    if (Platform.isMacOS) {
+      await Process.run('open', ['-R', path]);
+    } else if (Platform.isLinux) {
+      await Process.run('xdg-open', [p.dirname(path)]);
+    } else {
+      throw UnsupportedError('reveal is desktop only');
+    }
+  };
+});
+
+/// "Show in folder" for the file at [path] (TASK-E1): on Windows Explorer
+/// opens with it selected ([revealInFolder]); elsewhere (or when that
+/// fails) KFM's Browse opens its folder.
+Future<void> showInFolder(
   BuildContext context,
   WidgetRef ref,
   String path,
 ) async {
   if (isWindowsHost) {
     try {
-      await revealInExplorer(path);
+      await revealInFolder(ref, path);
       return;
     } on Object {
       // Explorer didn't start: KFM's own Browse instead.
@@ -136,7 +161,7 @@ void showSavedSnackBar(
           onPressed: () {
             if (!context.mounted) return;
             if (file != null) {
-              unawaited(revealInFolder(context, ref, file));
+              unawaited(showInFolder(context, ref, file));
             } else {
               openFolderInBrowse(context, folder);
             }
@@ -166,7 +191,7 @@ class ReceivedFileMenu extends ConsumerWidget {
         if (!context.mounted) return;
         switch (v) {
           case 'show' when file != null:
-            await revealInFolder(context, ref, file);
+            await showInFolder(context, ref, file);
           case 'show':
             openFolderInBrowse(context, folder);
           case 'open' when file != null:

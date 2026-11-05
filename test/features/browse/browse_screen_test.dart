@@ -14,6 +14,7 @@ import 'package:kfm/features/browse/ui/widgets/file_tile.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_carousel.dart';
 import 'package:kfm/features/cloud/ui/cloud_badge_cache.dart';
 import 'package:kfm/features/swipe/ui/file_viewer.dart';
+import 'package:kfm/l10n/generated/app_localizations.dart';
 
 import '../../core/files/fake_file_source.dart';
 import '../../core/files/fake_open_with.dart';
@@ -47,7 +48,8 @@ Future<void> _openBrowse(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Finder _tile(String name) => find.bySemanticsLabel(name);
+Finder _tile(String name) =>
+    find.bySemanticsLabel(RegExp('^${RegExp.escape(name)}, '));
 
 void main() {
   testWidgets('All shows every visible file; type chips filter; hidden files '
@@ -172,6 +174,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: ThemeData(extensions: const [AppTokens.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox.square(
               dimension: 128,

@@ -6,15 +6,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/index/index_query.dart';
+import 'package:kfm/core/platform/host_platform.dart';
 import 'package:kfm/core/platform/windows/windows_clipboard.dart';
-import 'package:kfm/desktop/browse/desktop_breadcrumb.dart';
 import 'package:kfm/desktop/browse/desktop_browse_controller.dart';
 import 'package:kfm/desktop/browse/desktop_clipboard.dart';
+import 'package:kfm/desktop/browse/desktop_disk_files.dart';
 import 'package:kfm/desktop/browse/disk_folders.dart';
+import 'package:kfm/desktop/shell/desktop_address_bar.dart';
+import 'package:kfm/desktop/shell/desktop_command_bar.dart';
+import 'package:kfm/desktop/shell/desktop_drives.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
-import 'package:kfm/desktop/shell/desktop_layout.dart';
+import 'package:kfm/desktop/shell/desktop_location.dart';
+import 'package:kfm/desktop/shell/desktop_nav_pane.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_sidebar.dart' show placeIcon;
+import 'package:kfm/desktop/shell/desktop_status_bar.dart';
+import 'package:kfm/desktop/shell/quick_access.dart';
+import 'package:kfm/desktop/tabs/desktop_tabs_controller.dart';
 import 'package:kfm/desktop/widgets/column_widths.dart';
 import 'package:kfm/desktop/widgets/desktop_context_menu.dart';
 import 'package:kfm/desktop/widgets/desktop_drag.dart';
@@ -23,12 +31,14 @@ import 'package:kfm/desktop/widgets/desktop_metrics.dart';
 import 'package:kfm/desktop/widgets/explorer_selection.dart';
 import 'package:kfm/desktop/widgets/explorer_view.dart';
 import 'package:kfm/desktop/widgets/file_explorer_parts.dart';
-import 'package:kfm/desktop/widgets/layout_switch.dart';
+import 'package:kfm/desktop/widgets/file_location_actions.dart';
+import 'package:kfm/desktop/widgets/file_type_icon.dart';
 import 'package:kfm/desktop/widgets/quick_look.dart';
 import 'package:kfm/features/browse/ui/browse_controller.dart';
 import 'package:kfm/features/browse/ui/folder_menu.dart';
 import 'package:kfm/features/browse/ui/open_file.dart';
 import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
+import 'package:kfm/features/external_storage/data/places_repository.dart';
 import 'package:kfm/features/folders/domain/file_operation.dart';
 import 'package:kfm/features/folders/ui/file_op_flow.dart';
 import 'package:kfm/features/folders/ui/last_operation_undo.dart';
@@ -36,8 +46,9 @@ import 'package:kfm/features/selection/domain/selection_state.dart';
 import 'package:kfm/features/selection/ui/selection_actions.dart';
 import 'package:kfm/features/swipe/ui/swipe_these.dart';
 
-/// Desktop Browse (TASK-PL3 step 3, PL3-3 a): an Explorer-like folder view
-/// over the index. Places (the scanned folders) at the top, then folders
+/// Desktop Browse (TASK-PL3 step 3, PL3-3 a; E3): an Explorer-like folder
+/// view over the index (folders outside it list their files from disk).
+/// Home = Quick access pins + drives; search results of a tab; folders
 /// and files with Large icons / Grid / Details (sortable columns),
 /// Explorer selection and keys, right-click menus with the phone's file
 /// actions (B4/B5/B9/X2/N9/B10), Del / Shift+Del / F2 / Ctrl+Z /
@@ -56,6 +67,11 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
   List<BrowseEntry> _entries = const [];
   String? _shownFolder;
 
+  /// E3: each tab keeps its own selection.
+  final Map<String, ExplorerSelection> _selByTab = {};
+  String? _tabId;
+  DesktopLocation _location = const HomeLocation();
+
   DesktopBrowseController get _nav =>
       ref.read(desktopBrowseControllerProvider.notifier);
 
@@ -64,15 +80,24 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
       if (e is FileBrowseEntry && _sel.contains(e.id)) e.file,
   ];
 
+  List<String> get _selectedPaths => [
+    for (final e in _entries)
+      if (_sel.contains(e.id))
+        switch (e) {
+          FileBrowseEntry(:final file) => file.path,
+          FolderBrowseEntry(:final path) => path,
+        },
+  ];
+
   List<FolderBrowseEntry> get _selectedFolders => [
     for (final e in _entries)
       if (e is FolderBrowseEntry && _sel.contains(e.id)) e,
   ];
 
+  /// Drive roots: never renamed, cut or dragged away.
   Set<String> get _roots => {
-    for (final p
-        in ref.read(desktopPlacesProvider).value ?? const <DesktopPlace>[])
-      p.path,
+    for (final d in desktopDrivesOf(ref.read(placesProvider).value ?? const []))
+      ?d.rootPath,
   };
 
   void _setSelection(ExplorerSelection s) {
@@ -131,7 +156,13 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
       case FolderBrowseEntry(:final path, :final available):
         if (available) _nav.open(path);
       case FileBrowseEntry(:final file):
-        await openFile(context, ref, file);
+        // E3: Explorer's double-click: the Windows default app (KFM's
+        // viewer is in the menu and on Space).
+        if (isWindowsHost) {
+          await openOrExplain(context, ref, file);
+        } else {
+          await openFile(context, ref, file);
+        }
     }
   }
 
@@ -231,7 +262,20 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
     final alt = keys.isAltPressed;
     final key = event.logicalKey;
     void run(Future<void> Function() f) => unawaited(f());
-    if (key == LogicalKeyboardKey.delete) {
+    final folder = ref.read(desktopBrowseControllerProvider).folder;
+    if (ctrl && shift && key == LogicalKeyboardKey.keyC) {
+      run(() => copyPathsAsText(ref, _selectedPaths));
+    } else if (ctrl && shift && key == LogicalKeyboardKey.keyN) {
+      if (folder != null) run(() => _newFolder(folder));
+    } else if (alt && key == LogicalKeyboardKey.enter) {
+      if (_selectedFiles case [final f]) {
+        run(() => showFileProperties(context, ref, f));
+      }
+    } else if (ctrl && shift && key == LogicalKeyboardKey.digit2) {
+      _nav.setLayout(ExplorerLayout.largeIcons);
+    } else if (ctrl && shift && key == LogicalKeyboardKey.digit6) {
+      _nav.setLayout(ExplorerLayout.details);
+    } else if (key == LogicalKeyboardKey.delete) {
       run(() => _delete(permanent: shift));
     } else if (key == LogicalKeyboardKey.f2) {
       run(_rename);
@@ -245,7 +289,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
       run(_paste);
     } else if (key == LogicalKeyboardKey.backspace ||
         (alt && key == LogicalKeyboardKey.arrowUp)) {
-      _nav.up(roots: _roots);
+      _nav.up();
     } else if (alt && key == LogicalKeyboardKey.arrowLeft) {
       _nav.goBack();
     } else if (alt && key == LogicalKeyboardKey.arrowRight) {
@@ -301,14 +345,50 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
       }
     } else if (item is FolderBrowseEntry && files.isEmpty) {
       final entry = FolderEntry(item.path, item.fileCount ?? 0);
-      entries.add(
-        DesktopMenuEntry(
-          label: l10n.desktopBrowseOpen,
-          icon: Icons.folder_open,
-          shortcut: 'Enter',
-          onSelected: () => unawaited(_open(item)),
-        ),
-      );
+      final pinned = await ref
+          .read(desktopQuickAccessProvider.notifier)
+          .isPinned(item.path);
+      if (!mounted) return;
+      entries
+        ..add(
+          DesktopMenuEntry(
+            label: l10n.desktopBrowseOpen,
+            icon: Icons.folder_open,
+            shortcut: 'Enter',
+            onSelected: () => unawaited(_open(item)),
+          ),
+        )
+        ..add(
+          DesktopMenuEntry(
+            key: const ValueKey('menu-open-new-tab'),
+            label: l10n.desktopOpenInNewTab,
+            icon: Icons.tab,
+            onSelected: () => ref
+                .read(desktopTabsControllerProvider.notifier)
+                .openInNewTab(FolderLocation(item.path)),
+          ),
+        )
+        ..add(
+          DesktopMenuEntry(
+            key: const ValueKey('menu-pin'),
+            label: pinned
+                ? l10n.desktopUnpinFromQuickAccess
+                : l10n.desktopPinToQuickAccess,
+            icon: Icons.push_pin_outlined,
+            onSelected: () => ref
+                .read(desktopQuickAccessProvider.notifier)
+                .togglePin(item.path, pinned: pinned),
+          ),
+        )
+        ..add(
+          DesktopMenuEntry(
+            key: const ValueKey('menu-folder-copy-path'),
+            label: l10n.desktopCopyAsPath,
+            icon: Icons.content_paste_go,
+            shortcut: DesktopKeys.label(DesktopKeys.copyAsPath),
+            onSelected: () => unawaited(copyPathsAsText(ref, [item.path])),
+          ),
+        );
       if (!_roots.contains(item.path)) {
         entries
           ..add(
@@ -353,6 +433,14 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
             label: l10n.desktopBrowseOpen,
             icon: Icons.open_in_new,
             shortcut: 'Enter',
+            onSelected: () => unawaited(_open(FileBrowseEntry(f))),
+          ),
+        )
+        ..add(
+          DesktopMenuEntry(
+            key: const ValueKey('menu-open-kfm'),
+            label: l10n.desktopOpenInKfm,
+            icon: Icons.visibility_outlined,
             onSelected: () => unawaited(openFile(context, ref, f)),
           ),
         )
@@ -391,14 +479,20 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
         );
         first = false;
       }
-      entries.add(
-        DesktopMenuEntry(
-          label: l10n.permanentConfirmYes,
-          icon: Icons.delete_forever_outlined,
-          shortcut: keys(DesktopKeys.deletePermanently),
-          onSelected: () => unawaited(_delete(permanent: true)),
-        ),
-      );
+      entries
+        ..add(
+          DesktopMenuEntry(
+            label: l10n.permanentConfirmYes,
+            icon: Icons.delete_forever_outlined,
+            shortcut: keys(DesktopKeys.deletePermanently),
+            onSelected: () => unawaited(_delete(permanent: true)),
+          ),
+        )
+        ..addAll(
+          fileLocationMenuEntries(context, ref, [
+            f,
+          ], openLocation: _location is SearchLocation),
+        );
     } else if (files.isNotEmpty) {
       final ids = [for (final f in files) f.id];
       final state = SelectionState(
@@ -452,12 +546,23 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
   // --- build ---------------------------------------------------------------
 
   List<BrowseEntry> _buildEntries(DesktopBrowseState st) {
+    if (_location case SearchLocation(:final query, :final scope)) {
+      final q = searchQuery(query, scope, st);
+      final files = ref.watch(filePagesProvider(q)).value?.items ?? const [];
+      return [for (final f in files) FileBrowseEntry(f)];
+    }
     final folder = st.folder;
     if (folder == null) {
+      // Home: Quick access pins, then the drives (no recent files).
+      final pins = ref.watch(desktopQuickAccessProvider).value ?? const [];
+      final drives = desktopDrivesOf(ref.watch(placesProvider).value ?? []);
+      final seen = <String>{};
       return [
-        for (final p
-            in ref.watch(desktopPlacesProvider).value ?? const <DesktopPlace>[])
-          FolderBrowseEntry(p.path, available: p.available),
+        for (final p in pins)
+          if (seen.add(p.toLowerCase())) FolderBrowseEntry(p),
+        for (final d in drives)
+          if (d.rootPath case final root? when seen.add(root.toLowerCase()))
+            FolderBrowseEntry(root, label: desktopDriveLabel(context.l10n, d)),
       ];
     }
     final folders = _mergeFolders(
@@ -474,8 +579,40 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
     }
     final query = st.filesQuery!;
     final files = ref.watch(filePagesProvider(query)).value?.items ?? const [];
-    return [...folders, for (final f in files) FileBrowseEntry(f)];
+    // E3: a folder the index doesn't cover lists its files from disk (index
+    // rows win on the same path).
+    final disk = ref.watch(desktopDiskFilesProvider(folder)).value;
+    final merged = <FileRef>[...files];
+    if (disk != null && disk.files.isNotEmpty) {
+      final known = {for (final f in files) f.path.toLowerCase()};
+      merged
+        ..addAll(disk.files.where((f) => !known.contains(f.path.toLowerCase())))
+        ..sort(_fileOrder(st));
+    }
+    return [...folders, for (final f in merged) FileBrowseEntry(f)];
   }
+
+  static int Function(FileRef, FileRef) _fileOrder(DesktopBrowseState st) {
+    int base(FileRef a, FileRef b) => switch (st.sortColumn) {
+      FileColumns.date => a.sortDate.compareTo(b.sortDate),
+      FileColumns.size => a.sizeBytes.compareTo(b.sizeBytes),
+      _ => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    };
+    return st.descending ? (a, b) => base(b, a) : base;
+  }
+
+  /// The index query of a search tab: names containing [query] under
+  /// [scope] (everywhere when null).
+  static IndexQuery searchQuery(
+    String query,
+    String? scope,
+    DesktopBrowseState st,
+  ) => IndexQuery(
+    nameContains: query,
+    folderPath: scope,
+    includeSubfolders: true,
+    sort: st.fileSort,
+  );
 
   /// The index's folders (with file counts) plus the folders on disk the
   /// index doesn't know (empty ones, or only unindexed files inside),
@@ -504,10 +641,232 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
+  /// Selects and shows the file a reveal request names (address bar with
+  /// a file path, "Open file location").
+  void _takeReveal(String? path, List<BrowseEntry> entries) {
+    if (path == null) return;
+    final lower = path.toLowerCase();
+    for (final e in entries) {
+      if (e case FileBrowseEntry(:final file)
+          when file.path.toLowerCase() == lower) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ref.read(desktopRevealRequestProvider.notifier).request(null);
+          _setSelection(
+            ExplorerSelection(ids: {e.id}, anchor: e.id, focus: e.id),
+          );
+          _explorer.currentState?.reveal(e.id);
+        });
+        return;
+      }
+    }
+  }
+
+  void _publishCommands(DesktopBrowseState st, bool hasUndo) {
+    final l10n = context.l10n;
+    final folder = st.folder;
+    final files = _selectedFiles;
+    final folders = _selectedFolders;
+    final any = files.isNotEmpty || folders.isNotEmpty;
+    final roots = _roots;
+    final movable =
+        files.isNotEmpty ||
+        folders.any((f) => f.available && !roots.contains(f.path));
+    String keys(SingleActivator a) => DesktopKeys.label(a);
+    final commands = <DesktopCommand>[
+      DesktopCommand(
+        id: 'new',
+        label: l10n.desktopCmdNew,
+        icon: Icons.add_circle_outline,
+        menu: [
+          DesktopCommand(
+            id: 'new-folder',
+            label: l10n.browseNewFolder,
+            icon: Icons.create_new_folder_outlined,
+            shortcut: keys(DesktopKeys.newFolder),
+            onPressed: folder == null
+                ? null
+                : () => unawaited(_newFolder(folder)),
+          ),
+        ],
+      ),
+      DesktopCommand(
+        id: 'cut',
+        label: l10n.desktopBrowseCut,
+        icon: Icons.content_cut,
+        shortcut: 'Ctrl+X',
+        divider: true,
+        onPressed: movable ? () => _copy(cut: true) : null,
+      ),
+      DesktopCommand(
+        id: 'copy',
+        label: l10n.desktopBrowseCopy,
+        icon: Icons.content_copy,
+        shortcut: 'Ctrl+C',
+        onPressed: movable ? () => _copy(cut: false) : null,
+      ),
+      DesktopCommand(
+        id: 'paste',
+        label: l10n.desktopBrowsePaste,
+        icon: Icons.content_paste,
+        shortcut: 'Ctrl+V',
+        onPressed: folder == null ? null : () => unawaited(_paste()),
+      ),
+      DesktopCommand(
+        id: 'rename',
+        label: l10n.fileMenuRename,
+        icon: Icons.drive_file_rename_outline,
+        shortcut: keys(DesktopKeys.rename),
+        onPressed: (files.length + folders.length) == 1
+            ? () => unawaited(_rename())
+            : null,
+      ),
+      DesktopCommand(
+        id: 'delete',
+        label: l10n.fileMenuDelete,
+        icon: Icons.delete_outline,
+        shortcut: keys(DesktopKeys.delete),
+        onPressed: files.isNotEmpty
+            ? () => unawaited(_delete(permanent: false))
+            : null,
+      ),
+      DesktopCommand(
+        id: 'sort-by',
+        label: l10n.desktopCmdSortBy,
+        icon: Icons.sort,
+        divider: true,
+        menu: [
+          for (final (id, label) in [
+            (FileColumns.name, l10n.browseSortName),
+            (FileColumns.date, l10n.browseSortDate),
+            (FileColumns.size, l10n.detailsSize),
+          ])
+            DesktopCommand(
+              id: 'sort-$id',
+              label: label,
+              icon: Icons.sort,
+              selected: st.sortColumn == id,
+              onPressed: () => _nav.sortBy(id),
+            ),
+          DesktopCommand(
+            id: 'sort-descending',
+            label: l10n.desktopSortDescending,
+            icon: Icons.south,
+            selected: st.descending,
+            onPressed: () => _nav.sortBy(st.sortColumn),
+          ),
+        ],
+      ),
+      DesktopCommand(
+        id: 'view',
+        label: l10n.desktopCmdView,
+        icon: Icons.view_agenda_outlined,
+        menu: [
+          for (final (layout, label) in [
+            (ExplorerLayout.largeIcons, l10n.desktopLayoutLargeIcons),
+            (ExplorerLayout.grid, l10n.desktopLayoutGrid),
+            (ExplorerLayout.details, l10n.desktopLayoutDetails),
+          ])
+            DesktopCommand(
+              id: 'view-${layout.name}',
+              label: label,
+              icon: Icons.view_list,
+              selected: st.layout == layout,
+              onPressed: () => _nav.setLayout(layout),
+            ),
+          DesktopCommand(
+            id: 'view-nav-pane',
+            label: l10n.desktopViewNavPane,
+            icon: Icons.view_sidebar_outlined,
+            selected: ref.read(desktopNavPaneShownProvider),
+            onPressed: () =>
+                ref.read(desktopNavPaneShownProvider.notifier).toggle(),
+          ),
+          DesktopCommand(
+            id: 'view-details-pane',
+            label: l10n.desktopViewDetailsPane,
+            icon: Icons.vertical_split_outlined,
+            selected: ref.read(desktopDetailsPaneProvider),
+            onPressed: () =>
+                ref.read(desktopDetailsPaneProvider.notifier).toggle(),
+          ),
+          DesktopCommand(
+            id: 'view-hidden',
+            label: l10n.desktopViewHidden,
+            icon: Icons.visibility_outlined,
+            selected: st.showHidden,
+            onPressed: () => _nav.setShowHidden(show: !st.showHidden),
+          ),
+        ],
+      ),
+      DesktopCommand(
+        id: 'sort-these',
+        label: l10n.desktopBrowseSortThese,
+        icon: Icons.swipe_outlined,
+        divider: true,
+        keepLabel: true,
+        onPressed: folder != null || files.length > 1
+            ? () => unawaited(_sortThese())
+            : null,
+      ),
+      if (hasUndo)
+        DesktopCommand(
+          id: 'undo',
+          label: l10n.undo,
+          icon: Icons.undo,
+          shortcut: 'Ctrl+Z',
+          keepLabel: true,
+          onPressed: () => unawaited(_undo()),
+        ),
+      if (any)
+        DesktopCommand(
+          id: 'copy-path',
+          label: l10n.desktopCopyAsPath,
+          icon: Icons.content_paste_go,
+          shortcut: keys(DesktopKeys.copyAsPath),
+          divider: true,
+          onPressed: () => unawaited(copyPathsAsText(ref, _selectedPaths)),
+        ),
+    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(desktopCommandsProvider(DesktopSection.browse).notifier)
+          .set(commands);
+      ref
+          .read(desktopViewTogglesProvider(DesktopSection.browse).notifier)
+          .set(
+            DesktopViewToggle(
+              details: st.layout == ExplorerLayout.details,
+              onChanged: (d) => _nav.setLayout(
+                d ? ExplorerLayout.details : ExplorerLayout.largeIcons,
+              ),
+            ),
+          );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final st = ref.watch(desktopBrowseControllerProvider);
+    final tabs = ref.watch(desktopTabsControllerProvider);
+    final tab = tabs.current;
+    // Only Browse locations change what this screen shows.
+    if (tab.location.section == DesktopSection.browse &&
+        tab.location is! RouteLocation) {
+      if (tab.id != _tabId) {
+        if (_tabId case final old?) _selByTab[old] = _sel;
+        _selByTab.removeWhere((id, _) => !tabs.tabs.any((t) => t.id == id));
+        _tabId = tab.id;
+        _sel = _selByTab[tab.id] ?? ExplorerSelection.empty;
+        _shownFolder = st.folder;
+      }
+      if (tab.location != _location) {
+        _location = tab.location;
+        _sel = ExplorerSelection.empty;
+      }
+    }
     if (st.folder != _shownFolder) {
       // A new folder: nothing selected there yet.
       _shownFolder = st.folder;
@@ -515,108 +874,23 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
     }
     final entries = _entries = _buildEntries(st);
     _report();
+    _takeReveal(ref.watch(desktopRevealRequestProvider), entries);
+    ref.watch(desktopRefreshTickProvider);
     final lastOp = ref.watch(lastOperationUndoProvider);
+    _publishCommands(st, lastOp != null);
     final theme = Theme.of(context);
+    final search = _location is SearchLocation
+        ? _location as SearchLocation
+        : null;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: 8,
-            vertical: 6,
-          ),
-          // Narrow (800 px window with the details pane): the labelled
-          // buttons become icons with tooltips.
-          child: Builder(
-            builder: (context) {
-              final compact = DesktopLayout.compact(context, ref, 800);
-              return Row(
-                children: [
-                  IconButton(
-                    key: const ValueKey('browse-back'),
-                    tooltip: shortcutHint(
-                      l10n,
-                      l10n.desktopBrowseBack,
-                      'Alt+←',
-                    ),
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: st.back.isEmpty ? null : _nav.goBack,
-                  ),
-                  IconButton(
-                    tooltip: shortcutHint(
-                      l10n,
-                      l10n.desktopBrowseForward,
-                      'Alt+→',
-                    ),
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: st.forward.isEmpty ? null : _nav.goForward,
-                  ),
-                  IconButton(
-                    key: const ValueKey('browse-up'),
-                    tooltip: shortcutHint(l10n, l10n.desktopBrowseUp, 'Alt+↑'),
-                    icon: const Icon(Icons.arrow_upward),
-                    onPressed: st.folder == null
-                        ? null
-                        : () => _nav.up(roots: _roots),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DesktopBreadcrumb(
-                      folder: st.folder,
-                      onOpen: _nav.open,
-                    ),
-                  ),
-                  if (lastOp != null) ...[
-                    if (compact)
-                      IconButton.filledTonal(
-                        key: const ValueKey('browse-undo'),
-                        tooltip: l10n.undo,
-                        onPressed: () => unawaited(_undo()),
-                        icon: const Icon(Icons.undo, size: 18),
-                      )
-                    else
-                      FilledButton.tonalIcon(
-                        key: const ValueKey('browse-undo'),
-                        onPressed: () => unawaited(_undo()),
-                        icon: const Icon(Icons.undo, size: 18),
-                        label: Text(l10n.undo),
-                      ),
-                    const SizedBox(width: 4),
-                  ],
-                  if (st.folder != null)
-                    if (compact)
-                      IconButton(
-                        key: const ValueKey('browse-sort-these'),
-                        tooltip: l10n.desktopBrowseSortThese,
-                        onPressed: () => unawaited(_sortThese()),
-                        icon: const Icon(Icons.swipe_outlined, size: 18),
-                      )
-                    else
-                      TextButton.icon(
-                        key: const ValueKey('browse-sort-these'),
-                        onPressed: () => unawaited(_sortThese()),
-                        icon: const Icon(Icons.swipe_outlined, size: 18),
-                        label: Text(l10n.desktopBrowseSortThese),
-                      ),
-                  IconButton(
-                    key: const ValueKey('browse-show-hidden'),
-                    tooltip: l10n.browseShowHidden,
-                    isSelected: st.showHidden,
-                    icon: const Icon(Icons.visibility_off_outlined),
-                    selectedIcon: const Icon(Icons.visibility_outlined),
-                    onPressed: () => _nav.setShowHidden(show: !st.showHidden),
-                  ),
-                  LayoutSwitch(layout: st.layout, onChanged: _nav.setLayout),
-                ],
-              );
-            },
-          ),
-        ),
-        const Divider(height: 1),
         Expanded(
           child: entries.isEmpty
               ? Center(
                   child: Text(
-                    st.folder == null
+                    search != null
+                        ? l10n.desktopSearchNone(search.query)
+                        : st.folder == null
                         ? l10n.desktopNoPlaces
                         : l10n.desktopBrowseEmptyFolder,
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -672,8 +946,16 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                     onKey: _onKey,
                     onContextMenu: (item, at) =>
                         unawaited(_contextMenu(item, at)),
+                    itemHoverHold: (e) {
+                      if (e case FolderBrowseEntry(:final available)
+                          when available) {
+                        unawaited(_open(e));
+                      }
+                    },
                     onNearEnd: () {
-                      final q = st.filesQuery;
+                      final q = search != null
+                          ? searchQuery(search.query, search.scope, st)
+                          : st.filesQuery;
                       if (q != null) {
                         unawaited(
                           ref.read(filePagesProvider(q).notifier).loadMore(),
@@ -695,6 +977,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                     columns: fileColumns<BrowseEntry>(
                       context,
                       fileOf: (e) => e is FileBrowseEntry ? e.file : null,
+                      folderColumn: search != null,
                       typeOf: (e) => e is FolderBrowseEntry
                           ? l10n.desktopTypeFolder
                           : null,
@@ -705,6 +988,7 @@ class _DesktopBrowseScreenState extends ConsumerState<DesktopBrowseScreen> {
                         ),
                         FolderBrowseEntry() => FileNameCell(
                           name: e.name,
+                          folderPath: e.path,
                           icon: st.folder == null
                               ? placeIcon(e.name)
                               : Icons.folder,
@@ -746,14 +1030,21 @@ class _FolderTile extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: FittedBox(
-            child: Icon(
-              placeIcon(entry.name) == Icons.folder_outlined
-                  ? Icons.folder
-                  : placeIcon(entry.name),
-              color: entry.available
-                  ? theme.colorScheme.primary
-                  : theme.disabledColor,
+          child: LayoutBuilder(
+            builder: (context, c) => Center(
+              child: entry.isDrive
+                  ? FileTypeIcon.drive(
+                      entry.path,
+                      size: c.biggest.shortestSide.clamp(16, 128),
+                    )
+                  : FileTypeIcon.folder(
+                      entry.path,
+                      size: c.biggest.shortestSide.clamp(16, 128),
+                      color: entry.available ? null : theme.disabledColor,
+                      fallback: placeIcon(entry.name) == Icons.folder_outlined
+                          ? Icons.folder
+                          : placeIcon(entry.name),
+                    ),
             ),
           ),
         ),

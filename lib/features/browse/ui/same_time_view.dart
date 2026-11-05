@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:kfm/app/a11y/file_semantics.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -288,7 +289,7 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
                           dimension: _tile,
                           child: Semantics(
                             button: true,
-                            label: files[i].name,
+                            label: fileSemanticsLabel(context.l10n, files[i]),
                             excludeSemantics: true,
                             child: InkWell(
                               onTap: () => _open(i),

@@ -75,7 +75,7 @@ void main() {
     await _settle(tester);
     expect(_paths(app), contains('/s/DCIM/Trip/a.jpg'));
     expect(_paths(app), isNot(contains('/s/DCIM/a.jpg')));
-    expect(find.byKey(const ValueKey('browse-undo')), findsOneWidget);
+    expect(find.byKey(const ValueKey('cmd-undo')), findsOneWidget);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await _mouseDrag(tester, find.text('b.jpg'), find.text('Trip'));

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/file_reveal.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
@@ -54,7 +55,8 @@ final List<TransferSection> _always = [
   // U2: copies and moves between places on this device.
   TransferSection(
     id: 'local',
-    label: (context) => context.l10n.transfersLocalSection,
+    label: (context) =>
+        context.l10n.transfersLocalSectionOn(deviceKind(context)),
     builder: (_) => const LocalJobsSection(),
   ),
   // N12: files other devices sent here (and N12b offers made from here).

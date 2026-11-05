@@ -9,6 +9,8 @@ String? backupSettingLabelOrNull(AppLocalizations l10n, String name) {
     AppSettings.themeMode.name: l10n.backupSettingThemeMode,
     AppSettings.themeAccent.name: l10n.backupSettingThemeAccent,
     AppSettings.leftHanded.name: l10n.backupSettingLeftHanded,
+    AppSettings.reduceMotion.name: l10n.backupSettingReduceMotion,
+    AppSettings.highContrast.name: l10n.backupSettingHighContrast,
     AppSettings.textSize.name: l10n.backupSettingTextSize,
     AppSettings.localeTag.name: l10n.backupSettingLanguage,
     AppSettings.storageBigFileThresholdBytes.name:
@@ -22,6 +24,7 @@ String? backupSettingLabelOrNull(AppLocalizations l10n, String name) {
     AppSettings.browseShowSizes.name: l10n.backupSettingBrowseShowSizes,
     AppSettings.desktopBrowseLayout.name: l10n.backupSettingDesktopBrowseLayout,
     AppSettings.desktopBrowseSort.name: l10n.backupSettingDesktopBrowseSort,
+    AppSettings.desktopIconStyle.name: l10n.backupSettingFileIcons,
     AppSettings.browseHighlightBig.name: l10n.backupSettingBrowseHighlightBig,
     AppSettings.searchSecondaryLanguage.name:
         l10n.backupSettingSearchSecondLanguage,

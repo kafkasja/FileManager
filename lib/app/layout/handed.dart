@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -8,10 +8,13 @@ part 'handed.g.dart';
 
 /// L4. Which thumb the user swipes with.
 ///
-/// Rule: thumb-side bottom controls use **physical** sides chosen by
-/// handedness (these helpers, with `textDirection: TextDirection.ltr`),
-/// ignoring text direction. Everything else stays directional. Never wrap
-/// widgets in `Directionality` to fake mirroring (that flips text too).
+/// Rule (TASK-E2 §7): Undo, the main bottom buttons, the selection bar's
+/// actions and FABs sit on the **thumb side** (right-handed → right,
+/// left-handed → left). Physical sides, chosen by handedness (these
+/// helpers, with `textDirection: TextDirection.ltr`), ignoring text
+/// direction. Everything else stays directional. Never wrap widgets in
+/// `Directionality` to fake mirroring (that flips text too). Desktop has no
+/// thumb: these are phone-only.
 enum Handedness { right, left }
 
 /// keepAlive stream like `themeModeProvider`.
@@ -25,20 +28,36 @@ Stream<Handedness> handedness(Ref ref) => ref
 Handedness handednessOf(WidgetRef ref) =>
     ref.watch(handednessProvider).value ?? Handedness.right;
 
-/// The physical side the "secondary" bottom control (Undo) sits on, for a
-/// `Row(textDirection: TextDirection.ltr)`. Right-handed → left (the
-/// default layout); left-handed → right.
-MainAxisAlignment secondarySide(Handedness h) =>
-    h == Handedness.right ? MainAxisAlignment.start : MainAxisAlignment.end;
+/// The physical side thumb controls (Undo) sit on, for a
+/// `Row(textDirection: TextDirection.ltr)`: right-handed → right,
+/// left-handed → left.
+MainAxisAlignment thumbSide(Handedness h) =>
+    h == Handedness.right ? MainAxisAlignment.end : MainAxisAlignment.start;
 
 /// [defaultOrder] is the order in the right-handed layout, physical left to
-/// right. Left-handed reverses it. Use with `textDirection: TextDirection.ltr`.
+/// right (its last items sit at the thumb). Left-handed reverses it. Use
+/// with `textDirection: TextDirection.ltr`.
 List<Widget> mirroredFor(Handedness h, List<Widget> defaultOrder) =>
     h == Handedness.right ? defaultOrder : defaultOrder.reversed.toList();
 
+/// [items] from the thumb outwards: the first sits at the thumb side
+/// (physical right for right-handed). Use with
+/// `textDirection: TextDirection.ltr`.
+List<Widget> thumbFirst(Handedness h, List<Widget> items) =>
+    h == Handedness.right ? items.reversed.toList() : items;
+
 /// `reverse:` for a horizontal scroll view whose first item belongs at the
-/// physical left (right-handed) or physical right (left-handed), whatever
-/// the ambient text direction (a horizontal scroll view starts at the
-/// ambient start side).
+/// thumb side (physical right for right-handed, left for left-handed),
+/// whatever the ambient text direction (a horizontal scroll view starts at
+/// the ambient start side).
 bool reverseHorizontalFor(Handedness h, TextDirection ambient) =>
-    (h == Handedness.left) != (ambient == TextDirection.rtl);
+    (h == Handedness.right) != (ambient == TextDirection.rtl);
+
+/// A floating action button on the thumb side (every phone FAB uses it; a
+/// rule test checks).
+FloatingActionButtonLocation thumbFabLocation(
+  Handedness h,
+  TextDirection ambient,
+) => (h == Handedness.right) == (ambient == TextDirection.ltr)
+    ? FloatingActionButtonLocation.endFloat
+    : FloatingActionButtonLocation.startFloat;

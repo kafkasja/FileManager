@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kfm/app/a11y/file_semantics.dart';
+import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/core/files/file_kind_resolver.dart';
 import 'package:kfm/core/files/file_ref.dart';
@@ -15,6 +17,7 @@ class FileGridTile extends StatelessWidget {
     required this.onTap,
     this.showSize = false,
     this.highlightBig = false,
+    this.bigFileBytes = defaultBigFileBytes,
     this.menu,
     this.highlight = const [],
     super.key,
@@ -38,8 +41,12 @@ class FileGridTile extends StatelessWidget {
   /// [showSize] is off.
   final bool highlightBig;
 
-  /// Same value as `kBigFileBytes` (Settings → Browse).
-  static const int bigFileBytes = 100 * 1024 * 1024;
+  /// The user's big-file threshold (TASK-E2: one value for the highlight
+  /// and Storage → Big files), read once per list by the caller.
+  final int bigFileBytes;
+
+  /// `AppSettings.storageBigFileThresholdBytes`'s default.
+  static const int defaultBigFileBytes = 100 * 1024 * 1024;
 
   /// What the ⋮ takes at the bottom-end: its 2 px inset, the 8 px tap-target
   /// margin, the 32 px button and a 4 px gap. The name stays clear of it.
@@ -56,9 +63,10 @@ class FileGridTile extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // E2 §7: name, type, size and date, not just the name.
         Semantics(
           button: true,
-          label: file.name,
+          label: fileSemanticsLabel(context.l10n, file),
           excludeSemantics: true,
           child: InkWell(
             onTap: onTap,
@@ -170,6 +178,7 @@ class FileListRow extends StatelessWidget {
     required this.file,
     required this.onTap,
     this.highlightBig = false,
+    this.bigFileBytes = FileGridTile.defaultBigFileBytes,
     this.menu,
     this.highlight = const [],
     super.key,
@@ -188,6 +197,9 @@ class FileListRow extends StatelessWidget {
 
   /// Big files' size in the error color.
   final bool highlightBig;
+
+  /// See [FileGridTile.bigFileBytes].
+  final int bigFileBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -212,18 +224,26 @@ class FileListRow extends StatelessWidget {
           ],
         ),
       ),
-      title: HighlightedName(name: file.name, words: highlight),
-      subtitle: Text(
-        [
-          formatBytes(file.sizeBytes, locale: locale),
-          formatDate(file.sortDate, locale: locale),
-        ].join(' · '),
-        style: highlightBig && file.sizeBytes >= FileGridTile.bigFileBytes
-            ? TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontWeight: FontWeight.bold,
-              )
-            : null,
+      // E2 §7: the row reads name, type, size and date once (the ⋮ stays
+      // reachable as the trailing button).
+      title: Semantics(
+        label: fileSemanticsLabel(context.l10n, file),
+        excludeSemantics: true,
+        child: HighlightedName(name: file.name, words: highlight),
+      ),
+      subtitle: ExcludeSemantics(
+        child: Text(
+          [
+            formatBytes(file.sizeBytes, locale: locale),
+            formatDate(file.sortDate, locale: locale),
+          ].join(' · '),
+          style: highlightBig && file.sizeBytes >= bigFileBytes
+              ? TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                )
+              : null,
+        ),
       ),
     );
   }

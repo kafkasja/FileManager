@@ -8,17 +8,17 @@ part of 'same_time_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// B3: the stored "taken within N seconds" window, clamped to 1–600.
+/// B3: the stored "taken within N seconds" window, clamped to 1 s … 24 h.
 
 @ProviderFor(sameTimeWindow)
 final sameTimeWindowProvider = SameTimeWindowProvider._();
 
-/// B3: the stored "taken within N seconds" window, clamped to 1–600.
+/// B3: the stored "taken within N seconds" window, clamped to 1 s … 24 h.
 
 final class SameTimeWindowProvider
     extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
     with $FutureModifier<int>, $StreamProvider<int> {
-  /// B3: the stored "taken within N seconds" window, clamped to 1–600.
+  /// B3: the stored "taken within N seconds" window, clamped to 1 s … 24 h.
   SameTimeWindowProvider._()
     : super(
         from: null,

@@ -104,7 +104,7 @@ void main() {
     expect(_folders(app, 'e.jpg'), ['/s/DCIM']);
     expect(_folders(app, 'a.jpg'), ['/s/DCIM']);
     expect(clip.paths, isEmpty);
-    await tester.tap(find.byKey(const ValueKey('browse-undo')));
+    await tester.tap(find.byKey(const ValueKey('cmd-undo')));
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(_folders(app, 'e.jpg'), ['/x/Explorer']);

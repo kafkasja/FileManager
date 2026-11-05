@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/app_info.dart';
+import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
 import 'package:kfm/features/ai_labels/data/ai_labels_providers.dart';
@@ -68,10 +69,13 @@ class _AiModelsDetailsScreenState extends ConsumerState<AiModelsDetailsScreen> {
           Text(l10n.aiModelsDetailsIntro),
           if (manifest != null)
             for (final m in manifest.models) _ModelCard(model: m),
-          section(l10n.aiModelsHowTitle, l10n.aiModelsHowBody),
+          section(
+            l10n.aiModelsHowTitle,
+            l10n.aiModelsHowBodyOn(deviceKind(context)),
+          ),
           section(
             l10n.aiModelsPrivacyTitle,
-            '${l10n.aiModelsPrivacyBody}\n\n${l10n.aiModelsBatteryBody}\n\n'
+            '${l10n.aiModelsPrivacyBodyOn(deviceKind(context))}\n\n${l10n.aiModelsBatteryBody}\n\n'
             '${l10n.aiModelsRemovableBody}',
           ),
           Align(

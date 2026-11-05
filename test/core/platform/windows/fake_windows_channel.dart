@@ -32,18 +32,63 @@ class FakeWindowsChannel implements WindowsChannel {
   /// X8: taskbar progress calls, in order.
   final List<(TaskbarProgress, int)> taskbar = [];
 
-  /// E1: paths "Show in folder" revealed.
-  final List<String> revealed = [];
-
-  @override
-  Future<void> revealInExplorer(String path) async => revealed.add(path);
-
   @override
   Future<void> setTaskbarProgress(
     TaskbarProgress state, [
     int value = 0,
   ]) async {
     taskbar.add((state, value));
+  }
+
+  /// E3: icon requests (`ext:.pdf` / `path:C:/x.exe` / `folder`).
+  final List<String> iconCalls = [];
+
+  /// E3: what [fileTypeNames] answers.
+  Map<String, String> typeNames = const {};
+
+  /// E3: paths passed to [revealInExplorer] / [showProperties].
+  final List<String> revealed = [];
+  final List<String> propertiesShown = [];
+
+  @override
+  Future<Uint8List?> fileIcon({
+    required int px,
+    String? path,
+    String? ext,
+    bool folder = false,
+    bool drive = false,
+  }) async {
+    _check('fileIcon');
+    iconCalls.add(
+      path != null
+          ? 'path:$path'
+          : folder
+          ? 'folder'
+          : 'ext:$ext',
+    );
+    return null;
+  }
+
+  @override
+  Future<Map<String, String>> fileTypeNames(List<String> exts) async {
+    _check('fileTypeNames');
+    return {
+      for (final e in exts)
+        if (typeNames[e] case final String n) e: n,
+    };
+  }
+
+  @override
+  Future<void> revealInExplorer(String path) async {
+    _check('revealInExplorer');
+    revealed.add(path);
+  }
+
+  @override
+  Future<bool> showProperties(String path) async {
+    _check('showProperties');
+    propertiesShown.add(path);
+    return true;
   }
 
   /// trashId → (original path, stored path, deleted at).

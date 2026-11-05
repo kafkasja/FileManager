@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/core/diagnostics/error_log.dart';
 import 'package:kfm/core/diagnostics/error_log_providers.dart';
-import 'package:kfm/features/settings/ui/about_section.dart';
+import 'package:kfm/features/settings/ui/about_advanced_entries.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 import 'package:kfm/l10n/generated/app_localizations_en.dart';
 
@@ -45,7 +45,7 @@ Future<void> _pump(
       child: const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: SingleChildScrollView(child: AboutSection())),
+        home: Scaffold(body: SingleChildScrollView(child: ErrorLogRows())),
       ),
     ),
   );
@@ -78,7 +78,10 @@ void main() {
     await log.record(_entry('b'));
     final shares = _Shares();
     await _pump(tester, log, shares);
-    expect(find.text(_l10n.errorLogShareSubtitle(2)), findsOneWidget);
+    expect(
+      find.text(_l10n.errorLogShareSubtitleOn(2, 'phone')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text(_l10n.errorLogShare));
     await tester.pumpAndSettle();

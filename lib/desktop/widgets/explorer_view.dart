@@ -70,12 +70,14 @@ class ExplorerView<T> extends StatefulWidget {
     this.onKey,
     this.onNearEnd,
     this.nameOf,
+    this.semanticLabelOf,
     this.focusNode,
     this.autofocus = false,
     this.scrollController,
     this.dragController,
     this.dragDataOf,
     this.itemDropOffer,
+    this.itemHoverHold,
     this.columnWidths = const {},
     this.onColumnWidthsChanged,
     super.key,
@@ -113,6 +115,10 @@ class ExplorerView<T> extends StatefulWidget {
   /// Type-to-find: the name typed letters match (null = off).
   final String Function(T item)? nameOf;
 
+  /// E2 §7: what Narrator reads for an item (name, type, size, date);
+  /// null = the item's own texts.
+  final String Function(T item)? semanticLabelOf;
+
   final FocusNode? focusNode;
   final bool autofocus;
   final ScrollController? scrollController;
@@ -124,6 +130,10 @@ class ExplorerView<T> extends StatefulWidget {
 
   /// Items that take drops (folders); null = none.
   final DropOfferBuilder? Function(T item)? itemDropOffer;
+
+  /// E3: a drag rested 1 s on an item (a drop target): spring-loaded
+  /// folders open.
+  final void Function(T item)? itemHoverHold;
 
   /// Details column widths the user dragged before (unscaled; by column
   /// id), e.g. remembered in the settings.
@@ -451,8 +461,12 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
       _pressAt = null;
       return;
     }
-    _dragging = true;
-    controller.begin(data, e.position, copy: ctrl);
+    controller
+      ..begin(data, e.position, copy: ctrl)
+      // E3: the controller follows the pointer from here, so the drag
+      // survives this list being rebuilt (a tab switched while hovering).
+      ..trackPointer(e.pointer);
+    _pressAt = null;
   }
 
   void _onItemUp(PointerUpEvent e) {
@@ -620,7 +634,9 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
   bool _typeToFind(KeyEvent event, {required bool ctrl}) {
     final nameOf = widget.nameOf;
     final ch = event.character;
-    if (nameOf == null || ctrl || ch == null || ch.trim().isEmpty) {
+    // E3: Alt+letter is a shortcut (Alt+P panes, Alt+D address bar).
+    final alt = HardwareKeyboard.instance.isAltPressed;
+    if (nameOf == null || ctrl || alt || ch == null || ch.trim().isEmpty) {
       return false;
     }
     _typedReset?.cancel();
@@ -760,6 +776,7 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
     final id = widget.idOf(item);
     final view = _ExplorerItem(
       key: ValueKey(id),
+      semanticLabel: widget.semanticLabelOf?.call(item),
       selected: _s.contains(id),
       focused: _s.focus == id,
       details: geo.details,
@@ -778,6 +795,11 @@ class ExplorerViewState<T> extends State<ExplorerView<T>> {
             key: ValueKey('$_dropKeyPrefix$id'),
             offer: offer,
             radius: geo.details ? 4 : 10,
+            holdDelay: const Duration(seconds: 1),
+            onHoverHold: switch (widget.itemHoverHold) {
+              final hold? => () => hold(item),
+              null => null,
+            },
             child: view,
           );
   }
@@ -933,9 +955,11 @@ class _ExplorerItem extends StatefulWidget {
     required this.onUp,
     required this.onCancel,
     required this.child,
+    this.semanticLabel,
     super.key,
   });
 
+  final String? semanticLabel;
   final bool selected;
   final bool focused;
   final bool details;
@@ -963,6 +987,8 @@ class _ExplorerItemState extends State<_ExplorerItem> {
     final radius = BorderRadius.circular(widget.details ? 4 : 10);
     return Semantics(
       selected: widget.selected,
+      label: widget.semanticLabel,
+      excludeSemantics: widget.semanticLabel != null,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hover = true),
         onExit: (_) => setState(() => _hover = false),

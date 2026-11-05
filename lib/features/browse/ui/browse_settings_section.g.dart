@@ -46,20 +46,20 @@ final class BrowseShowSizesProvider
 
 String _$browseShowSizesHash() => r'dfe9fe21d5ef99a09e34ce6ff78a256b70cec39d';
 
-/// Big files (`FileGridTile.bigFileBytes`, 100 MB+) get a colored size
-/// label.
+/// Big files (at least `AppSettings.storageBigFileThresholdBytes`, the one
+/// threshold Storage → Big files uses too) get a colored size label.
 
 @ProviderFor(browseHighlightBig)
 final browseHighlightBigProvider = BrowseHighlightBigProvider._();
 
-/// Big files (`FileGridTile.bigFileBytes`, 100 MB+) get a colored size
-/// label.
+/// Big files (at least `AppSettings.storageBigFileThresholdBytes`, the one
+/// threshold Storage → Big files uses too) get a colored size label.
 
 final class BrowseHighlightBigProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
     with $FutureModifier<bool>, $StreamProvider<bool> {
-  /// Big files (`FileGridTile.bigFileBytes`, 100 MB+) get a colored size
-  /// label.
+  /// Big files (at least `AppSettings.storageBigFileThresholdBytes`, the one
+  /// threshold Storage → Big files uses too) get a colored size label.
   BrowseHighlightBigProvider._()
     : super(
         from: null,

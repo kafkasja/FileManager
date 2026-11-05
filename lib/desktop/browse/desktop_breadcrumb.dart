@@ -25,7 +25,7 @@ class DesktopBreadcrumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final parts = <(String?, String)>[(null, l10n.desktopSidebarPlaces)];
+    final parts = <(String?, String)>[(null, l10n.desktopHome)];
     final f = folder;
     if (f != null) {
       final abs = f.startsWith('/');

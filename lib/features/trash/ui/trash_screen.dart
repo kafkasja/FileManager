@@ -302,10 +302,10 @@ class _SelectionBar extends ConsumerWidget {
     return SafeArea(
       child: Padding(
         padding: EdgeInsetsDirectional.all(context.tokens.spacing),
-        // L4: Restore / Delete forever swap sides for left-handed use.
+        // L4/E2: Restore (the main button) sits at the thumb.
         child: Row(
           textDirection: TextDirection.ltr,
-          children: mirroredFor(handednessOf(ref), [
+          children: thumbFirst(handednessOf(ref), [
             Expanded(
               child: FilledButton.icon(
                 onPressed: busy

@@ -9,6 +9,8 @@
 #include <setupapi.h>
 #include <cfgmgr32.h>
 #include <dbt.h>
+#include <shellapi.h>
+#include <commoncontrols.h>
 // clang-format on
 #include <knownfolders.h>
 #include <netlistmgr.h>
@@ -702,6 +704,48 @@ EncodableValue DeleteFromBin(const std::vector<std::wstring>& trash_ids) {
   return EncodableValue();
 }
 
+// PNG bytes of [source] converted to [format] (E3: shared by Thumbnail and
+// FileIcon).
+std::vector<uint8_t> EncodePng(IWICImagingFactory* wic,
+                               IWICBitmapSource* source,
+                               WICPixelFormatGUID format) {
+  std::vector<uint8_t> bytes;
+  ComPtr<IWICFormatConverter> converter;
+  Check(wic->CreateFormatConverter(&converter), "converter");
+  Check(converter->Initialize(source, format, WICBitmapDitherTypeNone,
+                              nullptr, 0.0, WICBitmapPaletteTypeCustom),
+        "convert");
+  ComPtr<IStream> stream;
+  Check(::CreateStreamOnHGlobal(nullptr, TRUE, &stream), "stream");
+  ComPtr<IWICBitmapEncoder> encoder;
+  Check(wic->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder),
+        "PNG encoder");
+  Check(encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache),
+        "encoder init");
+  ComPtr<IWICBitmapFrameEncode> frame;
+  Check(encoder->CreateNewFrame(&frame, nullptr), "frame");
+  Check(frame->Initialize(nullptr), "frame init");
+  UINT fw = 0, fh = 0;
+  Check(converter->GetSize(&fw, &fh), "size");
+  Check(frame->SetSize(fw, fh), "frame size");
+  WICPixelFormatGUID frame_format = format;
+  Check(frame->SetPixelFormat(&frame_format), "pixel format");
+  Check(frame->WriteSource(converter.Get(), nullptr), "write");
+  Check(frame->Commit(), "frame commit");
+  Check(encoder->Commit(), "encoder commit");
+  HGLOBAL global = nullptr;
+  Check(::GetHGlobalFromStream(stream.Get(), &global), "HGLOBAL");
+  STATSTG stat = {};
+  Check(stream->Stat(&stat, STATFLAG_NONAME), "stat");
+  const void* data = ::GlobalLock(global);
+  if (data) {
+    const uint8_t* b = static_cast<const uint8_t*>(data);
+    bytes.assign(b, b + static_cast<size_t>(stat.cbSize.QuadPart));
+    ::GlobalUnlock(global);
+  }
+  return bytes;
+}
+
 // PNG of the Shell's thumbnail, longest side <= size; empty when Windows has
 // none.
 EncodableValue Thumbnail(const std::wstring& path, int size) {
@@ -759,39 +803,7 @@ EncodableValue Thumbnail(const std::wstring& path, int size) {
     WICPixelFormatGUID format = alpha == WICBitmapIgnoreAlpha
                                     ? GUID_WICPixelFormat24bppBGR
                                     : GUID_WICPixelFormat32bppBGRA;
-    ComPtr<IWICFormatConverter> converter;
-    Check(wic->CreateFormatConverter(&converter), "converter");
-    Check(converter->Initialize(source.Get(), format, WICBitmapDitherTypeNone,
-                                nullptr, 0.0, WICBitmapPaletteTypeCustom),
-          "convert");
-    ComPtr<IStream> stream;
-    Check(::CreateStreamOnHGlobal(nullptr, TRUE, &stream), "stream");
-    ComPtr<IWICBitmapEncoder> encoder;
-    Check(wic->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder),
-          "PNG encoder");
-    Check(encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache),
-          "encoder init");
-    ComPtr<IWICBitmapFrameEncode> frame;
-    Check(encoder->CreateNewFrame(&frame, nullptr), "frame");
-    Check(frame->Initialize(nullptr), "frame init");
-    UINT fw = 0, fh = 0;
-    Check(converter->GetSize(&fw, &fh), "size");
-    Check(frame->SetSize(fw, fh), "frame size");
-    WICPixelFormatGUID frame_format = format;
-    Check(frame->SetPixelFormat(&frame_format), "pixel format");
-    Check(frame->WriteSource(converter.Get(), nullptr), "write");
-    Check(frame->Commit(), "frame commit");
-    Check(encoder->Commit(), "encoder commit");
-    HGLOBAL global = nullptr;
-    Check(::GetHGlobalFromStream(stream.Get(), &global), "HGLOBAL");
-    STATSTG stat = {};
-    Check(stream->Stat(&stat, STATFLAG_NONAME), "stat");
-    const void* data = ::GlobalLock(global);
-    if (data) {
-      const uint8_t* b = static_cast<const uint8_t*>(data);
-      bytes.assign(b, b + static_cast<size_t>(stat.cbSize.QuadPart));
-      ::GlobalUnlock(global);
-    }
+    bytes = EncodePng(wic.Get(), source.Get(), format);
   } catch (...) {
     ::DeleteObject(bitmap);
     throw;
@@ -799,6 +811,103 @@ EncodableValue Thumbnail(const std::wstring& path, int size) {
   ::DeleteObject(bitmap);
   if (bytes.empty()) return EncodableValue();
   return EncodableValue(std::move(bytes));
+}
+
+// ---- E3: shell icons, type names, reveal ----
+
+// `path` wins when given (per-path icons: .exe/.lnk, drives, known
+// folders); else by extension or a generic folder, without touching the
+// disk (SHGFI_USEFILEATTRIBUTES).
+EncodableValue FileIcon(const std::wstring& path, const std::wstring& ext,
+                        const std::wstring& kind, int size) {
+  UINT flags = SHGFI_SYSICONINDEX;
+  DWORD attrs = FILE_ATTRIBUTE_NORMAL;
+  std::wstring target;
+  if (!path.empty()) {
+    target = path;
+    if (target.size() == 2 && target[1] == L':') target += L'\\';
+  } else if (kind == L"folder") {
+    target = L"folder";
+    attrs = FILE_ATTRIBUTE_DIRECTORY;
+    flags |= SHGFI_USEFILEATTRIBUTES;
+  } else {
+    target = L"file" + ext;
+    flags |= SHGFI_USEFILEATTRIBUTES;
+  }
+  SHFILEINFOW info = {};
+  // With SHGFI_SYSICONINDEX the return value is the system image list (not
+  // to be freed); 0 = failed.
+  if (::SHGetFileInfoW(target.c_str(), attrs, &info, sizeof(info), flags) ==
+      0) {
+    return EncodableValue();
+  }
+  int list = size <= 16   ? SHIL_SMALL
+             : size <= 32 ? SHIL_LARGE
+             : size <= 96 ? SHIL_EXTRALARGE
+                          : SHIL_JUMBO;
+  ComPtr<IImageList> images;
+  if (FAILED(::SHGetImageList(list, IID_PPV_ARGS(&images)))) {
+    return EncodableValue();
+  }
+  HICON icon = nullptr;
+  if (FAILED(images->GetIcon(info.iIcon, ILD_TRANSPARENT, &icon)) || !icon) {
+    return EncodableValue();
+  }
+  std::vector<uint8_t> bytes;
+  try {
+    ComPtr<IWICImagingFactory> wic;
+    Check(::CoCreateInstance(CLSID_WICImagingFactory, nullptr,
+                             CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wic)),
+          "WIC");
+    ComPtr<IWICBitmap> bitmap;
+    Check(wic->CreateBitmapFromHICON(icon, &bitmap), "CreateBitmapFromHICON");
+    bytes = EncodePng(wic.Get(), bitmap.Get(), GUID_WICPixelFormat32bppBGRA);
+  } catch (...) {
+    ::DestroyIcon(icon);
+    throw;
+  }
+  ::DestroyIcon(icon);
+  if (bytes.empty()) return EncodableValue();
+  return EncodableValue(std::move(bytes));
+}
+
+// `{".jpg": "JPEG image"}`; the key "folder" gives the folder type name.
+EncodableValue FileTypeNames(const std::vector<std::wstring>& exts) {
+  EncodableMap out;
+  for (const auto& ext : exts) {
+    bool folder = ext == L"folder";
+    std::wstring target = folder ? std::wstring(L"folder") : L"file" + ext;
+    SHFILEINFOW info = {};
+    if (::SHGetFileInfoW(target.c_str(),
+                         folder ? FILE_ATTRIBUTE_DIRECTORY
+                                : FILE_ATTRIBUTE_NORMAL,
+                         &info, sizeof(info),
+                         SHGFI_TYPENAME | SHGFI_USEFILEATTRIBUTES) != 0 &&
+        info.szTypeName[0] != L'\0') {
+      out[EncodableValue(Utf8(ext))] = EncodableValue(Utf8(info.szTypeName));
+    }
+  }
+  return EncodableValue(std::move(out));
+}
+
+// Opens Explorer on the item's folder with the item selected. `{ok}`; a
+// missing path is `{ok: false, error: notFound}` (not thrown).
+EncodableValue RevealInExplorer(const std::wstring& path) {
+  EncodableMap out;
+  PIDLIST_ABSOLUTE pidl = ::ILCreateFromPathW(path.c_str());
+  if (!pidl) {
+    out[EncodableValue("ok")] = EncodableValue(false);
+    out[EncodableValue("error")] = EncodableValue("notFound");
+    return EncodableValue(std::move(out));
+  }
+  HRESULT hr = ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+  ::ILFree(pidl);
+  out[EncodableValue("ok")] = EncodableValue(SUCCEEDED(hr));
+  if (FAILED(hr)) {
+    out[EncodableValue("error")] = EncodableValue("failed");
+    out[EncodableValue("message")] = EncodableValue(HrMessage(hr));
+  }
+  return EncodableValue(std::move(out));
 }
 
 EncodableValue NetworkIsPublic() {
@@ -855,24 +964,6 @@ EncodableValue OpenFile(HWND window, const std::wstring& path) {
   if (::ShellExecuteExW(&info)) return OpenResult("opened", "");
   DWORD error = ::GetLastError();
   return OpenResult(OpenErrorFor(error), HrMessage(HRESULT_FROM_WIN32(error)));
-}
-
-// E1/E3 "Show in folder": Explorer at the file's folder with the file
-// selected. COM is set up here when the worker thread has none yet.
-EncodableValue RevealInExplorer(const std::wstring& path) {
-  HRESULT co = ::CoInitializeEx(
-      nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-  HRESULT hr = E_FAIL;
-  PIDLIST_ABSOLUTE pidl = ::ILCreateFromPathW(path.c_str());
-  if (pidl) {
-    hr = ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
-    ::ILFree(pidl);
-  } else {
-    hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-  }
-  if (SUCCEEDED(co)) ::CoUninitialize();
-  if (SUCCEEDED(hr)) return OpenResult("opened", "");
-  return OpenResult("failed", HrMessage(hr));
 }
 
 // Windows' "Open with" chooser (`SHOpenWithDialog`, launches the pick).
@@ -1268,6 +1359,7 @@ WindowsChannel::WindowsChannel(flutter::BinaryMessenger* messenger, HWND window)
     : window_(window),
       ops_(std::make_unique<WorkerPool>(1)),
       quick_(std::make_unique<WorkerPool>(4)),
+      icons_(std::make_unique<WorkerPool>(2)),
       alive_(std::make_shared<bool>(true)) {
   channel_ = std::make_unique<flutter::MethodChannel<EncodableValue>>(
       messenger, "com.kaf.kfm/windows",
@@ -1360,9 +1452,6 @@ void WindowsChannel::HandleCall(
     auto path = StringArg(args, "path");
     HWND window = window_;
     Run(*quick_, result, [window, path] { return OpenFile(window, path); });
-  } else if (method == "revealInExplorer") {
-    auto path = StringArg(args, "path");
-    Run(*quick_, result, [path] { return RevealInExplorer(path); });
   } else if (method == "openWith") {
     auto path = StringArg(args, "path");
     HWND window = window_;
@@ -1372,6 +1461,25 @@ void WindowsChannel::HandleCall(
     SetTaskbarProgress(window_, StringArg(args, "state"),
                        static_cast<int>(IntArg(args, "value", 0)));
     result->Success(EncodableValue());
+  } else if (method == "fileIcon") {
+    auto path = StringArg(args, "path");
+    auto ext = StringArg(args, "ext");
+    auto kind = StringArg(args, "kind");
+    int size = static_cast<int>(IntArg(args, "size", 16));
+    Run(*icons_, result,
+        [path, ext, kind, size] { return FileIcon(path, ext, kind, size); });
+  } else if (method == "fileTypeNames") {
+    auto exts = StringList(args, "exts");
+    Run(*icons_, result, [exts] { return FileTypeNames(exts); });
+  } else if (method == "revealInExplorer") {
+    auto path = StringArg(args, "path");
+    Run(*quick_, result, [path] { return RevealInExplorer(path); });
+  } else if (method == "showProperties") {
+    // Modeless property sheet: needs this (window) thread's message loop.
+    auto path = StringArg(args, "path");
+    BOOL ok = ::SHObjectProperties(window_, SHOP_FILEPATH, path.c_str(),
+                                   nullptr);
+    result->Success(EncodableValue(ok != FALSE));
   } else if (method == "ejectDrive") {
     auto path = StringArg(args, "path");
     Run(*quick_, result, [path] { return EjectDrive(path); });

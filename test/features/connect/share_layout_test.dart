@@ -95,11 +95,14 @@ void main() {
     testWidgets('the desktop Devices share pane fits ${size.width.toInt()}×'
         '${size.height.toInt()}', (tester) async {
       await pumpDesktopApp(tester, overrides: shareTestOverrides().overrides);
-      tester.view.physicalSize = size;
-      await tester.pump();
       await tester.tap(find.byKey(const ValueKey('desktop-nav-devices')));
       await tester.pump(const Duration(seconds: 1));
-      await tester.tap(find.byKey(const ValueKey('devices-share')));
+      tester.view.physicalSize = size;
+      await tester.pump();
+      final share = find.byKey(const ValueKey('devices-share'));
+      await tester.ensureVisible(share);
+      await tester.pump();
+      await tester.tap(share);
       await tester.pump(const Duration(seconds: 1));
       await tester.pump();
       expectFits(tester, size);

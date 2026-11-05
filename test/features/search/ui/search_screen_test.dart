@@ -78,7 +78,9 @@ Future<void> _type(WidgetTester tester, String text) async {
 Finder _file(String name) => find.byWidgetPredicate(
   (w) =>
       (w is Text && (w.data == name || w.textSpan?.toPlainText() == name)) ||
-      (w is Semantics && w.properties.label == name),
+      (w is Semantics &&
+          w.properties.button == true &&
+          (w.properties.label?.startsWith('$name, ') ?? false)),
 );
 
 /// Lets the "record this search" timer run out.

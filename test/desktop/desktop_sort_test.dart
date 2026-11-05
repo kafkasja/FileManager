@@ -42,10 +42,10 @@ Future<void> _withKey(
   await tester.pumpAndSettle();
 }
 
-/// The "→ Trash · 3 files" note goes after 3 s.
+/// The "→ Trash · 3 files" note (status bar) goes after 4 s.
 Future<void> _flashGone(WidgetTester tester) async {
-  await tester.pump(const Duration(seconds: 4));
-  expect(find.byKey(const ValueKey('sort-flash')), findsNothing);
+  await tester.pump(const Duration(seconds: 5));
+  expect(find.byKey(const ValueKey('desktop-status-message')), findsNothing);
 }
 
 void main() {

@@ -99,7 +99,7 @@ void main() {
     expect(find.text('Moved 1 folder (2 files)'), findsOneWidget);
     expect(_rows(tester), contains('Trip'));
 
-    await tester.tap(find.byKey(const ValueKey('browse-undo')));
+    await tester.tap(find.byKey(const ValueKey('cmd-undo')));
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(

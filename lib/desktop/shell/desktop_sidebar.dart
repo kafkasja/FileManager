@@ -1,178 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:kfm/app/l10n_ext.dart';
-import 'package:kfm/app/router.dart';
-import 'package:kfm/desktop/shell/desktop_drives.dart';
-import 'package:kfm/desktop/shell/desktop_drops.dart';
-import 'package:kfm/desktop/shell/desktop_layout.dart';
-import 'package:kfm/desktop/shell/desktop_navigation.dart';
-import 'package:kfm/desktop/shell/desktop_shell_state.dart';
-import 'package:kfm/desktop/widgets/desktop_drag.dart';
-import 'package:kfm/desktop/widgets/desktop_keys.dart';
 import 'package:kfm/desktop/widgets/desktop_metrics.dart';
-import 'package:kfm/features/tags/data/tag_providers.dart';
 
-/// Left sidebar (TASK-PL3 PL3-2 a): the sections, then Places and
-/// Collections. Collapses to icons.
-class DesktopSidebar extends ConsumerWidget {
-  const new({
-    required this.current,
-    required this.onSelect,
-    this.forceCollapsed = false,
-    super.key,
-  });
-
-  final DesktopSection current;
-  final ValueChanged<DesktopSection> onSelect;
-
-  /// Icons only whatever the user chose: a narrow window with the details
-  /// pane open (the toggle is disabled then).
-  final bool forceCollapsed;
-
-  static const double width = DesktopLayout.sidebarWidth;
-  static const double collapsedWidth = DesktopLayout.sidebarCollapsedWidth;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final collapsed =
-        forceCollapsed || ref.watch(desktopSidebarCollapsedProvider);
-    final places = ref.watch(desktopPlacesProvider).value ?? const [];
-    final tags = (ref.watch(tagsByIdProvider).value?.values.toList() ?? [])
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    final colors = Theme.of(context).colorScheme;
-    final sections = [
-      (DesktopSection.sort, Icons.swipe_outlined, Icons.swipe),
-      (DesktopSection.browse, Icons.folder_outlined, Icons.folder),
-      (DesktopSection.trash, Icons.delete_outline, Icons.delete),
-      (DesktopSection.devices, Icons.devices_outlined, Icons.devices),
-      (DesktopSection.settings, Icons.settings_outlined, Icons.settings),
-    ];
-    final target = collapsed ? collapsedWidth : width;
-    return AnimatedContainer(
-      // Forced (details pane in a narrow window): at once, so the content
-      // never sees the old width next to the pane.
-      duration: forceCollapsed
-          ? Duration.zero
-          : const Duration(milliseconds: 120),
-      width: target,
-      color: colors.surfaceContainerLow,
-      // The items are laid out at the final width while the bar grows, so
-      // labels are revealed instead of squeezed (they overflowed by 8 px
-      // for a frame on every expand).
-      child: ClipRect(
-        child: OverflowBox(
-          alignment: AlignmentDirectional.topStart,
-          minWidth: target,
-          maxWidth: target,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(10, 8, 10, 4),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: IconButton(
-                    key: const ValueKey('desktop-sidebar-toggle'),
-                    tooltip: collapsed
-                        ? l10n.desktopSidebarExpand
-                        : l10n.desktopSidebarCollapse,
-                    icon: const Icon(Icons.menu),
-                    onPressed: forceCollapsed
-                        ? null
-                        : () => ref
-                              .read(desktopSidebarCollapsedProvider.notifier)
-                              .toggle(),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  children: [
-                    for (final (s, icon, selectedIcon) in sections)
-                      _droppable(
-                        switch (s) {
-                          DesktopSection.trash => trashDropOffer(context, ref),
-                          DesktopSection.devices => devicesDropOffer(
-                            context,
-                            ref,
-                          ),
-                          _ => null,
-                        },
-                        SidebarItem(
-                          key: ValueKey('desktop-nav-${s.name}'),
-                          icon: s == current ? selectedIcon : icon,
-                          label: desktopSectionLabel(l10n, s),
-                          selected: s == current,
-                          collapsed: collapsed,
-                          onTap: () => onSelect(s),
-                        ),
-                      ),
-                    if (!collapsed) _Header(l10n.desktopSidebarPlaces),
-                    if (collapsed) const Divider(),
-                    for (final p in places)
-                      _droppable(
-                        p.available
-                            ? folderDropOffer(context, ref, p.path)
-                            : null,
-                        SidebarItem(
-                          key: ValueKey('desktop-place-${p.path}'),
-                          icon: placeIcon(p.name),
-                          label: p.name,
-                          tooltip: p.path,
-                          collapsed: collapsed,
-                          enabled: p.available,
-                          onTap: () => openDesktopFolder(context, ref, p.path),
-                        ),
-                      ),
-                    if (places.isEmpty && !collapsed)
-                      _Hint(l10n.desktopNoPlaces),
-                    // PL1: drives (system, other disks, USB sticks with Eject).
-                    DesktopDriveItems(collapsed: collapsed),
-                    if (!collapsed) _Header(l10n.desktopSidebarCollections),
-                    if (collapsed) const Divider(),
-                    _droppable(
-                      favoriteDropOffer(context, ref),
-                      SidebarItem(
-                        key: const ValueKey('desktop-favorites'),
-                        icon: Icons.star_outline,
-                        label: l10n.desktopFavorites,
-                        collapsed: collapsed,
-                        onTap: () => context.go(AppRoutes.collectionFavorites),
-                      ),
-                    ),
-                    for (final t in tags)
-                      _droppable(
-                        tagDropOffer(context, ref, t.id, t.name),
-                        SidebarItem(
-                          key: ValueKey('desktop-tag-${t.id}'),
-                          icon: Icons.label_outline,
-                          iconColor: Color(t.color),
-                          label: t.name,
-                          collapsed: collapsed,
-                          onTap: () =>
-                              context.go(AppRoutes.collectionTagFor(t.id)),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// [child] as a drop target (TASK-PL3 step 4) when [offer] is set.
-Widget _droppable(DropOfferBuilder? offer, Widget child) =>
-    offer == null ? child : DesktopDropTarget(offer: offer, child: child);
+// E3: the PL3 sidebar became `DesktopNavPane` (desktop_nav_pane.dart);
+// its row widget and place icons stay here.
 
 IconData placeIcon(String name) => switch (name.toLowerCase()) {
   'pictures' || 'afbeeldingen' || 'resimler' => Icons.photo_library_outlined,
@@ -182,38 +12,6 @@ IconData placeIcon(String name) => switch (name.toLowerCase()) {
   final n when n.length == 2 && n.endsWith(':') => Icons.storage_outlined,
   _ => Icons.folder_outlined,
 };
-
-class _Header extends StatelessWidget {
-  const new(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.fromSTEB(12, 16, 12, 4),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.labelMedium
-          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-    ),
-  );
-}
-
-class _Hint extends StatelessWidget {
-  const new(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.symmetric(horizontal: 12, vertical: 4),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.bodySmall
-          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-    ),
-  );
-}
 
 /// One row of the sidebar: hover highlight, a rounded accent pill when
 /// selected, a tooltip when collapsed.
@@ -228,6 +26,7 @@ class SidebarItem extends StatefulWidget {
     this.tooltip,
     this.iconColor,
     this.trailing,
+    this.leading,
     super.key,
   });
 
@@ -242,6 +41,9 @@ class SidebarItem extends StatefulWidget {
 
   /// A small button after the label (PL1: Eject); hidden when collapsed.
   final Widget? trailing;
+
+  /// E3: drawn instead of [icon] (a shell icon).
+  final Widget? leading;
 
   @override
   State<SidebarItem> createState() => _SidebarItemState();
@@ -285,11 +87,12 @@ class _SidebarItemState extends State<SidebarItem> {
             ),
             child: Row(
               children: [
-                Icon(
-                  widget.icon,
-                  size: 20,
-                  color: widget.enabled ? (widget.iconColor ?? fg) : fg,
-                ),
+                widget.leading ??
+                    Icon(
+                      widget.icon,
+                      size: 20,
+                      color: widget.enabled ? (widget.iconColor ?? fg) : fg,
+                    ),
                 if (!widget.collapsed) ...[
                   const SizedBox(width: 12),
                   Expanded(
