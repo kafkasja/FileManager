@@ -41,7 +41,7 @@ final class ConnectControllerProvider
   }
 }
 
-String _$connectControllerHash() => r'16752e25798e8dc4d7bac2ab1a5a04692df4aa35';
+String _$connectControllerHash() => r'b798b40c2d21f7c0a2aaff1488de7c674c256901';
 
 abstract class _$ConnectController extends $Notifier<ConnectState> {
   ConnectState build();
