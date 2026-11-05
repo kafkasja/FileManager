@@ -120,17 +120,22 @@ class FileActionsMenuButton extends ConsumerWidget {
     return IconButton(
       tooltip: context.l10n.fileMenuTooltip,
       padding: EdgeInsets.zero,
+      // On a thumbnail: no dark disc (it crowded the tile), just a white
+      // icon with a shadow; the tap area stays 48 dp.
       style: overlay
           ? IconButton.styleFrom(
-              backgroundColor: Colors.black54,
               foregroundColor: Colors.white,
-              minimumSize: const Size.square(32),
-              maximumSize: const Size.square(32),
+              minimumSize: const Size.square(48),
               padding: EdgeInsets.zero,
             )
           : null,
-      iconSize: overlay ? 18 : null,
-      icon: const Icon(Icons.more_vert),
+      iconSize: overlay ? 22 : null,
+      icon: Icon(
+        Icons.more_vert,
+        shadows: overlay
+            ? const [Shadow(blurRadius: 6), Shadow(blurRadius: 2)]
+            : null,
+      ),
       onPressed: () => unawaited(_open(context, ref, items)),
     );
   }

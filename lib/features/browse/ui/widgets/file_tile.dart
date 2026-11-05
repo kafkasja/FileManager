@@ -110,8 +110,8 @@ class FileGridTile extends StatelessWidget {
                   ),
                 if (file.kind == FileKind.video)
                   PositionedDirectional(
-                    // Next to the ⋮ when there is one.
-                    end: menu == null ? spacing / 2 : spacing / 2 + 36,
+                    // The ⋮ sits top-end on media tiles, so this corner is free.
+                    end: spacing / 2,
                     bottom: spacing / 2,
                     child: const Icon(
                       Icons.play_circle_outline,
@@ -161,8 +161,8 @@ class FileGridTile extends StatelessWidget {
             ),
           ),
         ),
-        // X4: top-start is free on media tiles (size bottom-start, ⋮ and
-        // video bottom-end); non-media tiles show their size label there.
+        // X4: top-start is free on media tiles (size bottom-start, video
+        // bottom-end, ⋮ top-end); non-media tiles show their size label there.
         if (showCloud)
           PositionedDirectional(
             start: spacing / 2,
@@ -171,7 +171,12 @@ class FileGridTile extends StatelessWidget {
                 : spacing / 2,
             child: CloudBadgeIcon(file: file),
           ),
-        if (menu case final menu?)
+        // Media tiles: ⋮ top-end, away from the size label and the play
+        // icon (bottom row). Non-media tiles keep it bottom-end because the
+        // type badge uses top-end.
+        if (menu case final menu? when file.isMedia)
+          PositionedDirectional(end: 0, top: 0, child: menu)
+        else if (menu case final menu?)
           PositionedDirectional(end: 2, bottom: 2, child: menu),
       ],
     );
