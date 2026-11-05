@@ -265,6 +265,14 @@ class WindowsChannelException implements Exception {
 /// - `ejectDrive {path}` → `{ok, error?}`: `CM_Request_Device_EjectW` on the
 ///   disk's parent device; `error` ∈ `inUse`, `notEjectable`, `failed`.
 ///
+/// - `fileIcon {path?, ext?, kind: file|folder|drive, size}` → PNG or null
+///   (E3: `SHGetFileInfoW(SHGFI_SYSICONINDEX)` + `SHGetImageList`, runs on
+///   its own 2-thread pool).
+/// - `fileTypeNames {exts}` → `{ext: name}` (`SHGFI_TYPENAME`).
+/// - `revealInExplorer {path}` → `{ok, error?: notFound|failed, message?}`
+///   (`SHOpenFolderAndSelectItems`).
+/// - `showProperties {path}` → bool (`SHObjectProperties`, platform thread).
+///
 /// Calls from the native side (`events`): `volumesChanged` (a volume
 /// arrived / was removed) and `power {state: suspend|resume}`.
 /// X8: `ITaskbarList3::SetProgressState` states.
@@ -427,6 +435,62 @@ class WindowsChannel {
         WindowsDrive.fromRow(r),
     ];
   }
+
+  /// E3: PNG of the Windows shell icon, [px] physical pixels (16/32/48/256
+  /// pick the shell image list). [path] gives a per-path icon (`.exe`,
+  /// `.lnk`, drives `C:`, known folders); else [ext] (`.pdf`) or a generic
+  /// folder (`folder: true`), looked up without touching the disk. Null
+  /// when Windows has none.
+  Future<Uint8List?> fileIcon({
+    required int px,
+    String? path,
+    String? ext,
+    bool folder = false,
+    bool drive = false,
+  }) => _call<Uint8List>('fileIcon', {
+    if (path != null) 'path': toNative(path),
+    'ext': ?ext,
+    'kind': drive
+        ? 'drive'
+        : folder
+        ? 'folder'
+        : 'file',
+    'size': px,
+  });
+
+  /// E3: Explorer's type names (`{'.jpg': 'JPEG image'}`); the key
+  /// `folder` gives the folder type name. Missing keys = Windows knows none.
+  Future<Map<String, String>> fileTypeNames(List<String> exts) async {
+    final raw =
+        await _call<Map<Object?, Object?>>('fileTypeNames', {'exts': exts}) ??
+        const {};
+    return {
+      for (final e in raw.entries)
+        if (e.key case final String k)
+          if (e.value case final String v) k: v,
+    };
+  }
+
+  /// E3/E1: opens Windows Explorer on [path]'s folder with it selected
+  /// (`SHOpenFolderAndSelectItems`). Throws [WindowsChannelException]
+  /// (`NOT_FOUND` / `REVEAL`) when it couldn't.
+  Future<void> revealInExplorer(String path) async {
+    final raw =
+        await _call<Map<Object?, Object?>>('revealInExplorer', {
+          'path': toNative(path),
+        }) ??
+        const {};
+    if (raw['ok'] == true) return;
+    throw WindowsChannelException(
+      raw['error'] == 'notFound' ? 'NOT_FOUND' : 'REVEAL',
+      raw['message'] as String? ?? path,
+    );
+  }
+
+  /// E3: Windows' own Properties sheet for [path] (`SHObjectProperties`,
+  /// modeless). False when Windows couldn't show it.
+  Future<bool> showProperties(String path) async =>
+      await _call<bool>('showProperties', {'path': toNative(path)}) ?? false;
 
   /// Null when Windows ejected the drive.
   Future<DriveEjectError?> ejectDrive(String path) async {
