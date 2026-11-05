@@ -100,10 +100,24 @@ Future<bool> desktopFolderIndexed(Ref ref, String folder) async {
   if (!isWindowsHost) return true;
   final roots = await ref.watch(windowsIndexRootStatusProvider.future);
   final lower = folder.toLowerCase();
-  return roots.any((r) {
-    final root = r.path.replaceAll(r'\', '/').toLowerCase();
-    return lower == root || lower.startsWith('$root/');
-  });
+  String? root;
+  for (final r in roots) {
+    final p = r.path.replaceAll(r'\', '/');
+    final l = p.toLowerCase();
+    if (lower == l || lower.startsWith('$l/')) root = p;
+  }
+  if (root == null) return false;
+  // The walker skips hidden and excluded folders (AppData, .git…), also
+  // under "Look everywhere" roots: those still list from disk.
+  for (var p = folder; p.length > root.length;) {
+    final name = p.substring(p.lastIndexOf('/') + 1);
+    if (name.startsWith('.') || isExcludedFolderPath(p)) return false;
+    if (hasHiddenAttribute(p)) return false;
+    final slash = p.lastIndexOf('/');
+    if (slash <= 0) break;
+    p = p.substring(0, slash);
+  }
+  return true;
 }
 
 /// [folder]'s files from disk when the index doesn't cover it; empty

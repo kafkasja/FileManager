@@ -15,6 +15,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
+import 'package:kfm/desktop/browse/desktop_disk_files.dart';
+import 'package:kfm/desktop/browse/disk_folders.dart';
 import 'package:kfm/desktop/shell/desktop_location.dart';
 import 'package:kfm/desktop/tabs/desktop_tabs_controller.dart';
 
@@ -57,7 +59,12 @@ void main() {
     Directory('${demo.path}/Work').createSync();
     final folder = demo.path.replaceAll(r'\', '/');
 
-    final app = await pumpDesktopApp(tester, files: desktopLibrary(12));
+    final app = await pumpDesktopApp(
+      tester,
+      files: desktopLibrary(12),
+      diskFiles: listDiskFiles,
+      diskFolders: listDiskFolders,
+    );
     // The first-run icon question.
     await tester.pumpAndSettle();
     await _shot(tester, '0-first-run');
