@@ -10,7 +10,6 @@ import 'package:kfm/core/index/index_providers.dart';
 import 'package:kfm/core/index/media_indexer.dart';
 import 'package:kfm/desktop/shell/desktop_command_bar.dart';
 import 'package:kfm/desktop/shell/desktop_drops.dart';
-import 'package:kfm/desktop/shell/desktop_layout.dart';
 import 'package:kfm/desktop/shell/desktop_shell_state.dart';
 import 'package:kfm/desktop/shell/desktop_status_bar.dart';
 import 'package:kfm/desktop/sort/sort_actions.dart';
@@ -254,17 +253,70 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
     ]);
   }
 
-  void _publishCommands(SwipeDeckState deck) {
+  void _publishCommands(
+    SwipeDeckState deck,
+    List<SortActionEntry> entries,
+    int undoable,
+  ) {
     final l10n = context.l10n;
     final files = _selectedFiles(deck);
     final focus = files.length == 1
         ? files.single
         : deck.upcoming.where((f) => f.id == _sel.focus).firstOrNull;
+    final hasSelection = !_sel.isEmpty || _sel.focus != null;
+    final tags = ref.read(tagsByIdProvider).value ?? const {};
+    final mode = deck.session.deleteMode;
     final commands = [
+      ...sortSetupCommands(context, ref, deck),
+      // The actions take the selection, or Sort files dragged onto them.
+      for (final (i, e) in entries.indexed)
+        DesktopCommand(
+          id: 'sort-action-${e.action.type.name}-$i',
+          key: ValueKey('sort-action-${e.action.type.name}'),
+          label: swipeActionShortLabel(
+            l10n,
+            e.action,
+            deleteMode: mode,
+            tags: tags,
+          ),
+          icon:
+              e.action.type == SwipeActionType.trash &&
+                  mode == DeleteMode.permanent
+              ? Icons.delete_forever_outlined
+              : swipeActionIcon(e.action.type),
+          color: sortActionColor(context, e.action),
+          shortcut: DesktopKeys.label(e.key),
+          keepLabel: true,
+          divider: i == 0,
+          onPressed: hasSelection ? () => _apply(e, deck) : null,
+          dropOffer: (data, {required copy}) => data.origin != DragOrigin.sort
+              ? null
+              : DropOffer(
+                  label: swipeActionName(l10n, e.action, mode, tags: tags),
+                  onDrop: () async => _applyFiles(e, deck, data.files),
+                ),
+        ),
+      DesktopCommand(
+        id: 'sort-favorite',
+        key: const ValueKey('sort-favorite'),
+        label: l10n.desktopSortFavorite,
+        icon: Icons.star_outline,
+        shortcut: DesktopKeys.label(DesktopKeys.favorite),
+        onPressed: hasSelection ? () => _favorite(deck) : null,
+      ),
+      DesktopCommand(
+        id: 'sort-tag',
+        key: const ValueKey('sort-tag'),
+        label: l10n.desktopSortTag,
+        icon: Icons.label_outline,
+        shortcut: DesktopKeys.label(DesktopKeys.tag),
+        onPressed: hasSelection ? () => unawaited(_tag(deck)) : null,
+      ),
       DesktopCommand(
         id: 'sort-open-location',
         label: l10n.desktopOpenFileLocation,
         icon: Icons.folder_open_outlined,
+        divider: true,
         onPressed: focus == null ? null : () => openFileLocation(ref, focus),
       ),
       DesktopCommand(
@@ -280,6 +332,36 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
                 ]),
               ),
       ),
+      // Always there (round 7: older users don't know Ctrl+Z).
+      DesktopCommand(
+        id: 'sort-undo',
+        key: const ValueKey('sort-undo'),
+        label: l10n.undo,
+        icon: _undoing ? Icons.hourglass_empty : Icons.undo,
+        shortcut: DesktopKeys.label(DesktopKeys.undo),
+        keepLabel: true,
+        divider: true,
+        onPressed: undoable > 0 && !_undoing
+            ? () => unawaited(_undoSteps(1))
+            : null,
+      ),
+      DesktopCommand(
+        id: 'sort-history',
+        key: const ValueKey('sort-history-toggle'),
+        label: l10n.desktopSortHistory,
+        icon: Icons.history,
+        shortcut: DesktopKeys.label(DesktopKeys.history),
+        onPressed: () => setState(() => _history = !_history),
+      ),
+      if (deck.swiped > 0)
+        DesktopCommand(
+          id: 'sort-done',
+          key: const ValueKey('sort-done'),
+          label: l10n.swipeDone,
+          icon: Icons.check,
+          keepLabel: true,
+          onPressed: () => unawaited(finishSwipeSession(context, ref, deck)),
+        ),
     ];
     final layout = ref.read(desktopSortLayoutProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -456,7 +538,8 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
     final layout = ref.watch(desktopSortLayoutProvider);
     final undoable =
         ref.watch(undoableCountProvider(deck.session.id)).value ?? 0;
-    _publishCommands(deck);
+    listenPresetSwitchErrors(context, ref);
+    _publishCommands(deck, entries, undoable);
     return CallbackShortcuts(
       bindings: {
         DesktopKeys.undo: () => unawaited(_undoSteps(1)),
@@ -465,23 +548,8 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
       child: Column(
         children: [
           SwipeSourceBar(deck: deck),
-          // S6 on the desktop: presets dropdown, filter, setup dialog.
-          SortSetupBar(deck: deck),
-          _Toolbar(
-            deck: deck,
-            entries: entries,
-            hasSelection: !_sel.isEmpty || _sel.focus != null,
-            undoable: undoable,
-            undoing: _undoing,
-            history: _history,
-            onApply: (e) => _apply(e, deck),
-            onDropApply: (e, files) => _applyFiles(e, deck, files),
-            onFavorite: () => _favorite(deck),
-            onTag: () => unawaited(_tag(deck)),
-            onUndo: () => unawaited(_undoSteps(1)),
-            onHistory: () => setState(() => _history = !_history),
-            onDone: () => unawaited(finishSwipeSession(context, ref, deck)),
-          ),
+          // E3: the setup row and the action toolbar are the shell's
+          // command bar now (`_publishCommands`).
           const Divider(height: 1),
           Expanded(
             child: Row(
@@ -578,261 +646,6 @@ class _DesktopSortScreenState extends ConsumerState<DesktopSortScreen> {
   }
 }
 
-class _Toolbar extends ConsumerWidget {
-  const new({
-    required this.deck,
-    required this.entries,
-    required this.hasSelection,
-    required this.undoable,
-    required this.undoing,
-    required this.history,
-    required this.onApply,
-    required this.onDropApply,
-    required this.onFavorite,
-    required this.onTag,
-    required this.onUndo,
-    required this.onHistory,
-    required this.onDone,
-  });
-
-  final SwipeDeckState deck;
-  final List<SortActionEntry> entries;
-  final bool hasSelection;
-  final int undoable;
-  final bool undoing;
-  final bool history;
-  final ValueChanged<SortActionEntry> onApply;
-
-  /// Sort files dragged onto an action button.
-  final void Function(SortActionEntry entry, List<FileRef> files) onDropApply;
-
-  /// F / T (always offered, also when the layout has no such action).
-  final VoidCallback onFavorite;
-  final VoidCallback onTag;
-  final VoidCallback onUndo;
-  final VoidCallback onHistory;
-  final VoidCallback onDone;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final tags = ref.watch(tagsByIdProvider).value ?? const {};
-    final mode = deck.session.deleteMode;
-    // E2 §7: no thumb on desktop, so no left-handed mirroring.
-    final ordered = entries;
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: 12,
-        vertical: 8,
-      ),
-      // Narrow (800 px window with the details pane, or while the sidebar
-      // animates): Undo becomes an icon with a tooltip.
-      child: Builder(
-        builder: (context) {
-          final compact = DesktopLayout.compact(context, ref, 640);
-          return Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final e in ordered) ...[
-                        DesktopDropTarget(
-                          offer: (data, {required copy}) =>
-                              data.origin != DragOrigin.sort
-                              ? null
-                              : DropOffer(
-                                  label: swipeActionName(
-                                    l10n,
-                                    e.action,
-                                    mode,
-                                    tags: tags,
-                                  ),
-                                  onDrop: () async =>
-                                      onDropApply(e, data.files),
-                                ),
-                          child: _ActionButton(
-                            key: ValueKey('sort-action-${e.action.type.name}'),
-                            label: swipeActionShortLabel(
-                              l10n,
-                              e.action,
-                              deleteMode: mode,
-                              tags: tags,
-                            ),
-                            tooltip: shortcutHint(
-                              l10n,
-                              swipeActionName(l10n, e.action, mode, tags: tags),
-                              DesktopKeys.label(e.key),
-                            ),
-                            keyHint: DesktopKeys.label(e.key),
-                            icon:
-                                e.action.type == SwipeActionType.trash &&
-                                    mode == DeleteMode.permanent
-                                ? Icons.delete_forever_outlined
-                                : swipeActionIcon(e.action.type),
-                            color: sortActionColor(context, e.action),
-                            onPressed: hasSelection ? () => onApply(e) : null,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      _ActionButton(
-                        key: const ValueKey('sort-favorite'),
-                        label: l10n.desktopSortFavorite,
-                        tooltip: shortcutHint(
-                          l10n,
-                          l10n.desktopSortFavorite,
-                          DesktopKeys.label(DesktopKeys.favorite),
-                        ),
-                        keyHint: DesktopKeys.label(DesktopKeys.favorite),
-                        icon: Icons.star_outline,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        onPressed: hasSelection ? onFavorite : null,
-                      ),
-                      const SizedBox(width: 8),
-                      _ActionButton(
-                        key: const ValueKey('sort-tag'),
-                        label: l10n.desktopSortTag,
-                        tooltip: shortcutHint(
-                          l10n,
-                          l10n.desktopSortTag,
-                          DesktopKeys.label(DesktopKeys.tag),
-                        ),
-                        keyHint: DesktopKeys.label(DesktopKeys.tag),
-                        icon: Icons.label_outline,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        onPressed: hasSelection ? onTag : null,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Always visible (round 7: older users don't know Ctrl+Z).
-              if (compact)
-                IconButton.filledTonal(
-                  key: const ValueKey('sort-undo'),
-                  tooltip: shortcutHint(
-                    l10n,
-                    l10n.undo,
-                    DesktopKeys.label(DesktopKeys.undo),
-                  ),
-                  onPressed: undoable > 0 && !undoing ? onUndo : null,
-                  icon: undoing
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.undo, size: 18),
-                )
-              else
-                FilledButton.tonalIcon(
-                  key: const ValueKey('sort-undo'),
-                  onPressed: undoable > 0 && !undoing ? onUndo : null,
-                  icon: undoing
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.undo, size: 18),
-                  label: Text(l10n.undo),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              const SizedBox(width: 4),
-              IconButton(
-                key: const ValueKey('sort-history-toggle'),
-                isSelected: history,
-                tooltip: shortcutHint(
-                  l10n,
-                  l10n.desktopSortHistory,
-                  DesktopKeys.label(DesktopKeys.history),
-                ),
-                icon: const Icon(Icons.history),
-                onPressed: onHistory,
-              ),
-              if (deck.swiped > 0) ...[
-                const SizedBox(width: 4),
-                TextButton(
-                  key: const ValueKey('sort-done'),
-                  onPressed: onDone,
-                  child: Text(l10n.swipeDone),
-                ),
-              ],
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// An action: coloured icon (trash red, keep green…), label, key hint.
-class _ActionButton extends StatelessWidget {
-  const new({
-    required this.label,
-    required this.tooltip,
-    required this.keyHint,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-    super.key,
-  });
-
-  final String label;
-  final String tooltip;
-  final String keyHint;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final enabled = onPressed != null;
-    return Tooltip(
-      message: tooltip,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          visualDensity: VisualDensity.compact,
-          side: BorderSide(
-            color: enabled ? color.withValues(alpha: 0.7) : theme.disabledColor,
-          ),
-          foregroundColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        onPressed: onPressed,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18),
-            const SizedBox(width: 6),
-            Text(label),
-            const SizedBox(width: 8),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: theme.colorScheme.outlineVariant),
-              ),
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: 4,
-                  vertical: 1,
-                ),
-                child: Text(keyHint, style: theme.textTheme.labelSmall),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// D1: the delete-mode setting is "permanent": confirm once per session.
 class _PermanentModeChoice extends ConsumerWidget {
   const new();
 

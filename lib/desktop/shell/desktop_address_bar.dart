@@ -268,7 +268,14 @@ class DesktopAddressBarState extends ConsumerState<DesktopAddressBar> {
           children: [
             desktopLocationIcon(loc),
             const SizedBox(width: 8),
-            Text(desktopLocationTitle(l10n, loc)),
+            // A long search title is cut, never overflows.
+            Flexible(
+              child: Text(
+                desktopLocationTitle(l10n, loc),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ),
