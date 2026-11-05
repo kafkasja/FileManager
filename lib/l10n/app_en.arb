@@ -4785,5 +4785,13 @@
   "linkShowCode": "Show my code",
   "@linkShowCode": {"description": "E1: Connect screen and desktop Devices choice; shows this device's QR and code for the other device.", "placeholders": {}},
   "linkShowCodeHint": "The other device scans or types it. Then you both see each other's files.",
-  "@linkShowCodeHint": {"description": "E1: subtitle of 'Show my code'.", "placeholders": {}}
+  "@linkShowCodeHint": {"description": "E1: subtitle of 'Show my code'.", "placeholders": {}},
+  "viewerMore": "More",
+  "@viewerMore": {"description": "Viewer action bar: opens the rest of the file's actions."},
+  "viewerOpen": "Open",
+  "@viewerOpen": {"description": "Remote viewer action bar: downloads the file, then opens it with the default app."},
+  "viewerOpenDownloading": "Downloading {name} to open it",
+  "@viewerOpenDownloading": {"description": "Snackbar after Open on another device's file.", "placeholders": {"name": {"type": "String"}}},
+  "viewerOpenFailed": "Couldn't download {name}",
+  "@viewerOpenFailed": {"description": "Snackbar when Open on another device's file could not download it.", "placeholders": {"name": {"type": "String"}}}
 }

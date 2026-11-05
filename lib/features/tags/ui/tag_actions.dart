@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/adaptive_sheet.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/core/db/app_database.dart';
+import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/features/browse/ui/widgets/file_actions_menu.dart';
 import 'package:kfm/features/selection/ui/selection_actions.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
@@ -151,6 +152,26 @@ bool isFavoriteIn(BuildContext context, String id) =>
     ).read(favoriteIdsProvider).value?.contains(id) ??
     false;
 
+Future<void> _toggleFavorite(
+  BuildContext context,
+  WidgetRef ref,
+  FileRef f,
+) async {
+  // The database, not the (possibly a tick old) loaded set.
+  final bool isFavorite;
+  try {
+    isFavorite = await ref.read(favoritesRepositoryProvider).isFavorite(f.id);
+  } on Object {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.l10n.tagWriteError)));
+    }
+    return;
+  }
+  if (!context.mounted) return;
+  await setFavorites(context, [f.id], favorite: !isFavorite);
+}
+
 /// B9's ⋮ file menu items: favorite toggle and the Tags sheet.
 final List<FileMenuItem> tagFileMenuItems = [
   FileMenuItem(
@@ -160,24 +181,7 @@ final List<FileMenuItem> tagFileMenuItems = [
         ? c.l10n.fileMenuFavoriteRemove
         : c.l10n.fileMenuFavoriteAdd,
     icon: Icons.favorite_border,
-    onSelected: (context, ref, f) async {
-      // The database, not the (possibly a tick old) loaded set.
-      final bool isFavorite;
-      try {
-        isFavorite = await ref
-            .read(favoritesRepositoryProvider)
-            .isFavorite(f.id);
-      } on Object {
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(context.l10n.tagWriteError)));
-        }
-        return;
-      }
-      if (!context.mounted) return;
-      await setFavorites(context, [f.id], favorite: !isFavorite);
-    },
+    onSelected: _toggleFavorite,
   ),
   FileMenuItem(
     order: 71,

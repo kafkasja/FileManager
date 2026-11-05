@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kfm/app/theme/app_theme.dart';
 import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
@@ -17,8 +18,12 @@ import 'package:kfm/features/connect/ui/remote_browse_screen.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/connect/ui/remote_image_provider.dart';
 import 'package:kfm/features/connect/ui/remote_thumbnail_provider.dart';
+import 'package:kfm/features/swipe/ui/file_viewer.dart';
 import 'package:kfm/features/swipe/ui/media_view.dart';
 import 'package:kfm/features/swipe/ui/video_controller_pool.dart';
+import 'package:kfm/features/transfers/data/transfer_engine.dart';
+import 'package:kfm/features/transfers/data/transfer_providers.dart';
+import 'package:kfm/features/transfers/domain/transfer_job.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
 
 import '../swipe/fake_video.dart';
@@ -301,6 +306,89 @@ void main() {
     expect(find.text('This file is no longer available'), findsNothing);
   });
 
+  testWidgets('remote viewer: Download, Open, Details and Move to trash; '
+      'Download queues a copy job into the receive folder', (tester) async {
+    final http = _http()
+      ..on(
+        'GET',
+        ApiRoutes.files,
+        (_) => const FilePageDto(
+          items: [
+            RemoteFileDto(
+              id: 'ms:1',
+              name: 'ms:1.jpg',
+              kind: FileKind.image,
+              sizeBytes: 100,
+              modifiedAtMs: 1000,
+              rootId: 'R1',
+              relativeFolder: '',
+            ),
+          ],
+          total: 1,
+        ).toJson(),
+      )
+      ..on(
+        'GET',
+        ApiRoutes.folders,
+        (_) => const FoldersResponseDto([]).toJson(),
+      );
+    final engine = _FakeEngine();
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const RemoteBrowseScreen(peerFingerprint: _fp),
+        ),
+        GoRoute(path: '/transfers', builder: (_, _) => const SizedBox()),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          remoteFollowsAppLifecycleProvider.overrideWithValue(false),
+          remoteConnectionControllerProvider.overrideWith(
+            () => _FakeConnection(http),
+          ),
+          videoHandleFactoryProvider.overrideWithValue(FakeVideoFactory().call),
+          transferEngineProvider.overrideWithValue(engine),
+          downloadsRootProvider.overrideWithValue('/dl'),
+        ],
+        child: MaterialApp.router(
+          theme: buildTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Camera'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FileGridTile).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(PagedFileViewer), findsOneWidget);
+    for (final k in ['download', 'open', 'details', 'trash']) {
+      expect(
+        find.byKey(ValueKey('remote-viewer-$k')),
+        findsOneWidget,
+        reason: k,
+      );
+    }
+
+    await tester.tap(find.byKey(const ValueKey('remote-viewer-download')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('transfer-download-confirm')));
+    await tester.pumpAndSettle();
+    expect(engine.downloads, hasLength(1));
+    final d = engine.downloads.single;
+    expect([for (final f in d.files) f.id], [remoteFileId(_fp, 'ms:1')]);
+    expect(d.folder, defaultDownloadFolder('/dl', 'Phone A'));
+    expect(d.mode, TransferMode.copy);
+    // Still in the viewer.
+    expect(find.byType(PagedFileViewer), findsOneWidget);
+  });
+
   testWidgets('remote browse while disconnected shows Connect again', (
     tester,
   ) async {
@@ -338,4 +426,23 @@ class _Idle extends _FakeConnection {
 
   @override
   RemoteHttp? get http => null;
+}
+
+/// Records downloads; nothing else is used by the viewer's Download.
+class _FakeEngine extends Fake implements TransferEngine {
+  final downloads =
+      <({List<FileRef> files, String folder, TransferMode mode})>[];
+
+  @override
+  Future<String> enqueueDownload(
+    List<FileRef> remoteFiles, {
+    required String peerFingerprint,
+    required String peerName,
+    required String localFolder,
+    TransferMode mode = TransferMode.copy,
+    String? inboxOfferId,
+  }) async {
+    downloads.add((files: remoteFiles, folder: localFolder, mode: mode));
+    return 'job1';
+  }
 }

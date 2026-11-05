@@ -20,7 +20,8 @@ part 'file_actions_menu.g.dart';
 /// One entry of a file's ⋮ menu (TASK-B4): Browse tiles and rows, search
 /// results and the B7 preview. B4 registers Open with, Rename, Duplicate,
 /// Copy to, Move to and Delete; B5 adds zip items, B9 tag/favorite, X2
-/// Share, B10 Details (last).
+/// Share, B10 Details (last). The enlarged viewers build their action bar
+/// from the same list ([FileMenuIds], `viewer_action_bar.dart`).
 @immutable
 class FileMenuItem {
   const new({
@@ -30,7 +31,16 @@ class FileMenuItem {
     this.order = 0,
     this.isAvailable = _always,
     this.labelFor,
+    this.id,
+    this.leaves = false,
   });
+
+  /// Stable name for the viewer bar's picks ([FileMenuIds]).
+  final String? id;
+
+  /// [onSelected] completes with `true` once the file left its list
+  /// (deleted, moved away): a viewer then shows the next file.
+  final bool leaves;
 
   final String Function(BuildContext context) label;
 
@@ -41,10 +51,26 @@ class FileMenuItem {
   /// Lower first.
   final int order;
   final bool Function(FileRef file) isAvailable;
-  final Future<void> Function(BuildContext context, WidgetRef ref, FileRef f)
+
+  /// Completes with `true` when a [leaves] item removed the file; other
+  /// items' results are ignored.
+  final Future<Object?> Function(BuildContext context, WidgetRef ref, FileRef f)
   onSelected;
 
   static bool _always(FileRef _) => true;
+}
+
+/// [FileMenuItem.id]s the viewers pick by name.
+abstract final class FileMenuIds {
+  static const sendLinked = 'e1.sendLinked';
+  static const openWith = 'b4.openWith';
+  static const rename = 'b4.rename';
+  static const duplicate = 'b4.duplicate';
+  static const copyTo = 'b4.copyTo';
+  static const moveTo = 'b4.moveTo';
+  static const delete = 'b4.delete';
+  static const share = 'x2.share';
+  static const details = 'b10.details';
 }
 
 /// Sorted by [FileMenuItem.order]. E1: while linked, "Send to `name`"
@@ -55,24 +81,28 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
     if (ref.watch(currentLinkProvider) case final link?)
       sendToLinkFileMenuItem(link),
     FileMenuItem(
+      id: FileMenuIds.openWith,
       order: 10,
       label: (c) => c.l10n.openWith,
       icon: Icons.open_in_new,
       onSelected: openWithOrExplain,
     ),
     FileMenuItem(
+      id: FileMenuIds.rename,
       order: 20,
       label: (c) => c.l10n.fileMenuRename,
       icon: Icons.drive_file_rename_outline,
       onSelected: renameFile,
     ),
     FileMenuItem(
+      id: FileMenuIds.duplicate,
       order: 30,
       label: (c) => c.l10n.fileMenuDuplicate,
       icon: Icons.control_point_duplicate,
       onSelected: (context, ref, f) => duplicateFiles(context, ref, [f]),
     ),
     FileMenuItem(
+      id: FileMenuIds.copyTo,
       order: 40,
       label: (c) => c.l10n.fileMenuCopyTo,
       icon: Icons.copy_outlined,
@@ -80,14 +110,18 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
           moveOrCopyFiles(context, ref, [f], copy: true),
     ),
     FileMenuItem(
+      id: FileMenuIds.moveTo,
       order: 50,
+      leaves: true,
       label: (c) => c.l10n.fileMenuMoveTo,
       icon: Icons.drive_file_move_outlined,
       onSelected: (context, ref, f) =>
           moveOrCopyFiles(context, ref, [f], copy: false),
     ),
     FileMenuItem(
+      id: FileMenuIds.delete,
       order: 60,
+      leaves: true,
       label: (c) => c.l10n.fileMenuDelete,
       icon: Icons.delete_outline,
       onSelected: (context, ref, f) => deleteFiles(context, ref, [f]),
@@ -97,6 +131,7 @@ List<FileMenuItem> fileMenuItems(Ref ref) => List.unmodifiable(
     sendFileMenuItem,
     ...tagFileMenuItems,
     FileMenuItem(
+      id: FileMenuIds.details,
       order: 90,
       label: (c) => c.l10n.fileMenuDetails,
       icon: Icons.info_outline,

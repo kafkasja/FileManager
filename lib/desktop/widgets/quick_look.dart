@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,19 +18,29 @@ class QuickLookAction {
     required this.label,
     required this.icon,
     required this.color,
-    required this.keyHint,
-    required this.matches,
     required this.run,
+    this.keyHint,
+    this.matches = _noKey,
+    this.buttonKey,
+    this.closes = false,
   });
+
+  /// Quick look closes before [run] (it opens something underneath).
+  final bool closes;
 
   final String label;
   final IconData icon;
   final Color color;
-  final String keyHint;
+
+  /// The key shown on the button ("Del"); null = button only.
+  final String? keyHint;
   final bool Function(KeyEvent event) matches;
+  final Key? buttonKey;
+
+  static bool _noKey(KeyEvent _) => false;
 
   /// Runs on `file`; true = it left the list (Quick look shows the next).
-  final bool Function(FileRef file) run;
+  final FutureOr<bool> Function(FileRef file) run;
 }
 
 /// Space / double-click (TASK-PL3): the photo or video big, ← → for the
@@ -68,6 +80,10 @@ class _QuickLook extends ConsumerStatefulWidget {
 class _QuickLookState extends ConsumerState<_QuickLook> {
   late String _id = widget.startId;
   int _index = 0;
+
+  /// Files an action removed (Browse: deleted) that `watchFiles` may
+  /// still list.
+  final Set<String> _left = {};
   final _focus = FocusNode(debugLabel: 'quickLook');
 
   @override
@@ -88,7 +104,11 @@ class _QuickLookState extends ConsumerState<_QuickLook> {
   }
 
   void _run(QuickLookAction a, FileRef file) {
-    a.run(file);
+    if (a.closes) _close();
+    unawaited(() async {
+      final left = await a.run(file);
+      if (left && mounted) setState(() => _left.add(file.id));
+    }());
   }
 
   KeyEventResult _onKey(List<FileRef> files, FileRef? file, KeyEvent e) {
@@ -129,7 +149,10 @@ class _QuickLookState extends ConsumerState<_QuickLook> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final files = widget.watchFiles(ref);
+    final files = [
+      for (final f in widget.watchFiles(ref))
+        if (!_left.contains(f.id)) f,
+    ];
     // The shown file left the list (sorted): show the one now at its place.
     var i = files.indexWhere((f) => f.id == _id);
     if (i < 0 && files.isNotEmpty) {
@@ -222,13 +245,18 @@ class _QuickLookState extends ConsumerState<_QuickLook> {
                   children: [
                     for (final a in widget.actions)
                       FilledButton.icon(
+                        key: a.buttonKey,
                         style: FilledButton.styleFrom(
                           backgroundColor: a.color.withValues(alpha: 0.85),
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _run(a, file),
                         icon: Icon(a.icon, size: 18),
-                        label: Text(shortcutHint(l10n, a.label, a.keyHint)),
+                        label: Text(
+                          a.keyHint == null
+                              ? a.label
+                              : shortcutHint(l10n, a.label, a.keyHint!),
+                        ),
                       ),
                   ],
                 ),
