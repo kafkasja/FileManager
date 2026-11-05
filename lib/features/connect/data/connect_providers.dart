@@ -23,6 +23,8 @@ import 'package:kfm/features/connect/data/device_identity_repository_impl.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/known_devices_dao.dart';
 import 'package:kfm/features/connect/data/known_pair_limiter.dart';
+import 'package:kfm/features/connect/data/link_invite_store.dart';
+import 'package:kfm/features/connect/data/link_perms_store.dart';
 import 'package:kfm/features/connect/data/middleware/allow_list.dart';
 import 'package:kfm/features/connect/data/middleware/authenticate.dart';
 import 'package:kfm/features/connect/data/offer_copy.dart';
@@ -34,10 +36,12 @@ import 'package:kfm/features/connect/data/path_guard.dart';
 import 'package:kfm/features/connect/data/remote_trash_service.dart';
 import 'package:kfm/features/connect/data/routes/file_routes.dart';
 import 'package:kfm/features/connect/data/routes/inbox_routes.dart';
+import 'package:kfm/features/connect/data/routes/link_routes.dart';
 import 'package:kfm/features/connect/data/routes/offer_routes.dart';
 import 'package:kfm/features/connect/data/routes/pair_routes.dart';
 import 'package:kfm/features/connect/data/routes/roots_routes.dart';
 import 'package:kfm/features/connect/data/routes/session_routes.dart';
+import 'package:kfm/features/connect/data/routes/take_routes.dart';
 import 'package:kfm/features/connect/data/routes/upload_routes.dart';
 import 'package:kfm/features/connect/data/secret_store.dart';
 import 'package:kfm/features/connect/data/server_pipeline.dart';
@@ -47,6 +51,7 @@ import 'package:kfm/features/connect/data/share_offers_dao.dart';
 import 'package:kfm/features/connect/data/share_scope_store.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/data/shared_folder_fs.dart';
+import 'package:kfm/features/connect/data/take_gate.dart';
 import 'package:kfm/features/connect/data/upload_store.dart';
 import 'package:kfm/features/connect/data/windows_share_check.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
@@ -55,6 +60,7 @@ import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/share_offer.dart';
 import 'package:kfm/features/connect/domain/share_scope.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/transfers/data/transfer_providers.dart'
     show transferPreprocessorProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -146,6 +152,31 @@ ShareScopeStore shareScopeStore(Ref ref) {
   return store;
 }
 
+/// TASK-E1: what this device lets each linked peer do (its own choice).
+@Riverpod(keepAlive: true)
+LinkPermsStore linkPermsStore(Ref ref) {
+  final store = LinkPermsStore();
+  ref.onDispose(store.clear);
+  return store;
+}
+
+/// TASK-E1: single-use back-link invites of the current sharing run.
+@Riverpod(keepAlive: true)
+LinkInviteStore linkInviteStore(Ref ref) {
+  final store = LinkInviteStore();
+  ref.onDispose(store.clear);
+  return store;
+}
+
+/// TASK-E1: the take prompt and its grants.
+@Riverpod(keepAlive: true)
+TakeGate takeGate(Ref ref) {
+  final perms = ref.watch(linkPermsStoreProvider);
+  final gate = TakeGate(perms: perms.of);
+  ref.onDispose(gate.clear);
+  return gate;
+}
+
 /// One client's shared folders, for the share screen and the picker.
 @riverpod
 Stream<ShareScope> shareScope(Ref ref, String clientFingerprint) {
@@ -186,6 +217,7 @@ AllowListGuard allowListGuard(Ref ref) {
     source: () => ref.read(fileSourceProvider),
     paths: ref.watch(pathGuardProvider),
     grants: LazyOfferGrants(() => ref.read(offerServiceProvider)),
+    takes: ref.watch(takeGateProvider),
   );
 }
 
@@ -263,6 +295,8 @@ OfferService offerService(Ref ref) {
         (await ref.read(deviceIdentityRepositoryProvider).loadOrCreate())
             .displayName,
     staging: transferStagingDir,
+    // E1: sends from the linked device need no prompt.
+    linked: (fp) => ref.read(linkControllerProvider)?.peerFingerprint == fp,
     prepareCopy: (f, offerId, seq) => prepareOfferCopy(
       f,
       dir: () async =>
@@ -381,11 +415,11 @@ PairHandOff pairHandOff(Ref ref) => promptHandOff(
           .touch(candidate.clientFingerprint, const [])
           .fireAndForget();
     }
-    await seedStoredScope(
-      load: ref.read(storedScopeLoaderProvider),
-      scopes: ref.read(shareScopeStoreProvider),
-      clientFingerprint: candidate.clientFingerprint,
-    );
+    // E1: the link's scope from this side's own perms (all storage, the
+    // remembered "Limit to folders", or nothing).
+    await ref
+        .read(linkControllerProvider.notifier)
+        .prepareSession(candidate.clientFingerprint);
   },
 );
 
@@ -546,6 +580,25 @@ List<ServerRoute> shareServerRoutes(Ref ref) {
     ...offerRoutes(() => ref.read(offerServiceProvider)),
     // N12b: offers to connected clients.
     ...inboxRoutes(() => ref.read(offerServiceProvider)),
+    // E1: the two-way link and the take prompt.
+    ...linkRoutes(
+      invites: ref.watch(linkInviteStoreProvider),
+      nonces: ref.watch(pairNonceStoreProvider),
+      limiter: ref.watch(knownPairLimiterProvider),
+      serverFingerprint: () async =>
+          (await identity.loadOrCreate()).fingerprint,
+      onLink: (session, dto, ip) => ref
+          .read(linkControllerProvider.notifier)
+          .onLinkRequest(session, dto, ip),
+      onJoin: (hello, invite, ip) =>
+          ref.read(linkControllerProvider.notifier).onJoin(hello, invite, ip),
+      onClose: (session) =>
+          ref.read(linkControllerProvider.notifier).onPeerClosed(session),
+    ),
+    takeRoute(
+      guard: ref.watch(allowListGuardProvider),
+      gate: ref.watch(takeGateProvider),
+    ),
     // N6: remembered devices reconnect without a QR.
     knownPairRoute(
       nonces: ref.watch(pairNonceStoreProvider),

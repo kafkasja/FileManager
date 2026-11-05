@@ -5,6 +5,7 @@ import 'package:kfm/features/connect/data/known_device_connector.dart';
 import 'package:kfm/features/connect/data/remembered_devices_service.dart';
 import 'package:kfm/features/connect/data/share_server.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -21,8 +22,10 @@ KnownDeviceConnector knownDeviceConnector(Ref ref) => KnownDeviceConnector(
   nearby: () => ref.exists(nearbyDevicesProvider)
       ? ref.read(nearbyDevicesProvider).value ?? const []
       : const [],
+  // E1: every connect pairing becomes a two-way link (send-only ones
+  // just connect).
   connect: (result) =>
-      ref.read(remoteConnectionControllerProvider.notifier).connect(result),
+      unawaited(ref.read(linkControllerProvider.notifier).onPaired(result)),
 );
 
 /// Remove / Remove all / Reset this device's identity (TASK-N6).

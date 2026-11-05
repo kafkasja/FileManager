@@ -156,9 +156,10 @@ void main() {
       expect(await tester.runAsync(() => dumpUserTables(db)), before);
       // The staged copy is gone.
       expect(
-        tmp.listSync(recursive: true).whereType<File>().where(
-          (f) => f.path.endsWith('import.json'),
-        ),
+        tmp
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('import.json')),
         isEmpty,
       );
       await tester.pumpWidget(const SizedBox());

@@ -93,8 +93,7 @@ void main() {
 
   test('drives become U1 places: system first, fixed and network drives '
       'as internal, sticks and cards removable', () async {
-    final channel = FakeWindowsChannel()
-      ..drives = [_c, _d, _usb, _sd, _net];
+    final channel = FakeWindowsChannel()..drives = [_c, _d, _usb, _sd, _net];
     final volumes = WindowsVolumes(channel);
     final places = buildPlaces(
       volumes: await volumes.list(),
@@ -103,27 +102,24 @@ void main() {
       canSeeAllFiles: true,
       sdkInt: await volumes.sdkInt(),
     );
-    expect([for (final p in places) p.id], [
-      kInternalPlaceId,
-      '3333-4444',
-      'ABCD-1234',
-      '5555-6666',
-      'Z:',
-    ]);
-    expect([for (final p in places) p.kind], [
-      PlaceKind.internal,
-      PlaceKind.internal,
-      PlaceKind.usbDrive,
-      PlaceKind.sdCard,
-      PlaceKind.internal,
-    ]);
-    expect([for (final p in places) p.isRemovable], [
-      false,
-      false,
-      true,
-      true,
-      false,
-    ]);
+    expect(
+      [for (final p in places) p.id],
+      [kInternalPlaceId, '3333-4444', 'ABCD-1234', '5555-6666', 'Z:'],
+    );
+    expect(
+      [for (final p in places) p.kind],
+      [
+        PlaceKind.internal,
+        PlaceKind.internal,
+        PlaceKind.usbDrive,
+        PlaceKind.sdCard,
+        PlaceKind.internal,
+      ],
+    );
+    expect(
+      [for (final p in places) p.isRemovable],
+      [false, false, true, true, false],
+    );
     expect(places.every((p) => p.access == AccessMethod.directPath), isTrue);
     expect(places[2].rootPath, 'E:');
     expect(places[2].label, 'KINGSTON (E:)');
@@ -171,25 +167,29 @@ void main() {
     expect(locator.placeOf('/storage/emulated/0'), kInternalPlaceId);
   });
 
-  test('scanOnStart scans the removable places of the first list once',
-      () async {
-    final scanned = <String>[];
-    final watcher = PlacesWatcher(
-      scanRoot: (root) async => scanned.add(root),
-      scanOnStart: true,
-    );
-    addTearDown(watcher.dispose);
-    final places = buildPlaces(
-      volumes: [for (final d in [_c, _usb]) volumeOfDrive(d)],
-      cameras: const [],
-      safGrants: const {},
-      canSeeAllFiles: true,
-      sdkInt: WindowsVolumes.directPathSdk,
-    );
-    watcher
-      ..onPlaces(places)
-      ..onPlaces(places);
-    await pumpEventQueue();
-    expect(scanned, ['E:']);
-  });
+  test(
+    'scanOnStart scans the removable places of the first list once',
+    () async {
+      final scanned = <String>[];
+      final watcher = PlacesWatcher(
+        scanRoot: (root) async => scanned.add(root),
+        scanOnStart: true,
+      );
+      addTearDown(watcher.dispose);
+      final places = buildPlaces(
+        volumes: [
+          for (final d in [_c, _usb]) volumeOfDrive(d),
+        ],
+        cameras: const [],
+        safGrants: const {},
+        canSeeAllFiles: true,
+        sdkInt: WindowsVolumes.directPathSdk,
+      );
+      watcher
+        ..onPlaces(places)
+        ..onPlaces(places);
+      await pumpEventQueue();
+      expect(scanned, ['E:']);
+    },
+  );
 }

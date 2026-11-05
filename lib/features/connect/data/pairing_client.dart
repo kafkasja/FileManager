@@ -9,6 +9,7 @@ import 'package:kfm/features/connect/data/crypto/identity_proof.dart';
 import 'package:kfm/features/connect/data/crypto/spake2.dart';
 import 'package:kfm/features/connect/data/pinned_client.dart';
 import 'package:kfm/features/connect/data/remote_errors.dart';
+import 'package:kfm/features/connect/data/routes/link_routes.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/device_identity.dart';
 import 'package:kfm/features/connect/domain/fingerprint_words.dart';
@@ -450,6 +451,60 @@ class PairingClient {
           PairingException(PairingFailure.keyChanged, cause: e),
         _ => _map(e, cancel),
       };
+    }
+  }
+
+  /// TASK-E1 back-link (the device that showed its code, B): connects to
+  /// the paired peer's server at [host]:[port], pinned to [fingerprint]
+  /// (the key the peer proved in the pairing; never an unpinned client),
+  /// signs the server nonce + `sha256(invite)` and sends
+  /// `POST /v1/link/join`. No prompt there: the peer asked for it.
+  Future<PairingSuccess> joinLink({
+    required String host,
+    required int port,
+    required String fingerprint,
+    required String name,
+    required Uint8List invite,
+  }) async {
+    final me = await _identity.loadOrCreate();
+    final http = _pinned(
+      Uri(scheme: 'https', host: host, port: port),
+      fingerprint,
+    );
+    try {
+      final n = await http.postJson(
+        ApiRoutes.pairNonce,
+        const <String, Object?>{},
+        decode: PairNonceDto.fromJson,
+        timeout: probeTimeout * 2,
+      );
+      final nonce = fromB64url(n.nonce);
+      if (nonce == null || nonce.length != 32) {
+        throw const PairingException(PairingFailure.badResponse);
+      }
+      final sig = await _identity.sign(
+        linkJoinMessage(fingerprint, nonce, invite),
+      );
+      final accepted = await http.postJson(
+        ApiRoutes.linkJoin,
+        LinkJoinRequestDto(
+          hello: _hello(me, SessionPurpose.connect),
+          invite: b64url(invite),
+          nonce: b64url(nonce),
+          sig: b64url(sig),
+        ).toJson(),
+        decode: PairAcceptedDto.fromJson,
+      );
+      http.bearerToken = accepted.token;
+      return PairingSuccess(
+        http: http,
+        accepted: accepted,
+        peerName: name,
+        peerFingerprint: fingerprint,
+      );
+    } on Object catch (e) {
+      http.close();
+      throw _map(e, null);
     }
   }
 

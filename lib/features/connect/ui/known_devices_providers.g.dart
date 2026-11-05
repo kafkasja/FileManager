@@ -59,7 +59,7 @@ final class KnownDeviceConnectorProvider
 }
 
 String _$knownDeviceConnectorHash() =>
-    r'8a4742a31e4f531b8119d4ecb9d356890dd8b9a3';
+    r'6facf425c1c39c7d132bf5c01f746c8af8b45d5c';
 
 /// Remove / Remove all / Reset this device's identity (TASK-N6).
 

@@ -11732,6 +11732,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connecting to {device}…'**
   String linkReconnecting(String device);
+
+  /// E1: checkbox on the connect dialog and the waiting screen (on by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Let {device} see my files'**
+  String linkLetSee(String device);
+
+  /// E1: explanation under 'Let <device> see my files'.
+  ///
+  /// In en, this message translates to:
+  /// **'It can browse all your files on this device. You can still send files either way.'**
+  String get linkLetSeeHint;
+
+  /// E1: checkbox on the connect dialog and the waiting screen (on by default).
+  ///
+  /// In en, this message translates to:
+  /// **'Let {device} take files without asking'**
+  String linkLetTake(String device);
+
+  /// E1: explanation under 'Let <device> take files without asking'.
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise you\'re asked first and see each file\'s name, size and type.'**
+  String get linkLetTakeHint;
+
+  /// E1: heading above the two checkboxes on the waiting screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What {device} may do with your files:'**
+  String linkYourChoices(String device);
+
+  /// E1: title of the take prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} wants to take {count, plural, =1{1 file} other{{count} files}} ({size})'**
+  String takePromptTitle(String device, int count, String size);
+
+  /// E1: title of the take prompt for a move.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} wants to move {count, plural, =1{1 file} other{{count} files}} ({size})'**
+  String takePromptMoveTitle(String device, int count, String size);
+
+  /// E1: note on the take prompt for a move.
+  ///
+  /// In en, this message translates to:
+  /// **'The originals go to the trash here once the copies are checked.'**
+  String get takePromptMoveNote;
+
+  /// E1: one file on the take prompt: size and type (like 'JPG').
+  ///
+  /// In en, this message translates to:
+  /// **'{size} · {type}'**
+  String takePromptFileLine(String size, String type);
+
+  /// E1: checkbox on the take prompt; turns 'take without asking' on for that device.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow {device}'**
+  String takePromptAlways(String device);
+
+  /// E1: allow button of the take prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get takePromptAllow;
+
+  /// E1: snackbar when the take prompt timed out.
+  ///
+  /// In en, this message translates to:
+  /// **'{device}\'s request ended: no answer'**
+  String takePromptTimedOut(String device);
+
+  /// E1: transfer error when the other device declined the take prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined by {device}'**
+  String transferErrorTakeDeclined(String device);
+
+  /// E1: transfer error when the other device didn't answer the take prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer from {device}'**
+  String transferErrorTakeNoAnswer(String device);
+
+  /// E1: connected screen note when the reverse half of the link failed.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} can\'t be reached from here: you can still send it files.'**
+  String linkOneWay(String device);
+
+  /// E1: link details line.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} can see your files'**
+  String linkTheySeeYours(String device);
+
+  /// E1: link details line.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} can\'t see your files'**
+  String linkTheyDontSeeYours(String device);
+
+  /// E1: advanced button in the link details; opens the folder picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit to folders…'**
+  String get linkLimitFolders;
+
+  /// E1: button on the connected screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse {device}'**
+  String linkSeeTheirFiles(String device);
+
+  /// E1: line above this device's QR on the Connect screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Or connect from the other device with this code'**
+  String get linkShowMyCode;
+
+  /// E1: title of the unified Connect screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a device'**
+  String get linkTitle;
 }
 
 class _AppLocalizationsDelegate

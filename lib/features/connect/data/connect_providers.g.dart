@@ -432,6 +432,145 @@ final class ShareScopeStoreProvider
 
 String _$shareScopeStoreHash() => r'5e7401195f05fb081da011eeec28687b4872536b';
 
+/// TASK-E1: what this device lets each linked peer do (its own choice).
+
+@ProviderFor(linkPermsStore)
+final linkPermsStoreProvider = LinkPermsStoreProvider._();
+
+/// TASK-E1: what this device lets each linked peer do (its own choice).
+
+final class LinkPermsStoreProvider
+    extends $FunctionalProvider<LinkPermsStore, LinkPermsStore, LinkPermsStore>
+    with $Provider<LinkPermsStore> {
+  /// TASK-E1: what this device lets each linked peer do (its own choice).
+  LinkPermsStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'linkPermsStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$linkPermsStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<LinkPermsStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LinkPermsStore create(Ref ref) {
+    return linkPermsStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LinkPermsStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LinkPermsStore>(value),
+    );
+  }
+}
+
+String _$linkPermsStoreHash() => r'2bd4113e01de1987c3841cba3e874393ed20e079';
+
+/// TASK-E1: single-use back-link invites of the current sharing run.
+
+@ProviderFor(linkInviteStore)
+final linkInviteStoreProvider = LinkInviteStoreProvider._();
+
+/// TASK-E1: single-use back-link invites of the current sharing run.
+
+final class LinkInviteStoreProvider
+    extends
+        $FunctionalProvider<LinkInviteStore, LinkInviteStore, LinkInviteStore>
+    with $Provider<LinkInviteStore> {
+  /// TASK-E1: single-use back-link invites of the current sharing run.
+  LinkInviteStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'linkInviteStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$linkInviteStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<LinkInviteStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LinkInviteStore create(Ref ref) {
+    return linkInviteStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LinkInviteStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LinkInviteStore>(value),
+    );
+  }
+}
+
+String _$linkInviteStoreHash() => r'4341fe3c499d0fe6bc5bd6399e23824701ea1c43';
+
+/// TASK-E1: the take prompt and its grants.
+
+@ProviderFor(takeGate)
+final takeGateProvider = TakeGateProvider._();
+
+/// TASK-E1: the take prompt and its grants.
+
+final class TakeGateProvider
+    extends $FunctionalProvider<TakeGate, TakeGate, TakeGate>
+    with $Provider<TakeGate> {
+  /// TASK-E1: the take prompt and its grants.
+  TakeGateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'takeGateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$takeGateHash();
+
+  @$internal
+  @override
+  $ProviderElement<TakeGate> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  TakeGate create(Ref ref) {
+    return takeGate(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TakeGate value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TakeGate>(value),
+    );
+  }
+}
+
+String _$takeGateHash() => r'9f511ac2a2b35d20d78435d28fae282c22be6bc8';
+
 /// One client's shared folders, for the share screen and the picker.
 
 @ProviderFor(shareScope)
@@ -657,7 +796,7 @@ final class AllowListGuardProvider
   }
 }
 
-String _$allowListGuardHash() => r'ff9b5c89d55b73841c56fdeb4037cbaf57821f1f';
+String _$allowListGuardHash() => r'93ee4937a5385222b057d85c67405f36606bccf1';
 
 /// Send-files offers (TASK-N12).
 
@@ -867,7 +1006,7 @@ final class OfferServiceProvider
   }
 }
 
-String _$offerServiceHash() => r'b0c5174735edebc1f88c5288c181e852a2b19a7e';
+String _$offerServiceHash() => r'6b3c5f00ccb538556a6a5e440b47ed7845150396';
 
 /// Every offer this device's server holds, newest first (Transfers
 /// Received / Offered cards).
@@ -1354,7 +1493,7 @@ final class PairHandOffProvider
   }
 }
 
-String _$pairHandOffHash() => r'c523832b49fd7933f736f50b31c8ec50ba4e92cc';
+String _$pairHandOffHash() => r'e3f8fc730c753b6c24a75682b5cf125f0562d530';
 
 /// mDNS advertise + browse (N2).
 
@@ -1757,7 +1896,7 @@ final class ShareServerRoutesProvider
   }
 }
 
-String _$shareServerRoutesHash() => r'e7d71708c4191515d048ea760830e7afc33d134d';
+String _$shareServerRoutesHash() => r'0f49a8338642181dfde41034cb74a6c2e8367310';
 
 @ProviderFor(shareServer)
 final shareServerProvider = ShareServerProvider._();

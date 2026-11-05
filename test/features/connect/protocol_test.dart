@@ -39,6 +39,7 @@ void main() {
         'pending_folder_unavailable': 409,
         'invalid_name': 400,
         'verification_failed': 409,
+        'take_needs_approval': 403,
         'internal': 500,
       },
     );
@@ -54,6 +55,7 @@ void main() {
       'POST /v1/pair',
       'POST /v1/pair/known',
       'POST /v1/pair/cancel',
+      'POST /v1/link/join',
     });
     expect(
       kUnauthenticatedRoutes.containsAll(PinnedClient.firstContactRoutes),

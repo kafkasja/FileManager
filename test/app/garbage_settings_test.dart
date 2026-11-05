@@ -12,9 +12,8 @@ import '../helpers/pump_app.dart';
 
 /// Every `AppSettings` key name (parsed like the X6 policy test does).
 Set<String> _allKeyNames() {
-  final source = File(
-    'lib/core/db/settings/app_settings.dart',
-  ).readAsStringSync();
+  final source = File('lib/core/db/settings/app_settings.dart')
+      .readAsStringSync();
   return RegExp("static final SettingKey[^']*'([^']+)'")
       .allMatches(source)
       .map((m) => m.group(1)!)

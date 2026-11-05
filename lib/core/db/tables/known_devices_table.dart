@@ -44,6 +44,14 @@ class KnownDevices extends Table {
   BoolColumn get autoAcceptFiles =>
       boolean().withDefault(const Constant(false))();
 
+  /// E1: "Let this peer see my files" (false → empty scope; sending still
+  /// works).
+  BoolColumn get letSee => boolean().withDefault(const Constant(true))();
+
+  /// E1: "Let this peer take files without asking" (false → the take
+  /// prompt asks first).
+  BoolColumn get letTakeFreely => boolean().withDefault(const Constant(true))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 

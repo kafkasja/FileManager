@@ -95,9 +95,9 @@ void main() {
     await tester.tap(find.text('Settings').last);
     await tester.pumpAndSettle();
     unawaited(
-      ProviderScope.containerOf(
-        tester.element(find.byType(Scaffold).first),
-      ).read(routerProvider).push(AppRoutes.connectShare),
+      ProviderScope.containerOf(tester.element(find.byType(Scaffold).first))
+          .read(routerProvider)
+          .push(AppRoutes.connectShare),
     );
     await tester.pumpAndSettle();
   }

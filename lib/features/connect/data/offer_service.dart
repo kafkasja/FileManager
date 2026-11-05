@@ -191,6 +191,7 @@ class OfferService implements OfferGrants {
     OfferLimiter? limiter,
     DateTime Function()? clock,
     this._serverFingerprint,
+    this._linked,
     this._prepareCopy,
     this._ownName,
     this._staging,
@@ -217,6 +218,9 @@ class OfferService implements OfferGrants {
 
   /// This device's key (for the 4-word phrase of a prompt).
   final Future<String> Function()? _serverFingerprint;
+
+  /// E1: whether `fp` is the linked device (its offers need no prompt).
+  final bool Function(String fp)? _linked;
 
   /// N12b: a location-free copy of a file in `<staging>/offer-<id>/` when X2
   /// "Remove location" applies to it; null = offer the original.
@@ -385,10 +389,12 @@ class OfferService implements OfferGrants {
       return (status: 201, offer: toDto(offer), error: null);
     }
     final known = await _devices.byFingerprint(fp);
-    if (known != null && !known.isTemporary && known.autoAcceptFiles) {
+    final linked = _linked?.call(fp) ?? false;
+    if (linked ||
+        (known != null && !known.isTemporary && known.autoAcceptFiles)) {
       offer = offer.copyWith(
         status: OfferStatus.accepted,
-        folder: defaultFolderFor(known.name),
+        folder: defaultFolderFor(known?.name ?? session.clientName),
         autoAccepted: true,
         decidedAt: now,
         expiresAt: now.add(kOfferGrantIdle),

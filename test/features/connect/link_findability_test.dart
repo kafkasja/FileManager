@@ -20,7 +20,7 @@ const _link = DeviceLink(
 );
 
 /// TASK-E1c: Connect is easy to find, a linked device shows, and "Send to
-/// <device>" is the first file and selection action.
+/// `device`" is the first file and selection action.
 void main() {
   testWidgets('not linked: Browse has a Devices button and a Nearby card; '
       'no chip, no Send to entry', (tester) async {

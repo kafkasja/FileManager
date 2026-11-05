@@ -7,7 +7,9 @@ import '../../helpers/pump_app.dart';
 void main() {
   // Monkey seed 1: on a 320 dp phone turned sideways the sheet's rows and
   // buttons overflowed (154 px at the bottom, 3.5 px on the right in Dutch).
-  testWidgets('Clear sheet scrolls on a small phone in landscape', (tester) async {
+  testWidgets('Clear sheet scrolls on a small phone in landscape', (
+    tester,
+  ) async {
     addTearDown(tester.view.reset);
     await pumpApp(tester);
     await tester.tap(find.text('Settings').last);

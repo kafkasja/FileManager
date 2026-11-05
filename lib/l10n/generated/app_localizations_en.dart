@@ -8399,4 +8399,111 @@ class AppLocalizationsEn extends AppLocalizations {
   String linkReconnecting(String device) {
     return 'Connecting to $device…';
   }
+
+  @override
+  String linkLetSee(String device) {
+    return 'Let $device see my files';
+  }
+
+  @override
+  String get linkLetSeeHint =>
+      'It can browse all your files on this device. You can still send files either way.';
+
+  @override
+  String linkLetTake(String device) {
+    return 'Let $device take files without asking';
+  }
+
+  @override
+  String get linkLetTakeHint =>
+      'Otherwise you\'re asked first and see each file\'s name, size and type.';
+
+  @override
+  String linkYourChoices(String device) {
+    return 'What $device may do with your files:';
+  }
+
+  @override
+  String takePromptTitle(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$device wants to take $_temp0 ($size)';
+  }
+
+  @override
+  String takePromptMoveTitle(String device, int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$device wants to move $_temp0 ($size)';
+  }
+
+  @override
+  String get takePromptMoveNote =>
+      'The originals go to the trash here once the copies are checked.';
+
+  @override
+  String takePromptFileLine(String size, String type) {
+    return '$size · $type';
+  }
+
+  @override
+  String takePromptAlways(String device) {
+    return 'Always allow $device';
+  }
+
+  @override
+  String get takePromptAllow => 'Allow';
+
+  @override
+  String takePromptTimedOut(String device) {
+    return '$device\'s request ended: no answer';
+  }
+
+  @override
+  String transferErrorTakeDeclined(String device) {
+    return 'Declined by $device';
+  }
+
+  @override
+  String transferErrorTakeNoAnswer(String device) {
+    return 'No answer from $device';
+  }
+
+  @override
+  String linkOneWay(String device) {
+    return '$device can\'t be reached from here: you can still send it files.';
+  }
+
+  @override
+  String linkTheySeeYours(String device) {
+    return '$device can see your files';
+  }
+
+  @override
+  String linkTheyDontSeeYours(String device) {
+    return '$device can\'t see your files';
+  }
+
+  @override
+  String get linkLimitFolders => 'Limit to folders…';
+
+  @override
+  String linkSeeTheirFiles(String device) {
+    return 'Browse $device';
+  }
+
+  @override
+  String get linkShowMyCode =>
+      'Or connect from the other device with this code';
+
+  @override
+  String get linkTitle => 'Connect a device';
 }

@@ -270,6 +270,10 @@ class ShareServerController extends _$ShareServerController {
     ref.read(acceptGateProvider).cancelAll();
     ref.read(clientSessionStoreProvider).clear();
     ref.read(shareScopeStoreProvider).clear();
+    // E1: invites, link perms and take grants die with the run.
+    ref.read(linkInviteStoreProvider).clear();
+    ref.read(takeGateProvider).clear();
+    ref.read(linkPermsStoreProvider).clear();
     // N9/N10: unfinished chunks end (their streams were cancelled with
     // the sessions); the partials stay so the same client can resume.
     ref.read(uploadStoreProvider).stop();

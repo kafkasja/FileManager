@@ -5,10 +5,12 @@ import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/data/discovery.dart';
 import 'package:kfm/features/connect/data/pairing_client.dart';
 import 'package:kfm/features/connect/domain/connection_request.dart';
+import 'package:kfm/features/connect/domain/link.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/domain/protocol.dart';
 import 'package:kfm/features/connect/domain/remote_connection_state.dart';
 import 'package:kfm/features/connect/ui/known_devices_providers.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/connect/ui/remote_connection_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -66,10 +68,15 @@ final class ConnectWaiting extends ConnectState {
     this.words = const [],
     this.remember = true,
     this.showRemember = true,
+    this.perms,
   });
 
   final String name;
   final List<String> words;
+
+  /// E1: what this device lets the peer do with ITS files (both on by
+  /// default); null for a send-only pairing (nothing is shared then).
+  final LinkPerms? perms;
 
   /// N6 "Remember this device" (default on): saved after an accept.
   final bool remember;
@@ -132,6 +139,9 @@ class ConnectController extends _$ConnectController {
 
   /// N12: `send` pairs a send-only session (the "Send to…" flow).
   SessionPurpose _purpose = SessionPurpose.connect;
+
+  /// E1: the waiting screen's checkboxes for this side's files.
+  LinkPerms _perms = const LinkPerms();
 
   /// N12: how the next pairing connects.
   // A method, not a setter: the flow sets it before starting a pairing.
@@ -286,6 +296,24 @@ class ConnectController extends _$ConnectController {
           words: s.words,
           remember: remember,
           showRemember: s.showRemember,
+          perms: s.perms,
+        ),
+      );
+    }
+  }
+
+  /// E1: the waiting screen's "Let <B> see / take" checkboxes.
+  void setPerms(LinkPerms perms) {
+    _perms = perms;
+    final s = state;
+    if (s is ConnectWaiting && s.perms != null) {
+      _set(
+        ConnectWaiting(
+          s.name,
+          words: s.words,
+          remember: s.remember,
+          showRemember: s.showRemember,
+          perms: perms,
         ),
       );
     }
@@ -299,9 +327,9 @@ class ConnectController extends _$ConnectController {
     _set(const ConnectChoose());
   }
 
-  /// Ends the connection (tells the other device) and starts over.
+  /// Ends the link (tells the other device, both halves) and starts over.
   Future<void> disconnect() async {
-    await ref.read(remoteConnectionControllerProvider.notifier).disconnect();
+    await ref.read(linkControllerProvider.notifier).disconnect();
     _set(const ConnectChoose());
   }
 
@@ -331,6 +359,7 @@ class ConnectController extends _$ConnectController {
         words: words,
         remember: _remember,
         showRemember: !_known,
+        perms: _purpose == SessionPurpose.connect ? _perms : null,
       ),
     );
   }
@@ -346,6 +375,12 @@ class ConnectController extends _$ConnectController {
     _remember = true;
     _known = reconnectFingerprint != null;
     _set(ConnectWorking(name));
+    _perms = reconnectFingerprint == null
+        ? const LinkPerms()
+        : await ref
+              .read(linkControllerProvider.notifier)
+              .storedPerms(reconnectFingerprint);
+    if (!ref.mounted || cancel.isCancelled) return;
     try {
       final result = await body(cancel);
       if (!ref.mounted || cancel.isCancelled) {
@@ -353,8 +388,16 @@ class ConnectController extends _$ConnectController {
         return;
       }
       _cancel = null;
-      // The listener in build() turns this into ConnectConnected.
-      ref.read(remoteConnectionControllerProvider.notifier).connect(result);
+      // The listener in build() turns this into ConnectConnected. E1: a
+      // connect pairing becomes a two-way link (the back-link follows).
+      unawaited(
+        ref
+            .read(linkControllerProvider.notifier)
+            .onPaired(
+              result,
+              perms: _purpose == SessionPurpose.connect ? _perms : null,
+            ),
+      );
       if (reconnectFingerprint == null && _remember) {
         // N6: a failed save shows through the write queue's error stream.
         unawaited(

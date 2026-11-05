@@ -23,6 +23,7 @@ import 'package:kfm/features/connect/domain/connection_request.dart';
 import 'package:kfm/features/connect/domain/known_device.dart';
 import 'package:kfm/features/connect/domain/pairing.dart';
 import 'package:kfm/features/connect/ui/accept_dialog.dart';
+import 'package:kfm/features/connect/ui/link_controller.dart';
 import 'package:kfm/features/connect/ui/share_server_controller.dart';
 import 'package:kfm/features/connect/ui/shared_folders_picker.dart';
 import 'package:kfm/l10n/generated/app_localizations.dart';
@@ -56,6 +57,8 @@ class ShareScreen extends ConsumerStatefulWidget {
 class _ShareScreenState extends ConsumerState<ShareScreen> {
   // Read once: `ref` can't be used in dispose.
   late final ShareServerController _controller;
+  // E1: the link keeps sharing running after this screen closes.
+  late final LinkController _link;
   late final ScreenAwake _awake;
   late final AcceptGate _gate;
   late final ShareChangeTracker _tracker;
@@ -72,6 +75,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   void initState() {
     super.initState();
     _controller = ref.read(shareServerControllerProvider.notifier);
+    _link = ref.read(linkControllerProvider.notifier)..holdServer();
     _awake = ref.read(screenAwakeProvider);
     _gate = ref.read(acceptGateProvider);
     _gateSub = _gate.events.listen(_onGateEvent);
@@ -132,7 +136,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     _statusSub?.close();
     _outcomeSub?.close();
     unawaited(_tracker.stop());
-    _controller.stopSharing().ignore();
+    // E1: stops sharing unless a device is linked (the link owns it then).
+    _link.releaseServer();
     _keepAwake(on: false);
     super.dispose();
   }
@@ -352,6 +357,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       );
       if (stop != true || !mounted) return;
     }
+    // Stop means stop, also while linked (the link ends with it).
+    unawaited(_controller.stopSharing());
     if (widget.onStop case final onStop?) {
       onStop();
     } else {

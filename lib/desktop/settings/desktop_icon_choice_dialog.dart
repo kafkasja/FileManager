@@ -11,7 +11,6 @@ import 'package:kfm/core/db/settings/app_settings.dart';
 import 'package:kfm/desktop/widgets/file_type_icon.dart';
 import 'package:kfm/features/settings/ui/settings_section.dart';
 
-
 /// Settings → General → File icons (TASK-E3; desktop with the Windows
 /// shell only).
 final fileIconsEntry = SettingsEntry(
