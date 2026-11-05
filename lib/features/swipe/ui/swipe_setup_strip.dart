@@ -19,8 +19,8 @@ import 'package:kfm/features/swipe/ui/swipe_setup_sheet.dart';
 import 'package:kfm/features/swipe/ui/widgets/swipe_layout_editor.dart';
 import 'package:kfm/features/tags/data/tag_providers.dart';
 
-/// The strip's height (S6: never more than 40 dp on small phones).
-const double kSwipeSetupStripHeight = 40;
+/// The strip's height: 48 dp, the Android tap target (E4; S6 had 40).
+const double kSwipeSetupStripHeight = 48;
 
 /// S6: the slim setup row under the app bar: active preset (tap = one-tap
 /// preset row), what each direction does (tap = setup sheet), a filter
@@ -123,13 +123,11 @@ class _SwipeSetupStripState extends ConsumerState<SwipeSetupStrip> {
             if (filterOn)
               IconButton(
                 tooltip: l10n.swipeSetupFilterOn,
-                visualDensity: VisualDensity.compact,
                 onPressed: () => showFilterSheet(context),
                 icon: const Badge(smallSize: 8, child: Icon(Icons.filter_list)),
               ),
             IconButton(
               tooltip: l10n.swipeSetupTuneTooltip,
-              visualDensity: VisualDensity.compact,
               onPressed: () => _openSheet(SwipeSetupSection.presets),
               icon: const Icon(Icons.tune),
             ),

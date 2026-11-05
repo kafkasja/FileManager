@@ -28,6 +28,10 @@ abstract interface class ThumbnailCache {
     ThumbPriority priority = ThumbPriority.visible,
   });
 
+  /// E4: the thumbnail if it is in the memory cache right now (no disk
+  /// read, no generating), so a tile can show it in its first frame.
+  Uint8List? peek(FileRef f);
+
   /// Warm the cache for what the user will see next.
   void prefetch(Iterable<FileRef> files);
 
@@ -197,6 +201,15 @@ class DiskThumbnailCache implements ThumbnailCache {
 
   @override
   bool hasFailed(FileRef f) => _failed.contains(_key(f));
+
+  @override
+  Uint8List? peek(FileRef f) {
+    if (!hasThumbnail(f)) return null;
+    final key = _key(f);
+    final cached = _memory.remove(key);
+    if (cached != null) _memory[key] = cached; // most recently used
+    return cached;
+  }
 
   @override
   void prefetch(Iterable<FileRef> files) {

@@ -1913,5 +1913,13 @@
   "a11yKindArchive": "Arşiv",
   "a11yKindFile": "Dosya",
   "a11yKindFileExt": "{ext} dosyası",
-  "desktopFileIconsHint": "Dosya ve klasörlerin listelerde nasıl görüneceği: Windows'un kendi simgeleri veya KFM'ninkiler."
+  "desktopFileIconsHint": "Dosya ve klasörlerin listelerde nasıl görüneceği: Windows'un kendi simgeleri veya KFM'ninkiler.",
+  "folderLabel": "{folder} · {place}",
+  "swipeFolderSemantics": "Klasör: {folder}",
+  "swipeFolderDetails": "Ayrıntılar",
+  "settingsSwipeShowFolder": "Dosyanın klasörünü göster",
+  "settingsSwipeShowFolderHelp": "Kartın üstünde tek satır. Yolu kopyalamak veya klasörü açmak için dokunun.",
+  "backupSettingSwipeShowFolder": "Dosyanın klasörünü göster",
+  "browseRefreshFailed": "Yenilenemedi. Tekrar deneyin.",
+  "sameTimeChangeWindow": "Aralığı değiştir"
 }

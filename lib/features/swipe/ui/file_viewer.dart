@@ -10,6 +10,7 @@ import 'package:kfm/core/files/file_ref.dart';
 import 'package:kfm/core/files/file_source_provider.dart';
 import 'package:kfm/core/thumbs/thumbnail.dart';
 import 'package:kfm/core/utils/format.dart';
+import 'package:kfm/features/browse/ui/widgets/browse_parts.dart';
 import 'package:kfm/features/cloud/ui/cloud_badge.dart';
 import 'package:kfm/features/connect/data/remote_source_provider.dart';
 import 'package:kfm/features/connect/domain/remote_file_id.dart';
@@ -260,10 +261,11 @@ class _FileViewerState extends ConsumerState<FileViewer> {
                 alignment: AlignmentDirectional.bottomEnd,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(16),
-                  // Shrinks instead of overflowing on narrow screens.
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerEnd,
+                  // Scrolls sideways instead of overflowing on narrow
+                  // screens; never shrinks the 48 dp buttons (E4, A3).
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       spacing: 8,
@@ -502,11 +504,11 @@ class _PagedFileViewerState extends ConsumerState<PagedFileViewer> {
                 alignment: AlignmentDirectional.bottomEnd,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(16),
-                  // Shrinks instead of overflowing on narrow screens (S22:
-                  // ⓘ + 4 actions + Select overflowed by 34 px).
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerEnd,
+                  // Scrolls sideways instead of overflowing on narrow
+                  // screens; never shrinks the 48 dp buttons (E4, A3).
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       spacing: 8,
@@ -884,6 +886,14 @@ class _InfoBar extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
               style: text,
             ),
+            // E4: where the file is ("Camera · Internal storage").
+            if (file.origin != FileOrigin.remote)
+              Text(
+                folderLabel(l10n, file.folderPath),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text,
+              ),
             for (final label in labels)
               Text(
                 l10n.reviewedInfoLine(

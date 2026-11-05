@@ -8303,4 +8303,33 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get desktopFileIconsHint =>
       'Dosya ve klasörlerin listelerde nasıl görüneceği: Windows\'un kendi simgeleri veya KFM\'ninkiler.';
+
+  @override
+  String folderLabel(String folder, String place) {
+    return '$folder · $place';
+  }
+
+  @override
+  String swipeFolderSemantics(String folder) {
+    return 'Klasör: $folder';
+  }
+
+  @override
+  String get swipeFolderDetails => 'Ayrıntılar';
+
+  @override
+  String get settingsSwipeShowFolder => 'Dosyanın klasörünü göster';
+
+  @override
+  String get settingsSwipeShowFolderHelp =>
+      'Kartın üstünde tek satır. Yolu kopyalamak veya klasörü açmak için dokunun.';
+
+  @override
+  String get backupSettingSwipeShowFolder => 'Dosyanın klasörünü göster';
+
+  @override
+  String get browseRefreshFailed => 'Yenilenemedi. Tekrar deneyin.';
+
+  @override
+  String get sameTimeChangeWindow => 'Aralığı değiştir';
 }

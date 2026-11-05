@@ -1913,5 +1913,13 @@
   "a11yKindArchive": "Archief",
   "a11yKindFile": "Bestand",
   "a11yKindFileExt": "{ext}-bestand",
-  "desktopFileIconsHint": "Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM."
+  "desktopFileIconsHint": "Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM.",
+  "folderLabel": "{folder} · {place}",
+  "swipeFolderSemantics": "Map: {folder}",
+  "swipeFolderDetails": "Details",
+  "settingsSwipeShowFolder": "Map van het bestand tonen",
+  "settingsSwipeShowFolderHelp": "Eén regel boven de kaart. Tik erop om het pad te kopiëren of de map te openen.",
+  "backupSettingSwipeShowFolder": "Map van het bestand tonen",
+  "browseRefreshFailed": "Vernieuwen lukte niet. Probeer het opnieuw.",
+  "sameTimeChangeWindow": "Venster wijzigen"
 }

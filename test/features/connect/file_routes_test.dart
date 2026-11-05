@@ -63,6 +63,9 @@ class _Source extends FakeFileSource {
 
 class _FakeThumbs implements ThumbnailCache {
   @override
+  Uint8List? peek(FileRef f) => null;
+
+  @override
   bool hasFailed(FileRef f) => false;
 
   final List<String> asked = [];
