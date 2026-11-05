@@ -21,6 +21,7 @@ import 'package:kfm/features/settings/ui/windows_roots_section.dart';
 import 'package:kfm/features/similar/ui/similar_section.dart';
 import 'package:kfm/features/smart_groups/ui/smart_groups_settings_section.dart';
 import 'package:kfm/features/storage/ui/storage_overview_section.dart';
+import 'package:kfm/features/swipe/ui/swipe_folder_line.dart';
 import 'package:kfm/features/swipe/ui/swipe_settings_section.dart';
 import 'package:kfm/features/trash/ui/deleting_section.dart';
 import 'package:kfm/features/updates/ui/updates_section.dart';
@@ -59,8 +60,7 @@ List<SettingsSection> settingsSections(Ref ref) => List.unmodifiable(
       entries: [
         swipeCustomizeEntry,
         swipeButtonsModeEntry,
-        // TODO(E4): `swipe.showFolder` ("Show the file's folder", phone) goes
-        // here; E4 builds the setting and the entry.
+        swipeShowFolderEntry,
         swipePresetsEntry,
         swipeReviewedBadgeEntry,
         swipeSessionSummaryEntry,

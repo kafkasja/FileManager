@@ -256,6 +256,12 @@ abstract final class AppSettings {
     defaultValue: true,
   );
 
+  /// E4. A line with the current file's folder on the swipe screen.
+  static final SettingKey<bool> swipeShowFolder = SettingKey.boolean(
+    'swipe.showFolder',
+    defaultValue: true,
+  );
+
   /// P2. Last 5 move/copy target folders, newest first (JSON list).
   static final SettingKey<String> swipeRecentTargets = SettingKey.string(
     'swipe.recentTargets',

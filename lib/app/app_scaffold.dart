@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/router.dart';
+import 'package:kfm/app/scroll_to_top.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/app/widgets/db_startup_banner.dart';
 import 'package:kfm/app/widgets/indexing_chip.dart';
@@ -17,7 +19,7 @@ import 'package:kfm/features/updates/ui/update_banner.dart';
 
 /// Bottom navigation (rail on wide screens) around the four tabs, with the
 /// app-wide banners above the tab content.
-class AppScaffold extends StatelessWidget {
+class AppScaffold extends ConsumerWidget {
   const new({required this.shell, super.key});
 
   final StatefulNavigationShell shell;
@@ -25,11 +27,17 @@ class AppScaffold extends StatelessWidget {
   /// Above this width (dp) a NavigationRail replaces the bottom bar (PL1).
   static const wideBreakpoint = 840.0;
 
-  void _select(int index) =>
-      shell.goBranch(index, initialLocation: index == shell.currentIndex);
+  void _select(WidgetRef ref, int index) {
+    final again = index == shell.currentIndex;
+    shell.goBranch(index, initialLocation: again);
+    // E4: tapping the active tab again also scrolls its list to the top.
+    if (again) {
+      ref.read(scrollToTopProvider.notifier).request(AppTab.values[index]);
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final tabs = [
       (AppTab.swipe, Icons.swipe_outlined, Icons.swipe, l10n.tabSwipe),
@@ -71,6 +79,17 @@ class AppScaffold extends StatelessWidget {
       ),
     );
     final wide = MediaQuery.sizeOf(context).width >= wideBreakpoint;
+    final onSwipe = shell.currentIndex == AppTab.swipe.index;
+    // E4 (A6): system back on the root of Browse, Trash or Settings goes to
+    // Swipe first; on Swipe it leaves the app. The tabs' own back steps
+    // (selection, folder up, a pushed screen) run before this.
+    final Widget content = PopScope(
+      canPop: onSwipe,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !onSwipe) shell.goBranch(AppTab.swipe.index);
+      },
+      child: body,
+    );
 
     if (wide) {
       return Scaffold(
@@ -78,7 +97,7 @@ class AppScaffold extends StatelessWidget {
           children: [
             NavigationRail(
               selectedIndex: shell.currentIndex,
-              onDestinationSelected: _select,
+              onDestinationSelected: (i) => _select(ref, i),
               labelType: NavigationRailLabelType.all,
               destinations: [
                 for (final (_, icon, selected, label) in tabs)
@@ -93,7 +112,7 @@ class AppScaffold extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
-                  Expanded(child: body),
+                  Expanded(child: content),
                   // X8: transfers and copies on every tab.
                   const JobsIndicator(),
                 ],
@@ -104,7 +123,7 @@ class AppScaffold extends StatelessWidget {
       );
     }
     return Scaffold(
-      body: body,
+      body: content,
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -112,7 +131,7 @@ class AppScaffold extends StatelessWidget {
           const JobsIndicator(),
           NavigationBar(
             selectedIndex: shell.currentIndex,
-            onDestinationSelected: _select,
+            onDestinationSelected: (i) => _select(ref, i),
             destinations: [
               for (final (_, icon, selected, label) in tabs)
                 NavigationDestination(

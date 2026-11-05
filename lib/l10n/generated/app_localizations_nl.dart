@@ -8365,6 +8365,36 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hoe bestanden en mappen eruitzien in de lijsten: de pictogrammen van Windows of die van KFM.';
 
   @override
+  String folderLabel(String folder, String place) {
+    return '$folder · $place';
+  }
+
+  @override
+  String swipeFolderSemantics(String folder) {
+    return 'Map: $folder';
+  }
+
+  @override
+  String get swipeFolderDetails => 'Details';
+
+  @override
+  String get settingsSwipeShowFolder => 'Map van het bestand tonen';
+
+  @override
+  String get settingsSwipeShowFolderHelp =>
+      'Eén regel boven de kaart. Tik erop om het pad te kopiëren of de map te openen.';
+
+  @override
+  String get backupSettingSwipeShowFolder => 'Map van het bestand tonen';
+
+  @override
+  String get browseRefreshFailed =>
+      'Vernieuwen lukte niet. Probeer het opnieuw.';
+
+  @override
+  String get sameTimeChangeWindow => 'Venster wijzigen';
+
+  @override
   String get shareInfoTooltip => 'Over delen';
 
   @override

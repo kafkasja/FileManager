@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kfm/app/layout/adaptive_list_tile.dart';
+import 'package:kfm/app/widgets/hiding_header.dart';
 import 'package:kfm/features/browse/ui/widgets/sources_row.dart';
 import 'package:kfm/features/filters/ui/filter_sheet.dart';
 import 'package:kfm/features/presets/ui/save_preset_dialog.dart';
@@ -44,19 +45,21 @@ Future<void> _browse(
 }
 
 void main() {
-  testWidgets('Browse fits a phone in landscape (the header scrolls away)', (
+  // E4: one header rule at every height (HidingHeaderSliver).
+  testWidgets('Browse fits a phone in landscape (the header hides)', (
     tester,
   ) async {
     await _browse(tester, dp: const Size(780, 360), textScale: 1.3);
     expect(tester.takeException(), isNull);
-    expect(find.byType(NestedScrollView), findsOneWidget);
+    expect(find.byType(HidingHeaderSliver), findsOneWidget);
   });
 
-  testWidgets('Browse keeps its plain header on a portrait phone', (
+  testWidgets('Browse uses the same hiding header on a portrait phone', (
     tester,
   ) async {
     await _browse(tester, dp: const Size(360, 780));
     expect(tester.takeException(), isNull);
+    expect(find.byType(HidingHeaderSliver), findsOneWidget);
     expect(find.byType(NestedScrollView), findsNothing);
   });
 

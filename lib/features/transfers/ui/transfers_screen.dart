@@ -6,6 +6,7 @@ import 'package:kfm/app/device_kind.dart';
 import 'package:kfm/app/file_reveal.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/app/widgets/empty_state.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/background_jobs/ui/jobs_indicator.dart';
 import 'package:kfm/features/cloud/data/cloud_providers.dart';
@@ -203,6 +204,7 @@ class TransfersScreen extends ConsumerWidget {
                             if (j.direction == TransferDirection.download) j,
                         ],
                         empty: l10n.transfersEmptyDownloads,
+                        icon: Icons.download_outlined,
                       ),
                       _JobList(
                         jobs: [
@@ -210,6 +212,7 @@ class TransfersScreen extends ConsumerWidget {
                             if (j.direction == TransferDirection.upload) j,
                         ],
                         empty: l10n.transfersEmptyUploads,
+                        icon: Icons.upload_outlined,
                       ),
                       for (final s in sections) Builder(builder: s.builder),
                     ],
@@ -236,22 +239,16 @@ class TransfersScreen extends ConsumerWidget {
 }
 
 class _JobList extends StatelessWidget {
-  const new({required this.jobs, required this.empty});
+  const new({required this.jobs, required this.empty, required this.icon});
 
   final List<TransferJob> jobs;
   final String empty;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.tokens.spacing;
-    if (jobs.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsetsDirectional.all(spacing * 3),
-          child: Text(empty, textAlign: TextAlign.center),
-        ),
-      );
-    }
+    if (jobs.isEmpty) return EmptyState(icon: icon, text: empty);
     return ListView.builder(
       padding: EdgeInsetsDirectional.all(spacing),
       itemCount: jobs.length,

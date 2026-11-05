@@ -766,6 +766,9 @@ void main() {
 
 class _NoThumbs implements ThumbnailCache {
   @override
+  Uint8List? peek(FileRef f) => null;
+
+  @override
   bool hasFailed(FileRef f) => false;
 
   @override

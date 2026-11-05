@@ -20,6 +20,7 @@ class FileGridTile extends StatelessWidget {
     this.bigFileBytes = defaultBigFileBytes,
     this.menu,
     this.highlight = const [],
+    this.showCloud = true,
     super.key,
   });
 
@@ -30,6 +31,10 @@ class FileGridTile extends StatelessWidget {
 
   /// B8: name words to highlight (search matches).
   final List<String> highlight;
+
+  /// X4's cloud badge can show (E4: the results view decides once for all
+  /// tiles, so tiles without uploads build no badge).
+  final bool showCloud;
 
   /// B4's ⋮ at the bottom-end (Normal mode only).
   final Widget? menu;
@@ -158,13 +163,14 @@ class FileGridTile extends StatelessWidget {
         ),
         // X4: top-start is free on media tiles (size bottom-start, ⋮ and
         // video bottom-end); non-media tiles show their size label there.
-        PositionedDirectional(
-          start: spacing / 2,
-          top: !file.isMedia && (showSize || big)
-              ? spacing / 2 + 20
-              : spacing / 2,
-          child: CloudBadgeIcon(file: file),
-        ),
+        if (showCloud)
+          PositionedDirectional(
+            start: spacing / 2,
+            top: !file.isMedia && (showSize || big)
+                ? spacing / 2 + 20
+                : spacing / 2,
+            child: CloudBadgeIcon(file: file),
+          ),
         if (menu case final menu?)
           PositionedDirectional(end: 2, bottom: 2, child: menu),
       ],
@@ -181,6 +187,7 @@ class FileListRow extends StatelessWidget {
     this.bigFileBytes = FileGridTile.defaultBigFileBytes,
     this.menu,
     this.highlight = const [],
+    this.showCloud = true,
     super.key,
   });
 
@@ -191,6 +198,9 @@ class FileListRow extends StatelessWidget {
 
   /// B8: name words to highlight (search matches).
   final List<String> highlight;
+
+  /// X4's cloud badge can show (see [FileGridTile.showCloud]).
+  final bool showCloud;
 
   /// B4's ⋮ as the trailing widget (Normal mode only).
   final Widget? menu;
@@ -216,11 +226,12 @@ class FileListRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(context.tokens.spacing / 2),
               child: Thumbnail(file: file),
             ),
-            PositionedDirectional(
-              end: 0,
-              bottom: 0,
-              child: CloudBadgeIcon(file: file, size: 12),
-            ),
+            if (showCloud)
+              PositionedDirectional(
+                end: 0,
+                bottom: 0,
+                child: CloudBadgeIcon(file: file, size: 12),
+              ),
           ],
         ),
       ),

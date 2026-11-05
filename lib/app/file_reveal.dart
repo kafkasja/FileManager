@@ -59,7 +59,7 @@ Future<void> showInFolder(
     }
   }
   if (!context.mounted) return;
-  openFolderInBrowse(context, p.posix.dirname(path));
+  openFolderInBrowse(context, p.posix.dirname(path), highlightId: 'path:$path');
 }
 
 /// Opens the file at [path] like a tap in Browse (its viewer or app).

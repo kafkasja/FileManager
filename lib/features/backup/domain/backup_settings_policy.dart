@@ -71,6 +71,7 @@ final List<BackupSetting> backupSettings = List.unmodifiable(<BackupSetting>[
   ),
   BackupSetting.of(AppSettings.deleteMode),
   BackupSetting.of(AppSettings.hapticsEnabled),
+  BackupSetting.of(AppSettings.swipeShowFolder),
   BackupSetting.of(AppSettings.swipeButtonsMode),
   BackupSetting.of(AppSettings.statsShowSessionSummary),
   BackupSetting.of(AppSettings.basicIncludeReviewed),

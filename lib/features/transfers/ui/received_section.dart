@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kfm/app/file_reveal.dart';
 import 'package:kfm/app/l10n_ext.dart';
 import 'package:kfm/app/theme/app_tokens.dart';
+import 'package:kfm/app/widgets/empty_state.dart';
 import 'package:kfm/core/utils/format.dart';
 import 'package:kfm/features/connect/data/connect_providers.dart';
 import 'package:kfm/features/connect/domain/share_offer.dart';
@@ -24,11 +25,9 @@ class ReceivedOffersSection extends ConsumerWidget {
     final spacing = context.tokens.spacing;
     final offers = ref.watch(shareOffersProvider).value ?? const <ShareOffer>[];
     if (offers.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsetsDirectional.all(spacing * 3),
-          child: Text(l10n.transfersEmptyReceived, textAlign: TextAlign.center),
-        ),
+      return EmptyState(
+        icon: Icons.move_to_inbox_outlined,
+        text: l10n.transfersEmptyReceived,
       );
     }
     return ListView.builder(
