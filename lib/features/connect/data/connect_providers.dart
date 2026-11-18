@@ -345,7 +345,7 @@ class PendingRequest extends _$PendingRequest {
 }
 
 /// Clients with a live session, oldest first (share screen list).
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<ClientSession>> connectedClients(Ref ref) async* {
   final store = ref.watch(clientSessionStoreProvider);
   yield store.sessions;
@@ -361,7 +361,7 @@ KnownDevicesRepository knownDevicesRepository(Ref ref) =>
     );
 
 /// The remembered-devices list (temporary rows hidden).
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<KnownDevice>> knownDevices(Ref ref) =>
     ref.watch(knownDevicesRepositoryProvider).watchVisible();
 

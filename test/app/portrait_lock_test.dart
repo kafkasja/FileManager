@@ -22,6 +22,8 @@ void main() {
 
   Widget app({FormFactor form = FormFactor.mobile, bool show = true}) =>
       ProviderScope(
+        // A root scope (pumped directly), not a nested one.
+        // ignore: riverpod_lint/scoped_providers_should_specify_dependencies
         overrides: [formFactorProvider.overrideWithValue(form)],
         child: MaterialApp(
           home: show
@@ -53,6 +55,8 @@ void main() {
 
   testWidgets('a hidden tab (TickerMode off) releases it', (tester) async {
     Widget tab({required bool visible}) => ProviderScope(
+      // A root scope (pumped directly), not a nested one.
+      // ignore: riverpod_lint/scoped_providers_should_specify_dependencies
       overrides: [formFactorProvider.overrideWithValue(FormFactor.mobile)],
       child: MaterialApp(
         home: TickerMode(

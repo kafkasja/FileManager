@@ -20,6 +20,8 @@ KnownDeviceConnector knownDeviceConnector(Ref ref) => KnownDeviceConnector(
   // Only while someone browses (the remembered-devices screen): reading
   // it otherwise would start a browse just to drop it.
   nearby: () => ref.exists(nearbyDevicesProvider)
+      // Only read while it exists: the mDNS browse must stay auto-dispose.
+      // ignore: riverpod_lint/only_use_keep_alive_inside_keep_alive
       ? ref.read(nearbyDevicesProvider).value ?? const []
       : const [],
   // E1: every connect pairing becomes a two-way link (send-only ones

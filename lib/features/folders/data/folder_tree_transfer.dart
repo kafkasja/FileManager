@@ -381,15 +381,15 @@ Future<List<String>> listIoSubfolders(String dir) async {
 }
 
 /// How subfolders are listed (tests: the fake file source has no disk).
-@riverpod
+@Riverpod(keepAlive: true)
 SubfolderLister subfolderLister(Ref ref) => listIoSubfolders;
 
 /// How emptied folders are removed (tests: the fake file source has no
 /// disk).
-@riverpod
+@Riverpod(keepAlive: true)
 EmptyDirRemover emptyDirRemover(Ref ref) => removeEmptyIoDir;
 
-@riverpod
+@Riverpod(keepAlive: true)
 FolderTreeTransfer folderTreeTransfer(Ref ref) => FolderTreeTransfer(
   source: ref.watch(fileSourceProvider),
   runner: ref.watch(fileOperationRunnerProvider),

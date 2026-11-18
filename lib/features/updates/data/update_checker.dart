@@ -25,7 +25,7 @@ AppVersion currentAppVersion(Ref ref) => AppVersion.tryParse(appVersion)!;
 DateTime Function() updateClock(Ref ref) => DateTime.now;
 
 /// "Check for updates" (off by default; rule 7).
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<bool> updateCheckEnabled(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch(AppSettings.updateCheckEnabled);
 

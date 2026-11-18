@@ -1183,7 +1183,7 @@ final class ConnectedClientsProvider
         argument: null,
         retry: null,
         name: r'connectedClientsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1203,7 +1203,7 @@ final class ConnectedClientsProvider
   }
 }
 
-String _$connectedClientsHash() => r'34b9c31fb9f04966675e7a1aa000d2e40189d82e';
+String _$connectedClientsHash() => r'6758b1a886a337343f59bdc9953af35da20506b6';
 
 /// Remembered devices (TASK-N6).
 
@@ -1282,7 +1282,7 @@ final class KnownDevicesProvider
         argument: null,
         retry: null,
         name: r'knownDevicesProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -1302,7 +1302,7 @@ final class KnownDevicesProvider
   }
 }
 
-String _$knownDevicesHash() => r'87e726a3ec00414877f69c1a8c5a32487869b1bb';
+String _$knownDevicesHash() => r'30af617f88c74c6a902e2f8e4cb9896861adf0f9';
 
 /// Startup cleanup (N6): temporary rows not seen for 7 days. The app
 /// watches it once.

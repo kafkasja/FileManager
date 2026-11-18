@@ -26,5 +26,19 @@ linter:
     # (FUSE) a stat can take milliseconds. Rule 4: never block the UI thread.
     avoid_slow_async_io: false
 
+# Exact version: the plugin resolves on its own (not from pubspec.lock), so a
+# range let CI pick up a newer riverpod_lint with new lints and fail a release.
+# Note: on this PC `flutter analyze` doesn't show plugin results; run
+# `dart analyze` to see them (CI's `flutter analyze` does show them).
 plugins:
-  riverpod_lint: ^3.1.9
+  riverpod_lint:
+    version: 3.2.0
+    diagnostics:
+      # Notifiers keep a few sync getters/fields (canReopen, filter, epoch,
+      # clock...) that callbacks read imperatively; they're not UI state.
+      avoid_public_notifier_properties: false
+      # 3.2.0 crashes the analysis server while reporting this rule
+      # ("requires 0 arguments, but 1 argument was provided"), so an ignore
+      # can't silence it. Its one hit is deliberate: desktopDragController
+      # holds the app's ChangeNotifier drag service (read, never watched).
+      unsupported_provider_value: false

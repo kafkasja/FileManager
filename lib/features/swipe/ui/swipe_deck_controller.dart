@@ -445,6 +445,8 @@ class SwipeDeckController extends _$SwipeDeckController {
     ref.onDispose(fileOps.cancel);
     ref.listen(tagsByIdProvider, (_, _) {});
     // Back online: load what was missing and commit what waited (D2).
+    // Per-peer family stays auto-dispose; this listen keeps it alive.
+    // ignore: riverpod_lint/only_use_keep_alive_inside_keep_alive
     ref.listen(remotePeerConnectedProvider(fp), (before, now) {
       if (now && before != true) unawaited(_onReconnected());
     });

@@ -123,7 +123,7 @@ final class UpdateCheckEnabledProvider
         argument: null,
         retry: null,
         name: r'updateCheckEnabledProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -143,7 +143,7 @@ final class UpdateCheckEnabledProvider
 }
 
 String _$updateCheckEnabledHash() =>
-    r'69ae1198968d7e0bbf0592b32beb1c77f30caca8';
+    r'd19e34062ed47f8c2396f044545de0d34dda22bc';
 
 /// The version whose banner the user closed ('' = none).
 

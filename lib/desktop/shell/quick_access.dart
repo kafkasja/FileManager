@@ -19,6 +19,8 @@ part 'quick_access.g.dart';
 @Riverpod(keepAlive: true)
 Future<List<String>> quickAccessDefaults(Ref ref) async {
   if (!isWindowsHost) {
+    // The watch keeps this one query alive; the family stays auto-dispose.
+    // ignore: riverpod_lint/only_use_keep_alive_inside_keep_alive
     final folders = await ref.watch(
       browseFoldersProvider(IndexQuery.all).future,
     );

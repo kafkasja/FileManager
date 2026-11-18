@@ -166,7 +166,7 @@ final class SimilarBlurThresholdProvider
         argument: null,
         retry: null,
         name: r'similarBlurThresholdProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -186,7 +186,7 @@ final class SimilarBlurThresholdProvider
 }
 
 String _$similarBlurThresholdHash() =>
-    r'a1cb2d30176a0dd5fc367d5c0155f2fdbb9fa35b';
+    r'74e9b82ec2d1ae5f0592d91d0860055f919de8ad';
 
 @ProviderFor(similarBlurry)
 final similarBlurryProvider = SimilarBlurryProvider._();

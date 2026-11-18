@@ -26,7 +26,7 @@ Stream<bool> similarIncludeScreenshots(Ref ref) => ref
 Stream<List<SimilarGroup>> similarGroups(Ref ref) =>
     ref.watch(similarRepositoryProvider).watchGroups();
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<int> similarBlurThreshold(Ref ref) => ref
     .watch(settingsRepositoryProvider)
     .watch(AppSettings.similarBlurThreshold);

@@ -26,7 +26,7 @@ final class SubfolderListerProvider
         argument: null,
         retry: null,
         name: r'subfolderListerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -53,7 +53,7 @@ final class SubfolderListerProvider
   }
 }
 
-String _$subfolderListerHash() => r'15ada9964cca79dcad22f23842765474aa220cb0';
+String _$subfolderListerHash() => r'5cc3e1371ca56132cf37af729af08f9452f72df2';
 
 /// How emptied folders are removed (tests: the fake file source has no
 /// disk).
@@ -76,7 +76,7 @@ final class EmptyDirRemoverProvider
         argument: null,
         retry: null,
         name: r'emptyDirRemoverProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -103,7 +103,7 @@ final class EmptyDirRemoverProvider
   }
 }
 
-String _$emptyDirRemoverHash() => r'ab14d6f0b1add86f106061ed70e2a0a6fc2ea8ed';
+String _$emptyDirRemoverHash() => r'5a4a2509de32e49b64ab88c93c9f21a1d58dba61';
 
 @ProviderFor(folderTreeTransfer)
 final folderTreeTransferProvider = FolderTreeTransferProvider._();
@@ -122,7 +122,7 @@ final class FolderTreeTransferProvider
         argument: null,
         retry: null,
         name: r'folderTreeTransferProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -151,4 +151,4 @@ final class FolderTreeTransferProvider
 }
 
 String _$folderTreeTransferHash() =>
-    r'd1a3d5898e263fb541f0699f4ebae5ac78a9d34f';
+    r'342284a221fbc6a6c0c5df39459dd076f1aea338';
