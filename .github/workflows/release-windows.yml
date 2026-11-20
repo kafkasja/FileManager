@@ -49,25 +49,33 @@ jobs:
           New-Item -ItemType Directory -Force dist\KFM | Out-Null
           Copy-Item -Recurse "$src\*" dist\KFM
           Compress-Archive -Path dist\KFM -DestinationPath "dist\$zip"
+          $sum = "dist\KFM-windows-x64-$name-checksum.txt"
+          "$((Get-FileHash "dist\$zip" -Algorithm SHA256).Hash.ToLower())  $zip" | Out-File -FilePath $sum -Encoding ascii
           "ZIP=dist\$zip" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SUM=$sum" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Keep the zip as a build artifact
         uses: actions/upload-artifact@v4
         with:
           name: kfm-windows
-          path: ${{ env.ZIP }}
+          path: |
+            ${{ env.ZIP }}
+            ${{ env.SUM }}
 
       - name: Attach to the release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           name: KFM ${{ github.ref_name }}
-          files: ${{ env.ZIP }}
+          files: |
+            ${{ env.ZIP }}
+            ${{ env.SUM }}
           fail_on_unmatched_files: true
           append_body: true
           body: |
-            ### Windows PC (Windows 10 or 11, 64-bit)
+            ### Windows PC (Windows 10 version 1809 or newer, or Windows 11; 64-bit)
             Download **KFM-windows-x64-${{ github.ref_name }}.zip**, right-click it, choose **Extract All**,
-            then open the **KFM** folder and double-click **KFM.exe**.
+            then open the new folder, then the **KFM** folder inside it, and double-click **KFM.exe**.
             If Windows says "Windows protected your PC", click **More info → Run anyway**.
+            If it says Smart App Control blocked it, KFM can't run on that PC until it's signed (coming later).
             To update, replace the KFM folder with the new one; your data stays on your PC.

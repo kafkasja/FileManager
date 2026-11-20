@@ -16,7 +16,7 @@ skip_tests=false
 
 die() { echo "release: $*" >&2; exit 1; }
 
-[ -f android/key.properties ] || die "android/key.properties missing (see docs/RELEASING.md). Not building a debug-signed release."
+[ -f android/key.properties ] || die "android/key.properties missing (see README.md -> Releasing a new version). Not building a debug-signed release."
 
 version_line=$(grep -E '^version:' pubspec.yaml | head -1)
 full=${version_line#version: }

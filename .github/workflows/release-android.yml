@@ -56,7 +56,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KFM_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_B64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo "::error::Release key secrets missing (KFM_KEYSTORE_BASE64, KFM_KEYSTORE_PASSWORD, KFM_KEY_ALIAS, KFM_KEY_PASSWORD). See docs/RELEASING.md."
+            echo "::error::Release key secrets missing (KFM_KEYSTORE_BASE64, KFM_KEYSTORE_PASSWORD, KFM_KEY_ALIAS, KFM_KEY_PASSWORD). See README.md -> Releasing a new version."
             exit 1
           fi
           ks="$RUNNER_TEMP/kfm-release.jks"
@@ -71,7 +71,7 @@ jobs:
       - name: Install packages
         run: flutter pub get
 
-      # Analyze + signed universal APK (arm + arm64) + debug-signature check.
+      # Analyze + signed universal APK (arm + arm64 + x86_64) + debug-signature check.
       # The tests run in the Windows release job.
       - name: Build signed APK
         run: bash tool/release.sh --skip-tests
