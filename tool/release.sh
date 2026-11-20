@@ -6,8 +6,8 @@
 # Output: build/release/kfm-X.Y.Z-N.apk and build/release/SHA256SUMS.txt.
 # Refuses to run without android/key.properties (a debug-signed APK must
 # never be published). Never uploads, tags or commits anything.
-# One universal APK for arm + arm64 (real phones). x86_64 (emulators only)
-# is left out: it added ~44 MB.
+# One universal APK for arm + arm64 (phones) + x86_64 (Intel/AMD Chromebooks,
+# emulators). One file for every device beats a smaller phone-only APK.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -48,7 +48,7 @@ fi
 
 flutter analyze
 if [ "$skip_tests" = false ]; then flutter test test/; fi
-flutter build apk --release --target-platform android-arm,android-arm64
+flutter build apk --release --target-platform android-arm,android-arm64,android-x64
 
 out="build/release/kfm-$name-$code.apk"
 cp build/app/outputs/flutter-apk/app-release.apk "$out"

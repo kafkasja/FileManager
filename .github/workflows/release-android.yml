@@ -104,7 +104,8 @@ jobs:
           fail_on_unmatched_files: true
           append_body: true
           body: |
-            ### Android phone or tablet (Android 7 or newer)
+            ### Android phone, tablet or Chromebook (Android 7 or newer)
             Download **KFM-android-${{ env.TAG }}.apk** on your phone and open it.
             If your phone asks whether to allow installing apps from this source, allow it and tap **Install**.
             To update, install the newer file over the old one; your sorting, tags and settings stay.
+            Chromebooks need a one-time setup to install it: see https://github.com/kafkasja/FileManager#install-on-a-chromebook
