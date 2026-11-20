@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/app/app_info.dart';
 import 'package:kfm/app/layout/text_scale.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/settings/app_settings.dart';
@@ -197,7 +198,7 @@ void main() {
       final position = tester.state<ScrollableState>(list).position;
       for (var i = 0; i < 100; i++) {
         sawTextSize |= find.text('Text size').evaluate().isNotEmpty;
-        sawVersion |= find.text('Version 0.1.0').evaluate().isNotEmpty;
+        sawVersion |= find.text('Version $appVersion').evaluate().isNotEmpty;
         if (position.pixels >= position.maxScrollExtent) break;
         await tester.drag(list, const Offset(0, -300));
         await tester.pumpAndSettle();

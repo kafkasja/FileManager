@@ -102,7 +102,7 @@ One-time setup: create the Android release key (keep backups: without it no upda
 Without them the Android download isn't built; the Windows one still is.
 
 Each release:
-1. Raise `version:` in `pubspec.yaml` (`X.Y.Z+N`, `N` always goes up by one) and set `appVersion` in `lib/app/app_info.dart` to the same `X.Y.Z`.
+1. Raise `version:` in `pubspec.yaml` (`X.Y.Z+N`, `N` always goes up by one) and set `appVersion` (`X.Y.Z`) and `appBuildNumber` (`N`) in `lib/app/app_info.dart` to match.
 2. Commit, then `git tag vX.Y.Z` and `git push origin main vX.Y.Z`.
 3. Wait for both jobs under **Actions**; the files appear on the release page.
 

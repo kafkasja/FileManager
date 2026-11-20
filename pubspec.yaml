@@ -1,7 +1,7 @@
 name: kfm
 description: "Kaf's File Manager: fast, safe, ad-free file and photo manager."
 publish_to: none
-version: 0.1.0+1
+version: 0.1.1+2
 
 environment:
   sdk: ^3.13.0

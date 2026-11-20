@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kfm/app/app_info.dart';
 import 'package:kfm/app/widgets/db_error_banner.dart';
 import 'package:kfm/core/db/db_providers.dart';
 import 'package:kfm/core/db/db_startup_check.dart';
@@ -96,11 +97,11 @@ void main() {
     );
     await tester.scrollUntilVisible(find.text('About & advanced'), 200);
     await openSettingsSection(tester, 'about');
-    expect(find.text('Version 0.1.0'), findsOneWidget);
+    expect(find.text('Version $appVersion'), findsOneWidget);
     // Back returns to the overview.
     await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.text('Version 0.1.0'), findsNothing);
+    expect(find.text('Version $appVersion'), findsNothing);
     expect(find.text('About & advanced'), findsOneWidget);
     // Scrolling disposed list rows' drift streams: let their close timers run.
     await tester.pumpAndSettle();
