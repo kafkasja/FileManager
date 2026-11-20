@@ -66,7 +66,7 @@ apksigner="$bt/apksigner"
 [ -e "$apksigner.bat" ] && apksigner="$apksigner.bat"
 if [ -n "$bt" ] && [ -e "$apksigner" ]; then
   certs=$("$apksigner" verify --print-certs "$out" 2>&1) || die "apksigner verify failed: $certs"
-  echo "$certs" | grep -E 'Signer #1 certificate (DN|SHA-256)' || die "apksigner printed no signer: $certs"
+  echo "$certs" | grep -E 'Signer( #1)?:? certificate (DN|SHA-256)' || die "apksigner printed no signer: $certs"
   if echo "$certs" | grep -q 'CN=Android Debug'; then
     die "APK is signed with the DEBUG key: do not publish"
   fi
