@@ -1,0 +1,104 @@
+# TASK-R1 in CI: on a version tag, build the release-signed Android APK with
+# tool/release.sh and attach it (+ SHA256SUMS.txt) to the tag's GitHub Release.
+#
+# Needs four repository secrets (Settings → Secrets and variables → Actions):
+#   KFM_KEYSTORE_BASE64    base64 of kfm-release.jks
+#   KFM_KEYSTORE_PASSWORD  store password
+#   KFM_KEY_ALIAS          key alias (kfm)
+#   KFM_KEY_PASSWORD       key password
+# Without them the job fails: a debug-signed APK is never published.
+#
+# Run it by hand (Actions → Release (Android) → Run workflow) with a tag such
+# as v0.1.0 to add the APK to a release that already exists.
+name: Release (Android)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and attach to (e.g. v0.1.0); empty = build only"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TAG: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ (github.ref_type != 'tag' && inputs.tag != '') && inputs.tag || github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Release key
+        env:
+          KEYSTORE_B64: ${{ secrets.KFM_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.KFM_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KFM_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KFM_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Release key secrets missing (KFM_KEYSTORE_BASE64, KFM_KEYSTORE_PASSWORD, KFM_KEY_ALIAS, KFM_KEY_PASSWORD). See docs/RELEASING.md."
+            exit 1
+          fi
+          ks="$RUNNER_TEMP/kfm-release.jks"
+          echo "$KEYSTORE_B64" | base64 -d > "$ks"
+          {
+            echo "storeFile=$ks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: Install packages
+        run: flutter pub get
+
+      # Analyze + signed universal APK (arm + arm64) + debug-signature check.
+      # The tests run in the Windows release job.
+      - name: Build signed APK
+        run: bash tool/release.sh --skip-tests
+
+      - name: Remove the key
+        if: always()
+        run: rm -f android/key.properties "$RUNNER_TEMP/kfm-release.jks"
+
+      - name: Keep the APK as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kfm-android
+          path: |
+            build/release/kfm-*.apk
+            build/release/SHA256SUMS.txt
+
+      - name: Attach to the release
+        if: env.TAG != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: |
+            build/release/kfm-*.apk
+            build/release/SHA256SUMS.txt
+          fail_on_unmatched_files: true
+          append_body: true
+          body: |
+            Android: download the `.apk` on your phone (Android 7.0 or newer) and open it.
+            Android asks once to allow installs from your browser or file app: allow it, then tap Install.
+            To update, install the newer `.apk` over the old one; your sessions, tags and settings stay.
