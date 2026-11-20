@@ -61,12 +61,13 @@ jobs:
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          name: KFM ${{ github.ref_name }}
           files: ${{ env.ZIP }}
           fail_on_unmatched_files: true
           append_body: true
           body: |
-            Windows: unzip anywhere and run `KFM\KFM.exe` (Windows 10 1809 or newer, 64-bit).
-
-            The app isn't signed yet, so Windows SmartScreen may say "Windows protected your PC".
-            Click **More info → Run anyway**. To update, replace the KFM folder; your data stays
-            in `%APPDATA%\Kaf\KFM`.
+            ### Windows PC (Windows 10 or 11, 64-bit)
+            Download **KFM-windows-x64-${{ github.ref_name }}.zip**, right-click it, choose **Extract All**,
+            then open the **KFM** folder and double-click **KFM.exe**.
+            If Windows says "Windows protected your PC", click **More info → Run anyway**.
+            To update, replace the KFM folder with the new one; your data stays on your PC.

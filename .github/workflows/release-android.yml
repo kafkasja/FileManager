@@ -80,25 +80,31 @@ jobs:
         if: always()
         run: rm -f android/key.properties "$RUNNER_TEMP/kfm-release.jks"
 
+      # Same naming as the Windows zip: KFM-android-v0.1.0.apk.
+      - name: Name the files
+        run: |
+          name="${TAG:-dev-${GITHUB_SHA::7}}"
+          mkdir -p dist
+          cp build/release/kfm-*.apk "dist/KFM-android-$name.apk"
+          (cd dist && sha256sum "KFM-android-$name.apk" > "KFM-android-$name-checksum.txt")
+
       - name: Keep the APK as a build artifact
         uses: actions/upload-artifact@v4
         with:
           name: kfm-android
-          path: |
-            build/release/kfm-*.apk
-            build/release/SHA256SUMS.txt
+          path: dist/*
 
       - name: Attach to the release
         if: env.TAG != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
-          files: |
-            build/release/kfm-*.apk
-            build/release/SHA256SUMS.txt
+          name: KFM ${{ env.TAG }}
+          files: dist/*
           fail_on_unmatched_files: true
           append_body: true
           body: |
-            Android: download the `.apk` on your phone (Android 7.0 or newer) and open it.
-            Android asks once to allow installs from your browser or file app: allow it, then tap Install.
-            To update, install the newer `.apk` over the old one; your sessions, tags and settings stay.
+            ### Android phone or tablet (Android 7 or newer)
+            Download **KFM-android-${{ env.TAG }}.apk** on your phone and open it.
+            If your phone asks whether to allow installing apps from this source, allow it and tap **Install**.
+            To update, install the newer file over the old one; your sorting, tags and settings stay.
